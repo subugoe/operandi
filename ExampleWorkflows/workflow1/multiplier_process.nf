@@ -20,18 +20,18 @@ log.info """\
 def multiply_line(line) {
    // splits the read line into strings, each string is a string format integer
    // then converts the string format integers to integers
-   integerList = line.split("\\s+").collect{it.toInteger()}
+   def integerList = line.split("\\s+").collect{it.toInteger()}
       
    // another way to accomplish the same result 
    // as the line above is to use a Java function:
    // integerList = line.split("\\s+").collect { java.lang.Integer.valueOf(it) }
       
    // multiplies each integer with the multiplier parameter
-   multipliedList = integerList.collect{it*params.multiplier}
+   def multipliedList = integerList.collect{it*params.multiplier}
       
    // joins the list of multiplied integers into a single string line 
    // with a delimiter whitespace between the values
-   multipliedString = multipliedList.join(" ") + "\n"
+   String multipliedString = multipliedList.join(" ") + "\n"
 
    // returns multipliedString
    // functions implicitly return the result of the last evaluated statement
@@ -66,11 +66,12 @@ process multiplier_process {
    // params.outdir is the output directory path
    destWriter = file("${params.outdir}multiplied_${x}").newWriter()
    
+   String line = ""
    // reads lines from the source file till EOF is reached
    while(line = sourceReader.readLine()) {
    
       // does the multiplications
-      multiplied_line = multiply_line(line)
+      String multiplied_line = multiply_line(line)
       
       // writes the line to the destination file
       destWriter.write(multiplied_line)
