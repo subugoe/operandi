@@ -4,8 +4,7 @@ nextflow.enable.dsl=2
 // pipeline parameters 
 params.indir = "$projectDir/input/"
 params.outdir = "$projectDir/output/"
-
-all_integers = []
+params.temp = "$projectDir/temp/"
 
 // log pipeline parameters to the console
 log.info """\
@@ -13,6 +12,7 @@ log.info """\
          ===========================================
          indir      : ${params.indir}
          outdir     : ${params.outdir}
+         temp       : ${params.temp}
          """
          .stripIndent()
 
@@ -27,9 +27,12 @@ log.info """\
 // output: creates two output channels
 process input_creator1 {
 
-   input:
-   val number_of_this_instance
+   // OPTIONAL: specify where to store the results of this process
+   publishDir params.temp
 
+   input:
+   val number_of_this_instance // from numbers_ch
+   
    // if we omit the "output" block, then no output channel will be created
    // input_creator.out would not work, however, the output files are still created!
 
@@ -39,7 +42,6 @@ process input_creator1 {
    // once the process instance finishes its execution
    // each output is accessed from the outside with an index
    // e.g. input_creator.out[0] accesses the file output
-   
    
    // RANDOM is a system variable and accessed with a $ prefix
    // number is accessed with the pattern: !{*}, where the * is the variable name
@@ -54,16 +56,19 @@ process input_creator1 {
 // same as the process above, but it returns a tuple output channel
 process input_creator2 {
 
+   // OPTIONAL: specify where to store the results of this process
+   publishDir params.temp
+
    input:
-   val number
+   val number_of_this_instance // from numbers_ch
 
    output:
    tuple env(INTEGER_NUM), file("input_num_*.txt")
 
    shell:
    '''
-   echo $RANDOM > input_num_!{number}.txt
-   INTEGER_NUM=$(cat input_num_!{number}.txt)
+   echo $RANDOM > input_num_!{number_of_this_instance}.txt
+   INTEGER_NUM=$(cat input_num_!{number_of_this_instance}.txt)
    '''
 }
 
@@ -71,8 +76,8 @@ process input_creator2 {
 process print_input1 {
 
    input:
-   val integer_num
-   path file_name
+   val integer_num // from input_creator1.out[0]
+   path file_name  // from input_creator1.out[1]
    
    // In the native code (Groovy) execution (exec: block)
    // the variables are accessed with the pattern: ${*}
@@ -87,7 +92,7 @@ process print_input2 {
    echo true // echo commands are disabled by default, set true to print to console
 
    input:
-   tuple val(integer_num), path(file_name)
+   tuple val(integer_num), path(file_name) // from input_creator2.out
    
    // since the tuple variant has less flexibility in comparison to the separate channels
    // this process additionaly separates the tuple and produces separate channels
@@ -164,71 +169,21 @@ workflow basic_flow2 {
       print_input2.out[1]
 }
 
-// integer collecting flow
-// collects all integers produced so far
-// return: a single channel containing all integers
-
-// the function version of the integer_collector
-/*
-def integer_collector (ch1_data, ch2_data){
-
-   destWriter = file("${params.indir}integers.txt").newWriter()
-
-   ch1_data.subscribe {  
-      // all_integers.add(it)
-      destWriter.append(it + '\n')
-   }
-   ch2_data.subscribe { 
-      // all_integers.add(it)
-      destWriter.append(it + '\n')
-   }
-   
-   //destWriter.close()
-}
-*/
-
-// WE WOULD NOT LIKE TO EXECUTE THIS AS A PROCESS
-// SINCE A NEW PROCESS INSTANCE IS CREATED FOR EACH X AND Y PAIR
-
-// the process version of the integer_collector
-/*
 process integer_collector {
+
+   // the maximum amount of instances for this process is set to 1
+   // this process will execute sequentially
+   maxForks 1 
    
    input:
-      val x // from ch1_data
-      val y // from ch2_data
-      
-   exec:
-      destWriter = file("${params.indir}integers.txt").newWriter()
-      println "The x is ${x} and the y is ${y}"
-      destWriter.append(x + '\n')
-      destWriter.append(y + '\n')
-      destWriter.close()
-}
-*/
+      val x // from basic_flow1.out[0]
+      val y // from basic_flow2.out[0]
 
-// the workflow version of the integer_collector
-workflow integer_collector {
-
-   take:
-      ch1_data
-      ch2_data
-
-   // Since the 
-   main:
-      destWriter = file("${params.indir}integers.txt").newWriter()
-
-      ch1_data.subscribe {  
-         // all_integers.add(it)
-         destWriter.append(it + '\n')
-      }
-      ch2_data.subscribe { 
-         // all_integers.add(it)
-         destWriter.append(it + '\n')
-      }
-      
-      // destWriter.close()
-   
+   shell:
+   '''
+   echo !{x} >> !{params.indir}integers.txt
+   echo !{y} >> !{params.indir}integers.txt
+   '''
 }
 
 // This is the main workflow
@@ -237,12 +192,6 @@ workflow {
    main:
       basic_flow1()
       basic_flow2()
-      
-      // in theory the integer_collector2 should wait here
-      // for basic_flow1 and basic_flow2 to finish their execution
-      // since we pass their output as an input
-      // however, this seems to not be the case
-      
       integer_collector(basic_flow1.out[0], basic_flow2.out[0])
 
 }

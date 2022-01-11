@@ -53,6 +53,7 @@ process multiplier_process {
    path x from input_file_ch
    
    // the exec: makes possible to execute native code (Groovy) other than system scripts
+   // however, when possible try to use shell scripts for reads/writes
    exec:
    // get the start time of the process by invoking external java function
    startTime = java.time.LocalDateTime.now()
