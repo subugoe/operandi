@@ -26,6 +26,7 @@ As a result, two output files named `multiplied_1.txt` and `multiplied_2.txt` ar
 - Each execution has also its own log files (`.nextflow.log.*`)
 - The cache and history are stored under the `.nextflow` directory.
 - Make sure to clear the cache and the output files to avoid potential bugs during the testing/learning process. This could also be done automatically be using either a `beforeScript` or `afterScript` directives inside the processes (check workflow2 for more information about such directives).
+- To execute the workflow use `nextflow run flow_name.nf` in the terminal (e.g. `nextflow run multuplier_process_dsl.nf`)
 
 ## workflow2
 Inside this folder there is a `complex_workflow.nf` file that represents a complex workflow execution.
@@ -42,3 +43,57 @@ Finally, the `integer_collector` process reads the produced integer values (by t
 - `temp` folder is created to demonstrate how to store the produced results in a single directory specified with the `publishDir` directive inside the processes. Processes still have their files inside their work space (i.e. inside the `work` folder).
 - `integers.txt` is an output file that we would like to use as an input for further processing. Thus, the file is created inside the input directory.
 - `maxForks` directive inside the `integer_collector` process sets the number of maximum instances. Useful when we want to execute a process in a sequential manner.
+
+## workflow3
+This workflow demonstrates how to run OCR-D processors in parallel. For our example we use the demo processor ocrd-vandalize.
+
+### 1. Installation of the ocrd_vandalize processor from source
+1. Clone the repository and enter its directory
+```sh
+git clone https://github.com/kba/ocrd_vandalize
+cd ocrd_vandalize
+```
+2. Create a virtual Python environment and activate it.
+```sh
+python3 -m venv $HOME/venv-ocrd
+source $HOME/venv-ocrd/bin/activate
+```
+NOTE: if you change the path of the virtual environment, do not forget to set the correct environment path inside the nextflow script!
+
+3. Install the wheel package (if missing, e.g., `error: invalid command bdist_wheel` encountered) and the ocrd_vandalize
+```sh
+pip3 install wheel
+make install
+```
+4. Check if the ocrd_vandalize is installed properly. Then deactivate the environment.
+```sh
+ocrd-vandalize --version
+deactivate
+```
+
+### 2. Preparation of the input files for the Nextflow workflow
+Execute the `prepare.sh` script inside the `workflow3` folder to prepare the input files.
+```sh
+cd workflow3
+./prepare.sh
+```
+
+The script does the following:
+1. Downloads a zip file that contains some example data.
+2. Creates an `input` folder and three separate subfolders named `data1`, `data2`, and `data3`.
+3. A copy of the example data is copied inside each of the subfolders.
+
+### 3. Execution of the workflow
+```sh
+nextflow run workflow_with_ocrd.nf
+```
+
+The Nextflow workflow does the following:
+1. Executes the ocrd-vandalize processor in parallel for each subfolder
+2. An `output` directory is created with the results for each subfolder
+
+NOTE: The output results of the processors are stored inside each subfolder and a copy link is published inside the `output` directory.
+
+### 4. Cleaning of the created files
+Execute the `clean.sh` script to clean the downloaded zip, execution logs, and the created folders - `input`, `output`, `work`, `.nextflow`.
+
