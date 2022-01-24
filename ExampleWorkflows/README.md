@@ -85,12 +85,13 @@ The script does the following:
 
 ### 3. Execution of the workflow
 ```sh
-nextflow run workflow_with_ocrd.nf
+nextflow run workflow_with_ocrd.nf -with-report
 ```
 
 The Nextflow workflow does the following:
 1. Executes the ocrd-vandalize processor in parallel for each subfolder
 2. An `output` directory is created with the results for each subfolder
+3. HTML execution report with summary, resource usage, and tasks is created (check the example `report.html`)
 
 NOTE: The output results of the processors are stored inside each subfolder and a copy link is published inside the `output` directory.
 
