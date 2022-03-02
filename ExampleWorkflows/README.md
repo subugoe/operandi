@@ -45,7 +45,7 @@ Finally, the `integer_collector` process reads the produced integer values (by t
 - `maxForks` directive inside the `integer_collector` process sets the number of maximum instances. Useful when we want to execute a process in a sequential manner.
 
 ## workflow3
-This workflow demonstrates how to run OCR-D processors in parallel. For our example we use the demo processor ocrd-vandalize.
+This workflow demonstrates how to run dummy OCR-D processors in parallel. For our example we use the demo processor ocrd-vandalize.
 
 ### 1. Installation of the ocrd_vandalize processor from source
 1. Clone the repository and enter its directory
@@ -97,4 +97,8 @@ NOTE: The output results of the processors are stored inside each subfolder and 
 
 ### 4. Cleaning of the created files
 Execute the `clean.sh` script to clean the downloaded zip, execution logs, and the created folders - `input`, `output`, `work`, `.nextflow`.
+
+## workflow4
+The 3 workflow examples demonstrate how to run OCR-D processors sequentially (`seq_ocrd_wf_single.nf`, `seq_ocrd_wf_many.nf`) and in parallel (`parallel_ocrd_wf.nf`). Refer to the previous instructions to run the workflows. Prepare the workspace for sequential run with `prepare.sh` and for parallel run with `prepare_parallel.sh`. Clean the produced files with `clean.sh`.
+
 
