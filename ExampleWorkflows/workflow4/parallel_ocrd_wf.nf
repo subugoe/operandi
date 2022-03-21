@@ -94,6 +94,7 @@ process ocropy_binarize {
 	
   input:
     path mets_file
+    path workspace
     val input_dir
     val output_dir
 	
@@ -113,6 +114,7 @@ process anybaseocr_crop {
 	
   input:
     path mets_file
+    path workspace
     val input_dir
     val output_dir
 	
@@ -132,6 +134,7 @@ process skimage_binarize {
 	
   input:
     path mets_file
+    path workspace
     val input_dir
     val output_dir
 	
@@ -151,6 +154,7 @@ process skimage_denoise {
 	
   input:
     path mets_file
+    path workspace
     val input_dir
     val output_dir
 	
@@ -170,6 +174,7 @@ process tesserocr_deskew {
 	
   input:
     path mets_file
+    path workspace
     val input_dir
     val output_dir
 	
@@ -191,6 +196,7 @@ process cis_ocropy_segment {
 	
   input:
     path mets_file
+    path workspace
     val input_dir
     val output_dir
 	
@@ -210,6 +216,7 @@ process cis_ocropy_dewarp {
 	
   input:
     path mets_file
+    path workspace
     val input_dir
     val output_dir
 	
@@ -229,6 +236,7 @@ process calamari_recognize {
 	
   input:
     path mets_file
+    path workspace
     val input_dir
     val output_dir
 	
