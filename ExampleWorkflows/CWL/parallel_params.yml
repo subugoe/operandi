@@ -1,0 +1,15 @@
+subspaces_array: 
+  - { class: Directory, path: ocrd-workspace/sub-workspace-1}
+  - { class: Directory, path: ocrd-workspace/sub-workspace-2}
+  - { class: Directory, path: ocrd-workspace/sub-workspace-3}
+  - { class: Directory, path: ocrd-workspace/sub-workspace-4}
+
+mets_array: 
+  - { class: File, path: ocrd-workspace/sub-workspace-1/mets.xml}
+  - { class: File, path: ocrd-workspace/sub-workspace-2/mets.xml}
+  - { class: File, path: ocrd-workspace/sub-workspace-3/mets.xml}
+  - { class: File, path: ocrd-workspace/sub-workspace-4/mets.xml}
+
+img_dir: OCR-D-IMG
+bin_dir: OCR-D-BIN
+crop_dir: OCR-D-CROP

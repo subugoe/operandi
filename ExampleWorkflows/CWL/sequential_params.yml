@@ -1,0 +1,11 @@
+workspace: 
+  class: Directory
+  path: ocrd-workspace
+
+mets: 
+  class: File
+  path: ocrd-workspace/mets.xml
+
+img_dir: OCR-D-IMG
+bin_dir: OCR-D-BIN
+crop_dir: OCR-D-CROP
