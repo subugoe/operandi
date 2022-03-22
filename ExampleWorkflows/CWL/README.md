@@ -35,3 +35,5 @@ cwl-runner sequential_workflow.cwl sequential_params.yml
 ./prepare_parallel.sh
 cwl-runner --parallel parallel_workflow.cwl parallel_params.yml
 ```
+
+3.3 Clean the workspace created with `./prepare.sh` or `./prepare_parallel.sh` before running again.
