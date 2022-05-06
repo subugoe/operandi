@@ -57,6 +57,7 @@ class Consumer:
     def set_callback(self, callback):
         self.__basic_consume(queue=Q_NAME, callback=callback, auto_ack=True)
 
+    # TODO: implement proper start/stop methods
     def start_consuming(self):
         print(f"INFO: Waiting for messages. To exit press CTRL+C.")
         self.__channel.start_consuming()
