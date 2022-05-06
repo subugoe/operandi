@@ -79,7 +79,7 @@ class Harvester:
                 print(f"INFO: Posted successfully... {mets_id}")
                 return True
 
-        # print(f"INFO: Not posted... {mets_id}")
+        print(f"INFO: Not posted... {mets_id}")
         return False
 
     def __print_waiting_message(self):

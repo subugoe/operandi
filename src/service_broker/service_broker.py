@@ -1,3 +1,4 @@
+import time
 
 from src.priority_queue.consumer import Consumer
 
@@ -14,7 +15,6 @@ class ServiceBroker:
         print(f"Constructor: {host}:{port}")
 
         self.consumer = Consumer()
-        self.consumer.set_callback(callback)
 
     def __del__(self):
         print(f"Destructor")
@@ -30,4 +30,18 @@ def callback(ch, method, properties, body):
 # TODO: Implement the entire service broker
 # Currently the service broker only passively consumes data from the queue
 service_broker = ServiceBroker()
-service_broker.consumer.start_consuming()
+
+# To consume continuously
+# service_broker.consumer.set_callback(callback)
+# service_broker.consumer.start_consuming()
+
+# Loops till there is a message inside the queue
+while True:
+    received = service_broker.consumer.single_consume()
+    if received is not None:
+        break
+    print(f"Looping")
+    time.sleep(2)
+
+# Do something with the received message body
+print(f"{received}")

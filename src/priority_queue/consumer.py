@@ -47,6 +47,7 @@ class Consumer:
             self.__channel.queue_declare(queue=queue, durable=durability)
 
     # Configure the basic consume method for a queue
+    # Continuously consumes data from the "queue"
     def __basic_consume(self, queue, callback, auto_ack=False):
         # 'callback' is the function to be called
         # when consuming from the queue
@@ -54,8 +55,23 @@ class Consumer:
                                      on_message_callback=callback,
                                      auto_ack=auto_ack)
 
+    # Consumes a single message from the channel
+    def __single_consume(self, queue):
+        method_frame, header_frame, body = self.__channel.basic_get(queue)
+        if method_frame:
+            # print(f"{method_frame}, {header_frame}, {body}")
+            self.__channel.basic_ack(method_frame.delivery_tag)
+            return body
+        else:
+            # print(f"No message returned")
+            return None
+
     def set_callback(self, callback):
         self.__basic_consume(queue=Q_NAME, callback=callback, auto_ack=True)
+
+    # Wrapper for __single_consume
+    def single_consume(self):
+        return self.__single_consume(Q_NAME)
 
     # TODO: implement proper start/stop methods
     def start_consuming(self):
