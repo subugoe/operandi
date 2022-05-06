@@ -128,6 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-#Nextflow cache and log files
+# Nextflow cache and log files
 ExampleWorkflows/workflow*/.nextflow*
 ExampleWOrkflows/workflow*/work
+
+# PyCharm files
+.idea/*
