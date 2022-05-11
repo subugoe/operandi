@@ -208,15 +208,26 @@ process calamari_recognize {
 workflow {
 
   main:
+    ocr_d_img = Channel.value("OCR-D-IMG")
+    ocr_d_bin = Channel.value("OCR-D-BIN")
+    ocr_d_crop = Channel.value("OCR-D-CROP")
+    ocr_d_bin2 = Channel.value("OCR-D-BIN2")
+    ocr_d_denoise = Channel.value("OCR-D-BIN-DENOISE")
+    ocr_d_deskew = Channel.value("OCR-D-BIN-DENOISE-DESKEW")
+    ocr_d_seg = Channel.value("OCR-D-SEG")
+    ocr_d_dewarp = Channel.value("OCR-D-SEG-LINE-RESEG-DEWARP")
+    ocr_d_oc = Channel.value("OCR-D-OC")
+  
+  
     // input_dir_ch = Channel.fromPath(params.reads, type: 'dir')
-    ocropy_binarize(params.mets, "OCR-D-IMG", "OCR-D-BIN")
-    anybaseocr_crop(params.mets, ocropy_binarize.out, "OCR-D-CROP")
-    skimage_binarize(params.mets, anybaseocr_crop.out, "OCR-D-BIN2")
-    skimage_denoise(params.mets, skimage_binarize.out, "OCR-D-BIN-DENOISE")
-    tesserocr_deskew(params.mets, skimage_denoise.out, "OCR-D-BIN-DENOISE-DESKEW")
-    cis_ocropy_segment(params.mets, tesserocr_deskew.out, "OCR-D-SEG")
-    cis_ocropy_dewarp(params.mets, cis_ocropy_segment.out, "OCR-D-SEG-LINE-RESEG-DEWARP")
-    calamari_recognize(params.mets, cis_ocropy_dewarp.out, "OCR-D-OC")
+    ocropy_binarize(params.mets, ocr_d_img, ocr_d_bin)
+    anybaseocr_crop(params.mets, ocropy_binarize.out, ocr_d_crop)
+    skimage_binarize(params.mets, anybaseocr_crop.out, ocr_d_bin2)
+    skimage_denoise(params.mets, skimage_binarize.out, ocr_d_denoise)
+    tesserocr_deskew(params.mets, skimage_denoise.out, ocr_d_deskew)
+    cis_ocropy_segment(params.mets, tesserocr_deskew.out, ocr_d_seg)
+    cis_ocropy_dewarp(params.mets, cis_ocropy_segment.out, ocr_d_dewarp)
+    calamari_recognize(params.mets, cis_ocropy_dewarp.out, ocr_d_oc)
 
 }
 
