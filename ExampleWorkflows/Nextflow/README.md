@@ -101,4 +101,5 @@ Execute the `clean.sh` script to clean the downloaded zip, execution logs, and t
 ## workflow4
 The 3 workflow examples demonstrate how to run OCR-D processors sequentially (`seq_ocrd_wf_single.nf`, `seq_ocrd_wf_many.nf`) and in parallel (`parallel_ocrd_wf.nf`). Refer to the previous instructions to run the workflows. Prepare the workspace for sequential run with `prepare.sh` and for parallel run with `prepare_parallel.sh`. Clean the produced files with `clean.sh`.
 
-
+## workflow5
+This workflow5 example is for the HPC environment.
