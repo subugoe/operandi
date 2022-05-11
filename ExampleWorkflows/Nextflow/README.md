@@ -108,13 +108,15 @@ This workflow5 example is for the HPC environment.
 Demonstration of the `watchPath` with `until` property.
 
 What to do:
-1. Execute the `pipelined_wf_v2` (version 2!) script with `$nextflow run pipelined_wf_v2`.
-2. Open a second terminal window.
-3. Change the working directory to `input_folder` with `cd`.
-4. Create a new file `.txt` file -> `$touch a.txt`
-5. Observe the results on the first terminal
-6. Go back to Step 4 and repeat as many times as you wish. 
-7. To finish the workflow create a text file with name `DONE.txt`.
+1. Prepare the folders structure with `./prepare.sh`
+2. Execute the `pipelined_wf_v2` (version 2!) script with `$nextflow run pipelined_wf_v2`.
+3. Open a second terminal window.
+4. Change the working directory to `input_folder` with `cd`.
+5. Create a new file `.txt` file -> `$touch a.txt`
+6. Observe the results on the first terminal
+7. Go back to Step 5 and repeat as many times as you wish. 
+8. To finish the workflow create a text file with name `DONE.txt`.
+9. To clean the content inside the folders use `./clean.sh`
 
 NOTES: 
 1. `pipelined_wf_v1` does not work as intended. Having separate `watchPath` channels for each `step` process leads to a situation in which when the `DONE.txt` file is created inside the `input_folder` the `watch_input_ch` channel is closed without submitting that file to process `step1`. So, the `watchPath` of the `step1_out` folder gets stuck in an infinite loop since the file which ends the loop is never created! Manually creating the intended file inside the `step1_out` folder do the task, but this is not what we are trying to achieve in this example. For the same reason, `watchPath` of the `step2_out` gets stuck in an infinite loop as a chain reaction.
