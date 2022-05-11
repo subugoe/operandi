@@ -16,9 +16,6 @@ class Harvester:
         self.is_harvesting = False
         self.vd18_file = VD18_IDS_FILE
         self.wtbs = WAIT_TIME_BETWEEN_SUBMITS
-        status1 = os.path.exists(self.vd18_file)
-        status2 = os.path.isfile(self.vd18_file)
-        print(f"S1: {status1}, S2: {status2}")
         if not os.path.exists(self.vd18_file) or not os.path.isfile(self.vd18_file):
             print(f"{self.vd18_file} file does not exist or is not a readable file!")
             exit(1)
@@ -91,10 +88,12 @@ class Harvester:
             time.sleep(1)
 
     # TODO: implement proper start and stop mechanisms
-    def start_harvesting(self):
+    def start_harvesting(self, limit=0):
         print(f"{self}")
         print(f"INFO: Starting harvesting...\n")
         print(f"INFO: Mets URL will be submitted every {self.wtbs} seconds.")
+
+        harvested_counter = 0
 
         # Reads vd18 file line by line
         with open(self.vd18_file, mode="r") as f:
@@ -104,6 +103,10 @@ class Harvester:
                 mets_id = line.strip()
                 self.__harvest_one_mets(mets_id)
                 self.__print_waiting_message()
+                harvested_counter += 1
+                # If the limit is reached stop harvesting
+                if harvested_counter == limit:
+                    break
 
     # TODO: implement proper start and stop mechanisms
     def stop_harvesting(self):
@@ -112,5 +115,5 @@ class Harvester:
 
 
 harvester = Harvester()
-harvester.start_harvesting()
+harvester.start_harvesting(limit=3)
 

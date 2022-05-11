@@ -14,8 +14,8 @@ unzip $ZIP_PATH -d $SCRIPT_DIR/temp
 
 for i in {1..3}
 do
-   mkdir -p $SCRIPT_DIR/input/data$i
-   cp -r $SCRIPT_DIR/temp/* $SCRIPT_DIR/input/data$i
+   mkdir -p $SCRIPT_DIR/input/workspaces$i
+   cp -r $SCRIPT_DIR/temp/* $SCRIPT_DIR/input/workspaces$i
 done
 
 rm -r $SCRIPT_DIR/temp

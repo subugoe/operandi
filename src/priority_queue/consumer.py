@@ -47,7 +47,7 @@ class Consumer:
             self.__channel.queue_declare(queue=queue, durable=durability)
 
     # Configure the basic consume method for a queue
-    # Continuously consumes data from the "queue"
+    # Continuously consumes workspaces from the "queue"
     def __basic_consume(self, queue, callback, auto_ack=False):
         # 'callback' is the function to be called
         # when consuming from the queue

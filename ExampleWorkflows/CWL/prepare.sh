@@ -17,18 +17,18 @@ unzip $ZIP_PATH -d $SCRIPT_DIR/temp
 mkdir -p $SCRIPT_DIR/ocrd-workspace/OCR-D-IMG
 # mkdir -p $SCRIPT_DIR/ocrd-workspace/OCR-D-GT-SEG-PAGE
 # mkdir -p $SCRIPT_DIR/ocrd-workspace/OCR-D-GT-SEG-BLOCK
-cp -r $SCRIPT_DIR/temp/data/OCR-D-IMG/* $SCRIPT_DIR/ocrd-workspace/OCR-D-IMG
-# cp -r $SCRIPT_DIR/temp/data/OCR-D-GT-SEG-PAGE/* $SCRIPT_DIR/ocrd-workspace/OCR-D-GT-SEG-PAGE
-# cp -r $SCRIPT_DIR/temp/data/OCR-D-GT-SEG-BLOCK/* $SCRIPT_DIR/ocrd-workspace/OCR-D-GT-SEG-BLOCK
+cp -r $SCRIPT_DIR/temp/workspaces/OCR-D-IMG/* $SCRIPT_DIR/ocrd-workspace/OCR-D-IMG
+# cp -r $SCRIPT_DIR/temp/workspaces/OCR-D-GT-SEG-PAGE/* $SCRIPT_DIR/ocrd-workspace/OCR-D-GT-SEG-PAGE
+# cp -r $SCRIPT_DIR/temp/workspaces/OCR-D-GT-SEG-BLOCK/* $SCRIPT_DIR/ocrd-workspace/OCR-D-GT-SEG-BLOCK
 
-# cp -r $SCRIPT_DIR/temp/data/OCR-D-IMG/OCR-D-IMG_0001.jpg $SCRIPT_DIR/ocrd-workspace/OCR-D-IMG/
-# cp -r $SCRIPT_DIR/temp/data/OCR-D-IMG/OCR-D-IMG_0002.jpg $SCRIPT_DIR/ocrd-workspace/OCR-D-IMG/
+# cp -r $SCRIPT_DIR/temp/workspaces/OCR-D-IMG/OCR-D-IMG_0001.jpg $SCRIPT_DIR/ocrd-workspace/OCR-D-IMG/
+# cp -r $SCRIPT_DIR/temp/workspaces/OCR-D-IMG/OCR-D-IMG_0002.jpg $SCRIPT_DIR/ocrd-workspace/OCR-D-IMG/
 
-# cp -r $SCRIPT_DIR/temp/data/OCR-D-GT-SEG-PAGE/OCR-D-GT-SEG-PAGE_0001.xml $SCRIPT_DIR/ocrd-workspace/OCR-D-SEG-PAGE/
-# cp -r $SCRIPT_DIR/temp/data/OCR-D-GT-SEG-PAGE/OCR-D-GT-SEG-PAGE_0002.xml $SCRIPT_DIR/ocrd-workspace/OCR-D-SEG-PAGE/
+# cp -r $SCRIPT_DIR/temp/workspaces/OCR-D-GT-SEG-PAGE/OCR-D-GT-SEG-PAGE_0001.xml $SCRIPT_DIR/ocrd-workspace/OCR-D-SEG-PAGE/
+# cp -r $SCRIPT_DIR/temp/workspaces/OCR-D-GT-SEG-PAGE/OCR-D-GT-SEG-PAGE_0002.xml $SCRIPT_DIR/ocrd-workspace/OCR-D-SEG-PAGE/
 
-# cp -r $SCRIPT_DIR/temp/data/OCR-D-GT-SEG-BLOCK/OCR-D-GT-SEG-BLOCK_0001.xml $SCRIPT_DIR/ocrd-workspace/OCR-D-GT-SEG-BLOCK/
-# cp -r $SCRIPT_DIR/temp/data/OCR-D-GT-SEG-BLOCK/OCR-D-GT-SEG-BLOCK_0002.xml $SCRIPT_DIR/ocrd-workspace/OCR-D-GT-SEG-BLOCK/
+# cp -r $SCRIPT_DIR/temp/workspaces/OCR-D-GT-SEG-BLOCK/OCR-D-GT-SEG-BLOCK_0001.xml $SCRIPT_DIR/ocrd-workspace/OCR-D-GT-SEG-BLOCK/
+# cp -r $SCRIPT_DIR/temp/workspaces/OCR-D-GT-SEG-BLOCK/OCR-D-GT-SEG-BLOCK_0002.xml $SCRIPT_DIR/ocrd-workspace/OCR-D-GT-SEG-BLOCK/
 
 # Give all permisions
 chmod -Rf 777 $SCRIPT_DIR/ocrd-workspace/OCR-D-IMG

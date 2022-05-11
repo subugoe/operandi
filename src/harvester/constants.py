@@ -21,7 +21,7 @@ VD18_METS_EXT: str = ".mets.xml"
 
 # Harvesting related constants
 # This is the time waited between the POST requests to the OPERANDI Server
-WAIT_TIME_BETWEEN_SUBMITS: int = 15  # seconds
+WAIT_TIME_BETWEEN_SUBMITS: int = 10  # seconds
 
 # This is the default POST method to OPERANDI
 # NOTE: Make sure that the OPERANDI Server's IP and PORT are correctly configured here!!!

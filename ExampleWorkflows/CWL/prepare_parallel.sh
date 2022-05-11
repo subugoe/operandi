@@ -20,8 +20,8 @@ MEDIATYPE="image/jpeg"  # the actual media type of the image files
 # Divide the workspace to 4 equal parts
 for i in {1..4}; do
    mkdir -p $SCRIPT_DIR/ocrd-workspace/sub-workspace-${i}/OCR-D-IMG
-   cp $SCRIPT_DIR/temp/data/OCR-D-IMG/OCR-D-IMG_000${i}.jpg $SCRIPT_DIR/ocrd-workspace/sub-workspace-${i}/OCR-D-IMG/
-   cp $SCRIPT_DIR/temp/data/OCR-D-IMG/OCR-D-IMG_000$((i+4)).jpg $SCRIPT_DIR/ocrd-workspace/sub-workspace-${i}/OCR-D-IMG/
+   cp $SCRIPT_DIR/temp/workspaces/OCR-D-IMG/OCR-D-IMG_000${i}.jpg $SCRIPT_DIR/ocrd-workspace/sub-workspace-${i}/OCR-D-IMG/
+   cp $SCRIPT_DIR/temp/workspaces/OCR-D-IMG/OCR-D-IMG_000$((i+4)).jpg $SCRIPT_DIR/ocrd-workspace/sub-workspace-${i}/OCR-D-IMG/
    
    #ocrd workspace -d $SCRIPT_DIR/ocrd-workspace/sub-workspace-${i} init
    #ocrd workspace -d $SCRIPT_DIR/ocrd-workspace/sub-workspace-${i} set-id "parallel_workflow"
