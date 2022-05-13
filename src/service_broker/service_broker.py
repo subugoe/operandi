@@ -12,11 +12,10 @@ from constants import (
 
 
 class ServiceBroker:
-    def __init__(self,
-                 host=IP,
-                 port=PORT):
+    def __init__(self, host=IP, port=PORT):
         print(f"ServiceBroker Constructor: {host}:{port}")
-
+        self.host = host
+        self.port = port
         self.consumer = Consumer()
         self.ssh = SSHCommunication()
 
@@ -63,7 +62,13 @@ service_broker.prepare_combination("test1")
 service_broker.ssh.put_directory(source="test1",
                                  destination="/home/users/mmustaf/",
                                  recursive=True)
-output, err, return_code = service_broker.ssh.execute_blocking("/opt/slurm/bin/sbatch /home/users/mmustaf/test1/base_script.sh")
+
+# Bash reads shell setup files, such as /etc/profile and bashrc, only if you log in interactively.
+# That's where the setup of the paths and modules happen.
+# You can bypass that by forcing bash to start a login shell:
+# $ ssh gwdu101.gwdg.de  "bash -lc 'srun --version'"
+ssh_command = "bash -lc 'sbatch /home/users/mmustaf/test1/base_script.sh'"
+output, err, return_code = service_broker.ssh.execute_blocking(ssh_command)
 print(f"RC:{return_code}, ERR:{err}, O:{output}")
 
 # To consume continuously

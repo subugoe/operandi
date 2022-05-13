@@ -27,14 +27,14 @@ fi
 
 # copies the ocrd-workspace folder which holds the OCR-D-IMG folder and the mets file
 # copies the Nextflow script - seq_ocrd_wf_single_processor.nf
-cp -rf /home/users/mmustaf/test1/bin "${TEMPDIR}"
+cp -rf /home/users/mmustaf/test1/bin ${TEMPDIR}
 
-cd "${TEMPDIR}"/bin || exit
+cd ${TEMPDIR}/bin
 
 # execute the main Nextflow script
-nextflow run seq_ocrd_wf_single_processor.nf --tempdir "${TEMPDIR}"/bin
+nextflow run seq_ocrd_wf_single_processor.nf --tempdir ${TEMPDIR}/bin
 
-hostname
-slurm_resources
+/usr/bin/hostname
+/opt/slurm/bin/slurm_resources
 
 # rm -rf $TEMPDIR
