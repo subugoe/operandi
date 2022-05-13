@@ -8,12 +8,13 @@ from constants import (
     VD18_METS_EXT,
     WAIT_TIME_BETWEEN_SUBMITS,
     POST_METHOD_TO_OPERANDI,
+    POST_METHOD_ID_PARAMETER,
+    POST_METHOD_URL_PARAMETER,
 )
 
 
 class Harvester:
     def __init__(self):
-        self.is_harvesting = False
         self.vd18_file = VD18_IDS_FILE
         self.wtbs = WAIT_TIME_BETWEEN_SUBMITS
         if not os.path.exists(self.vd18_file) or not os.path.isfile(self.vd18_file):
@@ -23,40 +24,30 @@ class Harvester:
     @staticmethod
     def url_exists(url):
         try:
-            response = requests.get(url)
+            response = requests.get(url, stream=True)
             if response.status_code == 200:
+                # print(f"Headers: {response.headers}")
+                # print(f"Content size: {response.content.__sizeof__() - 33}")
                 return True
-            else:
-                return False
 
         except requests.exceptions.RequestException as e:
             # print(f"f:url_exists, Exception: {e}")
             return False
 
-    @staticmethod
-    def mets_exists(mets_id):
-        # Example mets_id: "PPN767935306"
-        # print(f"f:mets_exists, mets_id: {mets_id}")
-        url = f"{VD18_URL}{mets_id}{VD18_METS_EXT}"
-
-        if Harvester.url_exists(url):
-            return True
-
-        return False
-
     # Single POST requests to OPERANDI Server
     # This request submits one mets file URL
-    def __post_to_operandi(self, mets_id):
-        if not mets_id:
+    def __post_to_operandi(self, mets_id, mets_url):
+        if not mets_id or not mets_url:
             return False
 
-        operandi_request_url = f"{POST_METHOD_TO_OPERANDI}{mets_id}"
+        # Construct the operandi request based on the mets_id and mets_url
+        operandi_request_url = f"{POST_METHOD_TO_OPERANDI}?" \
+                               f"{POST_METHOD_ID_PARAMETER}{mets_id}&" \
+                               f"{POST_METHOD_URL_PARAMETER}{mets_url}"
+
         try:
             response = requests.post(operandi_request_url)
-            if response.status_code//100 == 2:
-                return True
-            else:
-                return False
+            return response.status_code//100 == 2
 
         except requests.exceptions.RequestException as e:
             # print(f"f:post_to_operandi, Exception: {e}")
@@ -65,13 +56,14 @@ class Harvester:
     # 1. Checks if the mets_id exits
     # 2. Submits the mets_id to the Operandi Server
     def __harvest_one_mets(self, mets_id):
-        # print(f"INFO: Harvesting... {mets_id}")
+        # print(f"INFO: Harvesting... {mets_url}")
         if not mets_id:
             return False
 
-        if Harvester.mets_exists(mets_id):
+        mets_url = f"{VD18_URL}{mets_id}{VD18_METS_EXT}"
+        if Harvester.url_exists(mets_url):
             # print(f"INFO: Exists... {mets_id}")
-            success = self.__post_to_operandi(mets_id)
+            success = self.__post_to_operandi(mets_id, mets_url)
             if success:
                 print(f"INFO: Posted successfully... {mets_id}")
                 return True
@@ -102,11 +94,11 @@ class Harvester:
                     break
                 mets_id = line.strip()
                 self.__harvest_one_mets(mets_id)
-                self.__print_waiting_message()
                 harvested_counter += 1
                 # If the limit is reached stop harvesting
                 if harvested_counter == limit:
                     break
+                self.__print_waiting_message()
 
     # TODO: implement proper start and stop mechanisms
     def stop_harvesting(self):
@@ -114,6 +106,10 @@ class Harvester:
         print(f"INFO: Stopped harvesting")
 
 
-harvester = Harvester()
-harvester.start_harvesting(limit=3)
+def main():
+    harvester = Harvester()
+    harvester.start_harvesting(limit=1)
 
+
+if __name__ == "__main__":
+    main()

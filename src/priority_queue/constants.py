@@ -4,7 +4,7 @@ __all__ = [
     "RABBIT_MQ_PATH",
     "DEFAULT_EXCHANGER_NAME",
     "DEFAULT_EXCHANGER_TYPE",
-    "DEFAULT_QUEUE_NAME",
+    "DEFAULT_QUEUE_NAME"
 ]
 
 RABBIT_MQ_IP: str = "localhost"

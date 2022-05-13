@@ -7,6 +7,8 @@ __all__ = [
     "VD18_METS_EXT",
     "WAIT_TIME_BETWEEN_SUBMITS",
     "POST_METHOD_TO_OPERANDI",
+    "POST_METHOD_ID_PARAMETER",
+    "POST_METHOD_URL_PARAMETER"
 ]
 
 # These will be relevant if the harvester is deployed to another host
@@ -25,5 +27,6 @@ WAIT_TIME_BETWEEN_SUBMITS: int = 10  # seconds
 
 # This is the default POST method to OPERANDI
 # NOTE: Make sure that the OPERANDI Server's IP and PORT are correctly configured here!!!
-POST_METHOD_TO_OPERANDI: str = "http://localhost:8000/vd18_ids/?vd18_id="
-
+POST_METHOD_TO_OPERANDI: str = "http://localhost:8000/vd18_ids/"
+POST_METHOD_ID_PARAMETER: str = "vd18_id="
+POST_METHOD_URL_PARAMETER: str = "vd18_url="

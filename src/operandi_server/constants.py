@@ -2,7 +2,7 @@ __all__ = [
     "SERVER_IP",
     "SERVER_PORT",
     "SERVER_PATH",
-    "PRESERVE_REQUESTS",
+    "PRESERVE_REQUESTS"
 ]
 
 SERVER_IP: str = "localhost"

@@ -60,7 +60,7 @@ class Producer:
                                      mandatory=True)
 
 
-def try_producer():
+def main():
     producer = Producer()
     message = "Hello World!"
 
@@ -72,4 +72,5 @@ def try_producer():
     del producer
 
 
-# try_producer()
+if __name__ == "__main__":
+    main()

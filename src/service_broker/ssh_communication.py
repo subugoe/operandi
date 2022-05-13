@@ -5,6 +5,7 @@ from constants import (
     HPC_IP,
     HPC_USERNAME,
     HPC_KEY_PATH,
+    HPC_HOME_PATH,
 )
 
 
@@ -15,7 +16,7 @@ from constants import (
 # TODO: Improve the code and implement appropriate error handling
 class SSHCommunication:
     def __init__(self):
-        print(f"SSH Communication Constructor:")
+        # print(f"SSH Communication Constructor:")
         self.__ssh = SSHLibrary()
         if not os.path.exists(HPC_KEY_PATH) or not os.path.isfile(HPC_KEY_PATH):
             print(f"{HPC_KEY_PATH} file does not exist or is not a readable file!")
@@ -25,8 +26,7 @@ class SSHCommunication:
                                        username=HPC_USERNAME,
                                        keyfile=HPC_KEY_PATH)
 
-    def __del__(self):
-        print(f"SSHCommunication Destructor")
+        self.home_path = HPC_HOME_PATH
 
     # Example code to create a connection with a username and password
     def __connect_login(self, host, username, password):

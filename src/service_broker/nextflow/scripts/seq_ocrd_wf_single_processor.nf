@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 // pipeline parameters
 params.workspace = "$projectDir/ocrd-workspace/"
 params.mets = "$projectDir/ocrd-workspace/mets.xml"
-params.reads = "$projectDir/ocrd-workspace/OCR-D-IMG"
+params.reads = "$projectDir/ocrd-workspace/DEFAULT"
 params.tempdir = "null"
 
 // nextflow run <my script> --tempdir TEMPDIR
@@ -45,17 +45,3 @@ workflow {
     ocrd_cis_ocropy_binarize(params.mets, input_dir_ch)
     
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

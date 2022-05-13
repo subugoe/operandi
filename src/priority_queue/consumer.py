@@ -92,11 +92,13 @@ def default_callback(ch, method, properties, body):
     print(f"INFO_Default: A message has been received: {body}")
 
 
-def try_consumer():
+def main():
     consumer = Consumer()
 
     # Start listening for messages
     consumer.set_callback(callback=default_callback)
     consumer.start_consuming()
 
-# try_consumer()
+
+if __name__ == "__main__":
+    main()
