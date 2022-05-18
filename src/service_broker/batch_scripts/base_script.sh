@@ -22,7 +22,7 @@ if [ ! -d "/scratch1/users/${USER}" ]; then
   mkdir "/scratch1/users/${USER}"
 fi
 
-# Create a temporary directory with a random name
+# Create a temporary directory under the USER with name METS ID
 mkdir "/scratch1/users/${USER}/$2"
 
 # Check if created
