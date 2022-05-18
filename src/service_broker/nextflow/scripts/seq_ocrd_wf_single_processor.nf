@@ -4,6 +4,7 @@ nextflow.enable.dsl=2
 // pipeline parameters
 params.workspace = "$projectDir/ocrd-workspace/"
 params.mets = "$projectDir/ocrd-workspace/mets.xml"
+params.file_group = "DEFAULT"
 params.reads = "$projectDir/ocrd-workspace/DEFAULT"
 params.tempdir = "null"
 
@@ -16,10 +17,27 @@ log.info """\
          ===========================================
          workpace      : ${params.workspace}
          mets          : ${params.mets}
-         reads         : ${params.reads}
+         file_group    : ${params.file_group}
          tempdir       : ${params.tempdir}
          """
          .stripIndent()
+
+process download_workspace {
+  publishDir params.reads
+  // limit instances to 1
+  // (force to run sequentially)
+  maxForks 1
+  echo true
+
+  input:
+    path mets_file
+    val file_group
+
+  script:
+  """
+  singularity exec --bind ${params.tempdir} docker://ocrd/all:maximum ocrd workspace find --file-grp ${file_group} --download
+  """
+}
 
 process ocrd_cis_ocropy_binarize {
   // limit instances to 1
@@ -41,6 +59,7 @@ process ocrd_cis_ocropy_binarize {
 workflow {
 
   main:
+    download_workspace(params.mets, params.file_group)
     input_dir_ch = Channel.fromPath(params.reads, type: 'dir')
     ocrd_cis_ocropy_binarize(params.mets, input_dir_ch)
     

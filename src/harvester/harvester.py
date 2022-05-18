@@ -56,7 +56,7 @@ class Harvester:
     # 1. Checks if the mets_id exits
     # 2. Submits the mets_id to the Operandi Server
     def __harvest_one_mets(self, mets_id):
-        # print(f"INFO: Harvesting... {mets_url}")
+        # print(f"INFO: Harvesting... {mets_id}")
         if not mets_id:
             return False
 
