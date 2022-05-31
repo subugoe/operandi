@@ -24,7 +24,7 @@ RUN apt-get -y install \
     sudo \
     git \
 
-RUN python3 -m pip install --upgrade pip
+RUN python -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
 
 CMD /bin/bash
