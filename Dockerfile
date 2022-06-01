@@ -1,10 +1,10 @@
+FROM python:latest
+
 MAINTAINER OPERANDI
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
 ENV LANG=C.UTF-8
-
-FROM python:latest
 
 WORKDIR /build-operandi
 COPY . .
