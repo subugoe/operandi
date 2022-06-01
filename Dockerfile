@@ -20,8 +20,8 @@ RUN apt-get -y install \
     time \
     curl \
     sudo \
-    git \
-
+    git
+    
 RUN python -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
 
