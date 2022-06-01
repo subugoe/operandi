@@ -4,12 +4,10 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
 ENV LANG=C.UTF-8
 
+FROM python:latest
+
 WORKDIR /build-operandi
-COPY src ./src
-COPY tests ./tests
-COPY README.md .
-COPY OPERANDI_arch.png .
-COPY requirements.txt .
+COPY . .
 
 RUN apt-get update
 RUN apt-get -y install \
