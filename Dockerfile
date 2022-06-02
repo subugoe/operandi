@@ -8,6 +8,7 @@ ENV LANG=C.UTF-8
 
 WORKDIR /build-operandi
 COPY . .
+RUN chmod -R 765 .
 
 RUN apt-get update
 RUN apt-get -y install \
@@ -24,6 +25,7 @@ RUN apt-get -y install \
     
 RUN python -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
+ 
 RUN ./src/priority_queue/repo_setup.deb.sh	
 RUN ./src/priority_queue/install.sh
 
