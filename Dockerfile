@@ -6,7 +6,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
 ENV LANG=C.UTF-8
 
-WORKDIR /build-operandi
+WORKDIR /OPERANDI_TestRepo
+
 COPY . .
 RUN chmod -R 765 .
 
@@ -26,9 +27,7 @@ RUN apt-get -y install \
 RUN python -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
 
-WORKDIR /build-operandi/OPERANDI_TestRepo/src/priority_qeueu
-
-RUN ./repo_setup.deb.sh	
-RUN ./install.sh
+RUN ./src/priority_queue/repo_setup.deb.sh	
+RUN ./src/priority_queue/install.sh
 
 CMD /bin/bash
