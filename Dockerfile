@@ -25,8 +25,10 @@ RUN apt-get -y install \
     
 RUN python -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
- 
-RUN ./src/priority_queue/repo_setup.deb.sh	
-RUN ./src/priority_queue/install.sh
+
+WORKDIR /build-operandi/src/priority_qeueu
+
+RUN repo_setup.deb.sh	
+RUN install.sh
 
 CMD /bin/bash
