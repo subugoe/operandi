@@ -24,7 +24,7 @@ RUN apt-get -y install \
     
 RUN python -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
-RUN ./OPERANDI_TestRepo/src/priority_queue/repo_setup.deb.sh	
-RUN ./OPERANDI_TestRepo/src/priority_queue/install.sh
+RUN ./src/priority_queue/repo_setup.deb.sh	
+RUN ./src/priority_queue/install.sh
 
 CMD /bin/bash
