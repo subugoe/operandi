@@ -1,6 +1,4 @@
-ARG BASE_IMAGE
-FROM $BASE_IMAGE
-ARG FIXUP=echo
+FROM ubuntu:18.04
 MAINTAINER OPERANDI
 ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
@@ -28,8 +26,8 @@ RUN apt-get -y install \
     && pip3 install --upgrade pip setuptools \
     && make install 
     
-# RUN python -m pip install --upgrade pip
-# RUN pip3 install -r requirements_test.txt
+RUN python -m pip install --upgrade pip
+RUN pip3 install -r requirements_test.txt
 
 RUN ./src/priority_queue/repo_setup.deb.sh	
 RUN ./src/priority_queue/install.sh
