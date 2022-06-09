@@ -26,11 +26,10 @@ RUN apt-get -y install \
     git \
     && make deps-ubuntu \
     && pip3 install --upgrade pip setuptools \
-    && make install \
-    && $FIXUP
+    && make install 
     
-RUN python -m pip install --upgrade pip
-RUN pip3 install -r requirements_test.txt
+# RUN python -m pip install --upgrade pip
+# RUN pip3 install -r requirements_test.txt
 
 RUN ./src/priority_queue/repo_setup.deb.sh	
 RUN ./src/priority_queue/install.sh
