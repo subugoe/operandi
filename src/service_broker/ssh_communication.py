@@ -1,5 +1,5 @@
 import os
-from SSHLibrary import SSHLibrary
+import SSHLibrary
 
 from constants import (
     HPC_IP,
@@ -16,11 +16,14 @@ from constants import (
 # TODO: Improve the code and implement appropriate error handling
 class SSHCommunication:
     def __init__(self):
-        # print(f"SSH Communication Constructor:")
-        self.__ssh = SSHLibrary()
         if not os.path.exists(HPC_KEY_PATH) or not os.path.isfile(HPC_KEY_PATH):
-            print(f"{HPC_KEY_PATH} file does not exist or is not a readable file!")
+            print(f"{HPC_KEY_PATH} key file does not exist or is not a readable file!")
             exit(1)
+
+        self._SCP = "ON"
+        self._SCP_PRESERVE_TIMES = "True"
+        self._FILE_MODE = "0755"
+        self.__ssh = SSHLibrary.SSHLibrary()
 
         self.__connect_with_public_key(host=HPC_IP,
                                        username=HPC_USERNAME,
@@ -39,7 +42,6 @@ class SSHCommunication:
         self.__login = self.__ssh.login_with_public_key(username=username,
                                                         keyfile=keyfile,
                                                         allow_agent=True)
-        # print(f"Login: {self.__login}")
 
     # TODO: Handle the output and return_code instead of just returning them
     # Execute blocking commands
@@ -57,44 +59,30 @@ class SSHCommunication:
     def execute_non_blocking(self, command="ls -la"):
         self.__ssh.start_command(command)
 
-    # TODO: Improve the wrappers and set the defaults appropriately
-    # The next few functions are wrapper functions with simplified parameters
-    # We can abstract some parameters as constants to simplify the signature
-
     def put_file(self, source, destination):
-        mode = "0744"
-        scp = "ON"
-        scp_preserve_times = True
         self.__ssh.put_file(source=source,
                             destination=destination,
-                            mode=mode,
-                            scp=scp,
-                            scp_preserve_times=scp_preserve_times)
+                            mode=self._FILE_MODE,
+                            scp=self._SCP,
+                            scp_preserve_times=self._SCP_PRESERVE_TIMES)
 
     def put_directory(self, source, destination, recursive=True):
-        mode = "0744"
-        scp = "ON"
-        scp_preserve_times = True
         self.__ssh.put_directory(source=source,
                                  destination=destination,
-                                 mode=mode,
+                                 mode=self._FILE_MODE,
                                  recursive=recursive,
-                                 scp=scp,
-                                 scp_preserve_times=scp_preserve_times)
+                                 scp=self._SCP,
+                                 scp_preserve_times=self._SCP_PRESERVE_TIMES)
 
     def get_file(self, source, destination):
-        scp = "ON"
-        scp_preserve_times = True
         self.__ssh.get_file(source=source,
                             destination=destination,
-                            scp=scp,
-                            scp_preserve_times=scp_preserve_times)
+                            scp=self._SCP,
+                            scp_preserve_times=self._SCP_PRESERVE_TIMES)
 
     def get_directory(self, source, destination, recursive=True):
-        scp = "ON"
-        scp_preserve_times = True
         self.__ssh.get_directory(source=source,
                                  destination=destination,
                                  recursive=recursive,
-                                 scp=scp,
-                                 scp_preserve_times=scp_preserve_times)
+                                 scp=self._SCP,
+                                 scp_preserve_times=self._SCP_PRESERVE_TIMES)

@@ -1,9 +1,10 @@
-FROM python:latest
-
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
+ARG FIXUP=echo
 MAINTAINER OPERANDI
-
 ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
+ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
 WORKDIR /OPERANDI_TestRepo
@@ -22,7 +23,11 @@ RUN apt-get -y install \
     time \
     curl \
     sudo \
-    git
+    git \
+    && make deps-ubuntu \
+    && pip3 install --upgrade pip setuptools \
+    && make install \
+    && $FIXUP
     
 RUN python -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
@@ -30,4 +35,5 @@ RUN pip3 install -r requirements.txt
 RUN ./src/priority_queue/repo_setup.deb.sh	
 RUN ./src/priority_queue/install.sh
 
+# No entry point for the docker image
 CMD /bin/bash
