@@ -9,7 +9,7 @@ PIP = pip
 PYTHONIOENCODING=utf8
 TESTDIR = tests
 
-BUILD_ORDER = priority_queue operandi_server service_broker harvester
+BUILD_ORDER = src/priority_queue src/operandi_server src/service_broker src/harvester
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 

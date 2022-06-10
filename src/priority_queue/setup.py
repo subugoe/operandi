@@ -13,7 +13,6 @@ setup(
     author_email='mehmed.mustafa@gwdg.de',
     url='https://github.com/MehmedGIT/OPERANDI_TestRepo',
     license='Apache License 2.0',
-    packages=['priority_queue'],
     install_requires=install_requires,
     package_data={'': ['*.json', '*.yml', '*.xml']},
     keywords=['OPERANDI']
