@@ -14,7 +14,6 @@ setup(
     url='https://github.com/MehmedGIT/OPERANDI_TestRepo',
     license='Apache License 2.0',
     install_requires=install_requires,
-    package_data={'': ['*.json', '*.yml', '*.xml']},
     entry_points={
         'console_scripts': [
             'operandi-server=operandi_server.cli:cli',
