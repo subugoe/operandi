@@ -62,6 +62,10 @@ jobs:
     - name: Docker login
       run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
       
+    - name: Get the current build date
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d--%M-%S')"
+      
     - name: Docker build
       run: docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }} --build-arg BASE_IMAGE=$BASE_IMAGE
       
