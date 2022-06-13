@@ -29,10 +29,12 @@ RUN python3 -m pip install --upgrade pip setuptools
 RUN python3 -m pip install -r requirements_test.txt
 RUN make install 
 
-# Install the RabbitMQ Server
+
 # This is not needed in docker, we will use RabbitMQ docker instance
-RUN ./src/priority_queue/repo_setup.deb.sh	
-RUN ./src/priority_queue/install.sh
+
+# Install the RabbitMQ Server
+# RUN ./src/priority_queue/repo_setup.deb.sh	
+# RUN ./src/priority_queue/install.sh
 
 # No entry point for the docker image
 CMD /bin/bash
