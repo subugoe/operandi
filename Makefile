@@ -13,36 +13,46 @@ BUILD_ORDER = src/priority_queue src/operandi_server src/service_broker src/harv
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
+	# TODO: "    test           Run all unit tests"
+	# TODO: "    docs           Build documentation"
+	# TODO: "    docs-clean     Clean docs"
+	# TODO: "    docs-coverage  Calculate docstring coverage"
 help:
 	@echo ""
-	@echo "  Targets"
+	@echo "Targets"
 	@echo ""
-	@echo "    deps-ubuntu    Dependencies for deployment in an ubuntu/debian linux"
-	@echo "    deps-test      Install test python deps via pip"
-	@echo "    install        (Re)install the modules"
-	@echo "    install-dev    Install with pip install -e"
-	@echo "    uninstall      Uninstall the modules"
-
-	# TODO: @echo "    test           Run all unit tests"
-	# TODO: @echo "    docs           Build documentation"
-	# TODO: @echo "    docs-clean     Clean docs"
-	# TODO: @echo "    docs-coverage  Calculate docstring coverage"
-	@echo "    docker         Build docker image"
+	@echo " deps-ubuntu             Dependencies for deployment in an ubuntu/debian linux"
+	@echo " deps-test               Install test python deps via pip"
+	@echo " install                 (Re)install the modules"
+	@echo " install-dev             Install with pip install -e"
+	@echo " uninstall               Uninstall the modules"
+	@echo " docker-all              Build everything in a single docker image"
+	@echo " docker-harvester        Build harvester docker image"
+	@echo " docker-server           Build server docker image"
+	@echo " docker-broker           Build service-broker docker image"
 	@echo ""
-	@echo "  Variables"
+	@echo "Variables"
 	@echo ""
-	@echo "    DOCKER_TAG         Docker tag. Default: '$(DOCKER_TAG)'."
-	@echo "    DOCKER_BASE_IMAGE  Docker base image. Default: '$(DOCKER_BASE_IMAGE)'."
-	@echo "    DOCKER_ARGS        Additional arguments to docker build. Default: '$(DOCKER_ARGS)'"
-	@echo "    PIP_INSTALL        pip install command. Default: $(PIP_INSTALL)"
+	@echo " DOCKER_ALL              Docker all tag: '${DOCKER_ALL}'"
+	@echo " DOCKER_HARVESTER        Docker harvester tag: '${DOCKER_HARVESTER}'"
+	@echo " DOCKER_SERVER           Docker server tag: '${DOCKER_SERVER}'"
+	@echo " DOCKER_BROKER           Docker broker tag: '${DOCKER_BROKER}'"
+	@echo " DOCKER_UBUNTU_IMAGE     Docker ubuntu image: '${DOCKER_UBUNTU_IMAGE}'"
+	@echo " DOCKER_PYTHON_IMAGE     Docker python image: '${DOCKER_PYTHON_IMAGE}'"
+	@echo " DOCKER_ARGS             Additional arguments to docker build: '$(DOCKER_ARGS)'"
+	@echo " PIP_INSTALL             pip install command. Default: $(PIP_INSTALL)"
 
 # END-EVAL
 
-# Docker tag. Default: '$(DOCKER_TAG)'.
-DOCKER_TAG = operandi-test-1.0
+# Docker tags
+DOCKER_ALL = operandi-all-in-one
+DOCKER_HARVESTER = operandi-harvester
+DOCKER_SERVER = operandi-server
+DOCKER_BROKER = operandi-service-broker
 
-# Docker base image. Default: '$(DOCKER_BASE_IMAGE)'.
-DOCKER_BASE_IMAGE = ubuntu:18.04
+# Docker images
+DOCKER_UBUNTU_IMAGE = ubuntu:18.04
+DOCKER_PYTHON_IMAGE = python:3.9
 
 # Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
 DOCKER_ARGS = 
@@ -96,8 +106,18 @@ pyclean:
 # Docker
 #
 
-.PHONY: docker
+.PHONY: docker-all docker-harvester docker-server docker-broker
 
-# Build docker image
-docker:
-	docker build -t $(DOCKER_TAG) --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+# Build docker image all-in-one by default
+docker-all:
+	docker build -t $(DOCKER_ALL) --build-arg BASE_IMAGE=$(DOCKER_UBUNTU_IMAGE) $(DOCKER_ARGS) .
+
+# For separate docker builds
+docker-harvester: 
+	docker build -t $(DOCKER_HARVESTER) --build-arg BASE_IMAGE=$(DOCKER_UBUNTU_IMAGE) $(DOCKER_ARGS) ./src/harvester/
+
+docker-server: 
+	docker build -t $(DOCKER_SERVER) --build-arg BASE_IMAGE=$(DOCKER_UBUNTU_IMAGE) $(DOCKER_ARGS) ./src/operandi_server/
+
+docker-broker: 
+	docker build -t $(DOCKER_BROKER) --build-arg BASE_IMAGE=$(DOCKER_UBUNTU_IMAGE) $(DOCKER_ARGS) ./src/service_broker/
