@@ -60,7 +60,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Docker login
-      run: echo $DOCKER_PASSWORD | docker login --u $DOCKER_USER --password-stdin
+      run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
       
     - name: Docker build
       run: docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:latest --build-arg BASE_IMAGE=$BASE_IMAGE
