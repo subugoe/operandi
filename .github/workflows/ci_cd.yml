@@ -47,7 +47,7 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-  publish: 
+  publish_all: 
     needs: build
     runs-on: ubuntu-latest
 
@@ -57,18 +57,17 @@ jobs:
       REPO_NAME: operandi-all-in-one
       BASE_IMAGE: ubuntu:18.04
 
+
+
     steps:
     - uses: actions/checkout@v2
     - name: Docker login
-      run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-      
-    - name: Get the current build date
-      id: date
-      run: echo "::set-output name=date::$(date +'%Y-%m-%d--%M-%S')"
+      # We use the --pasword-stdin over --password for security reasons
+      run: echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERD --password-stdin
       
     - name: Docker build
-      run: docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }} --build-arg BASE_IMAGE=$BASE_IMAGE
+      run: docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:latest --build-arg BASE_IMAGE=$BASE_IMAGE
       
     - name: Docker push
-      run: docker push $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }}     
+      run: docker push $DOCKER_USER/$REPO_NAME:latest
 
