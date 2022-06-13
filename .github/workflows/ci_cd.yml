@@ -57,13 +57,11 @@ jobs:
       REPO_NAME: operandi-all-in-one
       BASE_IMAGE: ubuntu:18.04
 
-
-
     steps:
     - uses: actions/checkout@v2
     - name: Docker login
       # We use the --pasword-stdin over --password for security reasons
-      run: echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERD --password-stdin
+      run: echo $DOCKER_PASSWORD | docker login --username $DOCKER_USER --password-stdin
       
     - name: Docker build
       run: docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:latest --build-arg BASE_IMAGE=$BASE_IMAGE
