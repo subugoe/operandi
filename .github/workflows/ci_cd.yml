@@ -63,7 +63,7 @@ jobs:
       run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
       
     - name: Docker build
-      run: docker build --tag $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }} --build-arg BASE_IMAGE=$BASE_IMAGE
+      run: docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }} --build-arg BASE_IMAGE=$BASE_IMAGE
       
     - name: Docker push
       run: docker push $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }}     
