@@ -5,9 +5,9 @@ from typing import Optional
 import uvicorn
 from fastapi import FastAPI
 
-from src.priority_queue.producer import Producer
+from src.priority_queue.priority_queue.producer import Producer
 
-from constants import (
+from .constants import (
     SERVER_IP,
     SERVER_PORT,
     SERVER_PATH,
@@ -109,4 +109,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

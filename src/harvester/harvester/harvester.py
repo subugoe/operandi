@@ -2,7 +2,7 @@ import os
 import time
 import requests
 
-from constants import (
+from .constants import (
     VD18_IDS_FILE,
     VD18_URL,
     VD18_METS_EXT,

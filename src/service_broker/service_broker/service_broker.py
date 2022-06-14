@@ -4,10 +4,10 @@ import shutil
 import requests
 from clint.textui import progress
 
-from src.priority_queue.consumer import Consumer
-from src.service_broker.ssh_communication import SSHCommunication
+from src.priority_queue.priority_queue.consumer import Consumer
+from src.service_broker.service_broker.ssh_communication import SSHCommunication
 
-from constants import (
+from .constants import (
     SERVICE_BROKER_IP as IP,
     SERVICE_BROKER_PORT as PORT,
 )
@@ -21,8 +21,11 @@ class ServiceBroker:
         # print(f"ServiceBroker Constructor: {host}:{port}")
         self.host = host
         self.port = port
+        print(f"Service broker host:{host} port:{port}")
         self.consumer = Consumer()
+        print("Consumer initiated")
         self.ssh = SSHCommunication()
+        print("SSH connection successful")
 
     def download_mets_file(self, path_to_download, mets_url):
         filename = f"{path_to_download}/mets.xml"
