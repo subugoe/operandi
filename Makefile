@@ -10,6 +10,7 @@ PYTHONIOENCODING=utf8
 TESTDIR = tests
 
 BUILD_ORDER = src/priority_queue src/operandi_server src/service_broker src/harvester
+UNINSTALL_ORDER = priority_queue operandi_server service_broker harvester
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
@@ -81,7 +82,7 @@ install-dev: uninstall
 
 # Uninstall the tool
 uninstall:
-	for mod in $(BUILD_ORDER);do pip uninstall -y $$mod;done
+	for mod in $(UNINSTALL_ORDER);do pip uninstall -y $$mod;done
 
 #
 # Tests

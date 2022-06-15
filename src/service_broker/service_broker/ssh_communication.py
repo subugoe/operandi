@@ -1,7 +1,7 @@
 import os
 import SSHLibrary
 
-from constants import (
+from .constants import (
     HPC_IP,
     HPC_USERNAME,
     HPC_KEY_PATH,

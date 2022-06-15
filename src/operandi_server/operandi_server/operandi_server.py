@@ -5,7 +5,7 @@ from typing import Optional
 import uvicorn
 from fastapi import FastAPI
 
-from src.priority_queue.priority_queue.producer import Producer
+from priority_queue.producer import Producer
 
 from .constants import (
     SERVER_IP,

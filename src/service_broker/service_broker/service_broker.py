@@ -4,8 +4,8 @@ import shutil
 import requests
 from clint.textui import progress
 
-from src.priority_queue.priority_queue.consumer import Consumer
-from src.service_broker.service_broker.ssh_communication import SSHCommunication
+from priority_queue.consumer import Consumer
+from .ssh_communication import SSHCommunication
 
 from .constants import (
     SERVICE_BROKER_IP as IP,

@@ -1,3 +1,5 @@
+from pkg_resources import resource_filename
+
 __all__ = [
     "HARVESTER_IP",
     "HARVESTER_PORT",
@@ -17,7 +19,7 @@ HARVESTER_PORT: int = 27777
 HARVESTER_PATH: str = f"http://{HARVESTER_IP}:{HARVESTER_PORT}"
 
 # These are the VD18 constants
-VD18_IDS_FILE: str = "vd18IDs.txt"
+VD18_IDS_FILE: str = resource_filename(__name__, "vd18IDs.txt")
 VD18_URL: str = "https://gdz.sub.uni-goettingen.de/mets/"
 VD18_METS_EXT: str = ".mets.xml"
 

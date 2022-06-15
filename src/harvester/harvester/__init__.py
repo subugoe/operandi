@@ -1,7 +1,8 @@
 __all__ = [
-    'har_cli',
+    'cli',
     'Harvester',
 ]
 
-from cli import har_cli
+from .cli import cli
 from .harvester import Harvester
+
