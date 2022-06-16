@@ -59,9 +59,9 @@ class OperandiServer:
     def shutdown_event():
       if not self.preserve_requests:
 	      return
-      if len(vd18_id_dict):
+      if len(self.vd18_id_dict):
         with open("vd18_ids.txt", mode="w") as backup_doc:
-          for k in vd18_id_dict:
+          for k in self.vd18_id_dict:
             backup_doc.write(f"{k}, {self.vd18_id_dict[k]}\n")
 
 
