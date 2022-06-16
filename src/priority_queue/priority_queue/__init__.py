@@ -1,6 +1,6 @@
 __all__ = [
-    'Producer',
-    'Consumer',
+  "Producer",
+  "Consumer",
 ]
 
 from .producer import Producer

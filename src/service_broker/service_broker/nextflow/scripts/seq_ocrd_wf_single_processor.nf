@@ -13,14 +13,14 @@ params.tempdir = "null"
 
 // log pipeline parameters to the console
 log.info """\
-         O P E R A N D I - H P C - T E S T   P I P E L I N E
-         ===========================================
-         workpace      : ${params.workspace}
-         mets          : ${params.mets}
-         file_group    : ${params.file_group}
-         tempdir       : ${params.tempdir}
-         """
-         .stripIndent()
+  O P E R A N D I - H P C - T E S T   P I P E L I N E
+  ===========================================
+  workpace      : ${params.workspace}
+  mets          : ${params.mets}
+  file_group    : ${params.file_group}
+  tempdir       : ${params.tempdir}
+  """
+  .stripIndent()
 
 process download_workspace {
   publishDir params.reads

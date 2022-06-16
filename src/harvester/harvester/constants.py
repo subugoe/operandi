@@ -1,22 +1,22 @@
 from pkg_resources import resource_filename
 
 __all__ = [
-    "HARVESTER_IP",
-    "HARVESTER_PORT",
-    "HARVESTER_PATH",
-    "VD18_IDS_FILE",
-    "VD18_URL",
-    "VD18_METS_EXT",
-    "WAIT_TIME_BETWEEN_SUBMITS",
-    "POST_METHOD_TO_OPERANDI",
-    "POST_METHOD_ID_PARAMETER",
-    "POST_METHOD_URL_PARAMETER"
+  "HARVESTER_HOST",
+  "HARVESTER_PORT",
+  "HARVESTER_PATH",
+  "VD18_IDS_FILE",
+  "VD18_URL",
+  "VD18_METS_EXT",
+  "WAIT_TIME_BETWEEN_SUBMITS",
+  "POST_METHOD_TO_OPERANDI",
+  "POST_METHOD_ID_PARAMETER",
+  "POST_METHOD_URL_PARAMETER"
 ]
 
 # These will be relevant if the harvester is deployed to another host
-HARVESTER_IP: str = "localhost"
+HARVESTER_HOST: str = "localhost"
 HARVESTER_PORT: int = 27777
-HARVESTER_PATH: str = f"http://{HARVESTER_IP}:{HARVESTER_PORT}"
+HARVESTER_PATH: str = f"http://{HARVESTER_HOST}:{HARVESTER_PORT}"
 
 # These are the VD18 constants
 VD18_IDS_FILE: str = resource_filename(__name__, "vd18IDs.txt")

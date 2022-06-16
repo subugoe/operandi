@@ -1,5 +1,5 @@
 __all__ = [
-    'cli',
+  "cli",
 ]
 
 from .cli import cli

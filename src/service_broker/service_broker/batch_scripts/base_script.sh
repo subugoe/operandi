@@ -35,9 +35,9 @@ fi
 # copies the Nextflow script - seq_ocrd_wf_single_processor.nf
 
 # "$2" is the second parameter to this script -> the workspace name
-cp -rf /home/users/"${USER}"/"$2"/bin "/scratch1/users/${USER}/$2"
+cp -rf "/home/users/${USER}/$2/bin" "/scratch1/users/${USER}/$2"
 
-cd /scratch1/users/${USER}/$2/bin || exit
+cd "/scratch1/users/${USER}/$2/bin" || exit
 
 # TODO: Here should the images from the METS file downloaded
 # With the help of the "ocrd workspace" functionality

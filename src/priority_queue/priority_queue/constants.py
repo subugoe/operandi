@@ -1,18 +1,18 @@
 __all__ = [
-    "RABBIT_MQ_IP",
-    "RABBIT_MQ_PORT",
-    "RABBIT_MQ_PATH",
-    "DEFAULT_EXCHANGER_NAME",
-    "DEFAULT_EXCHANGER_TYPE",
-    "DEFAULT_QUEUE_NAME"
+  "RABBIT_MQ_HOST",
+  "RABBIT_MQ_PORT",
+  "RABBIT_MQ_PATH",
+  "DEFAULT_EXCHANGER_NAME",
+  "DEFAULT_EXCHANGER_TYPE",
+  "DEFAULT_QUEUE_NAME"
 ]
 
-RABBIT_MQ_IP: str = "localhost"
+RABBIT_MQ_HOST: str = "localhost"
 # This is the default port on which the RabbitMQ instance
 # is running after installation, do not change it unless you know how to configure it properly.
 # Pika Python client must use the same port to be able to communicate with the RabbitMQ
 RABBIT_MQ_PORT: int = 5672
-RABBIT_MQ_PATH: str = f"http://{RABBIT_MQ_IP}:{RABBIT_MQ_PORT}"
+RABBIT_MQ_PATH: str = f"http://{RABBIT_MQ_HOST}:{RABBIT_MQ_PORT}"
 
 DEFAULT_EXCHANGER_NAME: str = "operandi_exchanger"
 DEFAULT_EXCHANGER_TYPE: str = "direct"

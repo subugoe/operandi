@@ -14,10 +14,11 @@ UNINSTALL_ORDER = priority_queue operandi_server service_broker harvester
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
-	# TODO: "    test           Run all unit tests"
-	# TODO: "    docs           Build documentation"
-	# TODO: "    docs-clean     Clean docs"
-	# TODO: "    docs-coverage  Calculate docstring coverage"
+  # TODO: "    test           Run all unit tests"
+  # TODO: "    docs           Build documentation"
+  # TODO: "    docs-clean     Clean docs"
+  # TODO: "    docs-coverage  Calculate docstring coverage"
+  
 help:
 	@echo ""
 	@echo "Targets"
