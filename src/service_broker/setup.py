@@ -14,8 +14,7 @@ setup(
   url='https://github.com/MehmedGIT/OPERANDI_TestRepo',
   license='Apache License 2.0',
   packages=['service_broker', 
-            'service_broker.cli',
-            'ssh_communication'
+            'service_broker.cli'
            ],
   install_requires=install_requires,
   entry_points={
