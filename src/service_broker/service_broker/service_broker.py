@@ -132,8 +132,8 @@ class ServiceBroker:
         print(f"Workspace Name: {mets_id}")
         consumed_counter += 1
         self.prepare_workspace(mets_url=mets_url, workspace_name=mets_id)
-        # print(f"Submitting files is commented out!")
-        self.submit_files_and_trigger(workspace_name=mets_id)
+        print(f"Submitting files is commented out!")
+        # self.submit_files_and_trigger(workspace_name=mets_id)
 
       # Consume only till the limit is reached
       if consumed_counter == limit:

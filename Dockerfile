@@ -11,6 +11,8 @@ WORKDIR /OPERANDI_TestRepo
 COPY . .
 RUN chmod -R 765 .
 
+RUN export PYTHONPATH="$PYTHONPATH:/OPERANDI_TestRepo/src"
+
 RUN apt-get update
 RUN apt-get -y install \
     ca-certificates \

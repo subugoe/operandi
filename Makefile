@@ -113,6 +113,7 @@ pyclean:
 # Build docker image all-in-one by default
 docker-all:
 	docker build -t $(DOCKER_ALL) --build-arg BASE_IMAGE=$(DOCKER_UBUNTU_IMAGE) $(DOCKER_ARGS) .
+	# docker build -t operandi-all-in-one --build-arg BASE_IMAGE=ubuntu:18.04 $(DOCKER_ARGS) .
 
 # For separate docker builds
 docker-harvester: 

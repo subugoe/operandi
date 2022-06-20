@@ -13,7 +13,9 @@ setup(
   author_email='mehmed.mustafa@gwdg.de',
   url='https://github.com/MehmedGIT/OPERANDI_TestRepo',
   license='Apache License 2.0',
-  packages=['operandi_server', 'operandi_server.cli'],
+  packages=['operandi_server', 
+            'operandi_server.cli'
+           ],
   install_requires=install_requires,
   entry_points={
     'console_scripts': [
