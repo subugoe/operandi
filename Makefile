@@ -5,7 +5,7 @@ export
 
 SHELL = /bin/bash
 PYTHON = python
-PIP = pip
+PIP3 = pip3
 PYTHONIOENCODING=utf8
 TESTDIR = tests
 
@@ -60,7 +60,7 @@ DOCKER_PYTHON_IMAGE = python:3.9
 DOCKER_ARGS = 
 
 # pip install command. Default: $(PIP_INSTALL)
-PIP_INSTALL = pip install
+PIP3_INSTALL = pip3 install
 
 
 # Dependencies for deployment in an ubuntu/debian linux
@@ -69,13 +69,13 @@ deps-ubuntu:
 
 # Install test python deps via pip
 deps-test:
-	$(PIP) install -U pip
-	$(PIP) install -r requirements_test.txt
+	$(PIP3) install -U pip
+	$(PIP3) install -r requirements_test.txt
 
 # (Re)install the tool
 install:
-	$(PIP) install -U pip wheel
-	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP_INSTALL) .);done
+	$(PIP3) install -U pip wheel
+	for mod in $(BUILD_ORDER);do (cd $$mod ; $(PIP3_INSTALL) .);done
 
 # Install with pip install -e
 install-dev: uninstall
@@ -83,7 +83,7 @@ install-dev: uninstall
 
 # Uninstall the tool
 uninstall:
-	for mod in $(UNINSTALL_ORDER);do pip uninstall -y $$mod;done
+	for mod in $(UNINSTALL_ORDER);do $(PIP3) uninstall -y $$mod;done
 
 #
 # Tests
