@@ -5,11 +5,11 @@ CI/CD is working properly.
 ## 1. Introduction
 TODO: To be added
 
-This is still a draft Readme file and under construction.
+This is still a draft Readme file and is under construction.
 
 ## 2. Accessing the development VM of OPERANDI
 This step is only for internal developers of OPERANDI.
-For installation from source continue with the next step.
+For installation from the source continue with the next step.
 
 1. Create an SSH key pair (if not already done)
 ```sh
@@ -18,7 +18,7 @@ ssh-keygen -t rsa -b 2048 -f keyPath
 
 2. Write me an e-mail with your public key attached (if not already done)
 
-I will add your public key and provide you an access to the VM.
+I will add your public key and provide you access to the VM.
 
 3. Connect to our development VM (cloud@141.5.105.17) via ssh:
 ```sh
@@ -26,6 +26,7 @@ ssh cloud@141.5.105.17 -i keyPath
 ```
 
 All installations and configurations are already done inside the VM.
+
 You can proceed to step 4: `Executing one full cycle of OPERANDI`
 
 ## 3. Installation of OPERANDI from source
@@ -42,20 +43,25 @@ source $HOME/venv-operandi/bin/activate
 ```
 
 #### 3. Install the RabbitMQ Server (priority queue)
+
 3.1 First setup the repository with a single liner script:
 ```sh
 sudo ./src/priority_queue/repo_setup.deb.sh
 ```
 
 3.2 Install RabbitMQ:
+
 Easy install:
+
 ```sh
 sudo ./src/priority_queue/install.sh
 ```
-This script should install the RabbitMQ Server properly in most of the cases.
+
+This script should install the RabbitMQ Server properly in most cases.
 `NOTE`: Always check the content of scripts before execution! 
 
 Advanced install:
+
 It is highly recommended to perform the steps of the `install.sh` script manually step by step.
 
 #### 4. Install the modules of OPERANDI.
@@ -71,6 +77,7 @@ After a successful installation three executables are produced:
 ## 4. Executing one full cycle of OPERANDI
 
 1. Getting credentials (if not already done)
+
 1.1 For an account activation: Follow the instructions provided [here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:account_activation)
 
 1.2 Creating a key pair for the HPC environment: Follow the instructions provided [here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:connect_with_ssh)
@@ -88,10 +95,12 @@ make install-dev
 ```
 
 3. Enable and start the RabbitMQ Server (if not already running)
+
 Check if RabbitMQ is running:
 ```sh
 sudo lsof -i -P -n | grep LISTEN
 ```
+
 RabbitMQ should be running on ports 5672 and 25672. Example output of the previous command:
 ```sh
 beam.smp    926        rabbitmq   18u  IPv4  42412      0t0  TCP *:25672 (LISTEN)
@@ -110,6 +119,7 @@ source $HOME/venv-operandi/bin/activate
 ```
 
 5. In the first terminal start the OPERANDI Server
+
 ```sh
 operandi-server server start
 ```
@@ -123,11 +133,12 @@ INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 ```
 
 6. In the second terminal start the Service Broker
+
 ```sh
 operandi-broker broker start --limit 1
 ```
 
-For the demo run we want to take only one request from the priority queue, thus, we limit the amount of requests to be processed with the `--limit` option.
+For the demo run, we want to take only one request from the priority queue, thus, we limit the number of requests to be processed with the `--limit` option.
 
 Example Service Broker output:
 ```sh
@@ -145,7 +156,7 @@ WARNING for internal developers of OPERANDI: Currently, the development VM has n
 operandi-harvester harvest start --limit 1
 ```
 
-For the demo run we want to post only one request to the OPERANDI Server, thus, we limit the amount of requests to be posted with the `--limit` option.
+For the demo run, we want to post only one request to the OPERANDI Server, thus, we limit the number of requests to be posted with the `--limit` option.
 
 Example Harvester output:
 ```sh
@@ -157,6 +168,7 @@ INFO: Posted successfully... PPN767935306
 ```
 
 8. Results
+
 Produced extra output on the OPERANDI Server Terminal:
 ```sh
 INFO:     127.0.0.1:56564 - "POST /vd18_ids/?vd18_id=PPN767935306&vd18_url=https://gdz.sub.uni-goettingen.de/mets/PPN767935306.mets.xml HTTP/1.1" 200 OK
@@ -170,10 +182,11 @@ Workspace Name: PPN767935306
 Submitting files is commented out!
 ```
 
-Currently, the submission of files to the HPC environemnt is deactivated.
+Currently, the submission of files to the HPC environment is deactivated.
 The line that does that is commented out. If you still want to test that have a look inside the `service_broker.py`.
 
-## 5. Solutions to commonly occuring problems
+## 5. Solutions to commonly occurring problems
+
 This section provides solutions for potential problems that may arise.
 
 TODO: To be extended as errors occur
