@@ -32,7 +32,3 @@ def start_server(host, port):
               host=operandi_server.host, 
               port=operandi_server.port)
 
-@server_cli.command('stop')
-def stop_server():
-  print(f"Stopped server.")
-

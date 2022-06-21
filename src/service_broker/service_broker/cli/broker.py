@@ -21,7 +21,10 @@ def start_broker(limit):
   print(f"Service broker started with limit:{limit}")
   service_broker.start_consuming(limit)
 
+# TODO: Not functional yet.
+"""
 @broker_cli.command('stop')
 def stop_server():
   print(f"Stopped broker.")
+"""
 

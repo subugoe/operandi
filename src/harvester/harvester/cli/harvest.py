@@ -22,7 +22,10 @@ def start_harvesting(limit):
   print(f"Harvesting started with limit:{limit}")
   harvester.start_harvesting(limit)
 
-
+# TODO: Not functional yet
+"""
 @harvester_cli.command('stop')
 def stop_harvesting():
   print(f"Stopped harvesting.")
+"""
+
