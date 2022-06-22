@@ -20,9 +20,9 @@ ssh-keygen -t rsa -b 2048 -f keyPath
 
 I will add your public key and provide you access to the VM.
 
-3. Connect to our development VM (cloud@141.5.105.17) via ssh:
+3. Connect to our development VM (cloud@141.5.98.252) via ssh:
 ```sh
-ssh cloud@141.5.105.17 -i keyPath
+ssh cloud@141.5.98.252 -i keyPath
 ```
 
 All installations and configurations are already done inside the VM.
@@ -36,13 +36,20 @@ git clone https://github.com/MehmedGIT/OPERANDI_TestRepo
 cd OPERANDI_TestRepo
 ```
 
-#### 2. Create a virtual Python environment and activate it.
+#### 2. Install dependencies
+```sh
+sudo apt-get update
+sudo apt-get -y install make
+make deps-ubuntu
+```
+
+#### 3. Create a virtual Python environment and activate it.
 ```sh
 python3 -m venv $HOME/venv-operandi
 source $HOME/venv-operandi/bin/activate
 ```
 
-#### 3. Install the RabbitMQ Server (priority queue)
+#### 4. Install the RabbitMQ Server (priority queue)
 
 3.1 First setup the repository with a single liner script:
 ```sh
@@ -57,14 +64,14 @@ Easy install:
 sudo ./src/priority_queue/install.sh
 ```
 
-This script should install the RabbitMQ Server properly in most cases.
+This script should install the RabbitMQ Server properly in most cases (on ubuntu/debian linux OS).
 `NOTE`: Always check the content of scripts before execution! 
 
 Advanced install:
 
 It is highly recommended to perform the steps of the `install.sh` script manually step by step.
 
-#### 4. Install the modules of OPERANDI.
+#### 5. Install the modules of OPERANDI.
 ```sh
 make install
 ```
@@ -149,8 +156,6 @@ Service broker started with limit:1
 INFO: Waiting for messages. To exit press CTRL+C.
 ```
 
-WARNING for internal developers of OPERANDI: Currently, the development VM has no access to the HPC environment and the Service Broker cannot perform SSH connection and timeouts. Access has already been requested. Soon this problem will be solved.
-
 7. In the third terminal start the Harvester
 ```sh
 operandi-harvester harvest start --limit 1
@@ -183,6 +188,7 @@ Submitting files is commented out!
 ```
 
 Currently, the submission of files to the HPC environment is deactivated.
+Due to internal problems the HOME file system of the HPC environment does not function properly.
 The line that does that is commented out. If you still want to test that have a look inside the `service_broker.py`.
 
 ## 5. Solutions to commonly occurring problems

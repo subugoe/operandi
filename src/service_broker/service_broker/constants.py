@@ -19,7 +19,7 @@ SERVICE_BROKER_PATH: str = f"http://{SERVICE_BROKER_HOST}:{SERVICE_BROKER_PORT}"
 # HPC related constants
 HPC_HOST: str = "gwdu101.gwdg.de"
 HPC_USERNAME: str = "mmustaf"
-HPC_KEY_PATH: str = "/home/mm/.ssh/gwdg-cluster.pub"
+HPC_KEY_PATH: str = "/home/cloud/.ssh/gwdg-cluster.pub"
 HPC_HOME_PATH: str = f"/home/users/{HPC_USERNAME}"
 
 # Secure copy protocol related constants

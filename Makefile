@@ -1,8 +1,5 @@
 export
 
-# This Makefile is based on the Makefile of OCR-D
-# https://github.com/OCR-D/core/blob/master/Makefile
-
 SHELL = /bin/bash
 PYTHON = python
 PIP3 = pip3
