@@ -1,8 +1,8 @@
 __all__ = [
-  "SERVER_HOST",
-  "SERVER_PORT",
-  "SERVER_PATH",
-  "PRESERVE_REQUESTS"
+    "SERVER_HOST",
+    "SERVER_PORT",
+    "SERVER_PATH",
+    "PRESERVE_REQUESTS"
 ]
 
 SERVER_HOST: str = "localhost"
