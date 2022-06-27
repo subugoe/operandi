@@ -16,6 +16,7 @@ setup(
   packages=['service_broker', 
             'service_broker.cli'
            ],
+  package_data={'': ['batch_scripts/*.sh', 'nextflow/configs/*.config', 'nextflow/scripts/*.nf']},
   install_requires=install_requires,
   entry_points={
     'console_scripts': [

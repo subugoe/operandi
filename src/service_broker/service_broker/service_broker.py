@@ -29,7 +29,8 @@ class ServiceBroker:
         self.ssh = SSHCommunication()
         print("SSH connection successful")
 
-    def download_mets_file(self, path_to_download, mets_url):
+    @staticmethod
+    def download_mets_file(path_to_download, mets_url):
         filename = f"{path_to_download}/mets.xml"
 
         try:
@@ -48,7 +49,7 @@ class ServiceBroker:
                 return True
 
         except requests.exceptions.RequestException as e:
-            # print(f"f:download_mets_file, Exception: {e}")
+            print(f"f:download_mets_file, Exception: {e}")
             return False
 
     ###########################################################
@@ -99,12 +100,13 @@ class ServiceBroker:
             os.makedirs(ocrd_workspace_path)
             self.download_mets_file(ocrd_workspace_path, mets_url)
 
-    def submit_files_and_trigger(self, workspace_name):
+    def submit_files_of_workspace(self, workspace_name):
         source_path = f"{self._module_path}/nextflow_workspaces/{workspace_name}"
         self.ssh.put_directory(source=source_path,
                                destination=self.ssh.home_path,
                                recursive=True)
 
+    def trigger_execution_for_workspace(self, workspace_name):
         # This is the batch script submitted to the SLURM scheduler in HPC
         base_script_path = f"{self.ssh.home_path}/{workspace_name}/base_script.sh"
 
@@ -133,8 +135,9 @@ class ServiceBroker:
                 print(f"Workspace Name: {mets_id}")
                 consumed_counter += 1
                 self.prepare_workspace(mets_url=mets_url, workspace_name=mets_id)
-                print(f"Submitting files is commented out!")
-                # self.submit_files_and_trigger(workspace_name=mets_id)
+                # print(f"Submitting files and triggering cluster execution is commented out!")
+                self.submit_files_of_workspace(workspace_name=mets_id)
+                self.trigger_execution_for_workspace(workspace_name=mets_id)
 
             # Consume only till the limit is reached
             if consumed_counter == limit:
