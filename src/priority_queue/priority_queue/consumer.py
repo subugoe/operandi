@@ -5,7 +5,8 @@ from .constants import (
     RABBIT_MQ_PORT as PORT,
     DEFAULT_EXCHANGER_NAME as EXCHANGER,
     DEFAULT_EXCHANGER_TYPE as EX_TYPE,
-    DEFAULT_QUEUE_NAME as Q_NAME,
+    DEFAULT_QUEUE_SERVER_TO_BROKER as QUEUE_S_TO_B,
+    DEFAULT_QUEUE_BROKER_TO_SERVER as QUEUE_B_TO_S,
 )
 
 
@@ -15,18 +16,22 @@ class Consumer:
     """
 
     def __init__(self, host=HOST, port=PORT, exchanger=EXCHANGER,
-                 exchanger_type=EX_TYPE, queue=Q_NAME):
+                 exchanger_type=EX_TYPE):
         # Establish a connection with the RabbitMQ server.
         self.__create_connection(host, port)
         self.__create_channel(exchanger, exchanger_type)
 
-        # Create a queue
-        self.__create_queue(queue)
+        # Create the queues (same for both Producer and Consumer)
+        self.__create_queue(QUEUE_S_TO_B)
+        self.__create_queue(QUEUE_B_TO_S)
 
         # Bind the queue to the exchange agent, without a routing/binding key
         # May be not needed without a routing/binding key
         self.__channel.queue_bind(exchange=EXCHANGER,
-                                  queue=Q_NAME)
+                                  queue=QUEUE_S_TO_B)
+
+        self.__channel.queue_bind(exchange=EXCHANGER,
+                                  queue=QUEUE_B_TO_S)
 
     def __del__(self):
         if self.__connection.is_open:
@@ -67,11 +72,31 @@ class Consumer:
             return None
 
     def set_callback(self, callback):
-        self.__basic_consume(queue=Q_NAME, callback=callback, auto_ack=True)
+        self.__basic_consume(queue=QUEUE_S_TO_B, callback=callback, auto_ack=True)
 
     # Wrapper for __single_consume
     def single_consume(self):
-        return self.__single_consume(Q_NAME)
+        return self.__single_consume(QUEUE_S_TO_B)
+
+    # TODO: Create a new class named MessageExchanger
+    # This is needed, since we already have two-way communication
+    # The consumer (service-broker) also publishes messages back to the producer (operandi-server)
+    def reply_job_id(self, cluster_job_id, durable=False):
+        if durable:
+            delivery_mode = pika.spec.PERSISTENT_DELIVERY_MODE
+        else:
+            delivery_mode = pika.spec.TRANSIENT_DELIVERY_MODE
+
+        message_properties = pika.BasicProperties(
+            delivery_mode=delivery_mode
+        )
+
+        # Publish the message body through the exchanger agent
+        self.__channel.basic_publish(exchange=EXCHANGER,
+                                     routing_key=QUEUE_B_TO_S,
+                                     body=cluster_job_id,
+                                     properties=message_properties,
+                                     mandatory=True)
 
     # TODO: implement proper start/stop methods
     def start_consuming(self):

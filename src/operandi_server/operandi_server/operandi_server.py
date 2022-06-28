@@ -109,6 +109,17 @@ class OperandiServer:
             publish_message = f"{mets_url},{mets_id}"
             # Send the posted mets_url to the priority queue
             self.producer.basic_publish(publish_message.encode('utf8'))
-            message = f"URL posted:{mets_url}"
+
+            job_id = -1
+            # Loops till we receive the job ID
+            # TODO: Replace this properly so a thread handles that
+            while True:
+                received_bytes = self.producer.read_job_id()
+                if received_bytes is not None:
+                    job_id = received_bytes.decode('utf8')
+                    # print(f"JobID:{job_id}")
+                    break
+
+            message = f"URL posted:{mets_url}\n JobID:{job_id}"
 
             return {"message": message}

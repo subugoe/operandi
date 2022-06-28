@@ -5,7 +5,8 @@ from .constants import (
     RABBIT_MQ_PORT as PORT,
     DEFAULT_EXCHANGER_NAME as EXCHANGER,
     DEFAULT_EXCHANGER_TYPE as EX_TYPE,
-    DEFAULT_QUEUE_NAME as Q_NAME,
+    DEFAULT_QUEUE_SERVER_TO_BROKER as QUEUE_S_TO_B,
+    DEFAULT_QUEUE_BROKER_TO_SERVER as QUEUE_B_TO_S,
 )
 
 
@@ -15,13 +16,14 @@ class Producer:
     """
 
     def __init__(self, host=HOST, port=PORT, exchanger=EXCHANGER,
-                 exchanger_type=EX_TYPE, queue=Q_NAME):
+                 exchanger_type=EX_TYPE):
         # Establish a connection with the RabbitMQ server.
         self.__create_connection(host, port)
         self.__create_channel(exchanger, exchanger_type)
 
-        # Create a queue
-        self.__create_queue(queue)
+        # Create the queues (same for both Producer and Consumer)
+        self.__create_queue(QUEUE_S_TO_B)
+        self.__create_queue(QUEUE_B_TO_S)
 
     def __del__(self):
         if self.__connection.is_open:
@@ -54,7 +56,19 @@ class Producer:
 
         # Publish the message body through the exchanger agent
         self.__channel.basic_publish(exchange=EXCHANGER,
-                                     routing_key=Q_NAME,
+                                     routing_key=QUEUE_S_TO_B,
                                      body=body,
                                      properties=message_properties,
                                      mandatory=True)
+
+    # For getting back the cluster Job ID
+    # TODO: This should be implemented properly with a new class named MessageExchanger
+    def read_job_id(self):
+        method_frame, header_frame, body = self.__channel.basic_get(QUEUE_B_TO_S)
+        if method_frame:
+            # print(f"{method_frame}, {header_frame}, {body}")
+            self.__channel.basic_ack(method_frame.delivery_tag)
+            return body
+        else:
+            # print(f"No message returned")
+            return None

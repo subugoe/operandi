@@ -120,7 +120,10 @@ class ServiceBroker:
         # The line below triggers the execution of the base_script.sh inside th
         output, err, return_code = self.ssh.execute_blocking(ssh_command)
         print(f"RC:{return_code}, ERR:{err}, O:{output}")
+        return return_code, err, output
 
+    # TODO: Make this to consume properly with callback handler
+    # TODO: Create threads to handle this
     def start_consuming(self, limit):
         consumed_counter = 0
 
@@ -137,7 +140,20 @@ class ServiceBroker:
                 self.prepare_workspace(mets_url=mets_url, workspace_name=mets_id)
                 # print(f"Submitting files and triggering cluster execution is commented out!")
                 self.submit_files_of_workspace(workspace_name=mets_id)
-                self.trigger_execution_for_workspace(workspace_name=mets_id)
+                return_code, err, output = self.trigger_execution_for_workspace(workspace_name=mets_id)
+
+                # Job submitted successfully
+                if return_code == 0:
+                    # Example output message:
+                    # "Submitted batch job XXXXXXXX"
+
+                    # This is a temporal solution
+                    # should be parsed more elegantly
+                    job_id = output.split(" ")[3]
+                    self.consumer.reply_job_id(cluster_job_id=job_id)
+                else:
+                    # No job ID assigned, failed
+                    self.consumer.reply_job_id(cluster_job_id=-1)
 
             # Consume only till the limit is reached
             if consumed_counter == limit:
