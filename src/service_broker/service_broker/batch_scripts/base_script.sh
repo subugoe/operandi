@@ -12,6 +12,9 @@
 
 # "$1" is the first parameter to this script -> the workspace name
 
+hostname
+slurm_resources
+
 # clear the environment then load singularity and nextflow
 module purge
 module load singularity # loads "git" and "go" as well
@@ -45,8 +48,5 @@ echo "DOWNLOADING THE IMAGES FROM METS FILE ... DUMMY"
 
 # execute the main Nextflow script
 nextflow run seq_ocrd_wf_single_processor.nf --tempdir "/scratch1/users/${USER}/$1/bin"
-
-hostname
-slurm_resources
 
 # rm -rf "/scratch1/users/${USER}/$1"

@@ -87,14 +87,28 @@ class OperandiServer:
                 message = f"ID:{vd18_id} found!"
             return {"message": message}
 
+        # TODO: The two methods below could and should be combined
+        # To keep it simple, currently, both ways are supported
+
+        # Used to accept VD18 IDs from the Harvester
         @self.app.post("/vd18_ids/")
-        async def post_vd18_id(vd18_id: str, vd18_url: str):
+        async def post_vd18_id(vd18_url: str, vd18_id: str):
             message = f"{vd18_id} was already posted!"
             if vd18_id not in self.vd18_id_dict:
                 self.vd18_id_dict[vd18_id] = vd18_url
-                publish_message = f"{vd18_id}, {self.vd18_id_dict[vd18_id]}"
+                publish_message = f"{self.vd18_id_dict[vd18_id]},{vd18_id}"
                 # Send the posted vd18_id to the priority queue
                 self.producer.basic_publish(publish_message.encode('utf8'))
                 message = f"{vd18_id} is posted!"
+
+            return {"message": message}
+
+        # Used to accept Mets URLs from the user
+        @self.app.post("/mets_url/")
+        async def post_mets_url(mets_url: str, mets_id: str):
+            publish_message = f"{mets_url},{mets_id}"
+            # Send the posted mets_url to the priority queue
+            self.producer.basic_publish(publish_message.encode('utf8'))
+            message = f"URL posted:{mets_url}"
 
             return {"message": message}

@@ -62,12 +62,12 @@ class ServiceBroker:
     # Tree structure of the nextflow workspace:
     # nextflow_workspaces(dir):
     #   - nextflow_workspace_name(dir)
-    #   - base_script.sh
-    #   - bin(dir)
-    #     - nextflow.config
-    #     - seq_ocrd_wf_single_processor.nf (nextflow script)
-    #     - ocrd-workspace(dir)
-    #       - mets.xml
+    #       - base_script.sh
+    #       - bin(dir)
+    #           - nextflow.config
+    #           - seq_ocrd_wf_single_processor.nf (nextflow script)
+    #           - ocrd-workspace(dir)
+    #               - mets.xml
     ###########################################################
     # TODO: provide a better way for configuring paths
     def prepare_workspace(self, mets_url, workspace_name):
@@ -130,7 +130,7 @@ class ServiceBroker:
             received_bytes = self.consumer.single_consume()
             if received_bytes is not None:
                 received_string = received_bytes.decode('utf8')
-                mets_id, mets_url = received_string.split(',')
+                mets_url, mets_id = received_string.split(',')
                 print(f"URL:{mets_url}")
                 print(f"Workspace Name: {mets_id}")
                 consumed_counter += 1
