@@ -115,7 +115,7 @@ class ServiceBroker:
         # You can bypass that by forcing bash to start a login shell:
         # $ ssh gwdu101.gwdg.de  "bash -lc 'srun --version'"
 
-        ssh_command = f"bash -lc 'sbatch {base_script_path} {self.ssh.home_path} {workspace_name}'"
+        ssh_command = f"bash -lc 'sbatch {base_script_path} {workspace_name}'"
 
         # The line below triggers the execution of the base_script.sh inside th
         output, err, return_code = self.ssh.execute_blocking(ssh_command)

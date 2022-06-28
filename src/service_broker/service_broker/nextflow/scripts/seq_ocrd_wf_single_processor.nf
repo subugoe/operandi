@@ -35,7 +35,7 @@ process download_workspace {
 
   script:
   """
-  singularity exec --bind ${params.tempdir} docker://ocrd/all:maximum ocrd workspace find --file-grp ${file_group} --download
+  singularity exec --bind ${params.tempdir} docker://ocrd/all:maximum ocrd workspace find --file-grp ${file_group} --download --wait 1
   """
 }
 
