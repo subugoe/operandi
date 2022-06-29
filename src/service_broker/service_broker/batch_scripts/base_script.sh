@@ -51,16 +51,5 @@ echo "DOWNLOADING THE IMAGES FROM METS FILE ... DUMMY"
 # execute the main Nextflow script
 nextflow run seq_ocrd_wf_single_processor.nf --tempdir "/scratch1/users/${USER}/$1/bin"
 
-# Create a results workspace directory under the USER with name METS ID
-mkdir "/home/users/${USER}/result-workspace/$1"
-
-# Check if created
-if [ ! -d "/home/users/${USER}/result-workspace/$1" ]; then
-  echo "Result workspace directory was not created!"
-  exit 1
-fi
-
-# Copy the results back to the home directory under the result-workspace directory
-cp -rf "/scratch1/users/${USER}/$1" "/home/users/${USER}/result-workspace/$1"
 # Delete the results from the scratch
-rm -rf "/scratch1/users/${USER}/$1"
+# rm -rf "/scratch1/users/${USER}/$1"
