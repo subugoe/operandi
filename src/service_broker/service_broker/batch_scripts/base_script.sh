@@ -38,8 +38,10 @@ fi
 # copies the ocrd-workspace folder which holds the OCR-D-IMG folder and the mets file
 # copies the Nextflow script - seq_ocrd_wf_single_processor.nf
 
-
+# Copy the workspace from home to scratch
 cp -rf "/home/users/${USER}/$1/bin" "/scratch1/users/${USER}/$1"
+# Delete the workspace from home
+rm -rf "/home/users/${USER}/$1"
 cd "/scratch1/users/${USER}/$1/bin" || exit
 
 # TODO: Here should the images from the METS file downloaded
@@ -49,4 +51,16 @@ echo "DOWNLOADING THE IMAGES FROM METS FILE ... DUMMY"
 # execute the main Nextflow script
 nextflow run seq_ocrd_wf_single_processor.nf --tempdir "/scratch1/users/${USER}/$1/bin"
 
-# rm -rf "/scratch1/users/${USER}/$1"
+# Create a results workspace directory under the USER with name METS ID
+mkdir "/home/users/${USER}/result-workspace/$1"
+
+# Check if created
+if [ ! -d "/home/users/${USER}/result-workspace/$1" ]; then
+  echo "Result workspace directory was not created!"
+  exit 1
+fi
+
+# Copy the results back to the home directory under the result-workspace directory
+cp -rf "/scratch1/users/${USER}/$1" "/home/users/${USER}/result-workspace/$1"
+# Delete the results from the scratch
+rm -rf "/scratch1/users/${USER}/$1"

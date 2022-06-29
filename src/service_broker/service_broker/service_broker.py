@@ -2,7 +2,6 @@ import os.path
 import shutil
 import requests
 from clint.textui import progress
-import time
 
 from priority_queue.consumer import Consumer
 from .ssh_communication import SSHCommunication
@@ -100,11 +99,16 @@ class ServiceBroker:
             os.makedirs(ocrd_workspace_path)
             self.download_mets_file(ocrd_workspace_path, mets_url)
 
-    def submit_files_of_workspace(self, workspace_name):
+    def submit_files_of_workspace(self, workspace_name, remove_local=True):
         source_path = f"{self._module_path}/nextflow_workspaces/{workspace_name}"
         self.ssh.put_directory(source=source_path,
                                destination=self.ssh.home_path,
                                recursive=True)
+
+        # Remove the workspace from the local
+        # after submitting to the HPC
+        if remove_local:
+            shutil.rmtree(source_path)
 
     def trigger_execution_for_workspace(self, workspace_name):
         # This is the batch script submitted to the SLURM scheduler in HPC
@@ -129,46 +133,31 @@ class ServiceBroker:
 
         print(f"INFO: Waiting for messages. To exit press CTRL+C.")
         # Loops till there is a single message inside the queue
-        while True:
-            received_bytes = self.consumer.single_consume()
-            if received_bytes is not None:
-                received_string = received_bytes.decode('utf8')
-                mets_url, mets_id = received_string.split(',')
-                print(f"URL:{mets_url}")
-                print(f"Workspace Name: {mets_id}")
-                consumed_counter += 1
-                self.prepare_workspace(mets_url=mets_url, workspace_name=mets_id)
-                # print(f"Submitting files and triggering cluster execution is commented out!")
-                self.submit_files_of_workspace(workspace_name=mets_id)
-                return_code, err, output = self.trigger_execution_for_workspace(workspace_name=mets_id)
 
-                # Job submitted successfully
-                if return_code == 0:
-                    # Example output message:
-                    # "Submitted batch job XXXXXXXX"
+        # TODO: Replace this properly so a thread handles that
+        # TODO: Thread
+        # Blocks here till the job id is received back
 
-                    # This is a temporal solution
-                    # should be parsed more elegantly
-                    job_id = output.split(" ")[3]
-                    self.consumer.reply_job_id(cluster_job_id=job_id)
-                else:
-                    # No job ID assigned, failed
-                    self.consumer.reply_job_id(cluster_job_id=-1)
+        while consumed_counter < limit:
+            mets_url, mets_id = self.consumer.single_consume_mets_url()
+            print(f"URL:{mets_url}")
+            print(f"Workspace Name: {mets_id}")
 
-            # Consume only till the limit is reached
-            if consumed_counter == limit:
-                break
+            self.prepare_workspace(mets_url=mets_url, workspace_name=mets_id)
+            self.submit_files_of_workspace(workspace_name=mets_id)
+            return_code, err, output = self.trigger_execution_for_workspace(workspace_name=mets_id)
 
-            time.sleep(2)
+            # Job submitted successfully
+            if return_code == 0:
+                # Example output message:
+                # "Submitted batch job XXXXXXXX"
 
-    # Callback method for the service broker
-    def callback(ch, method, properties, body):
-        # print(f"INFO: ch: {ch}")
-        # print(f"INFO: method: {method}")
-        # print(f"INFO: properties: {properties}")
-        print(f"INFO: A METS URI has been consumed: {body}")
+                # This is a temporal solution
+                # should be parsed more elegantly
+                job_id = output.split(" ")[3]
+                self.consumer.reply_job_id(cluster_job_id=job_id)
+            else:
+                # No job ID assigned, failed
+                self.consumer.reply_job_id(cluster_job_id=-1)
 
-    def start_consuming_callback(self):
-        # To consume continuously
-        self.consumer.set_callback(self.callback)
-        self.consumer.start_consuming()
+            consumed_counter += 1

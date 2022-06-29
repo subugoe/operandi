@@ -1,13 +1,11 @@
-import pika
+import time
 
 from .constants import (
-    RABBIT_MQ_HOST as HOST,
-    RABBIT_MQ_PORT as PORT,
-    DEFAULT_EXCHANGER_NAME as EXCHANGER,
-    DEFAULT_EXCHANGER_TYPE as EX_TYPE,
-    DEFAULT_QUEUE_SERVER_TO_BROKER as QUEUE_S_TO_B,
-    DEFAULT_QUEUE_BROKER_TO_SERVER as QUEUE_B_TO_S,
+    DEFAULT_QUEUE_SERVER_TO_BROKER as DEFAULT_QSB,
+    DEFAULT_QUEUE_BROKER_TO_SERVER as DEFAULT_QBS,
 )
+
+from .message_exchanger import MessageExchanger
 
 
 class Producer:
@@ -15,60 +13,37 @@ class Producer:
     Producer class used by the OPERANDI Server
     """
 
-    def __init__(self, host=HOST, port=PORT, exchanger=EXCHANGER,
-                 exchanger_type=EX_TYPE):
-        # Establish a connection with the RabbitMQ server.
-        self.__create_connection(host, port)
-        self.__create_channel(exchanger, exchanger_type)
+    def __init__(self):
+        self.__messageExchanger = MessageExchanger()
 
-        # Create the queues (same for both Producer and Consumer)
-        self.__create_queue(QUEUE_S_TO_B)
-        self.__create_queue(QUEUE_B_TO_S)
+        # Declare the queue to which the Producer pushes data
+        self.__messageExchanger.declare_queue(DEFAULT_QSB)
+        # Bind the queue to the Exchanger agent
+        self.__messageExchanger.bind_queue(DEFAULT_QSB)
 
-    def __del__(self):
-        if self.__connection.is_open:
-            self.__connection.close()
+        # Declare the queue from which the Producer receives
+        # responses from the Service broker
+        self.__messageExchanger.declare_queue(DEFAULT_QBS)
+        # Bind the queue to the Exchanger agent
+        self.__messageExchanger.bind_queue(DEFAULT_QBS)
 
-    def __create_connection(self, host, port):
-        self.__parameters = pika.ConnectionParameters(host=host, port=port)
-        self.__connection = pika.BlockingConnection(self.__parameters)
-
-    def __create_channel(self, exchange, exchange_type):
-        if self.__connection.is_open:
-            self.__channel = self.__connection.channel()
-            if self.__channel.is_open:
-                self.__channel.exchange_declare(exchange=exchange,
-                                                exchange_type=exchange_type)
-
-    def __create_queue(self, queue, durability=False):
-        if self.__connection.is_open and self.__channel.is_open:
-            self.__channel.queue_declare(queue=queue, durable=durability)
-
-    def basic_publish(self, body, durable=False):
-        if durable:
-            delivery_mode = pika.spec.PERSISTENT_DELIVERY_MODE
-        else:
-            delivery_mode = pika.spec.TRANSIENT_DELIVERY_MODE
-
-        message_properties = pika.BasicProperties(
-            delivery_mode=delivery_mode
-        )
-
-        # Publish the message body through the exchanger agent
-        self.__channel.basic_publish(exchange=EXCHANGER,
-                                     routing_key=QUEUE_S_TO_B,
-                                     body=body,
-                                     properties=message_properties,
-                                     mandatory=True)
+    def publish_mets_url(self, body):
+        self.__messageExchanger.basic_publish(routing_key=DEFAULT_QSB,
+                                              body=body)
 
     # For getting back the cluster Job ID
-    # TODO: This should be implemented properly with a new class named MessageExchanger
-    def read_job_id(self):
-        method_frame, header_frame, body = self.__channel.basic_get(QUEUE_B_TO_S)
-        if method_frame:
-            # print(f"{method_frame}, {header_frame}, {body}")
-            self.__channel.basic_ack(method_frame.delivery_tag)
-            return body
-        else:
-            # print(f"No message returned")
-            return None
+    # TODO: This should be implemented properly with a Thread
+    # TODO: Thread
+    def receive_job_id(self):
+        # Temporal solution, bad to do that in that way!
+        while True:
+            method_frame, header_frame, body = self.__messageExchanger.channel.basic_get(DEFAULT_QBS)
+            if method_frame:
+                # print(f"{method_frame}, {header_frame}, {body}")
+                self.__messageExchanger.channel.basic_ack(method_frame.delivery_tag)
+                if body:
+                    job_id = body.decode('utf8')
+                    return job_id
+
+            # Check for new messages every 1 second
+            time.sleep(1)

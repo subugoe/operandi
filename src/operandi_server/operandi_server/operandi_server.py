@@ -18,8 +18,8 @@ from .constants import (
 
 class OperandiServer:
     def __init__(self, host=HOST, port=PORT):
-        self.host = HOST
-        self.port = PORT
+        self.host = host
+        self.port = port
         self.server_path = SERVER_PATH
         self.preserve_requests = PRESERVE_REQUESTS
 
@@ -98,7 +98,7 @@ class OperandiServer:
                 self.vd18_id_dict[vd18_id] = vd18_url
                 publish_message = f"{self.vd18_id_dict[vd18_id]},{vd18_id}"
                 # Send the posted vd18_id to the priority queue
-                self.producer.basic_publish(publish_message.encode('utf8'))
+                self.producer.publish_mets_url(publish_message.encode('utf8'))
                 message = f"{vd18_id} is posted!"
 
             return {"message": message}
@@ -106,20 +106,27 @@ class OperandiServer:
         # Used to accept Mets URLs from the user
         @self.app.post("/mets_url/")
         async def post_mets_url(mets_url: str, mets_id: str):
-            publish_message = f"{mets_url},{mets_id}"
+            publish_message = f"{mets_url},{mets_id}".encode('utf8')
+
             # Send the posted mets_url to the priority queue
-            self.producer.basic_publish(publish_message.encode('utf8'))
+            self.producer.publish_mets_url(body=publish_message)
 
-            job_id = -1
-            # Loops till we receive the job ID
             # TODO: Replace this properly so a thread handles that
-            while True:
-                received_bytes = self.producer.read_job_id()
-                if received_bytes is not None:
-                    job_id = received_bytes.decode('utf8')
-                    # print(f"JobID:{job_id}")
-                    break
+            # TODO: Thread
+            # Blocks here till the job id is received back
+            job_id = self.producer.receive_job_id()
+            print(f"JobID:{job_id}")
 
-            message = f"URL posted:{mets_url}\n JobID:{job_id}"
+            message = f"Mets URL posted successfully!"
+            return {"message": message, "mets_url": mets_url, "job_id": job_id}
 
-            return {"message": message}
+        # --- Callback functions called based on Service broker responses --- #
+        # Callback for jobID - currently not used, will be used by a thread
+        # TODO: Thread
+        def callback_job_id(ch, method, properties, body):
+            job_id = body.decode('utf8')
+            print(f"INFO: ch: {ch}")
+            print(f"INFO: method: {method}")
+            print(f"INFO: properties: {properties}")
+            print(f"INFO: A JobID has been received: {job_id}")
+            return job_id
