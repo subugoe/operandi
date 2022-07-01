@@ -195,4 +195,51 @@ The line that does that is commented out. If you still want to test that have a 
 
 This section provides solutions for potential problems that may arise.
 
-TODO: To be extended as errors occur
+1. Are there any authentication errors with the SSH connection when starting the Service Broker module?
+
+A potential reason for that error could be that your private key was not added to the SSH Agent.
+
+Solution:
+```sh
+eval `ssh-agent -s`
+ssh-add ~/.ssh/gwdg-cluster
+```
+
+The first command activates the SSH Agent (in case it is not active).
+
+The second command adds the private key to the SSH Agent. 
+The given path for the private key is the path inside the development VM. 
+Make sure to provide the correct path for your local installation.
+
+2. Downloading images based on mets file fails with an HTTP request exception inside the HPC environment.
+
+This is a known problem. This happens with the mets files coming from GDZ and has nothing to the with the Operandi project itself. 
+The URLs to the images inside the mets file sometimes trigger exception. 
+
+`Exception: HTTP request failed: URL (HTTP 500)`
+
+- Bad solution:
+
+Manually replace `http://gdz-srv1.` with `https://gdz.` inside the mets file.
+
+- Better solution:
+
+For now just provide a METS file URL link from another library.
+
+Follow these steps:
+
+1. Start the Operandi Server (check above for instructions)
+2. Start the Service Broker (check above for instructions)
+3. Instead of starting the Harvester, execute the following curl command to create a request
+```
+curl -X 'POST' \
+  'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&mets_id=PPN631277528' \
+  -H 'accept: application/json' \
+  -d ''
+```
+
+The request sends the URL of a mets file of a workspace and the ID of that mets file. 
+
+To obtain results faster we use a small workspace with just 29 pages.
+
+4. You will receive a Job-ID back as a response. Currently, this is the ID of the job running inside the HPC cluster. This will change in the future.
