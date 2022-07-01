@@ -1,8 +1,9 @@
 import os
 import datetime
-from pkg_resources import resource_filename
 
-import uvicorn
+from concurrent.futures import ThreadPoolExecutor
+import asyncio
+
 from fastapi import FastAPI
 from typing import Optional
 
@@ -39,6 +40,16 @@ class OperandiServer:
                 "description": "The URL of the OPERANDI server.",
             }],
         )
+
+        """
+        # On startup event creates a ThreadPoolExecutor
+        @self.app.on_event("startup")
+        def set_default_executor():
+            loop = asyncio.get_running_loop()
+            loop.set_default_executor(
+                ThreadPoolExecutor(max_workers=4)
+            )
+        """
 
         # On startup reads the dictionary of IDs that were previously submitted
         # If PRESERVE_REQUESTS is True

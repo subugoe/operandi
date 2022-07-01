@@ -158,6 +158,6 @@ class ServiceBroker:
                 self.consumer.reply_job_id(cluster_job_id=job_id)
             else:
                 # No job ID assigned, failed
-                self.consumer.reply_job_id(cluster_job_id=-1)
+                self.consumer.reply_job_id(cluster_job_id="No assigned ID")
 
             consumed_counter += 1
