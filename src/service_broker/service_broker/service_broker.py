@@ -6,25 +6,28 @@ from clint.textui import progress
 from priority_queue.consumer import Consumer
 from .ssh_communication import SSHCommunication
 
-from .constants import (
-    SERVICE_BROKER_HOST as HOST,
-    SERVICE_BROKER_PORT as PORT,
-)
-
 
 # TODO: Implement the entire service broker properly
 # Currently the functions are not modularized well enough
 
 
 class ServiceBroker:
-    def __init__(self, host=HOST, port=PORT):
-        self.host = host
-        self.port = port
+    def __init__(self):
         self._module_path = os.path.dirname(__file__)
 
-        print(f"Service broker host:{host} port:{port}")
-        self.consumer = Consumer()
+        self.consumer = Consumer(
+            username="operandi-broker",
+            password="operandi-broker"
+        )
         print("Consumer initiated")
+
+        # TODO: FIX THIS
+        # Currently, the service broker cannot connect to the HPC environment
+        # using SSH since there is no key pair inside the docker container
+
+        # When running inside the container,
+        # disable the self.ssh related commands manually!
+
         self.ssh = SSHCommunication()
         print("SSH connection successful")
 
@@ -126,23 +129,20 @@ class ServiceBroker:
         print(f"RC:{return_code}, ERR:{err}, O:{output}")
         return return_code, err, output
 
-    # TODO: Make this to consume properly with callback handler
-    # TODO: Create threads to handle this
-    def start_consuming(self, limit):
-        consumed_counter = 0
+    def start(self):
+        self.consumer.define_consuming_listener(
+            callback=self.mets_url_callback
+        )
 
-        print(f"INFO: Waiting for messages. To exit press CTRL+C.")
-        # Loops till there is a single message inside the queue
+    def mets_url_callback(self, ch, method, properties, body):
+        # print(f"{self}")
+        # print(f"INFO: ch: {ch}")
+        # print(f"INFO: method: {method}")
+        # print(f"INFO: properties: {properties}")
+        print(f"INFO: A METS URI has been consumed: {body}")
 
-        # TODO: Replace this properly so a thread handles that
-        # TODO: Thread
-        # Blocks here till the job id is received back
-
-        while consumed_counter < limit:
-            mets_url, mets_id = self.consumer.single_consume_mets_url()
-            print(f"URL:{mets_url}")
-            print(f"Workspace Name: {mets_id}")
-
+        if body:
+            mets_url, mets_id = body.decode('utf8').split(',')
             self.prepare_workspace(mets_url=mets_url, workspace_name=mets_id)
             self.submit_files_of_workspace(workspace_name=mets_id)
             return_code, err, output = self.trigger_execution_for_workspace(workspace_name=mets_id)
@@ -159,5 +159,3 @@ class ServiceBroker:
             else:
                 # No job ID assigned, failed
                 self.consumer.reply_job_id(cluster_job_id="No assigned ID")
-
-            consumed_counter += 1

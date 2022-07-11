@@ -25,7 +25,10 @@ class OperandiServer:
         self.preserve_requests = PRESERVE_REQUESTS
 
         self.vd18_id_dict = {}
-        self.producer = Producer()
+        self.producer = Producer(
+            username="operandi-server",
+            password="operandi-server"
+        )
 
         self.app = FastAPI(
             title="OPERANDI Server",
@@ -63,6 +66,11 @@ class OperandiServer:
                         line = line.strip('\n')
                         key, value = line.split(',')
                         self.vd18_id_dict[key] = value
+
+            # Initialize the listener (listens for job_id replies)
+            self.producer.define_consuming_listener(
+                callback=self.job_id_callback
+            )
 
         # On shutdown writes the dictionary of IDs to a text file
         # If PRESERVE_REQUESTS is True
@@ -133,11 +141,18 @@ class OperandiServer:
 
         # --- Callback functions called based on Service broker responses --- #
         # Callback for jobID - currently not used, will be used by a thread
-        # TODO: Thread
-        def callback_job_id(ch, method, properties, body):
-            job_id = body.decode('utf8')
-            print(f"INFO: ch: {ch}")
-            print(f"INFO: method: {method}")
-            print(f"INFO: properties: {properties}")
-            print(f"INFO: A JobID has been received: {job_id}")
-            return job_id
+        # TODO: Handle with a thread
+        # TODO: Use this callback function instead of "self.producer.receive_job_id()"
+        def job_id_callback(self, ch, method, properties, body):
+            # print(f"{self}")
+            # print(f"INFO: ch: {ch}")
+            # print(f"INFO: method: {method}")
+            # print(f"INFO: properties: {properties}")
+
+            if body:
+                job_id = body.decode('utf8')
+                # print(f"INFO: ch: {ch}")
+                # print(f"INFO: method: {method}")
+                # print(f"INFO: properties: {properties}")
+                print(f"INFO: A JobID has been received: {job_id}")
+                return job_id

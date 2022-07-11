@@ -29,6 +29,6 @@ WAIT_TIME_BETWEEN_SUBMITS: int = 10  # seconds
 
 # This is the default POST method to OPERANDI
 # NOTE: Make sure that the OPERANDI Server's IP and PORT are correctly configured here!!!
-POST_METHOD_TO_OPERANDI: str = "http://localhost:8000/vd18_ids/"
+POST_METHOD_TO_OPERANDI: str = "http://0.0.0.0:8000/vd18_ids/"
 POST_METHOD_ID_PARAMETER: str = "vd18_id="
 POST_METHOD_URL_PARAMETER: str = "vd18_url="

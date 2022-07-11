@@ -1,19 +1,23 @@
 __all__ = [
     "RABBIT_MQ_HOST",
+    "RABBIT_MQ_DOCKER_HOST",
     "RABBIT_MQ_PORT",
     "RABBIT_MQ_PATH",
+    "RABBIT_MQ_DOCKER_PATH",
     "DEFAULT_EXCHANGER_NAME",
     "DEFAULT_EXCHANGER_TYPE",
     "DEFAULT_QUEUE_SERVER_TO_BROKER",
     "DEFAULT_QUEUE_BROKER_TO_SERVER"
 ]
 
-RABBIT_MQ_HOST: str = "localhost"
+RABBIT_MQ_HOST: str = "localhost"  # "rabbit-mq-host" when Dockerized
+RABBIT_MQ_DOCKER_HOST: str = "rabbit-mq-host"
 # This is the default port on which the RabbitMQ instance
 # is running after installation, do not change it unless you know how to configure it properly.
 # Pika Python client must use the same port to be able to communicate with the RabbitMQ
 RABBIT_MQ_PORT: int = 5672
 RABBIT_MQ_PATH: str = f"http://{RABBIT_MQ_HOST}:{RABBIT_MQ_PORT}"
+RABBIT_MQ_DOCKER_PATH: str = f"http://{RABBIT_MQ_DOCKER_HOST}:{RABBIT_MQ_PORT}"
 
 DEFAULT_EXCHANGER_NAME: str = "operandi_exchanger"
 DEFAULT_EXCHANGER_TYPE: str = "direct"
@@ -27,6 +31,10 @@ DEFAULT_QUEUE_BROKER_TO_SERVER = "broker_to_server"
 # if not running - enable and start it:
 # $ sudo systemctl enable rabbitmq-server
 # $ sudo systemctl start rabbitmq-server
+
+# If the rabbitmq management is not running on port 15672
+# Enable it:
+# sudo rabbitmq-plugins enable rabbitmq_management
 
 # For more advanced networking options:
 # check here: https://www.rabbitmq.com/configure.html

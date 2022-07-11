@@ -16,16 +16,10 @@ def broker_cli():
 
 
 @broker_cli.command('start')
-@click.option('-l', '--limit', default=1, help='The amount of mets files to be taken from the RabbitMQ.')
-def start_broker(limit):
+def start_broker():
     service_broker = ServiceBroker()
-    print(f"Service broker started with limit:{limit}")
-    service_broker.start_consuming(limit)
+    print(f"INFO: Waiting for messages. To exit press CTRL+C.")
+    service_broker.start()
 
-
-# TODO: Not functional yet.
-"""
-@broker_cli.command('stop')
-def stop_server():
-  print(f"Stopped broker.")
-"""
+# NOTE: Stop mechanism is not needed
+# The service broker could be simply stopped with a signal (CTRL+N)

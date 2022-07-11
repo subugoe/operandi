@@ -13,24 +13,40 @@ class Consumer:
     Consumer class used by the Service-broker
     """
 
-    def __init__(self):
-        self.__messageExchanger = MessageExchanger()
+    def __init__(self, username, password):
+        self.__messageExchanger = MessageExchanger(username, password)
 
-        # Declaring and binding queues is done only once
-        # This is already handled by the Producer class
+        # It is enough to declare them once, however, to avoid
+        # any dependencies (which module to start first), we
+        # declare and bind queues both inside the producer and the consumer
 
-    # Consumes a single message from the channel
-    def single_consume_mets_url(self):
-        while True:
-            method_frame, header_frame, body = self.__messageExchanger.channel.basic_get(DEFAULT_QSB)
-            if method_frame:
-                # print(f"{method_frame}, {header_frame}, {body}")
-                self.__messageExchanger.channel.basic_ack(method_frame.delivery_tag)
-                if body:
-                    mets_url, mets_id = body.decode('utf8').split(',')
-                    return mets_url, mets_id
+        # Declare the queue to which the Producer pushes data
+        self.__messageExchanger.declare_queue(DEFAULT_QSB)
+        # Bind the queue to the Exchanger agent
+        self.__messageExchanger.bind_queue(DEFAULT_QSB)
 
-            time.sleep(1)
+        # Declare the queue from which the Producer receives
+        # responses from the Service broker
+        self.__messageExchanger.declare_queue(DEFAULT_QBS)
+        # Bind the queue to the Exchanger agent
+        self.__messageExchanger.bind_queue(DEFAULT_QBS)
+
+    # Listens for messages coming from the QSB
+    def define_consuming_listener(self, callback):
+        # Define a basic consume method and its callback function
+        # The 'callback' is the function to be called
+        # when consuming from the respective queue
+        self.__messageExchanger.channel.basic_consume(
+            queue=DEFAULT_QSB,
+            on_message_callback=callback,
+            auto_ack=True
+        )
+
+        self.__messageExchanger.channel.start_consuming()
+
+    # TODO: Clarify that better
+    # The consumer (service-broker) is also a producer
+    # for replies back to the producer (operandi-server)
 
     # TODO: Replace this properly so a thread handles that
     # TODO: Thread
@@ -38,12 +54,3 @@ class Consumer:
         # Publish the message body through the exchanger agent
         self.__messageExchanger.basic_publish(routing_key=DEFAULT_QBS,
                                               body=cluster_job_id)
-
-    # TODO: implement proper start/stop methods
-    def start_consuming(self):
-        self.__messageExchanger.channel.start_consuming()
-        print(f"INFO: Waiting for messages. To exit press CTRL+C.")
-
-    def stop_consuming(self):
-        self.__messageExchanger.channel.stop_consuming()
-        print(f"INFO: The consumer has stopped consuming.")

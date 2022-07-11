@@ -13,8 +13,12 @@ class Producer:
     Producer class used by the OPERANDI Server
     """
 
-    def __init__(self):
-        self.__messageExchanger = MessageExchanger()
+    def __init__(self, username, password):
+        self.__messageExchanger = MessageExchanger(username, password)
+
+        # It is enough to declare them once, however, to avoid
+        # any dependencies (which module to start first), we
+        # declare these both inside the producer and the consumer
 
         # Declare the queue to which the Producer pushes data
         self.__messageExchanger.declare_queue(DEFAULT_QSB)
@@ -30,6 +34,23 @@ class Producer:
     def publish_mets_url(self, body):
         self.__messageExchanger.basic_publish(routing_key=DEFAULT_QSB,
                                               body=body)
+
+    # TODO: Clarify that better
+    # The producer (operandi-server) is also a consumer
+    # for replies back from the consumer (service-broker)
+
+    # Listens for messages coming from the QBS
+    def define_consuming_listener(self, callback):
+        # Define a basic consume method and its callback function
+        # The 'callback' is the function to be called
+        # when consuming from the respective queue
+        self.__messageExchanger.channel.basic_consume(
+            queue=DEFAULT_QBS,
+            on_message_callback=callback,
+            auto_ack=True
+        )
+
+        self.__messageExchanger.channel.start_consuming()
 
     # For getting back the cluster Job ID
     # TODO: This should be implemented properly with a Thread

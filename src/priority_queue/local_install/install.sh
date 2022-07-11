@@ -39,3 +39,16 @@ sudo apt-get install -y erlang-base \
 ## Install rabbitmq-server and its dependencies
 sudo apt-get install rabbitmq-server -y --fix-missing
 
+## Enable and start the rabbitmq-server
+sudo systemctl enable rabbitmq-server
+sudo systemctl start rabbitmq-server
+
+## Create the operandi-server and operandi-broker user accounts
+sudo rabbitmqctl add_user operandi-server operandi-server
+sudo rabbitmqctl set_user_tags operandi-server administrator
+sudo rabbitmqctl set_permissions -p / operandi-server ".*" ".*" ".*"
+
+sudo rabbitmqctl add_user operandi-broker operandi-broker
+sudo rabbitmqctl set_user_tags operandi-broker administrator
+sudo rabbitmqctl set_permissions -p / operandi-broker ".*" ".*" ".*"
+
