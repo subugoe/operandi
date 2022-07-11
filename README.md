@@ -8,6 +8,8 @@ TODO: To be added
 This is still a draft Readme file and is under construction.
 
 ## 2. Accessing the development VM of OPERANDI
+CURRENTLY NOT UP-TO-DATE
+
 This step is only for internal developers of OPERANDI.
 For installation from the source continue with the next step.
 
@@ -53,7 +55,7 @@ source $HOME/venv-operandi/bin/activate
 
 3.1 First setup the repository with a single liner script:
 ```sh
-sudo ./src/priority_queue/repo_setup.deb.sh
+sudo ./src/priority_queue/local_install/repo_setup.deb.sh
 ```
 
 3.2 Install RabbitMQ:
@@ -61,7 +63,7 @@ sudo ./src/priority_queue/repo_setup.deb.sh
 Easy install:
 
 ```sh
-sudo ./src/priority_queue/install.sh
+sudo ./src/priority_queue/local_install/install.sh
 ```
 
 This script should install the RabbitMQ Server properly in most cases (on ubuntu/debian linux OS).
@@ -108,16 +110,18 @@ Check if RabbitMQ is running:
 sudo lsof -i -P -n | grep LISTEN
 ```
 
-RabbitMQ should be running on ports 5672 and 25672. Example output of the previous command:
+RabbitMQ should be running on ports 5672, 15672, and 25672. Example output of the previous command:
 ```sh
-beam.smp    926        rabbitmq   18u  IPv4  42412      0t0  TCP *:25672 (LISTEN)
-beam.smp    926        rabbitmq   33u  IPv6  42450      0t0  TCP *:5672 (LISTEN)
+beam.smp  103720  rabbitmq  18u  IPv4  383150  0t0  TCP *:25672 (LISTEN)
+beam.smp  103720  rabbitmq  33u  IPv6  373659  0t0  TCP *:5672 (LISTEN)
+beam.smp  103720  rabbitmq  34u  IPv4  393881  0t0  TCP *:15672 (LISTEN)
 ```
 
 If running, go to step 4. If not running, enable and start it:
 ```sh
 sudo systemctl enable rabbitmq-server
 sudo systemctl start rabbitmq-server
+sudo rabbitmq-plugins enable rabbitmq_management
 ```
 
 4. Open 3 new terminals and activate `venv-operandi` in all of them.
@@ -142,17 +146,14 @@ INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 6. In the second terminal start the Service Broker
 
 ```sh
-operandi-broker broker start --limit 1
+operandi-broker broker start
 ```
-
-For the demo run, we want to take only one request from the priority queue, thus, we limit the number of requests to be processed with the `--limit` option.
 
 Example Service Broker output:
 ```sh
 Service broker host:localhost port:27072
 Consumer initiated
 SSH connection successful
-Service broker started with limit:1
 INFO: Waiting for messages. To exit press CTRL+C.
 ```
 
@@ -188,8 +189,8 @@ Submitting files is commented out!
 ```
 
 Currently, the submission of files to the HPC environment is deactivated.
-Due to internal problems the HOME file system of the HPC environment does not function properly.
-The line that does that is commented out. If you still want to test that have a look inside the `service_broker.py`.
+If you have the credentials to access the HPC, look inside the `service_broker.py`.
+Set the `submitting_enabled` to True.
 
 ## 5. Solutions to commonly occurring problems
 

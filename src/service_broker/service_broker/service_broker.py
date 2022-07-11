@@ -10,6 +10,9 @@ from .ssh_communication import SSHCommunication
 # TODO: Implement the entire service broker properly
 # Currently the functions are not modularized well enough
 
+# Set to True if you have the credentials to use the HPC
+submitting_enabled = False
+
 
 class ServiceBroker:
     def __init__(self):
@@ -28,8 +31,14 @@ class ServiceBroker:
         # When running inside the container,
         # disable the self.ssh related commands manually!
 
-        self.ssh = SSHCommunication()
-        print("SSH connection successful")
+        global submitting_enabled
+
+        if submitting_enabled:
+            self.ssh = SSHCommunication()
+            print("SSH connection successful")
+        else:
+            self.ssh = None
+            print("SSH disabled. Nothing will be submitted to HPC")
 
     @staticmethod
     def download_mets_file(path_to_download, mets_url):
@@ -144,18 +153,25 @@ class ServiceBroker:
         if body:
             mets_url, mets_id = body.decode('utf8').split(',')
             self.prepare_workspace(mets_url=mets_url, workspace_name=mets_id)
-            self.submit_files_of_workspace(workspace_name=mets_id)
-            return_code, err, output = self.trigger_execution_for_workspace(workspace_name=mets_id)
 
-            # Job submitted successfully
-            if return_code == 0:
-                # Example output message:
-                # "Submitted batch job XXXXXXXX"
+            global submitting_enabled
 
-                # This is a temporal solution
-                # should be parsed more elegantly
-                job_id = output.split(" ")[3]
-                self.consumer.reply_job_id(cluster_job_id=job_id)
+            if submitting_enabled:
+                self.submit_files_of_workspace(workspace_name=mets_id)
+                return_code, err, output = self.trigger_execution_for_workspace(workspace_name=mets_id)
+
+                # Job submitted successfully
+                if return_code == 0:
+                    # Example output message:
+                    # "Submitted batch job XXXXXXXX"
+
+                    # This is a temporal solution
+                    # should be parsed more elegantly
+                    job_id = output.split(" ")[3]
+                    self.consumer.reply_job_id(cluster_job_id=job_id)
+                else:
+                    # No job ID assigned, failed
+                    self.consumer.reply_job_id(cluster_job_id="No assigned ID")
             else:
-                # No job ID assigned, failed
-                self.consumer.reply_job_id(cluster_job_id="No assigned ID")
+                print(f"Submitting files is commented out!")
+                self.consumer.reply_job_id(cluster_job_id="SSH to HPC disabled")

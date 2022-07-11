@@ -43,6 +43,9 @@ sudo apt-get install rabbitmq-server -y --fix-missing
 sudo systemctl enable rabbitmq-server
 sudo systemctl start rabbitmq-server
 
+## Enable the management plugin (running on port 15672)
+sudo rabbitmq-plugins enable rabbitmq_management
+
 ## Create the operandi-server and operandi-broker user accounts
 sudo rabbitmqctl add_user operandi-server operandi-server
 sudo rabbitmqctl set_user_tags operandi-server administrator
