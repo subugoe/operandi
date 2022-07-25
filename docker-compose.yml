@@ -37,7 +37,7 @@ services:
       - "8000:8000"
     networks:
       - operandi
-    command: operandi-server server start --host 0.0.0.0 --port 8000
+    command: operandi-server server start --host 0.0.0.0 --port 8000 --rabbit-mq-host rabbit-mq-host
 
   operandi-broker:
     image: operandi-broker
@@ -51,7 +51,7 @@ services:
     restart: on-failure
     networks:
       - operandi
-    command: operandi-broker broker start
+    command: operandi-broker broker start --rabbit-mq-host rabbit-mq-host
 
 networks:
   operandi:

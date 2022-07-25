@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from typing import Optional
 
 from priority_queue.producer import Producer
+from priority_queue.constants import RABBIT_MQ_HOST, RABBIT_MQ_PORT
 
 from .constants import (
     SERVER_HOST as HOST,
@@ -18,7 +19,11 @@ from .constants import (
 
 
 class OperandiServer:
-    def __init__(self, host=HOST, port=PORT):
+    def __init__(self,
+                 host=HOST,
+                 port=PORT,
+                 rabbit_mq_host=RABBIT_MQ_HOST,
+                 rabbit_mq_port=RABBIT_MQ_PORT):
         self.host = host
         self.port = port
         self.server_path = SERVER_PATH
@@ -27,7 +32,9 @@ class OperandiServer:
         self.vd18_id_dict = {}
         self.producer = Producer(
             username="operandi-server",
-            password="operandi-server"
+            password="operandi-server",
+            rabbit_mq_host=rabbit_mq_host,
+            rabbit_mq_port=rabbit_mq_port
         )
 
         self.app = FastAPI(

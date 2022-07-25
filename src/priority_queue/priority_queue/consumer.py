@@ -13,12 +13,15 @@ class Consumer:
     Consumer class used by the Service-broker
     """
 
-    def __init__(self, username, password):
-        self.__messageExchanger = MessageExchanger(username, password)
+    def __init__(self, username, password, rabbit_mq_host, rabbit_mq_port):
+        self.__messageExchanger = MessageExchanger(username,
+                                                   password,
+                                                   rabbit_mq_host,
+                                                   rabbit_mq_port)
 
         # It is enough to declare them once, however, to avoid
         # any dependencies (which module to start first), we
-        # declare and bind queues both inside the producer and the consumer
+        # declare these both inside the producer and the consumer
 
         # Declare the queue to which the Producer pushes data
         self.__messageExchanger.declare_queue(DEFAULT_QSB)

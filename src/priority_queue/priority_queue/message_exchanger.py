@@ -3,7 +3,6 @@ import pika
 from .constants import (
     RABBIT_MQ_HOST as HOST,
     RABBIT_MQ_PORT as PORT,
-    RABBIT_MQ_DOCKER_HOST as DOCKER_HOST,
     DEFAULT_EXCHANGER_NAME as EXCHANGER,
     DEFAULT_EXCHANGER_TYPE as EX_TYPE,
 )
@@ -15,20 +14,17 @@ class MessageExchanger:
     Producer and Consumer classes
     """
 
-    # TODO: FIX THIS
-    # Currently, the host has to be changed manually between HOST/DOCKER_HOST
-
     # Local credentials - guest, guest
     # Docker credentials - admin, admin
-    def __init__(self, username, password, host=HOST, port=PORT):
+    def __init__(self, username, password, rabbit_mq_host=HOST, rabbit_mq_port=PORT):
 
-        self.__rabbitMQ_host = host
-        self.__rabbitMQ_port = port
+        self.__rabbitMQ_host = rabbit_mq_host
+        self.__rabbitMQ_port = rabbit_mq_port
 
         # Set the connection parameters
         conn_params = pika.ConnectionParameters(
-            host=host,
-            port=port,
+            host=rabbit_mq_host,
+            port=rabbit_mq_port,
             credentials=pika.PlainCredentials(
                 username,
                 password

@@ -1,23 +1,19 @@
 __all__ = [
     "RABBIT_MQ_HOST",
-    "RABBIT_MQ_DOCKER_HOST",
     "RABBIT_MQ_PORT",
-    "RABBIT_MQ_PATH",
-    "RABBIT_MQ_DOCKER_PATH",
     "DEFAULT_EXCHANGER_NAME",
     "DEFAULT_EXCHANGER_TYPE",
     "DEFAULT_QUEUE_SERVER_TO_BROKER",
     "DEFAULT_QUEUE_BROKER_TO_SERVER"
 ]
 
-RABBIT_MQ_HOST: str = "localhost"  # "rabbit-mq-host" when Dockerized
-RABBIT_MQ_DOCKER_HOST: str = "rabbit-mq-host"
+# "rabbit-mq-host" when Dockerized
+# check the docker-compose.yml file
+RABBIT_MQ_HOST: str = "localhost"
 # This is the default port on which the RabbitMQ instance
 # is running after installation, do not change it unless you know how to configure it properly.
 # Pika Python client must use the same port to be able to communicate with the RabbitMQ
 RABBIT_MQ_PORT: int = 5672
-RABBIT_MQ_PATH: str = f"http://{RABBIT_MQ_HOST}:{RABBIT_MQ_PORT}"
-RABBIT_MQ_DOCKER_PATH: str = f"http://{RABBIT_MQ_DOCKER_HOST}:{RABBIT_MQ_PORT}"
 
 DEFAULT_EXCHANGER_NAME: str = "operandi_exchanger"
 DEFAULT_EXCHANGER_TYPE: str = "direct"

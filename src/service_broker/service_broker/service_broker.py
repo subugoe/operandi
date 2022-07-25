@@ -4,6 +4,7 @@ import requests
 from clint.textui import progress
 
 from priority_queue.consumer import Consumer
+from priority_queue.constants import RABBIT_MQ_HOST, RABBIT_MQ_PORT
 from .ssh_communication import SSHCommunication
 
 
@@ -15,12 +16,16 @@ submitting_enabled = False
 
 
 class ServiceBroker:
-    def __init__(self):
+    def __init__(self,
+                 rabbit_mq_host=RABBIT_MQ_HOST,
+                 rabbit_mq_port=RABBIT_MQ_PORT):
         self._module_path = os.path.dirname(__file__)
 
         self.consumer = Consumer(
             username="operandi-broker",
-            password="operandi-broker"
+            password="operandi-broker",
+            rabbit_mq_host=rabbit_mq_host,
+            rabbit_mq_port=rabbit_mq_port
         )
         print("Consumer initiated")
 
@@ -38,7 +43,7 @@ class ServiceBroker:
             print("SSH connection successful")
         else:
             self.ssh = None
-            print("SSH disabled. Nothing will be submitted to HPC")
+            print("SSH disabled. Nothing will be submitted to the HPC.")
 
     @staticmethod
     def download_mets_file(path_to_download, mets_url):
@@ -173,5 +178,6 @@ class ServiceBroker:
                     # No job ID assigned, failed
                     self.consumer.reply_job_id(cluster_job_id="No assigned ID")
             else:
-                print(f"Submitting files is commented out!")
+                print(f"Submitting files to HPC is disabled!")
+                print(f"Local execution of Nextflow will be performed.")
                 self.consumer.reply_job_id(cluster_job_id="SSH to HPC disabled")

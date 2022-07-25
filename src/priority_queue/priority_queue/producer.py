@@ -13,8 +13,11 @@ class Producer:
     Producer class used by the OPERANDI Server
     """
 
-    def __init__(self, username, password):
-        self.__messageExchanger = MessageExchanger(username, password)
+    def __init__(self, username, password, rabbit_mq_host, rabbit_mq_port):
+        self.__messageExchanger = MessageExchanger(username,
+                                                   password,
+                                                   rabbit_mq_host,
+                                                   rabbit_mq_port)
 
         # It is enough to declare them once, however, to avoid
         # any dependencies (which module to start first), we
