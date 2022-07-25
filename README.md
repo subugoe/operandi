@@ -23,7 +23,7 @@ I will add your public key and provide you access to the VM.
 
 3. Connect to our development VM (cloud@141.5.98.252) via ssh:
 ```sh
-ssh cloud@141.5.98.252 -i keyPath
+ssh cloud@141.5.99.32 -i keyPath
 ```
 
 All installations and configurations are already done inside the VM.
