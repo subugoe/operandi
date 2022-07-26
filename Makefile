@@ -62,7 +62,7 @@ PIP3_INSTALL = pip3 install
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	apt-get install -y python3 python3-venv
+	apt-get install -y python3 python3-venv python3-pip
 
 # Install test python deps via pip
 deps-test:
