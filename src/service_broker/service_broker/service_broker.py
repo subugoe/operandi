@@ -12,7 +12,7 @@ from .ssh_communication import SSHCommunication
 # Currently the functions are not modularized well enough
 
 # Set to True if you have the credentials to use the HPC
-submitting_enabled = False
+submitting_enabled = True
 
 
 class ServiceBroker:

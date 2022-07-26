@@ -11,8 +11,8 @@ from priority_queue.constants import RABBIT_MQ_HOST, RABBIT_MQ_PORT
 @click.group("broker")
 def broker_cli():
     """
-  Broker related cli
-  """
+    Broker related cli
+    """
 
 
 @broker_cli.command('start')

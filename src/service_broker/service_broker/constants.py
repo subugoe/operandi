@@ -5,6 +5,7 @@ __all__ = [
     "HPC_HOST",
     "HPC_USERNAME",
     "HPC_KEY_PATH",
+    "HPC_KEY_PATH2",
     "HPC_HOME_PATH",
     "SCP",
     "SCP_PRESERVE_TIMES",
@@ -22,6 +23,7 @@ SERVICE_BROKER_PATH: str = f"http://{SERVICE_BROKER_HOST}:{SERVICE_BROKER_PORT}"
 HPC_HOST: str = "gwdu101.gwdg.de"
 HPC_USERNAME: str = "mmustaf"
 HPC_KEY_PATH: str = "/home/mm/.ssh/gwdg-cluster.pub"
+HPC_KEY_PATH2: str = "/home/cloud/.ssh/gwdg-cluster.pub"
 HPC_HOME_PATH: str = f"/home/users/{HPC_USERNAME}"
 
 # Secure copy protocol related constants
