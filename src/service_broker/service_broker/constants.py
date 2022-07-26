@@ -1,21 +1,14 @@
 __all__ = [
-    "SERVICE_BROKER_HOST",
-    "SERVICE_BROKER_PORT",
-    "SERVICE_BROKER_PATH",
     "HPC_HOST",
     "HPC_USERNAME",
     "HPC_KEY_PATH",
-    "HPC_KEY_PATH2",
+    "HPC_KEY_VM_PATH",
     "HPC_HOME_PATH",
+    "HPC_DEFAULT_COMMAND",
     "SCP",
     "SCP_PRESERVE_TIMES",
     "MODE"
 ]
-
-# Service broker related constants (these are not used currently)
-SERVICE_BROKER_HOST: str = "localhost"
-SERVICE_BROKER_PORT: int = 27072
-SERVICE_BROKER_PATH: str = f"http://{SERVICE_BROKER_HOST}:{SERVICE_BROKER_PORT}"
 
 # HPC related constants
 # Must be either gwdu101 or gwdu102 (have /scratch1 access)
@@ -23,8 +16,9 @@ SERVICE_BROKER_PATH: str = f"http://{SERVICE_BROKER_HOST}:{SERVICE_BROKER_PORT}"
 HPC_HOST: str = "gwdu101.gwdg.de"
 HPC_USERNAME: str = "mmustaf"
 HPC_KEY_PATH: str = "/home/mm/.ssh/gwdg-cluster.pub"
-HPC_KEY_PATH2: str = "/home/cloud/.ssh/gwdg-cluster.pub"
+HPC_KEY_VM_PATH: str = "/home/cloud/.ssh/gwdg-cluster.pub"
 HPC_HOME_PATH: str = f"/home/users/{HPC_USERNAME}"
+HPC_DEFAULT_COMMAND: str = f"ls -la"
 
 # Secure copy protocol related constants
 SCP = "ON"

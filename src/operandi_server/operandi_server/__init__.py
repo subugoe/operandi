@@ -3,4 +3,3 @@ __all__ = [
 ]
 
 from .cli import cli
-

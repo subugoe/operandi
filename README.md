@@ -21,7 +21,7 @@ ssh-keygen -t rsa -b 2048 -f keyPath
 
 I will add your public key and provide you access to the VM.
 
-3. Connect to our development VM (cloud@141.5.98.252) via ssh:
+3. Connect to our development VM (cloud@141.5.99.32) via ssh:
 ```sh
 ssh cloud@141.5.99.32 -i keyPath
 ```

@@ -1,15 +1,14 @@
 import os
 import datetime
-
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
-
 from fastapi import FastAPI
 from typing import Optional
-
 from priority_queue.producer import Producer
-from priority_queue.constants import RABBIT_MQ_HOST, RABBIT_MQ_PORT
-
+from priority_queue.constants import (
+    RABBIT_MQ_HOST,
+    RABBIT_MQ_PORT
+)
 from .constants import (
     SERVER_HOST as HOST,
     SERVER_PORT as PORT,

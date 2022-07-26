@@ -2,11 +2,17 @@ import os.path
 import shutil
 import requests
 from clint.textui import progress
-
-from priority_queue.consumer import Consumer
-from priority_queue.constants import RABBIT_MQ_HOST, RABBIT_MQ_PORT
 from .ssh_communication import SSHCommunication
-
+from priority_queue.consumer import Consumer
+from priority_queue.constants import (
+    RABBIT_MQ_HOST,
+    RABBIT_MQ_PORT
+)
+from .constants import (
+    HPC_HOST,
+    HPC_USERNAME,
+    HPC_KEY_PATH
+)
 
 # TODO: Implement the entire service broker properly
 # Currently the functions are not modularized well enough
@@ -18,7 +24,10 @@ submitting_enabled = True
 class ServiceBroker:
     def __init__(self,
                  rabbit_mq_host=RABBIT_MQ_HOST,
-                 rabbit_mq_port=RABBIT_MQ_PORT):
+                 rabbit_mq_port=RABBIT_MQ_PORT,
+                 hpc_host=HPC_HOST,
+                 hpc_username=HPC_USERNAME,
+                 hpc_key_path=HPC_KEY_PATH):
         self._module_path = os.path.dirname(__file__)
 
         self.consumer = Consumer(
@@ -39,7 +48,9 @@ class ServiceBroker:
         global submitting_enabled
 
         if submitting_enabled:
-            self.ssh = SSHCommunication()
+            self.ssh = SSHCommunication(hpc_host=hpc_host,
+                                        hpc_username=hpc_username,
+                                        hpc_key_path=hpc_key_path,)
             print("SSH connection successful")
         else:
             self.ssh = None

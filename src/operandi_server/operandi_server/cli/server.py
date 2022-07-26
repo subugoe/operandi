@@ -1,20 +1,17 @@
 import click
-
 import uvicorn
-
+from ..operandi_server import OperandiServer
+from priority_queue.constants import (
+    RABBIT_MQ_HOST,
+    RABBIT_MQ_PORT
+)
+from ..constants import (
+    SERVER_HOST as HOST,
+    SERVER_PORT as PORT
+)
 # ----------------------------------------------------------------------
 # operandi-server server
 # ----------------------------------------------------------------------
-
-from ..constants import (
-    SERVER_HOST as HOST,
-    SERVER_PORT as PORT,
-    SERVER_PATH,
-    PRESERVE_REQUESTS,
-)
-
-from ..operandi_server import OperandiServer
-from priority_queue.constants import RABBIT_MQ_HOST, RABBIT_MQ_PORT
 
 
 @click.group("server")
