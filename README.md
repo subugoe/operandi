@@ -156,6 +156,19 @@ SSH connection successful
 INFO: Waiting for messages. To exit press CTRL+C.
 ```
 
+If you do not have HPC credentials for the SSH connection, then run the mockup broker for a local execution.
+Inside the development VM the ocrd/all:maximum docker image and Nextflow are already available.
+```sh
+operandi-broker broker start -m True
+```
+ 
+However, if you want to run the broker mockup locally on your machine you have to get the ocrd docker image and install Nextflow before starting the mockup.
+```sh
+docker pull ocrd/all:maximum
+``` 
+
+Check the Nextflow installation guide [here](https://www.nextflow.io/docs/latest/getstarted.html).  
+
 7. In the third terminal start the Harvester
 ```sh
 operandi-harvester harvest start --limit 1
