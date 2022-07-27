@@ -1,0 +1,118 @@
+12:21:29.673 INFO processor.OcropyBinarize - INPUT FILE 0 / PHYS_0001
+12:21:30.230 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0001'
+12:21:34.002 INFO ocrd.workspace.save_image_file - created file ID: FILE_0001_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0001_OCR-D-BIN.IMG-BIN.png
+12:21:34.003 INFO processor.OcropyBinarize - created file ID: FILE_0001_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0001_OCR-D-BIN.xml
+12:21:34.003 INFO processor.OcropyBinarize - INPUT FILE 1 / PHYS_0002
+12:21:34.116 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0002'
+12:21:37.649 INFO ocrd.workspace.save_image_file - created file ID: FILE_0002_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0002_OCR-D-BIN.IMG-BIN.png
+12:21:37.650 INFO processor.OcropyBinarize - created file ID: FILE_0002_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0002_OCR-D-BIN.xml
+12:21:37.650 INFO processor.OcropyBinarize - INPUT FILE 2 / PHYS_0003
+12:21:37.763 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0003'
+12:21:41.249 INFO ocrd.workspace.save_image_file - created file ID: FILE_0003_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0003_OCR-D-BIN.IMG-BIN.png
+12:21:41.250 INFO processor.OcropyBinarize - created file ID: FILE_0003_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0003_OCR-D-BIN.xml
+12:21:41.250 INFO processor.OcropyBinarize - INPUT FILE 3 / PHYS_0004
+12:21:41.339 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0004'
+12:21:44.259 INFO ocrd.workspace.save_image_file - created file ID: FILE_0004_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0004_OCR-D-BIN.IMG-BIN.png
+12:21:44.267 INFO processor.OcropyBinarize - created file ID: FILE_0004_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0004_OCR-D-BIN.xml
+12:21:44.267 INFO processor.OcropyBinarize - INPUT FILE 4 / PHYS_0005
+12:21:44.360 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0005'
+12:21:47.116 INFO ocrd.workspace.save_image_file - created file ID: FILE_0005_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0005_OCR-D-BIN.IMG-BIN.png
+12:21:47.117 INFO processor.OcropyBinarize - created file ID: FILE_0005_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0005_OCR-D-BIN.xml
+12:21:47.117 INFO processor.OcropyBinarize - INPUT FILE 5 / PHYS_0006
+12:21:47.210 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0006'
+12:21:50.085 INFO ocrd.workspace.save_image_file - created file ID: FILE_0006_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0006_OCR-D-BIN.IMG-BIN.png
+12:21:50.086 INFO processor.OcropyBinarize - created file ID: FILE_0006_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0006_OCR-D-BIN.xml
+12:21:50.086 INFO processor.OcropyBinarize - INPUT FILE 6 / PHYS_0007
+12:21:50.180 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0007'
+12:21:52.954 INFO ocrd.workspace.save_image_file - created file ID: FILE_0007_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0007_OCR-D-BIN.IMG-BIN.png
+12:21:52.955 INFO processor.OcropyBinarize - created file ID: FILE_0007_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0007_OCR-D-BIN.xml
+12:21:52.955 INFO processor.OcropyBinarize - INPUT FILE 7 / PHYS_0008
+12:21:53.050 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0008'
+12:21:55.861 INFO ocrd.workspace.save_image_file - created file ID: FILE_0008_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0008_OCR-D-BIN.IMG-BIN.png
+12:21:55.863 INFO processor.OcropyBinarize - created file ID: FILE_0008_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0008_OCR-D-BIN.xml
+12:21:55.863 INFO processor.OcropyBinarize - INPUT FILE 8 / PHYS_0009
+12:21:55.958 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0009'
+12:21:58.765 INFO ocrd.workspace.save_image_file - created file ID: FILE_0009_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0009_OCR-D-BIN.IMG-BIN.png
+12:21:58.766 INFO processor.OcropyBinarize - created file ID: FILE_0009_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0009_OCR-D-BIN.xml
+12:21:58.766 INFO processor.OcropyBinarize - INPUT FILE 9 / PHYS_0010
+12:21:58.861 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0010'
+12:22:01.680 INFO ocrd.workspace.save_image_file - created file ID: FILE_0010_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0010_OCR-D-BIN.IMG-BIN.png
+12:22:01.681 INFO processor.OcropyBinarize - created file ID: FILE_0010_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0010_OCR-D-BIN.xml
+12:22:01.682 INFO processor.OcropyBinarize - INPUT FILE 10 / PHYS_0011
+12:22:01.777 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0011'
+12:22:04.585 INFO ocrd.workspace.save_image_file - created file ID: FILE_0011_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0011_OCR-D-BIN.IMG-BIN.png
+12:22:04.585 INFO processor.OcropyBinarize - created file ID: FILE_0011_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0011_OCR-D-BIN.xml
+12:22:04.586 INFO processor.OcropyBinarize - INPUT FILE 11 / PHYS_0012
+12:22:04.680 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0012'
+12:22:07.505 INFO ocrd.workspace.save_image_file - created file ID: FILE_0012_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0012_OCR-D-BIN.IMG-BIN.png
+12:22:07.506 INFO processor.OcropyBinarize - created file ID: FILE_0012_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0012_OCR-D-BIN.xml
+12:22:07.506 INFO processor.OcropyBinarize - INPUT FILE 12 / PHYS_0013
+12:22:07.601 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0013'
+12:22:10.436 INFO ocrd.workspace.save_image_file - created file ID: FILE_0013_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0013_OCR-D-BIN.IMG-BIN.png
+12:22:10.444 INFO processor.OcropyBinarize - created file ID: FILE_0013_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0013_OCR-D-BIN.xml
+12:22:10.444 INFO processor.OcropyBinarize - INPUT FILE 13 / PHYS_0014
+12:22:10.539 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0014'
+12:22:13.368 INFO ocrd.workspace.save_image_file - created file ID: FILE_0014_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0014_OCR-D-BIN.IMG-BIN.png
+12:22:13.369 INFO processor.OcropyBinarize - created file ID: FILE_0014_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0014_OCR-D-BIN.xml
+12:22:13.369 INFO processor.OcropyBinarize - INPUT FILE 14 / PHYS_0015
+12:22:13.466 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0015'
+12:22:16.305 INFO ocrd.workspace.save_image_file - created file ID: FILE_0015_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0015_OCR-D-BIN.IMG-BIN.png
+12:22:16.306 INFO processor.OcropyBinarize - created file ID: FILE_0015_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0015_OCR-D-BIN.xml
+12:22:16.306 INFO processor.OcropyBinarize - INPUT FILE 15 / PHYS_0016
+12:22:16.400 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0016'
+12:22:19.261 INFO ocrd.workspace.save_image_file - created file ID: FILE_0016_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0016_OCR-D-BIN.IMG-BIN.png
+12:22:19.262 INFO processor.OcropyBinarize - created file ID: FILE_0016_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0016_OCR-D-BIN.xml
+12:22:19.262 INFO processor.OcropyBinarize - INPUT FILE 16 / PHYS_0017
+12:22:19.359 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0017'
+12:22:22.202 INFO ocrd.workspace.save_image_file - created file ID: FILE_0017_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0017_OCR-D-BIN.IMG-BIN.png
+12:22:22.203 INFO processor.OcropyBinarize - created file ID: FILE_0017_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0017_OCR-D-BIN.xml
+12:22:22.203 INFO processor.OcropyBinarize - INPUT FILE 17 / PHYS_0018
+12:22:22.299 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0018'
+12:22:25.144 INFO ocrd.workspace.save_image_file - created file ID: FILE_0018_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0018_OCR-D-BIN.IMG-BIN.png
+12:22:25.145 INFO processor.OcropyBinarize - created file ID: FILE_0018_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0018_OCR-D-BIN.xml
+12:22:25.145 INFO processor.OcropyBinarize - INPUT FILE 18 / PHYS_0019
+12:22:25.242 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0019'
+12:22:28.079 INFO ocrd.workspace.save_image_file - created file ID: FILE_0019_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0019_OCR-D-BIN.IMG-BIN.png
+12:22:28.080 INFO processor.OcropyBinarize - created file ID: FILE_0019_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0019_OCR-D-BIN.xml
+12:22:28.080 INFO processor.OcropyBinarize - INPUT FILE 19 / PHYS_0020
+12:22:28.175 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0020'
+12:22:31.032 INFO ocrd.workspace.save_image_file - created file ID: FILE_0020_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0020_OCR-D-BIN.IMG-BIN.png
+12:22:31.040 INFO processor.OcropyBinarize - created file ID: FILE_0020_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0020_OCR-D-BIN.xml
+12:22:31.040 INFO processor.OcropyBinarize - INPUT FILE 20 / PHYS_0021
+12:22:31.137 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0021'
+12:22:33.996 INFO ocrd.workspace.save_image_file - created file ID: FILE_0021_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0021_OCR-D-BIN.IMG-BIN.png
+12:22:33.997 INFO processor.OcropyBinarize - created file ID: FILE_0021_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0021_OCR-D-BIN.xml
+12:22:33.997 INFO processor.OcropyBinarize - INPUT FILE 21 / PHYS_0022
+12:22:34.091 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0022'
+12:22:36.952 INFO ocrd.workspace.save_image_file - created file ID: FILE_0022_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0022_OCR-D-BIN.IMG-BIN.png
+12:22:36.961 INFO processor.OcropyBinarize - created file ID: FILE_0022_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0022_OCR-D-BIN.xml
+12:22:36.961 INFO processor.OcropyBinarize - INPUT FILE 22 / PHYS_0023
+12:22:37.058 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0023'
+12:22:39.907 INFO ocrd.workspace.save_image_file - created file ID: FILE_0023_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0023_OCR-D-BIN.IMG-BIN.png
+12:22:39.908 INFO processor.OcropyBinarize - created file ID: FILE_0023_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0023_OCR-D-BIN.xml
+12:22:39.908 INFO processor.OcropyBinarize - INPUT FILE 23 / PHYS_0024
+12:22:40.001 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0024'
+12:22:42.840 INFO ocrd.workspace.save_image_file - created file ID: FILE_0024_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0024_OCR-D-BIN.IMG-BIN.png
+12:22:42.841 INFO processor.OcropyBinarize - created file ID: FILE_0024_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0024_OCR-D-BIN.xml
+12:22:42.841 INFO processor.OcropyBinarize - INPUT FILE 24 / PHYS_0025
+12:22:42.931 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0025'
+12:22:45.934 INFO ocrd.workspace.save_image_file - created file ID: FILE_0025_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0025_OCR-D-BIN.IMG-BIN.png
+12:22:45.935 INFO processor.OcropyBinarize - created file ID: FILE_0025_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0025_OCR-D-BIN.xml
+12:22:45.935 INFO processor.OcropyBinarize - INPUT FILE 25 / PHYS_0026
+12:22:46.044 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0026'
+12:22:49.747 INFO ocrd.workspace.save_image_file - created file ID: FILE_0026_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0026_OCR-D-BIN.IMG-BIN.png
+12:22:49.748 INFO processor.OcropyBinarize - created file ID: FILE_0026_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0026_OCR-D-BIN.xml
+12:22:49.748 INFO processor.OcropyBinarize - INPUT FILE 26 / PHYS_0027
+12:22:49.863 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0027'
+12:22:53.557 INFO ocrd.workspace.save_image_file - created file ID: FILE_0027_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0027_OCR-D-BIN.IMG-BIN.png
+12:22:53.558 INFO processor.OcropyBinarize - created file ID: FILE_0027_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0027_OCR-D-BIN.xml
+12:22:53.558 INFO processor.OcropyBinarize - INPUT FILE 27 / PHYS_0028
+12:22:53.676 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0028'
+12:22:57.647 INFO ocrd.workspace.save_image_file - created file ID: FILE_0028_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0028_OCR-D-BIN.IMG-BIN.png
+12:22:57.648 INFO processor.OcropyBinarize - created file ID: FILE_0028_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0028_OCR-D-BIN.xml
+12:22:57.648 INFO processor.OcropyBinarize - INPUT FILE 28 / PHYS_0029
+12:22:57.738 INFO processor.OcropyBinarize - About to binarize page 'PHYS_0029'
+12:23:00.588 INFO ocrd.workspace.save_image_file - created file ID: FILE_0029_OCR-D-BIN.IMG-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0029_OCR-D-BIN.IMG-BIN.png
+12:23:00.588 INFO processor.OcropyBinarize - created file ID: FILE_0029_OCR-D-BIN, file_grp: OCR-D-BIN, path: OCR-D-BIN/FILE_0029_OCR-D-BIN.xml
+12:23:00.589 INFO ocrd.process.profile - Executing processor 'ocrd-cis-ocropy-binarize' took 90.920448s (wall) 88.824027s (CPU)( [--input-file-grp='DEFAULT' --output-file-grp='OCR-D-BIN' --parameter='{"method": "ocropy", "threshold": 0.5, "grayscale": false, "maxskew": 0.0, "noise_maxsize": 0, "dpi": 0, "level-of-operation": "page"}' --page-id='']
+12:23:00.589 INFO ocrd.workspace.save_mets - Saving mets '/data/mets.xml'

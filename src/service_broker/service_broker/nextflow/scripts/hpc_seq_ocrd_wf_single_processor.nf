@@ -6,9 +6,9 @@ params.workspace = "$projectDir/ocrd-workspace/"
 params.mets = "$projectDir/ocrd-workspace/mets.xml"
 params.file_group = "DEFAULT"
 params.reads = "$projectDir/ocrd-workspace/DEFAULT"
-params.tempdir = "null"
+params.volumedir = "null"
 
-// nextflow run <my script> --tempdir TEMPDIR
+// nextflow run <my script> --volumedir TEMPDIR
 // Then, the parameter is accessed with: params.tempdir
 
 // log pipeline parameters to the console
@@ -18,7 +18,7 @@ log.info """\
   workpace      : ${params.workspace}
   mets          : ${params.mets}
   file_group    : ${params.file_group}
-  tempdir       : ${params.tempdir}
+  volumedir      : ${params.volumedir}
   """
   .stripIndent()
 
@@ -35,7 +35,7 @@ process download_workspace {
 
   script:
   """
-  singularity exec --bind ${params.tempdir} docker://ocrd/all:maximum ocrd workspace find --file-grp ${file_group} --download --wait 1
+  singularity exec --bind ${params.volumedir} docker://ocrd/all:maximum ocrd workspace find --file-grp ${file_group} --download --wait 1
   """
 }
 
@@ -51,7 +51,7 @@ process ocrd_cis_ocropy_binarize {
   
   script:
   """
-  singularity exec --bind ${params.tempdir} docker://ocrd/all:maximum ocrd-cis-ocropy-binarize -m ${mets_file} -I ${dir_name} -O "OCR-D-BIN"
+  singularity exec --bind ${params.volumedir} docker://ocrd/all:maximum ocrd-cis-ocropy-binarize -m ${mets_file} -I ${dir_name} -O "OCR-D-BIN"
   """
 }
 

@@ -37,16 +37,21 @@ def broker_cli():
 @click.option('-i', '--hpc-key-path',
               default=HPC_KEY_PATH,
               help='The path of the key file used for authentication.')
+@click.option('-m', '--use-broker-mockup',
+              default=False,
+              help='Toggle between HPC and Local execution')
 def start_broker(rabbit_mq_host,
                  rabbit_mq_port,
                  hpc_host,
                  hpc_username,
-                 hpc_key_path):
+                 hpc_key_path,
+                 use_broker_mockup):
     service_broker = ServiceBroker(rabbit_mq_host=rabbit_mq_host,
                                    rabbit_mq_port=rabbit_mq_port,
                                    hpc_host=hpc_host,
                                    hpc_username=hpc_username,
-                                   hpc_key_path=hpc_key_path)
+                                   hpc_key_path=hpc_key_path,
+                                   use_broker_mockup=use_broker_mockup)
     print(f"INFO: Waiting for messages. To exit press CTRL+C.")
     service_broker.start()
 

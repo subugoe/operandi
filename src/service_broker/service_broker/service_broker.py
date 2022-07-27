@@ -1,6 +1,8 @@
 import os.path
 import shutil
 import requests
+import subprocess
+import shlex
 from clint.textui import progress
 from .ssh_communication import SSHCommunication
 from priority_queue.consumer import Consumer
@@ -17,9 +19,6 @@ from .constants import (
 # TODO: Implement the entire service broker properly
 # Currently the functions are not modularized well enough
 
-# Set to True if you have the credentials to use the HPC
-submitting_enabled = True
-
 
 class ServiceBroker:
     def __init__(self,
@@ -27,8 +26,11 @@ class ServiceBroker:
                  rabbit_mq_port=RABBIT_MQ_PORT,
                  hpc_host=HPC_HOST,
                  hpc_username=HPC_USERNAME,
-                 hpc_key_path=HPC_KEY_PATH):
+                 hpc_key_path=HPC_KEY_PATH,
+                 use_broker_mockup=False):
         self._module_path = os.path.dirname(__file__)
+        self._home_dir_path = os.path.expanduser("~")
+        self._use_broker_mockup = use_broker_mockup
 
         self.consumer = Consumer(
             username="operandi-broker",
@@ -45,20 +47,20 @@ class ServiceBroker:
         # When running inside the container,
         # disable the self.ssh related commands manually!
 
-        global submitting_enabled
-
-        if submitting_enabled:
+        if self._use_broker_mockup:
+            self.ssh = None
+            print("SSH disabled. Nothing will be submitted to the HPC.")
+            print("The mockup version of the Service broker will be used.")
+        else:
             self.ssh = SSHCommunication(hpc_host=hpc_host,
                                         hpc_username=hpc_username,
                                         hpc_key_path=hpc_key_path,)
             print("SSH connection successful")
-        else:
-            self.ssh = None
-            print("SSH disabled. Nothing will be submitted to the HPC.")
 
     @staticmethod
     def download_mets_file(path_to_download, mets_url):
         filename = f"{path_to_download}/mets.xml"
+        print(f"Downloading to: {path_to_download}/mets.xml")
 
         try:
             response = requests.get(mets_url, stream=True)
@@ -97,12 +99,12 @@ class ServiceBroker:
     #               - mets.xml
     ###########################################################
     # TODO: provide a better way for configuring paths
-    def prepare_workspace(self, mets_url, workspace_name):
+    def prepare_hpc_workspace(self, mets_url, workspace_name):
         base_script_path = f"{self._module_path}/batch_scripts/base_script.sh"
         nextflow_config_path = f"{self._module_path}/nextflow/configs/nextflow.config"
-        nextflow_script_path = f"{self._module_path}/nextflow/scripts/seq_ocrd_wf_single_processor.nf"
+        nextflow_script_path = f"{self._module_path}/nextflow/scripts/hpc_seq_ocrd_wf_single_processor.nf"
 
-        nextflow_workspaces_path = f"{self._module_path}/nextflow_workspaces"
+        nextflow_workspaces_path = f"{self._home_dir_path}/OPERANDI_DATA/ws_hpc"
         current_workspace_path = f"{nextflow_workspaces_path}/{workspace_name}"
         bin_path = f"{current_workspace_path}/bin"
         ocrd_workspace_path = f"{bin_path}/ocrd-workspace"
@@ -125,10 +127,49 @@ class ServiceBroker:
 
         if not os.path.exists(ocrd_workspace_path):
             os.makedirs(ocrd_workspace_path)
-            self.download_mets_file(ocrd_workspace_path, mets_url)
+
+        self.download_mets_file(ocrd_workspace_path, mets_url)
+
+    ###########################################################
+    # Packs together the following:
+    # a nextflow script
+    # an ocrd-workspace/a mets file
+
+    # Tree structure of the nextflow workspace:
+    # nextflow_workspaces(dir):
+    #   - nextflow_workspace_name(dir)
+    #       - base_script.sh
+    #       - bin(dir)
+    #           - nextflow.config
+    #           - seq_ocrd_wf_single_processor.nf (nextflow script)
+    #           - ocrd-workspace(dir)
+    #               - mets.xml
+    ###########################################################
+    # TODO: provide a better way for configuring paths
+    def prepare_local_workspace(self, mets_url, workspace_name):
+        nextflow_script_path = f"{self._module_path}/nextflow/scripts/local_seq_ocrd_wf_single_processor.nf"
+        nextflow_workspaces_path = f"{self._home_dir_path}/OPERANDI_DATA/ws_local"
+        current_workspace_path = f"{nextflow_workspaces_path}/{workspace_name}"
+        bin_path = f"{current_workspace_path}/bin"
+        ocrd_workspace_path = f"{bin_path}/ocrd-workspace"
+
+        if not os.path.exists(bin_path):
+            # Under normal circumstances workspace names should not be duplicated
+            # If that is the case, this call should raise an exception
+            # For testing purposes currently exists_ok is set to True
+            # to avoid the exception
+            os.makedirs(bin_path, exist_ok=True)
+
+        if os.path.exists(nextflow_script_path):
+            shutil.copy2(nextflow_script_path, bin_path)
+
+        if not os.path.exists(ocrd_workspace_path):
+            os.makedirs(ocrd_workspace_path)
+
+        self.download_mets_file(ocrd_workspace_path, mets_url)
 
     def submit_files_of_workspace(self, workspace_name, remove_local=True):
-        source_path = f"{self._module_path}/nextflow_workspaces/{workspace_name}"
+        source_path = f"{self._home_dir_path}/OPERANDI_DATA/ws_hpc/{workspace_name}"
         self.ssh.put_directory(source=source_path,
                                destination=self.ssh.home_path,
                                recursive=True)
@@ -138,7 +179,21 @@ class ServiceBroker:
         if remove_local:
             shutil.rmtree(source_path)
 
-    def trigger_execution_for_workspace(self, workspace_name):
+    def trigger_local_execution(self, workspace_name):
+        source_path = f"{self._home_dir_path}/OPERANDI_DATA/ws_local/{workspace_name}"
+        nextflow_script_path = f"{source_path}/bin/local_seq_ocrd_wf_single_processor.nf"
+        workspace_path = f"{source_path}/bin/ocrd-workspace"
+        nextflow_command = f"nextflow run {nextflow_script_path} --volumedir {workspace_path} -with-report"
+        out_path = open(f"{source_path}/output.txt", 'w')
+        cwd = os.getcwd()
+        os.chdir(source_path)
+        output = subprocess.call(shlex.split(nextflow_command),
+                                 stdout=out_path)
+        os.chdir(cwd)
+        out_path.close()
+        return output
+
+    def trigger_hpc_execution(self, workspace_name):
         # This is the batch script submitted to the SLURM scheduler in HPC
         base_script_path = f"{self.ssh.home_path}/{workspace_name}/base_script.sh"
 
@@ -168,13 +223,21 @@ class ServiceBroker:
 
         if body:
             mets_url, mets_id = body.decode('utf8').split(',')
-            self.prepare_workspace(mets_url=mets_url, workspace_name=mets_id)
-
-            global submitting_enabled
-
-            if submitting_enabled:
+            if self._use_broker_mockup:
+                print(f"Submitting files to HPC is disabled!")
+                print(f"Local execution of Nextflow will be performed.")
+                self.consumer.reply_job_id(cluster_job_id="Running locally, no ID")
+                self.prepare_local_workspace(mets_url=mets_url, workspace_name=mets_id)
+                output = self.trigger_local_execution(workspace_name=mets_id)
+                if output == 0:
+                    print(f"Local execution of Nextflow was successful.")
+                else:
+                    print(f"There were problems with the local execution.")
+                    print(f"check the log files!")
+            else:
+                self.prepare_hpc_workspace(mets_url=mets_url, workspace_name=mets_id)
                 self.submit_files_of_workspace(workspace_name=mets_id)
-                return_code, err, output = self.trigger_execution_for_workspace(workspace_name=mets_id)
+                return_code, err, output = self.trigger_hpc_execution(workspace_name=mets_id)
 
                 # Job submitted successfully
                 if return_code == 0:
@@ -188,7 +251,3 @@ class ServiceBroker:
                 else:
                     # No job ID assigned, failed
                     self.consumer.reply_job_id(cluster_job_id="No assigned ID")
-            else:
-                print(f"Submitting files to HPC is disabled!")
-                print(f"Local execution of Nextflow will be performed.")
-                self.consumer.reply_job_id(cluster_job_id="SSH to HPC disabled")

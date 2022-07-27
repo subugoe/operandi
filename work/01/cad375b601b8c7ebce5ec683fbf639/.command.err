@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "/usr/local/bin/ocrd", line 12, in <module>
+    sys.exit(cli())
+  File "/usr/local/lib/python3.6/dist-packages/click/core.py", line 1128, in __call__
+    return self.main(*args, **kwargs)
+  File "/usr/local/lib/python3.6/dist-packages/click/core.py", line 1053, in main
+    rv = self.invoke(ctx)
+  File "/usr/local/lib/python3.6/dist-packages/click/core.py", line 1659, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+  File "/usr/local/lib/python3.6/dist-packages/click/core.py", line 1659, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+  File "/usr/local/lib/python3.6/dist-packages/click/core.py", line 1395, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/usr/local/lib/python3.6/dist-packages/click/core.py", line 754, in invoke
+    return __callback(*args, **kwargs)
+  File "/usr/local/lib/python3.6/dist-packages/click/decorators.py", line 84, in new_func
+    return ctx.invoke(f, obj, *args, **kwargs)
+  File "/usr/local/lib/python3.6/dist-packages/click/core.py", line 754, in invoke
+    return __callback(*args, **kwargs)
+  File "/build/core/ocrd/ocrd/cli/workspace.py", line 398, in workspace_find
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+  File "/build/core/ocrd/ocrd/workspace.py", line 78, in __init__
+    mets = OcrdMets(filename=self.mets_target)
+  File "/build/core/ocrd_models/ocrd_models/ocrd_mets.py", line 59, in __init__
+    super(OcrdMets, self).__init__(**kwargs)
+  File "/build/core/ocrd_models/ocrd_models/ocrd_xml_base.py", line 34, in __init__
+    raise Exception('File does not exist: %s' % filename)
+Exception: File does not exist: /data/mets.xml

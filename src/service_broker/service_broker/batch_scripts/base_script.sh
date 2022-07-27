@@ -49,7 +49,7 @@ cd "/scratch1/users/${USER}/$1/bin" || exit
 echo "DOWNLOADING THE IMAGES FROM METS FILE ... DUMMY"
 
 # execute the main Nextflow script
-nextflow run seq_ocrd_wf_single_processor.nf --tempdir "/scratch1/users/${USER}/$1/bin"
+nextflow run seq_ocrd_wf_single_processor.nf --volumedir "/scratch1/users/${USER}/$1/bin"
 
 # Delete the results from the scratch
 # rm -rf "/scratch1/users/${USER}/$1"
