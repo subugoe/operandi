@@ -1,1 +1,0 @@
-2022-07-27 13:16:38	2.2s	romantic_snyder	ERR	08db5174e87727c3c656471e16f3a620	b95f1991-0875-46d3-bfec-ebd37478c4c4	nextflow run /home/mm/.local/lib/python3.8/site-packages/service_broker/nextflow_workspaces_local/PPN631277528/bin/local_seq_ocrd_wf_single_processor.nf -with-report
