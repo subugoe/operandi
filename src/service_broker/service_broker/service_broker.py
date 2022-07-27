@@ -60,7 +60,6 @@ class ServiceBroker:
     @staticmethod
     def download_mets_file(path_to_download, mets_url):
         filename = f"{path_to_download}/mets.xml"
-        print(f"Downloading to: {path_to_download}/mets.xml")
 
         try:
             response = requests.get(mets_url, stream=True)
@@ -183,13 +182,11 @@ class ServiceBroker:
         source_path = f"{self._home_dir_path}/OPERANDI_DATA/ws_local/{workspace_name}"
         nextflow_script_path = f"{source_path}/bin/local_seq_ocrd_wf_single_processor.nf"
         workspace_path = f"{source_path}/bin/ocrd-workspace"
-        nextflow_command = f"nextflow run {nextflow_script_path} --volumedir {workspace_path} -with-report"
+        nextflow_command = f"nextflow -bg run {nextflow_script_path} --volumedir {workspace_path} -with-report"
         out_path = open(f"{source_path}/output.txt", 'w')
-        cwd = os.getcwd()
-        os.chdir(source_path)
         output = subprocess.call(shlex.split(nextflow_command),
+                                 cwd=source_path,
                                  stdout=out_path)
-        os.chdir(cwd)
         out_path.close()
         return output
 
@@ -224,16 +221,13 @@ class ServiceBroker:
         if body:
             mets_url, mets_id = body.decode('utf8').split(',')
             if self._use_broker_mockup:
-                print(f"Submitting files to HPC is disabled!")
-                print(f"Local execution of Nextflow will be performed.")
                 self.consumer.reply_job_id(cluster_job_id="Running locally, no ID")
                 self.prepare_local_workspace(mets_url=mets_url, workspace_name=mets_id)
                 output = self.trigger_local_execution(workspace_name=mets_id)
                 if output == 0:
-                    print(f"Local execution of Nextflow was successful.")
+                    print(f"{mets_id}, local execution of Nextflow has started.")
                 else:
-                    print(f"There were problems with the local execution.")
-                    print(f"check the log files!")
+                    print(f"{mets_id}, there were problems with the local execution.")
             else:
                 self.prepare_hpc_workspace(mets_url=mets_url, workspace_name=mets_id)
                 self.submit_files_of_workspace(workspace_name=mets_id)

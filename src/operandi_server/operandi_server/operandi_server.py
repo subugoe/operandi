@@ -1,8 +1,8 @@
 import os
 import datetime
-from concurrent.futures import ThreadPoolExecutor
-import asyncio
+from shutil import make_archive
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from typing import Optional
 from priority_queue.producer import Producer
 from priority_queue.constants import (
@@ -27,6 +27,7 @@ class OperandiServer:
         self.port = port
         self.server_path = SERVER_PATH
         self.preserve_requests = PRESERVE_REQUESTS
+        self._home_dir_path = os.path.expanduser("~")
 
         self.vd18_id_dict = {}
         self.producer = Producer(
@@ -49,16 +50,6 @@ class OperandiServer:
                 "description": "The URL of the OPERANDI server.",
             }],
         )
-
-        """
-        # On startup event creates a ThreadPoolExecutor
-        @self.app.on_event("startup")
-        def set_default_executor():
-            loop = asyncio.get_running_loop()
-            loop.set_default_executor(
-                ThreadPoolExecutor(max_workers=4)
-            )
-        """
 
         # On startup reads the dictionary of IDs that were previously submitted
         # If PRESERVE_REQUESTS is True
@@ -140,10 +131,43 @@ class OperandiServer:
             # TODO: Thread
             # Blocks here till the job id is received back
             job_id = self.producer.receive_job_id()
-            print(f"JobID:{job_id}")
+            # print(f"JobID:{job_id}")
 
             message = f"Mets URL posted successfully!"
             return {"message": message, "mets_url": mets_url, "job_id": job_id}
+
+        # List available workspaces
+        @self.app.get("/workspaces/")
+        async def get_workspaces():
+            local_workspace_path = f"{self._home_dir_path}/OPERANDI_DATA/ws_local"
+            # For the Alpha release only mockup is used, so no hpc workspace checked
+            # hpc_workspace_path = f"{self._home_dir_path}/OPERANDI_DATA/ws_hpc"
+
+            workspaces = []
+            for filename in os.listdir(local_workspace_path):
+                workspace = os.path.join(local_workspace_path, filename)
+                if os.path.isdir(workspace):
+                    workspaces.append(filename)
+
+            return {"workspaces": workspaces}
+
+        # Download workspace
+        @self.app.get("/workspaces/workspace_id")
+        async def get_workspaces(workspace_id: str):
+            local_workspace_path = f"{self._home_dir_path}/OPERANDI_DATA/ws_local"
+            workspace_path = f"{local_workspace_path}/{workspace_id}"
+            # For the Alpha release only mockup is used, so no hpc workspace checked
+            # hpc_workspace_path = f"{self._home_dir_path}/OPERANDI_DATA/ws_hpc"
+
+            if os.path.exists(workspace_path) and \
+                    os.path.isdir(workspace_path):
+                make_archive(workspace_path, "zip", local_workspace_path)
+                return FileResponse(path=f"{workspace_path}.zip",
+                                    media_type='application/zip',
+                                    filename=f"{workspace_id}.zip")
+            else:
+                message = f"workspace with id: {workspace_id} was not found!"
+                return {"message": message}
 
         # --- Callback functions called based on Service broker responses --- #
         # Callback for jobID - currently not used, will be used by a thread
