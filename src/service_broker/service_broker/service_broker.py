@@ -219,19 +219,19 @@ class ServiceBroker:
         print(f"INFO: A METS URI has been consumed: {body}")
 
         if body:
-            mets_url, mets_id = body.decode('utf8').split(',')
+            mets_url, workspace_id = body.decode('utf8').split(',')
             if self._use_broker_mockup:
                 self.consumer.reply_job_id(cluster_job_id="Running locally, no ID")
-                self.prepare_local_workspace(mets_url=mets_url, workspace_name=mets_id)
-                output = self.trigger_local_execution(workspace_name=mets_id)
+                self.prepare_local_workspace(mets_url=mets_url, workspace_name=workspace_id)
+                output = self.trigger_local_execution(workspace_name=workspace_id)
                 if output == 0:
-                    print(f"{mets_id}, local execution of Nextflow has started.")
+                    print(f"{workspace_id}, local execution of Nextflow has started.")
                 else:
-                    print(f"{mets_id}, there were problems with the local execution.")
+                    print(f"{workspace_id}, there were problems with the local execution.")
             else:
-                self.prepare_hpc_workspace(mets_url=mets_url, workspace_name=mets_id)
-                self.submit_files_of_workspace(workspace_name=mets_id)
-                return_code, err, output = self.trigger_hpc_execution(workspace_name=mets_id)
+                self.prepare_hpc_workspace(mets_url=mets_url, workspace_name=workspace_id)
+                self.submit_files_of_workspace(workspace_name=workspace_id)
+                return_code, err, output = self.trigger_hpc_execution(workspace_name=workspace_id)
 
                 # Job submitted successfully
                 if return_code == 0:

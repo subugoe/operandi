@@ -44,7 +44,7 @@ class OperandiServer:
                 "name": "Apache 2.0",
                 "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
             },
-            version="0.0.1",
+            version="1.0.0",
             servers=[{
                 "url": self.server_path,
                 "description": "The URL of the OPERANDI server.",
@@ -121,8 +121,12 @@ class OperandiServer:
 
         # Used to accept Mets URLs from the user
         @self.app.post("/mets_url/")
-        async def post_mets_url(mets_url: str, mets_id: str):
-            publish_message = f"{mets_url},{mets_id}".encode('utf8')
+        async def post_mets_url(mets_url: str, workspace_id: str):
+            # Create a timestamp
+            timestamp = datetime.datetime.now().strftime("_%Y%m%d_%H%M")
+            # Append the timestamp at the end of the provided workspace_id
+            workspace_id += timestamp
+            publish_message = f"{mets_url},{workspace_id}".encode('utf8')
 
             # Send the posted mets_url to the priority queue
             self.producer.publish_mets_url(body=publish_message)
@@ -134,7 +138,7 @@ class OperandiServer:
             # print(f"JobID:{job_id}")
 
             message = f"Mets URL posted successfully!"
-            return {"message": message, "mets_url": mets_url, "job_id": job_id}
+            return {"message": message, "mets_url": mets_url, "workspace_id": workspace_id, "job_id": job_id}
 
         # List available workspaces
         @self.app.get("/workspaces/")
@@ -161,7 +165,7 @@ class OperandiServer:
 
             if os.path.exists(workspace_path) and \
                     os.path.isdir(workspace_path):
-                make_archive(workspace_path, "zip", local_workspace_path)
+                make_archive(workspace_path, "zip", workspace_path)
                 return FileResponse(path=f"{workspace_path}.zip",
                                     media_type='application/zip',
                                     filename=f"{workspace_id}.zip")
