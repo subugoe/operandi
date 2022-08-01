@@ -86,6 +86,12 @@ class OperandiServer:
             time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
             return {"message": message, "time": time}
 
+        """
+        HARVESTER RELATED API
+        This is currently disabled since we are planning
+        to move the Harvester in the architecture. The harvester will talk directly 
+        to the service broker, instead of going through the Operandi Server.
+        
         # Basic dummy requests support without appropriate response models
         @self.app.get("/vd18_ids/")
         async def get_vd18_ids(start: Optional[int] = None, end: Optional[int] = None):
@@ -118,6 +124,7 @@ class OperandiServer:
                 message = f"{vd18_id} is posted!"
 
             return {"message": message}
+        """
 
         # Used to accept Mets URLs from the user
         @self.app.post("/mets_url/")

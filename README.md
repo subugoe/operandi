@@ -7,7 +7,7 @@ OPERANDI is one of the implementation projects funded by the DFG initiative OCR-
 The goal of OPERANDI is to develop and build an OCR-D-based implementation package for mass full-text capture with improved throughput, while improving the quality of the results. At the same time, the goal is that the implementation package can also be used by other projects and institutions with comparable requirements. Two scenarios were identified during the pilot. In the first scenario, OCR generation is to take place for works that have already been digitized, resulting in mass full-text capture. In the second scenario, OCR generation for new works to be digitized will take place as part of the digitization process.
 
 ## 2. Accessing the development VM of OPERANDI
-CURRENTLY NOT UP-TO-DATE
+UP-TO-DATE
 
 This step is only for internal developers of OPERANDI.
 For installation from the source continue with the next step.
@@ -52,14 +52,14 @@ source $HOME/venv-operandi/bin/activate
 
 #### 4. Install the RabbitMQ Server (priority queue)
 
-3.1 First setup the repository with a single liner script:
+3.1 First set up the repository with a single liner script:
 ```sh
 sudo ./src/priority_queue/local_install/repo_setup.deb.sh
 ```
 
 3.2 Install RabbitMQ:
 
-Easy install:
+Easy installation:
 
 ```sh
 sudo ./src/priority_queue/local_install/install.sh
@@ -123,7 +123,7 @@ sudo systemctl start rabbitmq-server
 sudo rabbitmq-plugins enable rabbitmq_management
 ```
 
-4. Open 3 new terminals and activate `venv-operandi` in all of them.
+4. Open 2 new terminals and activate `venv-operandi` in all of them.
 ```sh
 source $HOME/venv-operandi/bin/activate
 ```
@@ -156,7 +156,7 @@ SSH connection successful
 INFO: Waiting for messages. To exit press CTRL+C.
 ```
 
-If you do not have HPC credentials for the SSH connection, then run the mockup broker for a local execution.
+If you do not have the HPC credentials for the SSH connection, then run the mockup broker for a local execution.
 Inside the development VM the ocrd/all:maximum docker image and Nextflow are already available.
 ```sh
 operandi-broker broker start -m True
@@ -170,6 +170,11 @@ docker pull ocrd/all:maximum
 Check the Nextflow installation guide [here](https://www.nextflow.io/docs/latest/getstarted.html).  
 
 7. In the third terminal start the Harvester
+
+NOTE: Skip step 7. Go to step 8. The harvester module is not up-to-date. The location of the harvester will change.
+The harvester will no longer talk to the Operandi server. Instead, there will be a direct communication 
+between the Harvester and the Service broker module over the RabbitMQ.
+
 ```sh
 operandi-harvester harvest start --limit 1
 ```
@@ -185,24 +190,59 @@ INFO: Mets URL will be submitted every 10 seconds.
 INFO: Posted successfully... PPN767935306
 ```
 
-8. Results
+8. Create a request and get the results
 
-Produced extra output on the OPERANDI Server Terminal:
+8.1. Submit a `mets_url` and provide a `workspace_id`. 
+
+A timestamp is added as a suffix to the provided `workspace_id`. The format of the timestamp is `_%Y%m%d_%H%M`. E.g., `2022-07-28 17:00` will become `_20220728_1700` as a suffix.
+
+Open a new terminal and submit your mets_url. Here is an example curl request:
 ```sh
-INFO:     127.0.0.1:56564 - "POST /vd18_ids/?vd18_id=PPN767935306&vd18_url=https://gdz.sub.uni-goettingen.de/mets/PPN767935306.mets.xml HTTP/1.1" 200 OK
+curl -X 'POST' \
+  'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528' \
+  -H 'accept: application/json' \
+  -d ''
+```
+Replace `mets_url=VALUE` and `workspace_id=VALUE` appropriately for your input. 
+Once you submit the `mets_url` and the `workspace_id`, the service broker creates a directory named `workspace_id_%Y%m%d_%H%M`, 
+downloads the mets file, and the images of fileGrp `DEFAULT` inside the mets file.
+Then the broker triggers a nextflow workflow on that workspace using the base nextflow script inside the service broker
+(the base nextflow script runs only the binarization processor). 
+Soon, we will support a way to provide the desired `fileGrp` to be used. 
+Moreover, we will offer several ready to run Nextflow scripts to choose from instead of running just the base Nextflow script.
+In addition, there will be a way to provide an OCR-D process workflow textfile which will be converted to a Nextflow script.
+Check [here](https://github.com/MehmedGIT/OtoN_Converter) for additional information on the OtoN (OCR-D to Nextflow) converter. 
+
+8.2. List available workspaces. 
+
+It shows all `workspace_id`'s currently available on the Operandi Server.
+
+E.g.:
+```sh
+curl -X 'GET' \
+  'http://localhost:8000/workspaces/' \
+  -H 'accept: application/json'
 ```
 
-Produced extra output on the Service Broker Terminal:
+8.3. Get the results
+
+Download the zip of a `workspace_id_timestamp`. Suggestion: first list the available `workspace_id`'s to find your 
+`workspace_id` with the timestamp suffix. Then replace `workspace_id=VALUE` appropriately.
+Set the output path of the zip appropriately, i.e., the download location of the zip.
+
+E.g.:
 ```sh
-URL: https://gdz.sub.uni-goettingen.de/mets/PPN767935306.mets.xml
-Workspace Name: PPN767935306
-[################################] 820/820 - 00:00:00
-Submitting files is commented out!
+curl -X 'GET' \
+  'http://localhost:8000/workspaces/workspace_id?workspace_id=PPN631277528_20220728_1700' \
+  -H 'accept: application/json' --output /operandi_results/PPN631277528.zip
 ```
 
-Currently, the submission of files to the HPC environment is deactivated.
-If you have the credentials to access the HPC, look inside the `service_broker.py`.
-Set the `submitting_enabled` to True.
+The zip file includes the following:
+1. A `bin` directory with the `ocrd-workspace` and the executed base nextflow script.
+2. A `work` directory that has detailed information on the processes executed with Nextflow (logs, outputs, errors etc.). 
+This is especially useful for debugging!
+3. A Nextflow report with execution details such as execution duration and used resources: `report.html` 
+4. An `output.txt` that holds the `stdout` of the current Nextflow execution.
 
 ## 5. Solutions to commonly occurring problems
 

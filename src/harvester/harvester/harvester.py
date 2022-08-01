@@ -13,6 +13,11 @@ from .constants import (
 )
 
 
+# TODO: The harvester module will change completely
+# Currently, the harvester communicates with the Service broker
+# over the Operandi Server. This should change. The harvester
+# will talk directly to the broker over the RabbitMQ.
+# The current Harvester section in the README file will also be removed.
 class Harvester:
     def __init__(self):
         self.vd18_file = VD18_IDS_FILE

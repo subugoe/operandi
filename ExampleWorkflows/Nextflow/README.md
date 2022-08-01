@@ -3,7 +3,7 @@
 ## Install Nextflow or use the VM dev environment
 
 1. Please check the [install documentation](https://www.nextflow.io/docs/latest/getstarted.html) of Nextflow and install it on your local machine.
-2. Alternatively, you could connect to our development VM (ssh cloud@141.5.98.252) and use the environment there (the team developers should have access).
+2. Alternatively, you could connect to our development VM (ssh cloud@141.5.99.32) and use the environment there (the development team should have an access).
 
 ## workflow1
 Inside this folder there are an `input` and an `output` folder.
