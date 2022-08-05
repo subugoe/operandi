@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  priority-queue:
+    image: rabbit-mq
+    container_name: rabbit-mq
+    hostname: rabbit-mq-host
+    build:
+      context: ./src
+      dockerfile: ./Dockerfile_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ~/.docker-conf/rabbitmq/etc/:/var/etc/rabbitmq/
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq/
+    networks:
+      - operandi
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "0.0.0.0", "5672" ]
+      interval: 120s
+      timeout: 30s
+      retries: 5
+
+  operandi-server:
+    image: operandi-server
+    container_name: operandi-server
+    build:
+      context: ./src
+      dockerfile: ./Dockerfile_server  
+    depends_on:
+      priority-queue:
+        condition: service_healthy
+    restart: on-failure
+    ports:
+      - "8000:8000"
+    networks:
+      - operandi
+    command: operandi-server server start --host 0.0.0.0 --port 8000 --rabbit-mq-host rabbit-mq-host
+
+  operandi-broker:
+    image: operandi-broker
+    container_name: operandi-broker
+    build:
+      context: ./src
+      dockerfile: ./Dockerfile_broker
+    depends_on:
+      priority-queue:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - operandi
+    command: operandi-broker broker start --rabbit-mq-host rabbit-mq-host
+
+networks:
+  operandi:
+    name: operandi
+    driver: bridge
+    driver_opts:                         
+      com.docker.network.driver.mtu: 1450
+

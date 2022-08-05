@@ -1,0 +1,6 @@
+requests==2.27.0
+robotframework-sshlibrary
+clint==0.5.1
+pydantic>=1.9.1
+pytest>=7.0.0
+click>=7
