@@ -33,10 +33,8 @@ class ServiceBroker:
 
         # Installation path of the module
         self._module_path = os.path.dirname(__file__)
-        self._data_path = f'{os.path.expanduser("~")}/operandi-data'
-        # self._data_path = OPERANDI_DATA_PATH
+        self._data_path = OPERANDI_DATA_PATH
         self._use_broker_mockup = use_broker_mockup
-
         self.consumer = self.initiate_consumer(rabbit_mq_host, rabbit_mq_port)
 
         # TODO: FIX THIS
@@ -77,7 +75,7 @@ class ServiceBroker:
         if os.path.exists(src_path):
             shutil.copy2(src_path, dst_path)
 
-        print(f"Copied from: {src_path}, to: {dst_path}")
+        # print(f"Copied from: {src_path}, to: {dst_path}")
 
     def _copy_nextflow_config(self, workspace_id):
         config_id = "nextflow.config"
@@ -91,7 +89,7 @@ class ServiceBroker:
         if os.path.exists(src_path):
             shutil.copy2(src_path, dst_path)
 
-        print(f"Copied from: {src_path}, to: {dst_path}")
+        # print(f"Copied from: {src_path}, to: {dst_path}")
 
     def _copy_nextflow_script(self, workspace_id, local):
         if local:
@@ -110,7 +108,7 @@ class ServiceBroker:
         if os.path.exists(src_path):
             shutil.copy2(src_path, dst_path)
 
-        print(f"Copied from: {src_path}, to: {dst_path}")
+        # print(f"Copied from: {src_path}, to: {dst_path}")
 
     def download_mets_file(self, mets_url, workspace_id, local):
         ocrd_workspace_dir = self._get_ocrd_workspace_dir(workspace_id, local=local)
@@ -200,13 +198,13 @@ class ServiceBroker:
             # Set location to hpc - ws_hpc
             location = "ws_hpc"
         nf_workspace_dir = f"{self._data_path}/{location}/{workspace_id}"
-        print(f"Getting nf_workspace_dir: {nf_workspace_dir}")
+        # print(f"Getting nf_workspace_dir: {nf_workspace_dir}")
         return nf_workspace_dir
 
     def _get_ocrd_workspace_dir(self, workspace_id, local):
         nf_workspace_dir = self._get_nf_workspace_dir(workspace_id, local)
         ocrd_workspace_dir = f"{nf_workspace_dir}/bin/ocrd-workspace"
-        print(f"Getting ocrd_workspace_dir: {ocrd_workspace_dir}")
+        # print(f"Getting ocrd_workspace_dir: {ocrd_workspace_dir}")
         return ocrd_workspace_dir
 
     def _get_nextflow_script(self, workspace_id, local):
@@ -217,7 +215,7 @@ class ServiceBroker:
         else:
             script_id = "hpc_nextflow.nf"
         nf_script_path = f"{nf_workspace_dir}/bin/{script_id}"
-        print(f"Getting nextflow_script: {nf_script_path}")
+        # print(f"Getting nextflow_script: {nf_script_path}")
         return nf_script_path
 
     @staticmethod
@@ -245,10 +243,6 @@ class ServiceBroker:
         nf_script_path = self._get_nextflow_script(workspace_id, local=True)
         nf_workspace_dir = self._get_nf_workspace_dir(workspace_id, local=True)
         ocrd_workspace_dir = self._get_ocrd_workspace_dir(workspace_id, local=True)
-
-        print(f"nf_script_path: {nf_script_path}")
-        print(f"nf_workspace_dir: {nf_workspace_dir}")
-        print(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
 
         nf_command = self._build_nf_command(nf_script_path, ocrd_workspace_dir)
         nf_out, nf_err = self._get_nf_out_err_paths(nf_workspace_dir)
