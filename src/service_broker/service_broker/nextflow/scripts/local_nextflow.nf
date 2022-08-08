@@ -6,19 +6,19 @@ params.workspace = "$projectDir/ocrd-workspace/"
 params.mets = "$projectDir/ocrd-workspace/mets.xml"
 params.file_group = "DEFAULT"
 params.reads = "$projectDir/ocrd-workspace/DEFAULT"
-params.volumedir = "null"
+params.volume_dir = "null"
 
-// nextflow run <my script> --volumedir TEMPDIR
+// nextflow run <my script> --volume_dir TEMPDIR
 // Then, the parameter is accessed with: params.tempdir
 
 // log pipeline parameters to the console
 log.info """\
-  O P E R A N D I - H P C - T E S T   P I P E L I N E
+  O P E R A N D I - L O C A L - T E S T   P I P E L I N E
   ===========================================
   workpace      : ${params.workspace}
   mets          : ${params.mets}
   file_group    : ${params.file_group}
-  volumedir     : ${params.volumedir}
+  volume_dir    : ${params.volume_dir}
   """
   .stripIndent()
 
@@ -35,7 +35,7 @@ process download_workspace {
 
   script:
   """
-  docker run --rm -v ${params.volumedir}:/data -w /data -- ocrd/all:maximum ocrd workspace find --file-grp ${file_group} --download --wait 1
+  docker run --rm -v ${params.volume_dir}:/data -w /data -- ocrd/all:maximum ocrd workspace find --file-grp ${file_group} --download --wait 1
   """
 }
 
@@ -51,7 +51,7 @@ process ocrd_cis_ocropy_binarize {
   
   script:
   """
-  docker run --rm -v ${params.volumedir}:/data -w /data -- ocrd/all:maximum ocrd-cis-ocropy-binarize -m ${mets_file} -I ${dir_name} -O "OCR-D-BIN"
+  docker run --rm -v ${params.volume_dir}:/data -w /data -- ocrd/all:maximum ocrd-cis-ocropy-binarize -m ${mets_file} -I ${dir_name} -O "OCR-D-BIN"
   """
 }
 
