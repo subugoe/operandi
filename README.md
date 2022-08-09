@@ -201,13 +201,14 @@ A timestamp is added as a suffix to the provided `workspace_id`. The format of t
 
 Open a new terminal and submit your mets_url. Here is an example curl request:
 ```sh
-curl -X 'POST' \
-  'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528' \
-  -H 'accept: application/json' \
-  -d ''
+curl -X 'POST' http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528
 ```
-Replace `mets_url=VALUE` and `workspace_id=VALUE` appropriately for your input. 
-Once you submit the `mets_url` and the `workspace_id`, the service broker creates a directory named `workspace_id_%Y%m%d_%H%M`, 
+Replace `mets_url=VALUE` and `workspace_id=VALUE` appropriately for your input.
+
+`Warning`: Note that in `mets_url=VALUE` the `:` and `/` are replaced with `%3A` and `%2F`, respectively.
+Do not just copy and paste a browser link.
+
+Once you submit the `mets_url` and the `workspace_id`, the service broker creates a directory named `workspace_id_%Y%m%d_%H%M`,
 downloads the mets file, and the images of fileGrp `DEFAULT` inside the mets file.
 Then the broker triggers a Nextflow workflow on that workspace using the base Nextflow script inside the service broker
 (the base Nextflow script runs only the binarization processor). 
@@ -223,22 +224,18 @@ It shows all `workspace_id`'s currently available on the Operandi Server.
 
 E.g.:
 ```sh
-curl -X 'GET' \
-  'http://localhost:8000/workspaces/' \
-  -H 'accept: application/json'
+curl -X 'GET' http://localhost:8000/workspaces/
 ```
 
 8.3. Get the results
 
 Download the zip of a `workspace_id_timestamp`. Suggestion: first list the available `workspace_id`'s to find your 
 `workspace_id` with the timestamp suffix. Then replace `workspace_id=VALUE` appropriately.
-Set the output path of the zip appropriately, i.e., the download location of the zip.
+Set the `output` path of the zip appropriately, i.e., the download location of the zip.
 
 E.g.:
 ```sh
-curl -X 'GET' \
-  'http://localhost:8000/workspaces/workspace_id?workspace_id=PPN631277528_20220728_1700' \
-  -H 'accept: application/json' --output ~/operandi_results/PPN631277528.zip
+curl -X 'GET' http://localhost:8000/workspaces/workspace_id?workspace_id=PPN631277528_20220728_1700 --output ~/operandi_results/PPN631277528.zip
 ```
 
 The zip file includes the following:
@@ -288,11 +285,8 @@ Follow these steps:
 1. Start the Operandi Server (check above for instructions)
 2. Start the Service Broker (check above for instructions)
 3. Instead of starting the Harvester, execute the following curl command to create a request
-```
-curl -X 'POST' \
-  'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&mets_id=PPN631277528' \
-  -H 'accept: application/json' \
-  -d ''
+```sh
+curl -X 'POST' http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528
 ```
 
 The request sends the URL of a mets file of a workspace and the ID of that mets file. 
