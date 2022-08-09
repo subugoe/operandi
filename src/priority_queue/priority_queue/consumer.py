@@ -32,16 +32,6 @@ class Consumer:
 
         self.__messageExchanger.channel.start_consuming()
 
-        """
-        self.__messageExchanger.channel.basic_consume(
-            queue=DEFAULT_QSB,
-            on_message_callback=callback,
-            auto_ack=True
-        )
-
-        self.__messageExchanger.channel.start_consuming()
-        """
-
     # TODO: Clarify that better
     # The consumer (service-broker) is also a producer
     # for replies back to the producer (operandi-server)
@@ -53,9 +43,3 @@ class Consumer:
             queue_name=DEFAULT_QBS,
             message=cluster_job_id
         )
-
-        """
-        # Publish the message body through the exchanger agent
-        self.__messageExchanger.basic_publish(routing_key=DEFAULT_QBS,
-                                              body=cluster_job_id)
-        """

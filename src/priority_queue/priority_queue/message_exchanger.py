@@ -130,29 +130,3 @@ class MessageExchanger:
         self.channel.basic_consume(queue=queue_name,
                                    on_message_callback=callback,
                                    auto_ack=auto_ack)
-
-    # DEPRECATED: basic_publish and basic_consume
-    def basic_publish(self, routing_key, body, durable=False):
-        if durable:
-            delivery_mode = pika.spec.PERSISTENT_DELIVERY_MODE
-        else:
-            delivery_mode = pika.spec.TRANSIENT_DELIVERY_MODE
-
-        message_properties = pika.BasicProperties(
-            delivery_mode=delivery_mode
-        )
-
-        # Publish the message body through the exchanger agent
-        self.channel.basic_publish(exchange=EXCHANGER,
-                                   routing_key=routing_key,
-                                   body=body,
-                                   properties=message_properties,
-                                   mandatory=True)
-
-    def basic_consume(self, queue_name, callback, auto_ack=False):
-        # The 'callback' is the function to be called
-        # when consuming from the respective queue
-        # Both modules declare their own callback handlers separately
-        self.channel.basic_consume(queue=queue_name,
-                                   on_message_callback=callback,
-                                   auto_ack=auto_ack)

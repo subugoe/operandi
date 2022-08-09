@@ -41,18 +41,6 @@ class Producer:
 
         self.__messageExchanger.channel.start_consuming()
 
-        """
-        # The 'callback' is the function to be called
-        # when consuming from the respective queue
-        self.__messageExchanger.channel.basic_consume(
-            queue=DEFAULT_QBS,
-            on_message_callback=callback,
-            auto_ack=True
-        )
-
-        self.__messageExchanger.channel.start_consuming()
-        """
-
     # For getting back the cluster Job ID
     # TODO: This should be implemented properly with a Thread
     # TODO: Thread

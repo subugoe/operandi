@@ -201,7 +201,7 @@ A timestamp is added as a suffix to the provided `workspace_id`. The format of t
 
 Open a new terminal and submit your mets_url. Here is an example curl request:
 ```sh
-curl -X 'POST' http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528
+curl -X 'POST' 'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528'
 ```
 Replace `mets_url=VALUE` and `workspace_id=VALUE` appropriately for your input.
 
@@ -224,7 +224,7 @@ It shows all `workspace_id`'s currently available on the Operandi Server.
 
 E.g.:
 ```sh
-curl -X 'GET' http://localhost:8000/workspaces/
+curl -X 'GET' 'http://localhost:8000/workspaces/'
 ```
 
 8.3. Get the results
@@ -235,7 +235,7 @@ Set the `output` path of the zip appropriately, i.e., the download location of t
 
 E.g.:
 ```sh
-curl -X 'GET' http://localhost:8000/workspaces/workspace_id?workspace_id=PPN631277528_20220728_1700 --output ~/operandi_results/PPN631277528.zip
+curl -X 'GET' 'http://localhost:8000/workspaces/workspace_id?workspace_id=PPN631277528_20220728_1700' --output ~/operandi_results/PPN631277528.zip
 ```
 
 The zip file includes the following:
@@ -286,11 +286,14 @@ Follow these steps:
 2. Start the Service Broker (check above for instructions)
 3. Instead of starting the Harvester, execute the following curl command to create a request
 ```sh
-curl -X 'POST' http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528
+curl -X 'POST' 'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528'
 ```
 
 The request sends the URL of a mets file of a workspace and the ID of that mets file. 
 
 To obtain results faster we use a small workspace with just 29 pages.
 
-4. A Job-ID is sent back as a response. Currently, this is the ID of the job running inside the HPC cluster. This will change in the future. There is no ID when using the mockup version of the service broker for local executions.
+4. A Job-ID is sent back as a response. 
+Currently, this is the ID of the job running inside the HPC cluster. 
+This will change in the future. 
+There is no ID when using the mockup version of the service broker for local executions.
