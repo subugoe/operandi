@@ -26,6 +26,21 @@ class SSHCommunication:
         self.__connection_index = None
         self.__login = None
 
+    def connect_to_hpc(self, host, username, key_path):
+        keyfile = self.__check_keyfile(key_path)
+        # Provided key path not found
+        if not keyfile:
+            print(f"Warning: HPC key path does not exist or is not readable!")
+            print(f"Checked path: \n{key_path}")
+            print(f"Trying to find the default key file.")
+            # Try to find keys in the default paths
+            keyfile = self.__check_default_keyfile()
+
+        self.__connection_index = self.__ssh.open_connection(host=host)
+        self.__login = self.__ssh.login_with_public_key(username=username,
+                                                        keyfile=keyfile,
+                                                        allow_agent=True)
+
     @staticmethod
     def __check_keyfile(hpc_key_path):
         if os.path.exists(hpc_key_path) and os.path.isfile(hpc_key_path):
@@ -41,21 +56,6 @@ class SSHCommunication:
         print(f"Default HPC key path do not exist or is not readable!")
         print(f"Checked paths: \n{HPC_KEY_PATH}")
         exit(1)
-
-    def connect_to_hpc(self, host, username, key_path):
-        keyfile = self.__check_keyfile(key_path)
-        # Provided key path not found
-        if not keyfile:
-            print(f"Warning: HPC key path does not exist or is not readable!")
-            print(f"Checked path: \n{key_path}")
-            print(f"Trying to find the default key file.")
-            # Try to find keys in the default paths
-            keyfile = self.__check_default_keyfile()
-
-        self.__connection_index = self.__ssh.open_connection(host=host)
-        self.__login = self.__ssh.login_with_public_key(username=username,
-                                                        keyfile=keyfile,
-                                                        allow_agent=True)
 
     # TODO: Handle the output and return_code instead of just returning them
     # Execute blocking commands
