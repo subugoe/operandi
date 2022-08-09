@@ -23,6 +23,7 @@ HPC_HOME_PATH: str = f"/home/users/{HPC_USERNAME}"
 
 # Secure copy protocol related constants
 SCP: str = "ON"
+# TODO: Test this inside the HPC environment
 SCP_PRESERVE_TIMES: str = "True"
 MODE: str = "0755"
 

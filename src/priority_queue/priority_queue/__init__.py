@@ -1,7 +1,7 @@
 __all__ = [
   "MessageExchanger",
   "Producer",
-  "Consumer",
+  "Consumer"
 ]
 
 from .message_exchanger import MessageExchanger

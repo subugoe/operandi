@@ -7,14 +7,14 @@ from clint.textui import progress
 from .ssh_communication import SSHCommunication
 from priority_queue.consumer import Consumer
 from priority_queue.constants import (
-    RABBIT_MQ_HOST,
-    RABBIT_MQ_PORT,
+    RABBIT_MQ_HOST as RMQ_HOST,
+    RABBIT_MQ_PORT as RMQ_PORT
 )
 from .constants import (
     HPC_HOST,
     HPC_USERNAME,
     HPC_KEY_PATH,
-    OPERANDI_DATA_PATH,
+    OPERANDI_DATA_PATH
 )
 
 
@@ -24,8 +24,8 @@ from .constants import (
 
 class ServiceBroker:
     def __init__(self,
-                 rabbit_mq_host=RABBIT_MQ_HOST,
-                 rabbit_mq_port=RABBIT_MQ_PORT,
+                 rabbit_mq_host=RMQ_HOST,
+                 rabbit_mq_port=RMQ_PORT,
                  hpc_host=HPC_HOST,
                  hpc_username=HPC_USERNAME,
                  hpc_key_path=HPC_KEY_PATH,
@@ -66,7 +66,7 @@ class ServiceBroker:
     def start(self):
         # Specify the callback method, i.e.,
         # what to happen every time something is consumed
-        self.__consumer.define_consuming_listener(
+        self.__consumer.define_queue_listener(
             callback=self.__mets_url_callback
         )
 

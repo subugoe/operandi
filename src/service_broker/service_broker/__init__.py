@@ -1,7 +1,7 @@
 __all__ = [
   "cli"
   "ServiceBroker",
-  "SSHCommunication",
+  "SSHCommunication"
 ]
 
 from .cli import cli

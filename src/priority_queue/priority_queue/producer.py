@@ -2,7 +2,7 @@ import time
 from .message_exchanger import MessageExchanger
 from .constants import (
     DEFAULT_QUEUE_SERVER_TO_BROKER as DEFAULT_QSB,
-    DEFAULT_QUEUE_BROKER_TO_SERVER as DEFAULT_QBS,
+    DEFAULT_QUEUE_BROKER_TO_SERVER as DEFAULT_QBS
 )
 
 
@@ -10,39 +10,38 @@ class Producer:
     """
     Producer class used by the OPERANDI Server
     """
-
     def __init__(self, username, password, rabbit_mq_host, rabbit_mq_port):
         self.__messageExchanger = MessageExchanger(username,
                                                    password,
                                                    rabbit_mq_host,
                                                    rabbit_mq_port)
 
-        # It is enough to declare them once, however, to avoid
-        # any dependencies (which module to start first), we
-        # declare these both inside the producer and the consumer
-
-        # Declare the queue to which the Producer pushes data
-        self.__messageExchanger.declare_queue(DEFAULT_QSB)
-        # Bind the queue to the Exchanger agent
-        self.__messageExchanger.bind_queue(DEFAULT_QSB)
-
-        # Declare the queue from which the Producer receives
-        # responses from the Service broker
-        self.__messageExchanger.declare_queue(DEFAULT_QBS)
-        # Bind the queue to the Exchanger agent
-        self.__messageExchanger.bind_queue(DEFAULT_QBS)
+        # It is enough to configure them once, however, to avoid
+        # any module dependencies, i.e. which module to start first,
+        # defaults are configured both in the Producer and the Consumer
+        self.__messageExchanger.configure_default_queues()
 
     def publish_mets_url(self, body):
-        self.__messageExchanger.basic_publish(routing_key=DEFAULT_QSB,
-                                              body=body)
+        self.__messageExchanger.send_to_queue(queue_name=DEFAULT_QSB, message=body)
+        # self.__messageExchanger.basic_publish(routing_key=DEFAULT_QSB, body=body)
 
     # TODO: Clarify that better
     # The producer (operandi-server) is also a consumer
     # for replies back from the consumer (service-broker)
 
     # Listens for messages coming from the QBS
-    def define_consuming_listener(self, callback):
-        # Define a basic consume method and its callback function
+    def define_queue_listener(self, callback):
+        # The 'callback' is the function to be called
+        # when a message is received from the queue
+        self.__messageExchanger.receive_from_queue(
+            queue_name=DEFAULT_QBS,
+            callback=callback,
+            auto_ack=True
+        )
+
+        self.__messageExchanger.channel.start_consuming()
+
+        """
         # The 'callback' is the function to be called
         # when consuming from the respective queue
         self.__messageExchanger.channel.basic_consume(
@@ -52,6 +51,7 @@ class Producer:
         )
 
         self.__messageExchanger.channel.start_consuming()
+        """
 
     # For getting back the cluster Job ID
     # TODO: This should be implemented properly with a Thread

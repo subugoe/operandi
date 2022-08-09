@@ -35,4 +35,3 @@ DEFAULT_QUEUE_BROKER_TO_SERVER = "broker_to_server"
 # For more advanced networking options:
 # check here: https://www.rabbitmq.com/configure.html
 # check here: https://www.rabbitmq.com/networking.html
-
