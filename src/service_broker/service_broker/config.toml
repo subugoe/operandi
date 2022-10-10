@@ -1,0 +1,11 @@
+# HPC related constants
+# Must be either gwdu101 or gwdu102 (have /scratch1 access)
+# gwdu103 has no access to /scratch1 (have /scratch2 access)
+hpc_host = "gwdu101.gwdg.de"
+hpc_username  = "mmustaf"
+
+# Secure copy protocol related constants
+scp = "ON"
+scp_preserve_times = "True"
+mode  = "0755"
+

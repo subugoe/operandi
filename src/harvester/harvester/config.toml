@@ -1,0 +1,12 @@
+# These are the VD18 constants
+vd18_url = "https://gdz.sub.uni-goettingen.de/mets/"
+vd18_mets_ext = ".mets.xml"
+
+# This is the time waited between the POST requests to the OPERANDI Server
+wait_time_between_submits = 10
+
+# This is the default POST method to OPERANDI
+# NOTE: Make sure that the OPERANDI Server's IP and PORT are correctly configured here!!!
+post_method_to_operandi = "http://0.0.0.0:8000/vd18_ids/"
+post_method_id_parameter = "vd18_id="
+post_method_url_parameter = "vd18_url="

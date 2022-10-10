@@ -1,5 +1,6 @@
 import os
 import datetime
+import time
 from shutil import make_archive
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
@@ -76,7 +77,7 @@ class OperandiServer:
 
             # Send the posted mets_url to the priority queue
             self.producer.publish_mets_url(body=publish_message)
-
+            time.sleep(5)
             # TODO: Replace this properly so a thread handles that
             # TODO: Thread
             # Blocks here till the job id is received back
