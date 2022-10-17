@@ -122,3 +122,34 @@ NOTES:
 1. `pipelined_wf_v1` does not work as intended. Having separate `watchPath` channels for each `step` process leads to a situation in which when the `DONE.txt` file is created inside the `input_folder` the `watch_input_ch` channel is closed without submitting that file to process `step1`. So, the `watchPath` of the `step1_out` folder gets stuck in an infinite loop since the file which ends the loop is never created! Manually creating the intended file inside the `step1_out` folder do the task, but this is not what we are trying to achieve in this example. For the same reason, `watchPath` of the `step2_out` gets stuck in an infinite loop as a chain reaction.
 
 2. `pipelined_wf_v2` works just as intended!
+
+## workflow7
+`rest_api_dynamic_branching.nf` script demonstrates rest api calls to outside world and dynamic branching based on the received message.
+
+What to do:
+1. Execute the script with `nextflow run rest_api_dynamic_branching.nf`
+
+What happens:
+1. A get request is sent to the operandi server.
+2. The json response got from the server contains field "time".
+3. The json is parsed and the last digit of the time is obtained, i.e., the last digit of the minutes.
+4. Based on the value of the digit a label with value `odd` or `even` is created.
+5. According to the value of the label the `branch_accordingly` process decides which script to execute.
+
+`dummy_pagewise.nf` script demonstrates how to execute dummy pagewise processing.
+
+What to do:
+1. Execute the script with `nextflow run dummy_pagewise.nf`
+
+What happens:
+1. A channel with values between 1 and 32 is created.
+2. Each value is passed to the `dummy_pagewise_binarize` process.
+3. 4 instances of the process are created (maxForks 4).
+4. Depending on the received value of `page_number` an output file with name `bin_*` is created with content `page_number`. The placeholder is replaced with the value of `page_number`.
+5. The output channel of the previous process is used as an input to the `dummy_pagewise_crop` process.
+6. 4 instances of the process are created again.
+7. Depending on the received files with names in format `bin_*` output files with format `crop_bin_*` are produced. The content of the files are again the symbolic `page_number`.
+
+Note: Sleeping for 2 seconds is introduced inside the `binarize` process to show that there is no waiting time between the `binarize` and `crop` processes. I.e., when the `binarize` is done with 4 pages, then `crop` starts working on these 4 pages while the `binarize` processes the next 4 pages.
+Follow the output on the console.
+
