@@ -369,7 +369,7 @@ process merging_mets {
   script:
     """
     source "${params.venv_path}"
-    ocrd workspace --mets ${mets_file} merge --force --no-copy-files ${params.workspace}/mets_${page_num}.xml
+    ocrd workspace --mets ${mets_file} merge --force --no-copy-files ${params.workspace}/mets_${page_num}.xml --page-id PHYS_${page_num}
     rm ${params.workspace}/mets_${page_num}.xml
     deactivate
     """
