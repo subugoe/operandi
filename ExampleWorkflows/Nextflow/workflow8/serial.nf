@@ -10,17 +10,30 @@ params.cleaning = "OFF" // nextflow run <script> --cleaning "ON"/"OFF"
 
 // log pipeline parameters to the console
 log.info """\
-  O C R - D - T E S T   P I P E L I N E - EXPERIMENTAL
-  ===========================================
-  environment   : ${params.venv_path}
-  workpace      : ${params.workspace}
-  mets          : ${params.mets}
-  file_group    : ${params.file_group}
+  O C R - D - W O R K F L O W 1 - Serial
+  ======================================================
+  environment       : ${params.venv_path}
+  workpace          : ${params.workspace}
+  mets              : ${params.mets}
+  file_group        : ${params.file_group}
+  cleaning          : ${params.cleaning}
+  
+  OCR-D WORKFLOW REPRESENTED WITH THIS NEXTFLOW SCRIPT:
+  ======================================================
+  ocrd process \\
+  "cis-ocropy-binarize -I OCR-D-IMG -O OCR-D-BIN" \\
+  "anybaseocr-crop -I OCR-D-BIN -O OCR-D-CROP" \\
+  "skimage-binarize -I OCR-D-CROP -O OCR-D-BIN2 -P method li" \\
+  "skimage-denoise -I OCR-D-BIN2 -O OCR-D-BIN-DENOISE -P level-of-operation page" \\
+  "tesserocr-deskew -I OCR-D-BIN-DENOISE -O OCR-D-BIN-DENOISE-DESKEW -P operation_level page" \\
+  "cis-ocropy-segment -I OCR-D-BIN-DENOISE-DESKEW -O OCR-D-SEG -P level-of-operation page" \\
+  "cis-ocropy-dewarp -I OCR-D-SEG -O OCR-D-SEG-LINE-RESEG-DEWARP" \\
+  "calamari-recognize -I OCR-D-SEG-LINE-RESEG-DEWARP -O OCR-D-OCR -P checkpoint_dir qurator-gt4histocr-1.0"
+  ======================================================
   """
   .stripIndent()
 
 process cleaning_mets {
-  maxForks 1
   echo true
 
   input:
@@ -33,20 +46,20 @@ process cleaning_mets {
   if (params.cleaning == "ON")
     """
     source "${params.venv_path}"
-    echo "Cleaning is turned on"
-    ocrd workspace --mets ${mets_file} remove-group --recursive --force THUMBS 
-    ocrd workspace --mets ${mets_file} remove-group --recursive --force PRESENTATION 
+    echo "Cleaning of unnecessary file groups is turned on"
+    ocrd workspace --mets ${mets_file} remove-group --recursive --force THUMBS
+    echo "THUMBS fileGrp was removed from the mets file"
+    ocrd workspace --mets ${mets_file} remove-group --recursive --force PRESENTATION
+    echo "PRESENTATION fileGrp was removed from the mets file"
     deactivate
     """
   else
     """
-    echo "Cleaning is turned off"
+    echo "Cleaning of unnecessary file groups is turned off"
     """
 }
 
 process binarize {
-  maxForks 1
-
   input:
     path mets_file
     val input_dir
@@ -64,8 +77,6 @@ process binarize {
 }
 
 process crop {
-  maxForks 1
-
   input:
     path mets_file
     val input_dir
@@ -83,8 +94,6 @@ process crop {
 }
 
 process skimage_bin {
-  maxForks 1
-  
   input:
     path mets_file
     val input_dir
@@ -102,8 +111,6 @@ process skimage_bin {
 }
 
 process skimage_den {
-  maxForks 1
-  
   input:
     path mets_file
     val input_dir
@@ -121,8 +128,6 @@ process skimage_den {
 }
 
 process deskew {
-  maxForks 1
-  
   input:
     path mets_file
     val input_dir
@@ -140,8 +145,6 @@ process deskew {
 }
 
 process segment {
-  maxForks 1
-  
   input:
     path mets_file
     val input_dir
@@ -159,8 +162,6 @@ process segment {
 }
 
 process dewarp {
-  maxForks 1
-  
   input:
     path mets_file
     val input_dir
@@ -178,8 +179,6 @@ process dewarp {
 }
 
 process calamari_recognize {
-  maxForks 1
-  
   input:
     path mets_file
     val input_dir
@@ -198,10 +197,9 @@ process calamari_recognize {
 
 // This is the main workflow
 workflow {
-
   main:
     cleaning_mets(params.mets)
-    binarize(cleaning_mets.out[0], "DEFAULT", "OCR-D-BIN")
+    binarize(cleaning_mets.out[0], params.file_group, "OCR-D-BIN")
     crop(cleaning_mets.out[0], binarize.out[0], "OCR-D-CROP")
     skimage_bin(cleaning_mets.out[0], crop.out[0], "OCR-D-BIN2")
     skimage_den(cleaning_mets.out[0], skimage_bin.out[0], "OCR-D-BIN-DENOISE")
