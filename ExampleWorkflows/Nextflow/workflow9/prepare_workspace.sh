@@ -15,6 +15,3 @@ if [ ! -e $METS_PATH ]; then
   mv $SCRIPT_DIR/*mets.xml $SCRIPT_DIR/ocrd-workspace/mets.xml
 fi
 
-cd $SCRIPT_DIR/ocrd-workspace
-ocrd workspace find --file-grp PRESENTATION --download
-
