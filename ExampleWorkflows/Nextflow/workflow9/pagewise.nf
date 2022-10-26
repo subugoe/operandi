@@ -36,7 +36,7 @@ log.info """\
   "cis-ocropy-deskew -I OCR-D-SEG-REPAIR -O OCR-D-SEG-REG-DESKEW -P level-of-operation region" \\
   "cis-ocropy-clip -I OCR-D-SEG-REG-DESKEW -O OCR-D-SEG-REG-DESKEW-CLIP -P level-of-operation region" \\
   "tesserocr-segment-line -I OCR-D-SEG-REG-DESKEW-CLIP -O OCR-D-SEG-LINE" \\
-  "segment-repair -I OCR-D-SEG-LINE -O OCR-D-SEG-REPAIR-LINE -P sanitize true" \\
+  skipped/failing - "segment-repair -I OCR-D-SEG-LINE -O OCR-D-SEG-REPAIR-LINE -P sanitize true" \\
   "cis-ocropy-dewarp -I OCR-D-SEG-REPAIR-LINE -O OCR-D-SEG-LINE-RESEG-DEWARP" \\
   "calamari-recognize -I OCR-D-SEG-LINE-RESEG-DEWARP -O OCR-D-OCR -P checkpoint_dir qurator-gt4histocr-1.0"
   ======================================================
@@ -399,8 +399,8 @@ workflow {
     ocropy_deskew_region(segment_repair_plausibilized.out[0], "OCR-D-SEG-REG-DESKEW", segment_repair_plausibilized.out[1])
     ocropy_clip(ocropy_deskew_region.out[0], "OCR-D-SEG-REG-DESKEW-CLIP", ocropy_deskew_region.out[1])
     tesserocr_segment_line(ocropy_clip.out[0], "OCR-D-SEG-LINE", ocropy_clip.out[1])
-    segment_repair_sanitized(tesserocr_segment_line.out[0], "OCR-D-SEG-REPAIR-LINE", tesserocr_segment_line.out[1])
-    ocropy_dewarp(segment_repair_sanitized.out[0], "OCR-D-SEG-LINE-RESEG-DEWARP", segment_repair_sanitized.out[1])
+    // segment_repair_sanitized(tesserocr_segment_line.out[0], "OCR-D-SEG-REPAIR-LINE", tesserocr_segment_line.out[1])
+    ocropy_dewarp(tesserocr_segment_line.out[0], "OCR-D-SEG-LINE-RESEG-DEWARP", tesserocr_segment_line.out[1])
     calamari_recognize(ocropy_dewarp.out[0], "OCR-D-OCR", ocropy_dewarp.out[1])
 
     // Merging mets files representing pages into the main mets file
