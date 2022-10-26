@@ -14,3 +14,7 @@ if [ ! -e $METS_PATH ]; then
   wget $METS_LINK -P $SCRIPT_DIR
   mv $SCRIPT_DIR/*mets.xml $SCRIPT_DIR/ocrd-workspace/mets.xml
 fi
+
+cd $SCRIPT_DIR/ocrd-workspace
+ocrd workspace find --file-grp DEFAULT --download
+
