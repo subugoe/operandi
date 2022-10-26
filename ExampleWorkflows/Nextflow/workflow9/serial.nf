@@ -148,7 +148,7 @@ process ocropy_deskew_page {
   script:
     """
     source "${params.venv_path}"
-    ocrd-cis-ocropy-deskew --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P operation_level page
+    ocrd-cis-ocropy-deskew --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P level-of-operation page
     deactivate
     """ 
 }
@@ -199,7 +199,7 @@ process ocropy_deskew_region {
   script:
     """
     source "${params.venv_path}"
-    ocrd-cis-ocropy-deskew --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P operation_level region
+    ocrd-cis-ocropy-deskew --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P level-of-operation region
     deactivate
     """ 
 }
@@ -216,7 +216,7 @@ process ocropy_clip {
   script:
     """
     source "${params.venv_path}"
-    ocrd-cis-ocropy-clip --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P operation_level region
+    ocrd-cis-ocropy-clip --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P level-of-operation region
     deactivate
     """ 
 }
