@@ -190,7 +190,7 @@ process ocropy_deskew_page {
   script:
     """
     source "${params.venv_path}"
-    ocrd-cis-ocropy-deskew --mets ${params.workspace}/mets_${page_num}.xml -I ${input_dir} -O ${output_dir} --page-id PHYS_${page_num} -P operation_level page
+    ocrd-cis-ocropy-deskew --mets ${params.workspace}/mets_${page_num}.xml -I ${input_dir} -O ${output_dir} --page-id PHYS_${page_num} -P level-of-operation page
     deactivate
     """ 
 }
@@ -250,7 +250,7 @@ process ocropy_deskew_region {
   script:
     """
     source "${params.venv_path}"
-    ocrd-cis-ocropy-deskew --mets ${params.workspace}/mets_${page_num}.xml -I ${input_dir} -O ${output_dir} --page-id PHYS_${page_num} -P operation_level region
+    ocrd-cis-ocropy-deskew --mets ${params.workspace}/mets_${page_num}.xml -I ${input_dir} -O ${output_dir} --page-id PHYS_${page_num} -P level-of-operation region
     deactivate
     """ 
 }
@@ -270,7 +270,7 @@ process ocropy_clip {
   script:
     """
     source "${params.venv_path}"
-    ocrd-cis-ocropy-clip --mets ${params.workspace}/mets_${page_num}.xml -I ${input_dir} -O ${output_dir} --page-id PHYS_${page_num} -P operation_level region
+    ocrd-cis-ocropy-clip --mets ${params.workspace}/mets_${page_num}.xml -I ${input_dir} -O ${output_dir} --page-id PHYS_${page_num} -P level-of-operation region
     deactivate
     """ 
 }
