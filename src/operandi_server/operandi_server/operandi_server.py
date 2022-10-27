@@ -63,8 +63,12 @@ class OperandiServer:
         @self.app.get("/")
         async def home():
             message = "The home page of OPERANDI server"
-            time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-            return {"message": message, "time": time}
+            _time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+            json_message = {
+                "message": message,
+                "time": _time
+            }
+            return json_message
 
         # Used to accept Mets URLs from the user
         @self.app.post("/mets_url/")
@@ -75,17 +79,16 @@ class OperandiServer:
             workspace_id += timestamp
             publish_message = f"{mets_url},{workspace_id}".encode('utf8')
 
-            # Send the posted mets_url to the priority queue
+            # Send the posted mets_url to the priority queue (RabbitMQ)
             self.producer.publish_mets_url(body=publish_message)
-            time.sleep(5)
-            # TODO: Replace this properly so a thread handles that
-            # TODO: Thread
-            # Blocks here till the job id is received back
-            job_id = self.producer.receive_job_id()
-            # print(f"JobID:{job_id}")
 
             message = f"Mets URL posted successfully!"
-            return {"message": message, "mets_url": mets_url, "workspace_id": workspace_id, "job_id": job_id}
+            json_message = {
+                "message": message,
+                "mets_url": mets_url,
+                "workspace_id": workspace_id
+            }
+            return json_message
 
         # List available workspaces
         @self.app.get("/workspaces/")
@@ -101,7 +104,10 @@ class OperandiServer:
                 if os.path.isdir(workspace):
                     workspaces.append(filename)
 
-            return {"workspaces": workspaces}
+            json_message = {
+                "workspaces": workspaces
+            }
+            return json_message
 
         # Download workspace
         @self.app.get("/workspaces/workspace_id")
@@ -120,7 +126,10 @@ class OperandiServer:
                                     filename=f"{workspace_id}.zip")
             else:
                 message = f"workspace with id: {workspace_id} was not found!"
-                return {"message": message}
+                json_message = {
+                    "message": message
+                }
+                return json_message
 
     def __initiate_fast_api_app(self):
         app = FastAPI(
@@ -148,21 +157,3 @@ class OperandiServer:
         )
         print("Producer initiated")
         return producer
-
-    # --- Callback functions called based on Service broker responses --- #
-    # Callback for jobID - currently not used, will be used by a thread
-    # TODO: Handle with a thread
-    # TODO: Use this callback function instead of "self.producer.receive_job_id()"
-    def __job_id_callback(self, ch, method, properties, body):
-        # print(f"{self}")
-        # print(f"INFO: ch: {ch}")
-        # print(f"INFO: method: {method}")
-        # print(f"INFO: properties: {properties}")
-
-        if body:
-            job_id = body.decode('utf8')
-            # print(f"INFO: ch: {ch}")
-            # print(f"INFO: method: {method}")
-            # print(f"INFO: properties: {properties}")
-            print(f"INFO: A JobID has been received: {job_id}")
-            return job_id

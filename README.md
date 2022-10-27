@@ -39,7 +39,7 @@ cd operandi
 ```sh
 sudo apt-get update
 sudo apt-get -y install make
-make deps-ubuntu
+sudo make deps-ubuntu
 ```
 
 #### 3. Create a virtual Python environment and activate it.

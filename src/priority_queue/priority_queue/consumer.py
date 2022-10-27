@@ -1,7 +1,6 @@
 from .message_exchanger import MessageExchanger
 from .constants import (
-    DEFAULT_QUEUE_SERVER_TO_BROKER as DEFAULT_QSB,
-    DEFAULT_QUEUE_BROKER_TO_SERVER as DEFAULT_QBS
+    DEFAULT_QUEUE_SERVER_TO_BROKER as DEFAULT_QSB
 )
 
 
@@ -27,19 +26,7 @@ class Consumer:
         self.__messageExchanger.receive_from_queue(
             queue_name=DEFAULT_QSB,
             callback=callback,
-            auto_ack=True
+            auto_ack=False  # acks must be sent manually
         )
 
         self.__messageExchanger.channel.start_consuming()
-
-    # TODO: Clarify that better
-    # The consumer (service-broker) is also a producer
-    # for replies back to the producer (operandi-server)
-
-    # TODO: Replace this properly so a thread handles that
-    # TODO: Thread
-    def reply_job_id(self, cluster_job_id):
-        self.__messageExchanger.send_to_queue(
-            queue_name=DEFAULT_QBS,
-            message=cluster_job_id
-        )

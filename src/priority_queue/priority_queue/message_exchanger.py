@@ -5,7 +5,6 @@ from .constants import (
     DEFAULT_EXCHANGER_NAME as EXCHANGER,
     DEFAULT_EXCHANGER_TYPE as EXCHANGE_TYPE,
     DEFAULT_QUEUE_SERVER_TO_BROKER as DEFAULT_QSB,
-    DEFAULT_QUEUE_BROKER_TO_SERVER as DEFAULT_QBS
 )
 
 
@@ -66,7 +65,7 @@ class MessageExchanger:
             self.channel.exchange_declare(exchange=exchange,
                                           exchange_type=exchange_type)
         else:
-            print("ERROR_create_channel: Connection is closed!")
+            print("MessageExchanger>create_channel(): Error, connection is closed!")
 
     def configure_default_queues(self):
         # Declare the queue to which the Producer (Server) pushes data
@@ -74,19 +73,13 @@ class MessageExchanger:
         # Bind the queue to the Exchanger agent
         self.bind_queue(DEFAULT_QSB)
 
-        # Declare the queue from which the Producer (Server)
-        # receives responses back from the Consumer (Broker)
-        self.declare_queue(DEFAULT_QBS)
-        # Bind the queue to the Exchanger agent
-        self.bind_queue(DEFAULT_QBS)
-
     # The Operandi server declares the QUEUE_S_TO_B to publish to the Broker
     # The Service broker declares the QUEUE_B_TO_S to response back to the Server
     def declare_queue(self, queue_name, durability=False):
         if self.__connection.is_open and self.channel.is_open:
             self.channel.queue_declare(queue=queue_name, durable=durability)
         else:
-            print("ERROR_declare_queue: Connection is closed!")
+            print("MessageExchanger>declare_queue(): Error, connection is closed!")
 
     # The Operandi server binds the QUEUE_S_TO_B to the Exchanger agent
     # The Service broker binds the QUEUE_B_TO_S to the Exchanger agent
@@ -94,11 +87,9 @@ class MessageExchanger:
         if self.__connection.is_open and self.channel.is_open:
             self.channel.queue_bind(queue=queue, exchange=exchange)
         else:
-            print("ERROR_bind_queue: Connection is closed!")
+            print("MessageExchanger>bind_queue(): Error, connection is closed!")
 
     def send_to_queue(self, queue_name, message, exchange=EXCHANGER, durable=False):
-        # In the development phase - set to False
-        # In the production phase - will be set to True
         if durable:
             delivery_mode = pika.spec.PERSISTENT_DELIVERY_MODE
         else:
@@ -121,7 +112,7 @@ class MessageExchanger:
 
     # The 'callback' is the function to be called
     # when receiving from the respective queue
-    def receive_from_queue(self, queue_name, callback, auto_ack=False):
+    def receive_from_queue(self, queue_name, callback, auto_ack=True):
         # Receives from the default channel
         # In case more channels have to be created, then
         # a list with channels should be created and the

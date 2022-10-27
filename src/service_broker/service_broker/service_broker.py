@@ -45,12 +45,12 @@ class ServiceBroker:
         # disable the self.ssh related commands manually!
         if self._use_broker_mockup:
             self.ssh = None
-            print("SSH disabled. Nothing will be submitted to the HPC.")
-            print("The mockup version of the Service broker will be used.")
+            print("ServiceBroker>__init__(): SSH disabled. Nothing will be submitted to the HPC.")
+            print("ServiceBroker>__init__(): The mockup version of the Service broker will be used.")
         else:
             self.ssh = SSHCommunication()
             self.ssh.connect_to_hpc(hpc_host, hpc_username, hpc_key_path)
-            print("SSH connection successful")
+            print("ServiceBroker>__init__(): SSH connection successful")
 
     @staticmethod
     def __initiate_consumer(rabbit_mq_host, rabbit_mq_port):
@@ -60,7 +60,7 @@ class ServiceBroker:
             rabbit_mq_host=rabbit_mq_host,
             rabbit_mq_port=rabbit_mq_port
         )
-        print("Consumer initiated")
+        print("ServiceBroker>__initiate_consumer(): Consumer initiated")
         return consumer
 
     def start(self):
@@ -72,65 +72,66 @@ class ServiceBroker:
 
     # The callback method provided to the Consumer listener
     def __mets_url_callback(self, ch, method, properties, body):
-        # print(f"{self}")
-        # print(f"INFO: ch: {ch}")
-        # print(f"INFO: method: {method}")
-        # print(f"INFO: properties: {properties}")
-        print(f"INFO: A METS URI has been consumed: {body}")
-
         if body:
+            print(f"INFO: Channel: {ch}")
+            print(f"INFO: Method: {method}")
+            print(f"INFO: Properties: {properties}")
+            print(f"INFO: Body: {body}")
             mets_url, workspace_id = body.decode('utf8').split(',')
+            print(f"INFO: Mets URL: {mets_url}")
+            print(f"INFO: Workspace_ID: {workspace_id}")
             if self._use_broker_mockup:
-                self.__prepare_local_workspace(mets_url, workspace_id)
-                return_code = self.__trigger_local_execution(workspace_id)
-                if return_code == 0:
-                    print(f"{workspace_id}, local execution of Nextflow has started.")
-                else:
-                    print(f"{workspace_id}, there were problems with the local execution.")
-                self.__consumer.reply_job_id(cluster_job_id="Running locally, no cluster job ID")
+                self.__execute_on_local(mets_url, workspace_id)
             else:
-                self.__prepare_hpc_workspace(mets_url, workspace_id)
-                self.__submit_hpc_workspace(workspace_id)
-                return_code, err, output = self.__trigger_hpc_execution(workspace_id)
+                self.__execute_on_hpc(mets_url, workspace_id)
 
-                # Job submitted successfully
-                if return_code == 0:
-                    # Example output message:
-                    # "Submitted batch job XXXXXXXX"
+            # Send an acknowledgement back
+            ch.basic_ack(delivery_tag=method.delivery_tag)
 
-                    # This is a temporal solution
-                    # should be parsed more elegantly
-                    job_id = output.split(" ")[3]
-                    self.__consumer.reply_job_id(cluster_job_id=job_id)
-                else:
-                    # No job ID assigned, failed
-                    self.__consumer.reply_job_id(cluster_job_id="No assigned ID")
+    def __execute_on_local(self, mets_url, workspace_id):
+        self.__prepare_local_workspace(mets_url, workspace_id)
+        return_code = self.__trigger_local_nf_execution(workspace_id)
+        # Local execution started successfully
+        if return_code == 0:
+            print(f"INFO: Execution started locally: {workspace_id}")
+        else:
+            print(f"ERROR: Failed local run: {workspace_id}")
 
-    ###########################################################
-    # Tree structure of the nextflow local workspace:
-    # ws_local (dir):
-    #   - {workspace_id} (dir)
-    #       - bin (dir)
-    #           - local_nextflow.nf (nextflow script)
-    #           - ocrd-workspace (dir)
-    #               - mets.xml
-    ###########################################################
+    def __execute_on_hpc(self, mets_url, workspace_id):
+        self.__prepare_hpc_workspace(mets_url, workspace_id)
+        self.__submit_hpc_workspace(workspace_id)
+        return_code, err, output = self.__trigger_hpc_nf_execution(workspace_id)
+        # Job submitted successfully
+        if return_code == 0:
+            print(f"INFO: Execution started on HPC: {workspace_id}")
+        else:
+            print(f"ERROR: Failed HPC run: {workspace_id}")
+
     def __prepare_local_workspace(self, mets_url, workspace_id):
+        ###########################################################
+        # Tree structure of the nextflow local workspace:
+        # ws_local (dir):
+        #   - {workspace_id} (dir)
+        #       - bin (dir)
+        #           - local_nextflow.nf (nextflow script)
+        #           - ocrd-workspace (dir)
+        #               - mets.xml
+        ###########################################################
         self.__copy_nextflow_script(workspace_id, local=True)
         self.__download_mets_file(mets_url, workspace_id, local=True)
 
-    ###########################################################
-    # Tree structure of the nextflow hpc workspace:
-    # ws_hpc (dir):
-    #   - {workspace_id} (dir)
-    #       - base_script.sh (batch script)
-    #       - bin(dir)
-    #           - nextflow.config
-    #           - hpc_nextflow.nf (nextflow script)
-    #           - ocrd-workspace (dir)
-    #               - mets.xml
-    ###########################################################
     def __prepare_hpc_workspace(self, mets_url, workspace_id):
+        ###########################################################
+        # Tree structure of the nextflow hpc workspace:
+        # ws_hpc (dir):
+        #   - {workspace_id} (dir)
+        #       - base_script.sh (batch script)
+        #       - bin(dir)
+        #           - nextflow.config
+        #           - hpc_nextflow.nf (nextflow script)
+        #           - ocrd-workspace (dir)
+        #               - mets.xml
+        ###########################################################
         self.__copy_batch_script(workspace_id)
         self.__copy_nextflow_config(workspace_id)
         self.__copy_nextflow_script(workspace_id, local=False)
@@ -162,6 +163,8 @@ class ServiceBroker:
                     # size of the mets file
                     length = response.content.__sizeof__() - 33
                     size = (length / 512) + 1
+                    # TODO: The progress bar is not working as expected
+                    # TODO: Consider to remove it completely
                     for chunk in progress.bar(response.iter_content(chunk_size=512), expected_size=size):
                         if chunk:
                             file.write(chunk)
@@ -169,16 +172,19 @@ class ServiceBroker:
                 return True
 
         except requests.exceptions.RequestException as e:
-            print(f"f:download_mets_file, Exception: {e}")
+            print(f"ServiceBroker>__download_mets_file(): Exception: {e}")
             return False
 
-    def __trigger_local_execution(self, workspace_id):
+    def __trigger_local_nf_execution(self, workspace_id):
         nf_script_path = self.__get_nextflow_script(workspace_id, local=True)
         nf_workspace_dir = self.__get_nf_workspace_dir(workspace_id, local=True)
         ocrd_workspace_dir = self.__get_ocrd_workspace_dir(workspace_id, local=True)
 
         nf_command = self.__build_nf_command(nf_script_path, ocrd_workspace_dir)
         nf_out, nf_err = self.__get_nf_out_err_paths(nf_workspace_dir)
+
+        # TODO: Not a big fan of the nested structure, fix this to open/close files separately
+        # TODO: Exception handling related to fd should be then more clear
         with open(nf_out, 'w+') as nf_out_file:
             with open(nf_err, 'w+') as nf_err_file:
                 # Raises an exception if the subprocess fails
@@ -194,16 +200,18 @@ class ServiceBroker:
                                              )
         return nf_process
 
-    def __trigger_hpc_execution(self, workspace_id):
+    def __trigger_hpc_nf_execution(self, workspace_id):
         batch_script_path = self.__get_hpc_batch_script(workspace_id)
         ssh_command = self.__build_sbatch_command(batch_script_path, workspace_id)
+        # TODO: Non-blocking process in the background must be started instead
+        # TODO: The results of the output, err, and return_code must be written to a file
         output, err, return_code = self.ssh.execute_blocking(ssh_command)
-        print(f"RC:{return_code}, ERR:{err}, O:{output}")
+        print(f"ServiceBroker>__trigger_hpc_execution(): RC:{return_code}, ERR:{err}, O:{output}")
         return return_code, err, output
 
     @staticmethod
     def __build_nf_command(nf_script_path, workspace_dir):
-        nf_command = "nextflow -bg"
+        nf_command = "nextflow -bg"  # -bg - run in the background
         nf_command += f" run {nf_script_path}"
         # When running an OCR-D docker container
         # It is enough to map the volume_dir.
@@ -211,7 +219,7 @@ class ServiceBroker:
         nf_command += f" --volume_dir {workspace_dir}"
         # nf_command += f" --workspace {workspace_dir}/"
         # nf_command += f" --mets {workspace_dir}/mets.xml"
-        nf_command += " -with-report"
+        nf_command += " -with-report"  # produce report.html
 
         return nf_command
 
