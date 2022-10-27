@@ -1,6 +1,5 @@
 import os
 import datetime
-import time
 from shutil import make_archive
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
@@ -43,11 +42,6 @@ class OperandiServer:
                         line = line.strip('\n')
                         key, value = line.split(',')
                         self.vd18_id_dict[key] = value
-
-            # Initialize the listener (listens for job_id replies)
-            self.producer.define_queue_listener(
-                callback=self.__job_id_callback
-            )
 
         # On shutdown writes the dictionary of IDs to a text file
         # If PRESERVE_REQUESTS is True
