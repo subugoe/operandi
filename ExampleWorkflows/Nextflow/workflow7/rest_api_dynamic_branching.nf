@@ -10,7 +10,7 @@ log.info """\
 
 // Get json that has timestamp
 def rest_api_get(){
-  def connection = new URL("http://operandi.ocr-d.de:8000/").openConnection()
+  def connection = new URL("http://operandi.ocr-d.de").openConnection()
   def response_code = connection.getResponseCode();
   println("Get response code: " + response_code);
   if (response_code.equals(200)){
