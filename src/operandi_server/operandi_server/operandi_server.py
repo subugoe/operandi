@@ -16,10 +16,18 @@ from .constants import (
     OPERANDI_DATA_PATH
 )
 
+"""
+The OCR-D WebAPI must be installed to use these imports
+
+from ocrd_webapi.routers import (
+    workflow,
+    workspace
+)
+"""
+
 
 class OperandiServer:
     def __init__(self, host=HOST, port=PORT, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT):
-
         self.host = host
         self.port = port
         self.server_path = SERVER_PATH
@@ -139,6 +147,14 @@ class OperandiServer:
                 "description": "The URL of the OPERANDI server.",
             }],
         )
+
+        """
+        The following lines integrate the routers from the OCR-D WebAPI
+        
+        app.include_router(workspace.router)
+        app.include_router(workflow.router)
+        """
+
         return app
 
     @staticmethod

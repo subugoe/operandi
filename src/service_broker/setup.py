@@ -11,7 +11,7 @@ setup(
     long_description_content_type='text/markdown',
     author='Mehmed Mustafa',
     author_email='mehmed.mustafa@gwdg.de',
-    url='https://github.com/MehmedGIT/OPERANDI_TestRepo',
+    url='https://github.com/subugoe/operandi',
     license='Apache License 2.0',
     packages=['service_broker',
               'service_broker.cli'

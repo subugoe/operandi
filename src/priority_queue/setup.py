@@ -11,7 +11,7 @@ setup(
     long_description_content_type='text/markdown',
     author='Mehmed Mustafa',
     author_email='mehmed.mustafa@gwdg.de',
-    url='https://github.com/MehmedGIT/OPERANDI_TestRepo',
+    url='https://github.com/subugoe/operandi',
     license='Apache License 2.0',
     packages=['priority_queue'],
     package_data={'': ['config.toml', '*.json', '*.yml', '*.xml']},
