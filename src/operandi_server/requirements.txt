@@ -5,3 +5,5 @@ pydantic>=1.9.1
 pytest>=7.0.0
 click >=7
 tomli>=2.0.0
+ocrd_webapi @ git+https://github.com/OCR-D/ocrd-webapi-implementation.git@refactoring#egg=ocrd_webapi
+

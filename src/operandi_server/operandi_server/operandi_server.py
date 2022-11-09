@@ -16,14 +16,10 @@ from .constants import (
     OPERANDI_DATA_PATH
 )
 
-"""
-The OCR-D WebAPI must be installed to use these imports
-
 from ocrd_webapi.routers import (
     workflow,
     workspace
 )
-"""
 
 
 class OperandiServer:
@@ -148,12 +144,9 @@ class OperandiServer:
             }],
         )
 
-        """
-        The following lines integrate the routers from the OCR-D WebAPI
-        
+        # The following lines reuse the routers from the OCR-D WebAPI
         app.include_router(workspace.router)
         app.include_router(workflow.router)
-        """
 
         return app
 
