@@ -12,10 +12,13 @@ from .constants import (
     SERVER_HOST as HOST,
     SERVER_PORT as PORT,
     SERVER_PATH,
-    PRESERVE_REQUESTS,
-    OPERANDI_DATA_PATH
+    OPERANDI_DATA_PATH,
+    WORKFLOWS_DIR,
+    WORKSPACES_DIR,
+    DB_URL,
 )
 
+from ocrd_webapi.database import initiate_database
 from ocrd_webapi.routers import (
     workflow,
     workspace
@@ -27,36 +30,20 @@ class OperandiServer:
         self.host = host
         self.port = port
         self.server_path = SERVER_PATH
-        self.preserve_requests = PRESERVE_REQUESTS
         self._data_path = OPERANDI_DATA_PATH
 
-        self.vd18_id_dict = {}
         self.app = self.__initiate_fast_api_app()
         self.producer = self.__initiate_producer(rabbit_mq_host, rabbit_mq_port)
 
-        # On startup reads the dictionary of IDs that were previously submitted
-        # If PRESERVE_REQUESTS is True
         @self.app.on_event("startup")
         async def startup_event():
-            if not self.preserve_requests:
-                return
-            if os.path.exists("vd18_ids.txt") and os.path.isfile("vd18_ids.txt"):
-                with open("vd18_ids.txt", mode="r") as backup_doc:
-                    for line in backup_doc:
-                        line = line.strip('\n')
-                        key, value = line.split(',')
-                        self.vd18_id_dict[key] = value
+            os.makedirs(WORKSPACES_DIR, exist_ok=True)
+            os.makedirs(WORKFLOWS_DIR, exist_ok=True)
+            await initiate_database(DB_URL)
 
-        # On shutdown writes the dictionary of IDs to a text file
-        # If PRESERVE_REQUESTS is True
         @self.app.on_event("shutdown")
         def shutdown_event():
-            if not self.preserve_requests:
-                return
-            if len(self.vd18_id_dict):
-                with open("vd18_ids.txt", mode="w") as backup_doc:
-                    for k in self.vd18_id_dict:
-                        backup_doc.write(f"{k}, {self.vd18_id_dict[k]}\n")
+            pass
 
         @self.app.get("/")
         async def home():
@@ -92,9 +79,9 @@ class OperandiServer:
         @self.app.get("/workspaces/")
         async def get_workspaces():
             # TODO: Provide more appropriate way for paths
-            local_workspace_path = f"{self._data_path}/ws_local"
+            local_workspace_path = f"{WORKSPACES_DIR}/ws_local"
             # For the Alpha release only mockup is used, so no hpc workspace checked
-            # hpc_workspace_path = f"{self._data_path}/ws_hpc"
+            # hpc_workspace_path = f"{WORKSPACES_DIR}/ws_hpc"
 
             workspaces = []
             for filename in os.listdir(local_workspace_path):
@@ -111,10 +98,10 @@ class OperandiServer:
         @self.app.get("/workspaces/workspace_id")
         async def get_workspaces(workspace_id: str):
             # TODO: Provide more appropriate way for paths
-            local_workspace_path = f"{self._data_path}/ws_local"
+            local_workspace_path = f"{WORKSPACES_DIR}/ws_local"
             workspace_path = f"{local_workspace_path}/{workspace_id}"
             # For the Alpha release only mockup is used, so no hpc workspace checked
-            # hpc_workspace_path = f"{self._data_path}/ws_hpc"
+            # hpc_workspace_path = f"{WORKSPACES_DIR}/ws_hpc"
 
             if os.path.exists(workspace_path) and \
                     os.path.isdir(workspace_path):
@@ -137,7 +124,7 @@ class OperandiServer:
                 "name": "Apache 2.0",
                 "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
             },
-            version="1.0.0",
+            version="1.1.0",
             servers=[{
                 "url": self.server_path,
                 "description": "The URL of the OPERANDI server.",

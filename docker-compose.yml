@@ -3,7 +3,7 @@ version: '3.8'
 services:
   priority-queue:
     image: rabbit-mq
-    container_name: rabbit-mq
+    container_name: operandi-rabbit-mq
     hostname: rabbit-mq-host
     build:
       context: ./src
@@ -22,6 +22,14 @@ services:
       interval: 120s
       timeout: 30s
       retries: 5
+      
+  operandi-mongodb:
+    image: "mongo"
+    container_name: operandi-mongodb
+    ports:
+      - "27018:27017"
+    volumes:
+      - "/tmp/operandi-mongo-data:/data/db"
 
   operandi-server:
     image: operandi-server

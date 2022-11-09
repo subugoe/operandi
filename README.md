@@ -1,5 +1,6 @@
 # OPERANDI
 This is the OPERANDI project's repository. The Readme file is still a draft and under construction.
+The file may be slightly outdated. Will be updated after integrating the OCR-D WebApi.
 
 ## 1. Introduction
 OPERANDI is one of the implementation projects funded by the DFG initiative OCR-D. The main goal of OCR-D is the conceptual and technical preparation of the full-text transformation of the 16th to 18th-century prints published in the German language area. The task of automatic full-text recognition is broken down into individual process steps, which can be reproduced in the open-source OCR-D software. This makes it possible to create optimal workflows for the prints to be processed, and thus generate scientifically usable full texts.
@@ -72,7 +73,7 @@ It is highly recommended to perform the steps of the `install.sh` script manuall
 
 #### 5. Install the modules of OPERANDI.
 ```sh
-make install
+make install-dev
 ```
 
 After a successful installation three executables are produced:
@@ -121,14 +122,15 @@ sudo systemctl start rabbitmq-server
 sudo rabbitmq-plugins enable rabbitmq_management
 ```
 
-4. Open 2 new terminals and activate `venv-operandi` in all of them.
+4. Open 2 new terminals and activate the `venv-operandi` environment in each of them.
 ```sh
 source $HOME/venv-operandi/bin/activate
 ```
 
-5. In the first terminal start the OPERANDI Server
+5. In the first terminal start the MongoDB and the OPERANDI Server
 
 ```sh
+make start-mongo
 operandi-server server start
 ```
 

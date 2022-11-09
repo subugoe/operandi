@@ -1,13 +1,16 @@
 from pkg_resources import resource_filename
 import tomli
-from pathlib import Path
+import os
 
 __all__ = [
     "SERVER_HOST",
     "SERVER_PORT",
     "SERVER_PATH",
-    "PRESERVE_REQUESTS",
-    "OPERANDI_DATA_PATH"
+    "OPERANDI_DATA_PATH",
+    "JOBS_DIR",
+    "WORKFLOWS_DIR",
+    "WORKSPACES_DIR",
+    "DB_URL"
 ]
 
 TOML_FILENAME: str = resource_filename(__name__, 'config.toml')
@@ -20,8 +23,10 @@ SERVER_PORT: int = TOML_CONFIG["server_port"]
 SERVER_PATH: str = f"http://{SERVER_HOST}:{SERVER_PORT}"
 
 # OPERANDI related data is stored inside
-OPERANDI_DATA_PATH: str = f"{Path.home()}/operandi-data"
+OPERANDI_DATA_PATH: str = TOML_CONFIG["server_data_path"]
+JOBS_DIR: str = os.path.join(OPERANDI_DATA_PATH, "jobs")
+WORKFLOWS_DIR: str = os.path.join(OPERANDI_DATA_PATH, "workflows")
+WORKSPACES_DIR: str = os.path.join(OPERANDI_DATA_PATH, "workspaces")
+DB_URL: str = TOML_CONFIG["mongodb_url"]
 
-# Should the server safe previously accepted requests to a file?
-# This may be useful in the future
-PRESERVE_REQUESTS: bool = eval(TOML_CONFIG["preserve_requests"])
+

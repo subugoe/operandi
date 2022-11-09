@@ -1,3 +1,4 @@
 server_host = "localhost"
 server_port = 8000
-preserve_requests = "False"
+server_data_path = "/tmp/operandi-data"
+mongodb_url = "mongodb://localhost:27018"

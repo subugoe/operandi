@@ -25,6 +25,7 @@ help:
 	@echo " install                 (Re)install the modules"
 	@echo " install-dev             Install with pip install -e"
 	@echo " uninstall               Uninstall the modules"
+	@echo " start-mongo							Start the Mongo DB"
 	@echo " docker-all              Build everything in a single docker image"
 	@echo " docker-harvester        Build harvester docker image"
 	@echo " docker-server           Build server docker image"
@@ -81,6 +82,9 @@ install-dev: uninstall
 # Uninstall the tool
 uninstall:
 	for mod in $(UNINSTALL_ORDER);do $(PIP3) uninstall -y $$mod;done
+
+start-mongo:
+	docker-compose up -d operandi-mongodb
 
 #
 # Tests
