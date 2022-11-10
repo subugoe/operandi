@@ -74,7 +74,6 @@ class MessageExchanger:
         self.bind_queue(DEFAULT_QSB)
 
     # The Operandi server declares the QUEUE_S_TO_B to publish to the Broker
-    # The Service broker declares the QUEUE_B_TO_S to response back to the Server
     def declare_queue(self, queue_name, durability=False):
         if self.__connection.is_open and self.channel.is_open:
             self.channel.queue_declare(queue=queue_name, durable=durability)
@@ -82,7 +81,6 @@ class MessageExchanger:
             print("MessageExchanger>declare_queue(): Error, connection is closed!")
 
     # The Operandi server binds the QUEUE_S_TO_B to the Exchanger agent
-    # The Service broker binds the QUEUE_B_TO_S to the Exchanger agent
     def bind_queue(self, queue, exchange=EXCHANGER):
         if self.__connection.is_open and self.channel.is_open:
             self.channel.queue_bind(queue=queue, exchange=exchange)

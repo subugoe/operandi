@@ -10,7 +10,6 @@ rabbit_mq_port = 5672
 default_exchange_name = "operandi_exchanger"
 default_exchange_type = "direct"
 default_queue_server_to_broker = "server_to_broker"
-default_queue_broker_to_server = "broker_to_server"
 
 # NOTE
 # Make sure RabbitMQ is enabled and running on 5672 and 25672:

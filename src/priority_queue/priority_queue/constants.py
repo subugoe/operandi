@@ -7,7 +7,6 @@ __all__ = [
     "DEFAULT_EXCHANGER_NAME",
     "DEFAULT_EXCHANGER_TYPE",
     "DEFAULT_QUEUE_SERVER_TO_BROKER",
-    "DEFAULT_QUEUE_BROKER_TO_SERVER"
 ]
 
 TOML_FILENAME: str = resource_filename(__name__, 'config.toml')
@@ -26,7 +25,6 @@ RABBIT_MQ_PORT: int = TOML_CONFIG["rabbit_mq_port"]
 DEFAULT_EXCHANGER_NAME: str = TOML_CONFIG["default_exchange_name"]
 DEFAULT_EXCHANGER_TYPE: str = TOML_CONFIG["default_exchange_type"]
 DEFAULT_QUEUE_SERVER_TO_BROKER: str = TOML_CONFIG["default_queue_server_to_broker"]
-DEFAULT_QUEUE_BROKER_TO_SERVER: str = TOML_CONFIG["default_queue_broker_to_server"]
 
 # NOTE
 # Make sure RabbitMQ is enabled and running on 5672 and 25672:
