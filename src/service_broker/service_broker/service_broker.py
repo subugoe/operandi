@@ -14,7 +14,8 @@ from .constants import (
     HPC_HOST,
     HPC_USERNAME,
     HPC_KEY_PATH,
-    OPERANDI_DATA_PATH
+    WORKFLOWS_DIR,
+    WORKSPACES_DIR
 )
 
 
@@ -33,7 +34,6 @@ class ServiceBroker:
 
         # Installation path of the module
         self._module_path = os.path.dirname(__file__)
-        self._data_path = OPERANDI_DATA_PATH
         self._use_broker_mockup = use_broker_mockup
         self.__consumer = self.__initiate_consumer(rabbit_mq_host, rabbit_mq_port)
 
@@ -255,7 +255,7 @@ class ServiceBroker:
         else:
             # Set location to hpc - ws_hpc
             location = "ws_hpc"
-        nf_workspace_dir = f"{self._data_path}/{location}/{workspace_id}"
+        nf_workspace_dir = f"{WORKSPACES_DIR}/{location}/{workspace_id}"
         # print(f"Getting nf_workspace_dir: {nf_workspace_dir}")
         return nf_workspace_dir
 

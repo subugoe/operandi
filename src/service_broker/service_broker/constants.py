@@ -1,5 +1,6 @@
 from pkg_resources import resource_filename
 import tomli
+import os
 from pathlib import Path
 
 __all__ = [
@@ -10,7 +11,11 @@ __all__ = [
     "SCP",
     "SCP_PRESERVE_TIMES",
     "MODE",
-    "OPERANDI_DATA_PATH"
+    "DB_URL",
+    "OPERANDI_DATA_PATH",
+    "JOBS_DIR",
+    "WORKFLOWS_DIR",
+    "WORKSPACES_DIR"
 ]
 
 TOML_FILENAME: str = resource_filename(__name__, 'config.toml')
@@ -35,4 +40,8 @@ SCP_PRESERVE_TIMES: str = eval(TOML_CONFIG["scp_preserve_times"])
 MODE: str = TOML_CONFIG["mode"]
 
 # OPERANDI related data is stored inside
-OPERANDI_DATA_PATH: str = f"{Path.home()}/operandi-data"
+OPERANDI_DATA_PATH: str = TOML_CONFIG["server_data_path"]
+JOBS_DIR: str = os.path.join(OPERANDI_DATA_PATH, "jobs")
+WORKFLOWS_DIR: str = os.path.join(OPERANDI_DATA_PATH, "workflows")
+WORKSPACES_DIR: str = os.path.join(OPERANDI_DATA_PATH, "workspaces")
+DB_URL: str = TOML_CONFIG["mongodb_url"]

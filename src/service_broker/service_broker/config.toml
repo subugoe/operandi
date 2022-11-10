@@ -9,3 +9,5 @@ scp = "ON"
 scp_preserve_times = "True"
 mode  = "0755"
 
+server_data_path = "/tmp/operandi-data"
+mongodb_url = "mongodb://localhost:27018"
