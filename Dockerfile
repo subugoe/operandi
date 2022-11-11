@@ -13,8 +13,7 @@ RUN chmod -R 765 .
 
 RUN export PYTHONPATH="$PYTHONPATH:/OPERANDI_TestRepo/src"
 
-RUN apt-get update
-RUN apt-get -y install \
+RUN apt-get update && apt-get -y install \
     ca-certificates \
     software-properties-common \
     python3-dev \
