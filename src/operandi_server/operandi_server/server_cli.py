@@ -1,28 +1,31 @@
 import click
 import uvicorn
-from ..operandi_server import OperandiServer
+
 from priority_queue.constants import (
     RABBIT_MQ_HOST,
     RABBIT_MQ_PORT
 )
-from ..constants import (
+from .constants import (
     SERVER_HOST as HOST,
     SERVER_PORT as PORT
 )
+from .server import OperandiServer
+
+__all__ = ['cli']
+
+
 # ----------------------------------------------------------------------
-# operandi-server server
+# operandi-server
 # ----------------------------------------------------------------------
-
-
-@click.group("server")
-def server_cli():
+@click.group()
+@click.version_option()
+def cli(**kwargs):  # pylint: disable=unused-argument
     """
-    Server related cli
+    Entry-point of multipurpose CLI for Operandi Server
     """
-    print("Server related cli")
 
 
-@server_cli.command('start')
+@cli.command('start')
 @click.option('-h', '--host',
               default=HOST,
               help='The host of the Operandi server.')

@@ -4,12 +4,14 @@ import requests
 import subprocess
 import shlex
 from clint.textui import progress
-from .ssh_communication import SSHCommunication
+
 from priority_queue.consumer import Consumer
 from priority_queue.constants import (
     RABBIT_MQ_HOST as RMQ_HOST,
     RABBIT_MQ_PORT as RMQ_PORT
 )
+
+from .ssh_communication import SSHCommunication
 from .constants import (
     HPC_HOST,
     HPC_USERNAME,

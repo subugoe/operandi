@@ -1,27 +1,31 @@
 import click
-from ..service_broker import ServiceBroker
+
 from priority_queue.constants import (
     RABBIT_MQ_HOST,
     RABBIT_MQ_PORT
 )
-from ..constants import (
+from .broker import ServiceBroker
+from .constants import (
     HPC_HOST,
     HPC_USERNAME,
     HPC_KEY_PATH
 )
+
+__all__ = ['cli']
+
+
 # ----------------------------------------------------------------------
-# operandi-broker broker
+# operandi-broker
 # ----------------------------------------------------------------------
-
-
-@click.group("broker")
-def broker_cli():
+@click.group()
+@click.version_option()
+def cli(**kwargs):  # pylint: disable=unused-argument
     """
-    Broker related cli
+    Entry-point of multipurpose CLI for Operandi Broker
     """
 
 
-@broker_cli.command('start')
+@cli.command('start')
 @click.option('--rabbit-mq-host',
               default=RABBIT_MQ_HOST,
               help='The host of the RabbitMQ.')

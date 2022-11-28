@@ -5,7 +5,7 @@ install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='operandi_server',
-    version='1.1.0',
+    version='1.1.1',
     description='OPERANDI - REST API Server',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -13,14 +13,12 @@ setup(
     author_email='mehmed.mustafa@gwdg.de',
     url='https://github.com/subugoe/operandi',
     license='Apache License 2.0',
-    packages=['operandi_server',
-              'operandi_server.cli'
-              ],
+    packages=['operandi_server'],
     package_data={'': ['config.toml']},
     install_requires=install_requires,
     entry_points={
         'console_scripts': [
-            'operandi-server=operandi_server.cli:cli',
+            'operandi-server=operandi_server:cli',
         ]
     },
 )

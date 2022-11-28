@@ -1,6 +1,7 @@
 import os
 import datetime
 from shutil import make_archive
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from priority_queue.producer import Producer
@@ -8,6 +9,13 @@ from priority_queue.constants import (
     RABBIT_MQ_HOST as RMQ_HOST,
     RABBIT_MQ_PORT as RMQ_PORT
 )
+
+from ocrd_webapi.database import initiate_database
+from ocrd_webapi.routers import (
+    workflow,
+    workspace,
+)
+
 from .constants import (
     SERVER_HOST as HOST,
     SERVER_PORT as PORT,
@@ -16,12 +24,6 @@ from .constants import (
     WORKFLOWS_DIR,
     WORKSPACES_DIR,
     DB_URL,
-)
-
-from ocrd_webapi.database import initiate_database
-from ocrd_webapi.routers import (
-    workflow,
-    workspace
 )
 
 
@@ -33,6 +35,14 @@ class OperandiServer:
         self._data_path = OPERANDI_DATA_PATH
 
         self.app = self.__initiate_fast_api_app()
+
+        # The following lines reuse the routers from the OCR-D WebAPI
+        self.app.include_router(workflow.router)
+        self.app.include_router(workspace.router)
+        # Don't put this out of comments yet - missing confing files/malfunctioning
+        # self.app.include_router(discovery.router)
+        # self.app.include_router(processor.router)
+
         self.producer = self.__initiate_producer(rabbit_mq_host, rabbit_mq_port)
 
         @self.app.on_event("startup")
@@ -56,8 +66,11 @@ class OperandiServer:
             return json_message
 
         # Used to accept Mets URLs from the user
-        @self.app.post("/mets_url/")
+        @self.app.post("/workspace/mets_url2/", tags=["Workspace"])
         async def post_mets_url(mets_url: str, workspace_id: str):
+            """
+            Operandi extension to Workspace
+            """
             # Create a timestamp
             timestamp = datetime.datetime.now().strftime("_%Y%m%d_%H%M")
             # Append the timestamp at the end of the provided workspace_id
@@ -130,10 +143,6 @@ class OperandiServer:
                 "description": "The URL of the OPERANDI server.",
             }],
         )
-
-        # The following lines reuse the routers from the OCR-D WebAPI
-        app.include_router(workspace.router)
-        app.include_router(workflow.router)
 
         return app
 

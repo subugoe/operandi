@@ -5,7 +5,7 @@ install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='harvester',
-    version='0.0.1',
+    version='0.0.2',
     description='OPERANDI - Harvester',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -13,14 +13,12 @@ setup(
     author_email='mehmed.mustafa@gwdg.de',
     url='https://github.com/subugoe/operandi',
     license='Apache License 2.0',
-    packages=['harvester',
-              'harvester.cli'
-              ],
+    packages=['harvester'],
     package_data={'': ['config.toml', '*.txt']},
     install_requires=install_requires,
     entry_points={
         'console_scripts': [
-            'operandi-harvester=harvester.cli:cli',
+            'operandi-harvester=harvester:cli',
         ]
     },
 )

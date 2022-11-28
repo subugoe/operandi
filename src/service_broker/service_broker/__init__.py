@@ -1,9 +1,9 @@
 __all__ = [
-  "cli"
+  "cli",
   "ServiceBroker",
-  "SSHCommunication"
+  "SSHCommunication",
 ]
 
-from .cli import cli
-from .service_broker import ServiceBroker
+from .broker_cli import cli
+from .broker import ServiceBroker
 from .ssh_communication import SSHCommunication

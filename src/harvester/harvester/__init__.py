@@ -3,6 +3,6 @@ __all__ = [
   "Harvester",
 ]
 
-from .cli import cli
+from .harvester_cli import cli
 from .harvester import Harvester
 

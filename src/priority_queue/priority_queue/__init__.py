@@ -1,10 +1,10 @@
 __all__ = [
+  "Consumer",
   "MessageExchanger",
   "Producer",
-  "Consumer"
+
 ]
 
+from .consumer import Consumer
 from .message_exchanger import MessageExchanger
 from .producer import Producer
-from .consumer import Consumer
-

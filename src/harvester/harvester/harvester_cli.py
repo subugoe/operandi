@@ -1,21 +1,23 @@
 import click
 
-from ..harvester import Harvester
+from .harvester import Harvester
+
+
+__all__ = ['cli']
 
 
 # ----------------------------------------------------------------------
-# operandi-harvester harvest
+# operandi-harvester
 # ----------------------------------------------------------------------
-
-@click.group("harvest")
-def harvester_cli():
+@click.group()
+@click.version_option()
+def cli(**kwargs):  # pylint: disable=unused-argument
     """
-    Harvesting related cli
+    Entry-point of multipurpose CLI for Harvester
     """
-    print("Harvesting related cli")
 
 
-@harvester_cli.command('start')
+@cli.command('start')
 @click.option('-l', '--limit', default=1, help='The amount of mets files to be harvested.')
 def start_harvesting(limit):
     harvester = Harvester()

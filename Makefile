@@ -19,20 +19,24 @@ UNINSTALL_ORDER = priority_queue operandi_server service_broker harvester
 help:
 	@echo ""
 	@echo "Targets"
-	@echo ""
 	@echo " deps-ubuntu             Dependencies for deployment in an ubuntu/debian linux"
 	@echo " deps-test               Install test python deps via pip"
 	@echo " install                 (Re)install the modules"
 	@echo " install-dev             Install with pip install -e"
 	@echo " uninstall               Uninstall the modules"
-	@echo " start-mongo							Start the Mongo DB"
+	@echo ""
+	@echo " start-mongo             Start the Mongo DB"
+	@echo " start-broker-hpc        Start the Operandi Broker hpc (workflows executed in HPC)"
+	@echo " start-broker-local      Start the Operandi Broker local (workflows executed locally)"
+	@echo " start-server            Start the Operandi Server"
+	@echo " start-harvester         Start the Harvester"
+	@echo ""
 	@echo " docker-all              Build everything in a single docker image"
 	@echo " docker-harvester        Build harvester docker image"
 	@echo " docker-server           Build server docker image"
 	@echo " docker-broker           Build service-broker docker image"
 	@echo ""
 	@echo "Variables"
-	@echo ""
 	@echo " DOCKER_ALL              Docker all tag: '${DOCKER_ALL}'"
 	@echo " DOCKER_HARVESTER        Docker harvester tag: '${DOCKER_HARVESTER}'"
 	@echo " DOCKER_SERVER           Docker server tag: '${DOCKER_SERVER}'"
@@ -83,8 +87,23 @@ install-dev: uninstall
 uninstall:
 	for mod in $(UNINSTALL_ORDER);do $(PIP3) uninstall -y $$mod;done
 
+
 start-mongo:
 	docker-compose up -d operandi-mongodb
+
+start-broker-hpc:
+	operandi-broker start
+
+start-broker-local:
+	operandi-broker start -m True
+
+start-server:
+	operandi-server start
+
+# Currently, broken
+start-harvester:
+	echo "Not working properly"
+	operandi-harvester start --limit 1
 
 #
 # Tests
@@ -112,6 +131,7 @@ pyclean:
 .PHONY: docker-all docker-harvester docker-server docker-broker
 
 # Build docker image all-in-one by default
+# DOCKER commands are outdated and need rework.
 docker-all:
 	docker build -t $(DOCKER_ALL) --build-arg BASE_IMAGE=$(DOCKER_UBUNTU_IMAGE) $(DOCKER_ARGS) .
 	# docker build -t operandi-all-in-one --build-arg BASE_IMAGE=ubuntu:18.04 $(DOCKER_ARGS) .

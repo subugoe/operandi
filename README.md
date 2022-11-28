@@ -131,7 +131,7 @@ source $HOME/venv-operandi/bin/activate
 
 ```sh
 make start-mongo
-operandi-server server start
+make start-server
 ```
 
 Example OPERANDI Server output:
@@ -145,7 +145,7 @@ INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 6. In the second terminal start the Service Broker
 
 ```sh
-operandi-broker broker start
+make start-broker-hpc
 ```
 
 Example Service Broker output:
@@ -169,7 +169,7 @@ No further actions needed.
 
 Start the mockup version of the service broker:
 ```sh
-operandi-broker broker start -m True
+make start-broker-local
 ```
 
 7. In the third terminal start the Harvester
@@ -181,7 +181,7 @@ The harvester will no longer talk to the Operandi server. Instead, there will be
 between the Harvester and the Service broker module over the RabbitMQ.
 
 ```sh
-operandi-harvester harvest start --limit 1
+operandi-harvester start --limit 1
 ```
 
 For the demo run, we want to post only one request to the OPERANDI Server, thus, we limit the number of requests to be posted with the `--limit` option.

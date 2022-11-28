@@ -1,8 +1,7 @@
-import time
-from .message_exchanger import MessageExchanger
 from .constants import (
     DEFAULT_QUEUE_SERVER_TO_BROKER as DEFAULT_QSB
 )
+from .message_exchanger import MessageExchanger
 
 
 class Producer:
