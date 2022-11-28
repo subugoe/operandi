@@ -30,11 +30,11 @@ class ServiceBroker:
                  hpc_host=HPC_HOST,
                  hpc_username=HPC_USERNAME,
                  hpc_key_path=HPC_KEY_PATH,
-                 use_broker_mockup=False):
+                 local_execution=False):
 
         # Installation path of the module
         self._module_path = os.path.dirname(__file__)
-        self._use_broker_mockup = use_broker_mockup
+        self._local_execution = local_execution
         self.__consumer = self.__initiate_consumer(rabbit_mq_host, rabbit_mq_port)
 
         # TODO: FIX THIS
@@ -43,7 +43,7 @@ class ServiceBroker:
 
         # When running inside the container,
         # disable the self.ssh related commands manually!
-        if self._use_broker_mockup:
+        if self._local_execution:
             self.ssh = None
             print("ServiceBroker>__init__(): SSH disabled. Nothing will be submitted to the HPC.")
             print("ServiceBroker>__init__(): The mockup version of the Service broker will be used.")
@@ -80,7 +80,7 @@ class ServiceBroker:
             mets_url, workspace_id = body.decode('utf8').split(',')
             print(f"INFO: Mets URL: {mets_url}")
             print(f"INFO: Workspace_ID: {workspace_id}")
-            if self._use_broker_mockup:
+            if self._local_execution:
                 self.__execute_on_local(mets_url, workspace_id)
             else:
                 self.__execute_on_hpc(mets_url, workspace_id)

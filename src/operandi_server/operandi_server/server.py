@@ -65,7 +65,7 @@ class OperandiServer:
             return json_message
 
         # Used to accept Mets URLs from the user
-        @self.app.post("/workspace/mets_url2/", tags=["Workspace"])
+        @self.app.post("/workspace/", tags=["Workspace"])
         async def post_mets_url(mets_url: str, workspace_id: str):
             """
             Operandi extension to Workspace
