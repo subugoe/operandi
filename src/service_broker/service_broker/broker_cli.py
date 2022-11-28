@@ -41,7 +41,8 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 @click.option('-i', '--hpc-key-path',
               default=HPC_KEY_PATH,
               help='The path of the key file used for authentication.')
-@click.option('-m', '--use-broker-mockup',
+@click.option('-m', '--mocked',
+              is_flag=True,
               default=False,
               help='Toggle between HPC and Local execution')
 def start_broker(rabbit_mq_host,

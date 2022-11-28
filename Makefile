@@ -95,7 +95,7 @@ start-broker-hpc:
 	operandi-broker start
 
 start-broker-local:
-	operandi-broker start -m True
+	operandi-broker start --mocked
 
 start-server:
 	operandi-server start

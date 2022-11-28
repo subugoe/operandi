@@ -4,18 +4,17 @@ from shutil import make_archive
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from priority_queue.producer import Producer
-from priority_queue.constants import (
-    RABBIT_MQ_HOST as RMQ_HOST,
-    RABBIT_MQ_PORT as RMQ_PORT
-)
-
 from ocrd_webapi.database import initiate_database
 from ocrd_webapi.routers import (
     workflow,
     workspace,
 )
 
+from priority_queue.producer import Producer
+from priority_queue.constants import (
+    RABBIT_MQ_HOST as RMQ_HOST,
+    RABBIT_MQ_PORT as RMQ_PORT
+)
 from .constants import (
     SERVER_HOST as HOST,
     SERVER_PORT as PORT,

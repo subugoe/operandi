@@ -10,8 +10,6 @@ from priority_queue.constants import (
     RABBIT_MQ_HOST as RMQ_HOST,
     RABBIT_MQ_PORT as RMQ_PORT
 )
-
-from .ssh_communication import SSHCommunication
 from .constants import (
     HPC_HOST,
     HPC_USERNAME,
@@ -19,7 +17,7 @@ from .constants import (
     WORKFLOWS_DIR,
     WORKSPACES_DIR
 )
-
+from .ssh_communication import SSHCommunication
 
 # TODO: Implement the entire service broker properly
 # Currently the functions are not modularized well enough

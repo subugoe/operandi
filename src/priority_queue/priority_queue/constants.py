@@ -2,17 +2,21 @@ from pkg_resources import resource_filename
 import tomli
 
 __all__ = [
-    "RABBIT_MQ_HOST",
-    "RABBIT_MQ_PORT",
     "DEFAULT_EXCHANGER_NAME",
     "DEFAULT_EXCHANGER_TYPE",
     "DEFAULT_QUEUE_SERVER_TO_BROKER",
+    "RABBIT_MQ_HOST",
+    "RABBIT_MQ_PORT",
 ]
 
 TOML_FILENAME: str = resource_filename(__name__, 'config.toml')
 TOML_FD = open(TOML_FILENAME, mode='rb')
 TOML_CONFIG = tomli.load(TOML_FD)
 TOML_FD.close()
+
+DEFAULT_EXCHANGER_NAME: str = TOML_CONFIG["default_exchange_name"]
+DEFAULT_EXCHANGER_TYPE: str = TOML_CONFIG["default_exchange_type"]
+DEFAULT_QUEUE_SERVER_TO_BROKER: str = TOML_CONFIG["default_queue_server_to_broker"]
 
 # "rabbit-mq-host" when Dockerized
 # check the docker-compose.yml file
@@ -22,9 +26,6 @@ RABBIT_MQ_HOST: str = TOML_CONFIG["rabbit_mq_host"]
 # Pika Python client must use the same port to be able to communicate with the RabbitMQ
 RABBIT_MQ_PORT: int = TOML_CONFIG["rabbit_mq_port"]
 
-DEFAULT_EXCHANGER_NAME: str = TOML_CONFIG["default_exchange_name"]
-DEFAULT_EXCHANGER_TYPE: str = TOML_CONFIG["default_exchange_type"]
-DEFAULT_QUEUE_SERVER_TO_BROKER: str = TOML_CONFIG["default_queue_server_to_broker"]
 
 # NOTE
 # Make sure RabbitMQ is enabled and running on 5672 and 25672:

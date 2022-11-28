@@ -1,4 +1,5 @@
 import pika
+
 from .constants import (
     RABBIT_MQ_HOST as HOST,
     RABBIT_MQ_PORT as PORT,
