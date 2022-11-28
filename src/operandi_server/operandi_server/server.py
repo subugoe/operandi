@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from ocrd_webapi.database import initiate_database
 from ocrd_webapi.routers import (
+    discovery,
     workflow,
     workspace,
 )
@@ -36,10 +37,10 @@ class OperandiServer:
         self.app = self.__initiate_fast_api_app()
 
         # The following lines reuse the routers from the OCR-D WebAPI
+        self.app.include_router(discovery.router)
         self.app.include_router(workflow.router)
         self.app.include_router(workspace.router)
-        # Don't put this out of comments yet - missing confing files/malfunctioning
-        # self.app.include_router(discovery.router)
+        # Don't put this out of comments yet - missing config files/malfunctioning
         # self.app.include_router(processor.router)
 
         self.producer = self.__initiate_producer(rabbit_mq_host, rabbit_mq_port)
