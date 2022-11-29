@@ -4,11 +4,19 @@ from shutil import make_archive
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from ocrd_webapi.database import initiate_database
+from ocrd_webapi.database import (
+    initiate_database,
+    save_workspace
+)
 from ocrd_webapi.routers import (
     discovery,
     workflow,
     workspace,
+)
+from ocrd_webapi.managers.workspace_manager import WorkspaceManager
+from ocrd_webapi.models.workspace import WorkspaceRsrc
+from ocrd_webapi.utils import (
+    bagit_from_url
 )
 
 from priority_queue.producer import Producer
@@ -25,6 +33,10 @@ from .constants import (
     WORKSPACES_DIR,
     DB_URL,
 )
+
+# TODO: Optimize this. Workspace manager object is created twice.
+#  Once here, once when the Workspace router is included in the app
+workspace_manager = WorkspaceManager()
 
 
 class OperandiServer:
@@ -65,9 +77,21 @@ class OperandiServer:
             }
             return json_message
 
-        # Used to accept Mets URLs from the user
         @self.app.post("/mets_url", tags=["Workspace"])
-        async def operandi_post_mets_url(mets_url: str, workspace_id: str):
+        async def operandi_post_mets_url(mets_url: str):
+            bag_path = bagit_from_url(mets_url=mets_url, file_grp="DEFAULT")
+            # TODO: This is broken, the ocrd-web api expects file stream, not path or filePtr
+            #  Must be fixed in the WebAPI to provide more general function fo
+            ws_url, ws_id = await workspace_manager.create_workspace_from_zip(bag_path, file_stream=False)
+
+            # Note, this only posts the mets_url and do not
+            # trigger a workflow execution, unlike the old api call
+
+            return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
+
+        # Used to accept Mets URLs from the user
+        @self.app.post("/mets_url_old")
+        async def operandi_post_mets_url_old(mets_url: str, workspace_id: str):
             """
             Operandi extension to Workspace
             """
