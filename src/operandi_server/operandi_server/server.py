@@ -80,8 +80,6 @@ class OperandiServer:
         @self.app.post("/mets_url", tags=["Workspace"])
         async def operandi_post_mets_url(mets_url: str):
             bag_path = bagit_from_url(mets_url=mets_url, file_grp="DEFAULT")
-            # TODO: This is broken, the ocrd-web api expects file stream, not path or filePtr
-            #  Must be fixed in the WebAPI to provide more general function fo
             ws_url, ws_id = await workspace_manager.create_workspace_from_zip(bag_path, file_stream=False)
 
             # Note, this only posts the mets_url and do not
