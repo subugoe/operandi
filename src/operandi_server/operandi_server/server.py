@@ -77,14 +77,19 @@ class OperandiServer:
             }
             return json_message
 
-        @self.app.post("/mets_url", tags=["Workspace"])
-        async def operandi_post_mets_url(mets_url: str):
+        @self.app.post("/workspace_import_external", tags=["Workspace"])
+        async def operandi_import_from_mets_url(mets_url: str):
             bag_path = bagit_from_url(mets_url=mets_url, file_grp="DEFAULT")
             ws_url, ws_id = await workspace_manager.create_workspace_from_zip(bag_path, file_stream=False)
 
             # Note, this only posts the mets_url and do not
             # trigger a workflow execution, unlike the old api call
 
+            return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
+
+        @self.app.post("/workspace_import_local", tags=["Workspace"])
+        async def operandi_import_from_mets_dir(mets_dir: str):
+            ws_url, ws_id = await workspace_manager.create_workspace_from_mets_dir(mets_dir)
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
 
         # Used to accept Mets URLs from the user
