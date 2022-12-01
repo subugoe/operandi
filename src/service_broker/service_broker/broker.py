@@ -46,12 +46,12 @@ class ServiceBroker:
         # disable the self.ssh related commands manually!
         if self._local_execution:
             self.ssh = None
-            print("ServiceBroker>__init__(): SSH disabled. Nothing will be submitted to the HPC.")
-            print("ServiceBroker>__init__(): The mockup version of the Service broker will be used.")
+            print("ServiceBroker>__init__.py(): SSH disabled. Nothing will be submitted to the HPC.")
+            print("ServiceBroker>__init__.py(): The mockup version of the Service broker will be used.")
         else:
             self.ssh = SSHCommunication()
             self.ssh.connect_to_hpc(hpc_host, hpc_username, hpc_key_path)
-            print("ServiceBroker>__init__(): SSH connection successful")
+            print("ServiceBroker>__init__.py(): SSH connection successful")
 
     @staticmethod
     def __initiate_consumer(rabbit_mq_host, rabbit_mq_port):
@@ -330,8 +330,9 @@ class ServiceBroker:
         url = 'http://141.5.99.53/api/bag'
         files = {'file': open(path_to_bag, 'rb')}
         params = {'isGt': False}
+        # The credentials here are already publicly available inside the ola-hd repo
+        # Ignore docker warnings about exposed credentials
         response = requests.post(url, files=files, data=params, auth=("admin", "JW24G.xR"))
         if response.status_code >= 400:
             response.raise_for_status()
         return response.json()['pid']
-    
