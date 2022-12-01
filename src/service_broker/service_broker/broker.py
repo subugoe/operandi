@@ -321,3 +321,17 @@ class ServiceBroker:
             shutil.copy2(src_path, dst_path)
 
         # print(f"Copied from: {src_path}, to: {dst_path}")
+
+    # TODO: Conceptual implementation, not tested in any way yet
+    @staticmethod
+    def __send_bag_to_olahd(path_to_bag) -> str:
+        # Ola-HD dev instance,
+        # available only when connected to GOENET
+        url = 'http://141.5.99.53/api/bag'
+        files = {'file': open(path_to_bag, 'rb')}
+        params = {'isGt': False}
+        response = requests.post(url, files=files, data=params, auth=("admin", "JW24G.xR"))
+        if response.status_code >= 400:
+            response.raise_for_status()
+        return response.json()['pid']
+    
