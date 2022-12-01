@@ -34,8 +34,8 @@ RUN make install
 # This is not needed in docker, we will use RabbitMQ docker instance
 
 # Install the RabbitMQ Server
-# RUN ./src/priority_queue/repo_setup.deb.sh	
-# RUN ./src/priority_queue/install.sh
+# RUN ./src/rabbit_mq_utils/repo_setup.deb.sh
+# RUN ./src/rabbit_mq_utils/install.sh
 
 # No entry point for the docker image
 CMD /bin/bash

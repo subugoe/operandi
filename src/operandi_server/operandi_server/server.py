@@ -19,8 +19,8 @@ from ocrd_webapi.utils import (
     bagit_from_url
 )
 
-from priority_queue.producer import Producer
-from priority_queue.constants import (
+from rabbit_mq_utils.producer import Producer
+from rabbit_mq_utils.constants import (
     RABBIT_MQ_HOST as RMQ_HOST,
     RABBIT_MQ_PORT as RMQ_PORT
 )
@@ -93,8 +93,8 @@ class OperandiServer:
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
 
         # Used to accept Mets URLs from the user
-        @self.app.post("/mets_url_old")
-        async def operandi_post_mets_url_old(mets_url: str, workspace_id: str):
+        @self.app.post("/mets_url")
+        async def operandi_post_mets_url(mets_url: str, workspace_id: str):
             """
             Operandi extension to Workspace
             """

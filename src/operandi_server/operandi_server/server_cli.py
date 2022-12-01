@@ -1,7 +1,7 @@
 import click
 import uvicorn
 
-from priority_queue.constants import (
+from rabbit_mq_utils.constants import (
     RABBIT_MQ_HOST,
     RABBIT_MQ_PORT
 )
@@ -39,6 +39,7 @@ def cli(**kwargs):  # pylint: disable=unused-argument
               default=RABBIT_MQ_PORT,
               help='The port of the RabbitMQ.')
 def start_server(host, port, rabbit_mq_host, rabbit_mq_port):
+    print(f"OPERANDI SERVER CLI> HOST: {host}, PORT: {port}, RABBIT_MQ_HOST: {rabbit_mq_host}, RABBIT_MQ_PORT: {rabbit_mq_port}")
     operandi_server = OperandiServer(host=host,
                                      port=port,
                                      rabbit_mq_host=rabbit_mq_host,

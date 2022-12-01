@@ -6,8 +6,8 @@ PIP3 = pip3
 PYTHONIOENCODING=utf8
 TESTDIR = tests
 
-BUILD_ORDER = src/priority_queue src/operandi_server src/service_broker src/harvester
-UNINSTALL_ORDER = priority_queue operandi_server service_broker harvester
+BUILD_ORDER = src/rabbit_mq_utils src/operandi_server src/service_broker src/harvester
+UNINSTALL_ORDER = rabbit_mq_utils operandi_server service_broker harvester
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
 
@@ -26,6 +26,7 @@ help:
 	@echo " uninstall               Uninstall the modules"
 	@echo ""
 	@echo " start-mongo             Start the Mongo DB"
+	@echo " start-rabbitmq          Start the RabbitMQ Server"
 	@echo " start-broker-hpc        Start the Operandi Broker hpc (workflows executed in HPC)"
 	@echo " start-broker-local      Start the Operandi Broker local (workflows executed locally)"
 	@echo " start-server            Start the Operandi Server"
@@ -93,6 +94,9 @@ uninstall:
 start-mongo:
 	docker-compose up -d operandi-mongodb
 
+start-rabbitmq:
+	docker-compose up -d operandi-rabbit-mq
+
 start-broker-hpc:
 	operandi-broker start
 
@@ -104,8 +108,8 @@ start-server:
 
 # Currently, broken
 start-harvester:
-	echo "Not working properly"
-	operandi-harvester start --limit 1
+	echo "Harvester is out of service."
+	# operandi-harvester start --limit 1
 
 #
 # Tests

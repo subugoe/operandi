@@ -8,207 +8,199 @@ OPERANDI is one of the implementation projects funded by the DFG initiative OCR-
 The goal of OPERANDI is to develop and build an OCR-D-based implementation package for mass full-text capture with improved throughput while improving the quality of the results. At the same time, the goal is that the implementation package can also be used by other projects and institutions with comparable requirements. Two scenarios were identified during the pilot. In the first scenario, OCR generation is to take place for works that have already been digitized, resulting in mass full-text capture. In the second scenario, OCR generation for new works to be digitized will take place as part of the digitization process.
 
 ## 2. Accessing the development VM of OPERANDI
-UP-TO-DATE
-
 This step is only for internal developers of OPERANDI.
-For installation from the source continue with the next step.
-
-1. Create an SSH key pair (if not already done)
+For installation from the source continue with the next step. 
+Connect to our development VM (cloud@141.5.99.32) via ssh:
 ```sh
-ssh-keygen -t rsa -b 2048 -f keyPath
+ssh cloud@141.5.99.32 -i /path/to/your_key
 ```
-
-2. Write Mehmed an e-mail with your public key attached (if not already done) to get access to the development VM.
-
-3. Connect to our development VM (cloud@141.5.99.32) via ssh:
-```sh
-ssh cloud@141.5.99.32 -i keyPath
-```
-
-All installations and configurations are already done inside the VM.
-
-You can proceed to step 4: `Executing one full cycle of OPERANDI`
+(Currently, the dev VM is not up-to-date)
 
 ## 3. Installation of OPERANDI from source
-#### 1. Clone the repository and enter its directory.
+#### 3.1. Clone the repository and enter its directory.
 ```sh
 git clone git@github.com:subugoe/operandi.git
 cd operandi
 ```
 
-#### 2. Install dependencies
+#### 3.2. Install dependencies
 ```sh
 sudo apt-get update
 sudo apt-get -y install make
 sudo make deps-ubuntu
 ```
 
-#### 3. Create a virtual Python environment and activate it.
+#### 3.3. Create a virtual Python environment and activate it.
 ```sh
 python3 -m venv $HOME/venv-operandi
 source $HOME/venv-operandi/bin/activate
 ```
 
-#### 4. Install the RabbitMQ Server (priority queue)
-
-3.1 First set up the repository with a single liner script:
-```sh
-sudo ./src/priority_queue/local_install/repo_setup.deb.sh
-```
-
-3.2 Install RabbitMQ:
-
-Easy installation:
-
-```sh
-sudo ./src/priority_queue/local_install/install.sh
-```
-
-This script should install the RabbitMQ Server properly in most cases (on Ubuntu/Debian Linux OS).
-`NOTE`: Always check the content of scripts before execution! 
-
-Advanced install:
-
-It is highly recommended to perform the steps of the `install.sh` script manually step by step.
-
-#### 5. Install the modules of OPERANDI.
+#### 3.4. Install the modules of OPERANDI.
 ```sh
 make install-dev
 ```
 
-After a successful installation three executables are produced:
-- operandi-server
-- operandi-broker
-- operandi-harvester
+## 4. Configurations
 
-## 4. Executing one full cycle of OPERANDI
+Select either of the two options and fulfill the requirements.
 
-1. Getting credentials (if not already done)
+#### 4.1 Option 1: The service broker executes workflows on the local host
 
-1.1 For an account activation: Follow the instructions provided [here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:account_activation)
+<details>
+<summary> 4.1.1 Requirements </summary>
 
-1.2 Creating a key pair for the HPC environment: Follow the instructions provided [here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:connect_with_ssh)
-
-Make sure you can access the GWDG's HPC environment from your local machine.
-
-2. Configurations:
-
-2.1 Set the HPC related credentials `HPC_USERNAME` and `HPC_KEY_PATH` inside:
-[constants.py](./src/service_broker/service_broker/constants.py) of Service Broker.
-
-2.2 Reinstall the OPERANDI modules to save the changes of the previous step
-```sh
-make install-dev
-```
-
-3. Enable and start the RabbitMQ Server (if not already running)
-
-Check if RabbitMQ is running:
-```sh
-sudo lsof -i -P -n | grep LISTEN
-```
-
-RabbitMQ should be running on ports 5672, 15672, and 25672. Example output of the previous command:
-```sh
-beam.smp  103720  rabbitmq  18u  IPv4  383150  0t0  TCP *:25672 (LISTEN)
-beam.smp  103720  rabbitmq  33u  IPv6  373659  0t0  TCP *:5672 (LISTEN)
-beam.smp  103720  rabbitmq  34u  IPv4  393881  0t0  TCP *:15672 (LISTEN)
-```
-
-If running, go to step 4. If not running, enable and start it:
-```sh
-sudo systemctl enable rabbitmq-server
-sudo systemctl start rabbitmq-server
-sudo rabbitmq-plugins enable rabbitmq_management
-```
-
-4. Open 2 new terminals and activate the `venv-operandi` environment in each of them.
-```sh
-source $HOME/venv-operandi/bin/activate
-```
-
-5. In the first terminal start the MongoDB and the OPERANDI Server
-
-```sh
-make start-mongo
-make start-server
-```
-
-Example OPERANDI Server output:
-```sh
-INFO:     Started server process [34531]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
-```
-
-6. In the second terminal start the Service Broker
-
-```sh
-make start-broker-hpc
-```
-
-Example Service Broker output:
-```sh
-Service broker host:localhost port:27072
-Consumer initiated
-SSH connection successful
-INFO: Waiting for messages. To exit press CTRL+C.
-```
-
-If there are no HPC credentials for the SSH connection, then the mockup version of the service broker can be used for local execution.
-However, to do so two things are required: 1. OCR-D Software docker image and 2. Nextflow installed locally.
-- Pull the docker image of the OCR-D Software
+1. OCR-D Software, check [here](https://ocr-d.de/en/setup) for more details. 
+For simplicity, just pull the docker image of `ocrd/all:maximum`. 
+As the tag hints, this will download the entire OCR-D software (~13.5GB).
 ```sh
 docker pull ocrd/all:maximum
 ```
-- Check the Nextflow installation guide [here](https://www.nextflow.io/docs/latest/getstarted.html).
 
-Inside the development VM, the ocrd/all:maximum docker image and Nextflow are already available.
-No further actions needed.
-
-Start the mockup version of the service broker:
+2. Nextflow installed locally, check [here](https://www.nextflow.io/docs/latest/getstarted.html) for more details.
 ```sh
-make start-broker-local
+curl -s https://get.nextflow.io | bash
+chmod +x nextflow
+mv nextflow /usr/local/bin/
+nextflow -v
 ```
 
-7. In the third terminal start the Harvester
+</details>
 
-NOTE: Skip step 7. Go to step 8. 
+<details>
+ <summary> 4.1.2 Configurations </summary>
+By default the service broker is configured to run locally. 
+No further configurations needed.
+</details>
 
-The harvester module is not up-to-date. The location of the harvester will change.
-The harvester will no longer talk to the Operandi server. Instead, there will be direct communication 
-between the Harvester and the Service broker module over the RabbitMQ.
+#### 4.2 Option 2: The service broker executes workflows in the HPC environment
 
+<details>
+<summary> 4.2.1 Requirements </summary>
+
+1. GWDG credentials, check [here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:account_activation).
+2. Access to the HPC environment, check [here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:connect_with_ssh).
+</details>
+
+<details>
+<summary> 4.2.2 Configurations </summary>
+
+1. Set the HPC related credentials `HPC_USERNAME` and `HPC_KEY_PATH` inside the 
+`operandi/src/service_broker/service_broker/config.toml` file of the 
+service broker module.
+
+2. Reinstall the OPERANDI modules to save the changes of the previous step
 ```sh
-operandi-harvester start --limit 1
+make install-dev
 ```
 
-For the demo run, we want to post only one request to the OPERANDI Server, thus, we limit the number of requests to be posted with the `--limit` option.
+Soon there will be a more convenient way to configure things 
+and reinstallation of modules will not be needed.
+</details>
 
-Example Harvester output:
-```sh
-Harvesting started with limit:1
-INFO: Starting harvesting...
+## 5. Executing one full cycle of OPERANDI
 
-INFO: Mets URL will be submitted every 10 seconds.
-INFO: Posted successfully... PPN767935306
+Executing steps `5.1` and `5.2` for the first time will take more time - downloading and building.
+
+#### 5.1 Start the MongoDB docker container
+```bash
+make start-mongo
 ```
 
-8. Create a request and get the results
+#### 5.2 Start the RabbitMQ docker container
+```bash
+make start-rabbitmq
+```
 
-8.1. Submit a `mets_url` and provide a `workspace_id`. 
+<details>
+ <summary> Check if MongoDB and RabbitMQ are running: </summary>
 
-A timestamp is added as a suffix to the provided `workspace_id`. The format of the timestamp is `_%Y%m%d_%H%M`. E.g., `2022-07-28 17:00` will become `_20220728_1700` as a suffix.
+`sudo lsof -i -P -n | grep LISTEN` or `docker ps`
 
-Open a new terminal and submit your mets_url. Here is an example curl request:
+By default, the MongoDB is listening on port 27018 and 
+RabbitMQ is listening on ports 5672, 15672, and 25672.
+```sh
+docker-pr 102316  root  4u  IPv4 635588  0t0  TCP *:27018 (LISTEN)
+docker-pr 102323  root  4u  IPv6 644201  0t0  TCP *:27018 (LISTEN)
+docker-pr 103097  root  4u  IPv4 637506  0t0  TCP *:25672 (LISTEN)
+docker-pr 103103  root  4u  IPv6 646574  0t0  TCP *:25672 (LISTEN)
+docker-pr 103116  root  4u  IPv4 648464  0t0  TCP *:15672 (LISTEN)
+docker-pr 103122  root  4u  IPv6 630453  0t0  TCP *:15672 (LISTEN)
+docker-pr 103134  root  4u  IPv4 642880  0t0  TCP *:5672 (LISTEN)
+docker-pr 103141  root  4u  IPv6 642885  0t0  TCP *:5672 (LISTEN)
+```
+</details>
+
+#### 5.3 Start the Operandi broker
+Depending on the configuration in `step 4`, there are two options. 
+To run a service broker instance that executes workflows locally or 
+an instance that executes workflows in the HPC environment. 
+
+Open a new terminal, activate the virtual Python environment created in `step 3.3`, and 
+start one of the broker instances.
+
+<details>
+ <summary> Local instance </summary>
+
+```bash
+source $HOME/venv-operandi/bin/activate
+make start-broker-local 
+```
+</details>
+
+<details>
+ <summary> HPC instance </summary>
+
+```bash
+source $HOME/venv-operandi/bin/activate
+make start-broker-hpc 
+```
+</details>
+
+#### 5.4 Start the Operandi server
+
+As in `step 5.3`, activate the environment, then start the server.
+```bash
+source $HOME/venv-operandi/bin/activate
+make start-server
+```
+
+#### 5.5 Start the Harvester (currently, out of service, skip)
+The harvester module is not up-to-date. 
+The location of the harvester will change in the architecture.
+The harvester will no longer communicate with the Operandi server. 
+Instead, there will be direct communication 
+between the Harvester and the Service broker over RabbitMQ.
+
+#### 5.6 Interactive API documentation
+
+Check the interactive API documentation of the Operandi server once there is a running server instance (http://localhost:8000/docs).
+Operandi reuses the provided API from OCR-D and extends it.
+
+1. OCR-D WebAPI [spec](https://github.com/OCR-D/spec/blob/master/openapi.yml)
+2. OCR-D WebAPI [swagger](https://app.swaggerhub.com/apis/kba/ocr-d_web_api/0.0.1#/).
+3. OCR-D WebAPI [repo](https://github.com/OCR-D/ocrd-webapi-implementation).
+
+#### 5.7 Curl requests
+These are the curl requests we support in the alpha release of Operandi, e.g., 
+the `default` tag in the interactive API documentation.
+
+<details>
+ <summary> 1. Post a workspace, parameters: `METS URL` and `workspace_id`. </summary>
+
+```sh
+E.g.:
+mets_url=https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml
+workspace_id=PPN631277528
+```
+`Warning`: Note that in `mets_url=VALUE` the `:` and `/` are replaced with `%3A` and `%2F`, respectively, in the curl command below.
+Do not just copy and paste a browser link.
+
 ```sh
 curl -X 'POST' 'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528'
 ```
-Replace `mets_url=VALUE` and `workspace_id=VALUE` appropriately for your input.
 
-`Warning`: Note that in `mets_url=VALUE` the `:` and `/` are replaced with `%3A` and `%2F`, respectively.
-Do not just copy and paste a browser link.
+The `workspace_id` is modified with a timestamp suffix, i.e., `workspace_id_{timestamp}`
 
 Once you submit the `mets_url` and the `workspace_id`, the service broker creates a directory named `workspace_id_%Y%m%d_%H%M`,
 downloads the mets file, and the images of fileGrp `DEFAULT` inside the mets file.
@@ -220,22 +212,25 @@ Moreover, we will offer several ready-to-run Nextflow scripts to choose from ins
 In addition, there will be a way to provide an OCR-D process workflow text file which will be converted to a Nextflow script.
 Check [here](https://github.com/MehmedGIT/OtoN_Converter) for additional information on the OtoN (OCR-D to Nextflow) converter. 
 
-8.2. List available workspaces. 
+</details>
 
-It shows all `workspace_id`'s currently available on the Operandi Server.
+<details>
+ <summary> 2. List available workspaces.</summary> 
 
-E.g.:
+It shows all `workspace_id`'s currently available on the Operandi Server. E.g.:
 ```sh
 curl -X 'GET' 'http://localhost:8000/workspaces/'
 ```
 
-8.3. Get the results
+</details>
+
+
+<details>
+ <summary> 3. Download a workspace + workflow results </summary>
 
 Download the zip of a `workspace_id_timestamp`. Suggestion: first list the available `workspace_id`'s to find your 
 `workspace_id` with the timestamp suffix. Then replace `workspace_id=VALUE` appropriately.
 Set the `output` path of the zip appropriately, i.e., the download location of the zip.
-
-E.g.:
 ```sh
 curl -X 'GET' 'http://localhost:8000/workspaces/workspace_id?workspace_id=PPN631277528_20220728_1700' --output ~/operandi_results/PPN631277528.zip
 ```
@@ -247,18 +242,21 @@ This is especially useful for debugging!
 3. A Nextflow report with execution details such as execution duration and used resources: `report.html` 
 4. An `output.txt` that holds the `stdout` of the current Nextflow execution.
 
-## 5. Solutions to commonly occurring problems
+</details>
+
+## 6. Solutions to potential problems
 
 This section provides solutions for potential problems that may arise.
 
-1. Are there any authentication errors with the SSH connection when starting the Service Broker module?
+<details>
+ <summary> 1. Authentication errors using SSH when starting the `service-broker-hpc`.</summary>
 
 A potential reason for that error could be that your private key was not added to the SSH Agent.
 
 Solution:
 ```sh
 eval `ssh-agent -s`
-ssh-add ~/.ssh/gwdg-cluster
+ssh-add /path/to/your_key
 ```
 
 The first command activates the SSH Agent (in case it is not active).
@@ -267,35 +265,21 @@ The second command adds the private key to the SSH Agent.
 The given path for the private key is the path inside the development VM. 
 Make sure to provide the correct path for your local installation.
 
-2. Downloading images based on mets file fails with an HTTP request exception inside the HPC environment.
+</details>
 
-This is a known problem. This happens with the mets files coming from GDZ. 
-The URLs to the images inside the mets file sometimes trigger server-side error exceptions. 
+<details>
+ <summary> 2. Downloading images referenced inside the METS file fails with an HTTP request exception.</summary>
 
-`Exception: HTTP request failed: URL (HTTP 500)`
+This is a known problem. This usually happens with METS files coming from the GDZ. 
 
-- Bad solution:
+The URLs to the images inside the mets file sometimes trigger server-side error exceptions, e.g., `Exception: HTTP request failed: URL (HTTP 500)`
 
-Manually replace `http://gdz-srv1.` with `https://gdz.` inside the mets file.
-
-- Better solution:
-
-For now, just provide a METS file URL link from another library.
-
-Follow these steps:
-
-1. Start the Operandi Server (check above for instructions)
-2. Start the Service Broker (check above for instructions)
-3. Instead of starting the Harvester, execute the following curl command to create a request
+- Bad solution: Find-all and replace `http://gdz-srv1.` with `https://gdz.` inside the mets file.
+- Better Solution: Try a METS file URL from another library. E.g.,
+```sh
+https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml
+```
 ```sh
 curl -X 'POST' 'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528'
 ```
-
-The request sends the URL of a mets file of a workspace and the ID of that mets file. 
-
-To obtain results faster we use a small workspace with just 29 pages.
-
-4. A Job-ID is sent back as a response. 
-Currently, this is the ID of the job running inside the HPC cluster. 
-This will change in the future. 
-There is no ID when using the mockup version of the service broker for local executions.
+</details>

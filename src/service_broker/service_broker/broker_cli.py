@@ -1,6 +1,6 @@
 import click
 
-from priority_queue.constants import (
+from rabbit_mq_utils.constants import (
     RABBIT_MQ_HOST,
     RABBIT_MQ_PORT
 )

@@ -5,8 +5,8 @@ import subprocess
 import shlex
 from clint.textui import progress
 
-from priority_queue.consumer import Consumer
-from priority_queue.constants import (
+from rabbit_mq_utils.consumer import Consumer
+from rabbit_mq_utils.constants import (
     RABBIT_MQ_HOST as RMQ_HOST,
     RABBIT_MQ_PORT as RMQ_PORT
 )
