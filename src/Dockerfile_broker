@@ -13,6 +13,7 @@ WORKDIR /usr/src/service_broker/service_broker
 
 # install dependencies    
 RUN apt-get update && apt-get -y install \
+    git \
     ca-certificates \
     curl \
     iputils-ping \
