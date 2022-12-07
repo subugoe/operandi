@@ -1,5 +1,8 @@
 from pkg_resources import resource_filename
-import tomli
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 __all__ = [
     "VD18_IDS_FILE",
@@ -13,7 +16,7 @@ __all__ = [
 
 TOML_FILENAME: str = resource_filename(__name__, 'config.toml')
 TOML_FD = open(TOML_FILENAME, mode='rb')
-TOML_CONFIG = tomli.load(TOML_FD)
+TOML_CONFIG = tomllib.load(TOML_FD)
 TOML_FD.close()
 
 # These are the VD18 constants

@@ -1,5 +1,10 @@
 from pkg_resources import resource_filename
-import tomli
+#import tomli
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
+
 
 __all__ = [
     "DEFAULT_EXCHANGER_NAME",
@@ -11,7 +16,8 @@ __all__ = [
 
 TOML_FILENAME: str = resource_filename(__name__, 'config.toml')
 TOML_FD = open(TOML_FILENAME, mode='rb')
-TOML_CONFIG = tomli.load(TOML_FD)
+#TOML_CONFIG = tomli.load(TOML_FD)
+TOML_CONFIG = tomllib.load(TOML_FD)
 TOML_FD.close()
 
 DEFAULT_EXCHANGER_NAME: str = TOML_CONFIG["default_exchange_name"]
