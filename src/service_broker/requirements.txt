@@ -4,5 +4,6 @@ clint==0.5.1
 pydantic>=1.9.1
 pytest>=7.0.0
 click>=7
-tomli>=2.0.0
+#tomli>=2.0.1
+tomli >= 1.1.0 ; python_version < "3.11"
 

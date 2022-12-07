@@ -4,6 +4,10 @@ fastapi>=0.75.1
 pydantic>=1.9.1
 pytest>=7.0.0
 click >=7
-tomli>=2.0.0
-ocrd_webapi @ git+https://github.com/OCR-D/ocrd-webapi-implementation.git@refactoring#egg=ocrd_webapi
+#tomli>=2.0.1
+tomli >= 1.1.0 ; python_version < "3.11"
+# ocrd_webapi @ git+https://github.com/OCR-D/ocrd-webapi-implementation.git@v0.1.0#egg=ocrd_webapi
+#git+https://github.com/OCR-D/ocrd-webapi-implementation.git@v0.1.0#egg=ocrd_webapi
+ocrd_webapi @ git+https://github.com/OCR-D/ocrd-webapi-implementation.git@v0.1.0
+#ocrd_webapi @ git+https://github.com/OCR-D/ocrd-webapi-implementation.git
 
