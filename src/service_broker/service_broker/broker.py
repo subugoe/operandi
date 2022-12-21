@@ -11,7 +11,8 @@ from rabbit_mq_utils.constants import (
     RABBIT_MQ_PORT as RMQ_PORT,
     DEFAULT_EXCHANGER_NAME,
     DEFAULT_EXCHANGER_TYPE,
-    DEFAULT_QUEUE_SERVER_TO_BROKER
+    DEFAULT_QUEUE_SERVER_TO_BROKER,
+    DEFAULT_QUEUE_HARVESTER_TO_BROKER
 )
 from .constants import (
     HPC_HOST,
@@ -39,7 +40,8 @@ class ServiceBroker:
         # Installation path of the module
         self._module_path = os.path.dirname(__file__)
         self._local_execution = local_execution
-        self.__consumer = self.__initiate_consumer(rabbit_mq_host, rabbit_mq_port)
+        self.__consumer_from_server_queue = self.__initiate_consumer(rabbit_mq_host, rabbit_mq_port)
+        self.__consumer_from_harvester_queue = self.__initiate_consumer(rabbit_mq_host, rabbit_mq_port)
 
         # TODO: FIX THIS
         # Currently, the service broker cannot connect to the HPC environment
@@ -70,15 +72,25 @@ class ServiceBroker:
         print("ServiceBroker>__initiate_consumer(): Consumer initiated")
         return consumer
 
-    def start(self):
+    def start_listening_to_server_queue(self):
         # Specify the callback method, i.e.,
         # what to happen every time something is consumed
-        self.__consumer.configure_consuming(
+        self.__consumer_from_server_queue.configure_consuming(
             queue_name=DEFAULT_QUEUE_SERVER_TO_BROKER,
             callback_method=self.__mets_url_callback
         )
         # The main thread blocks here
-        self.__consumer.start_consuming()
+        self.__consumer_from_server_queue.start_consuming()
+
+    def start_listening_to_harvester_queue(self):
+        # Specify the callback method, i.e.,
+        # what to happen every time something is consumed
+        self.__consumer_from_harvester_queue.configure_consuming(
+            queue_name=DEFAULT_QUEUE_HARVESTER_TO_BROKER,
+            callback_method=self.__mets_url_callback
+        )
+        # The main thread blocks here
+        self.__consumer_from_harvester_queue.start_consuming()
 
     # The callback method provided to the Consumer listener
     def __mets_url_callback(self, ch, method, properties, body):
