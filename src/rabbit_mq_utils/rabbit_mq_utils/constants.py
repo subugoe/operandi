@@ -8,6 +8,7 @@ __all__ = [
     "DEFAULT_EXCHANGER_NAME",
     "DEFAULT_EXCHANGER_TYPE",
     "DEFAULT_QUEUE_SERVER_TO_BROKER",
+    "DEFAULT_QUEUE_HARVESTER_TO_BROKER",
     "RABBIT_MQ_HOST",
     "RABBIT_MQ_PORT",
 ]
@@ -20,6 +21,7 @@ TOML_FD.close()
 DEFAULT_EXCHANGER_NAME: str = TOML_CONFIG["default_exchange_name"]
 DEFAULT_EXCHANGER_TYPE: str = TOML_CONFIG["default_exchange_type"]
 DEFAULT_QUEUE_SERVER_TO_BROKER: str = TOML_CONFIG["default_queue_server_to_broker"]
+DEFAULT_QUEUE_HARVESTER_TO_BROKER: str = TOML_CONFIG["default_queue_harvester_to_broker"]
 
 # "rabbit-mq-host" when Dockerized
 # check the docker-compose.yml file
