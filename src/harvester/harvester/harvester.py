@@ -33,8 +33,8 @@ class Harvester:
 
         if logger is None:
             logger = logging.getLogger(__name__)
-        logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
-        logging.getLogger("pika").setLevel(logging.WARNING)
+        logging.basicConfig(level=logging.WARNING, format=LOG_FORMAT)
+        logging.getLogger(__name__).setLevel(LOG_LEVEL)
         self._logger = logger
 
         self.vd18_file = VD18_IDS_FILE

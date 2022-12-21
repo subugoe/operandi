@@ -55,7 +55,8 @@ class OperandiServer:
 
         if logger is None:
             logger = logging.getLogger(__name__)
-        logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+        logging.basicConfig(level=logging.WARNING, format=LOG_FORMAT)
+        logging.getLogger(__name__).setLevel(LOG_LEVEL)
         self._server_logger = logger
 
         self._server_logger.info(f"Operandi host:{host}, port:{port}")
