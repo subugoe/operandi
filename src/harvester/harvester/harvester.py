@@ -1,7 +1,16 @@
 import os
+import datetime
 import time
 import requests
 
+from ocrd_webapi.rabbitmq import RMQPublisher
+from rabbit_mq_utils.constants import (
+    RABBIT_MQ_HOST as RMQ_HOST,
+    RABBIT_MQ_PORT as RMQ_PORT,
+    DEFAULT_EXCHANGER_NAME,
+    DEFAULT_EXCHANGER_TYPE,
+    DEFAULT_QUEUE_HARVESTER_TO_BROKER
+)
 from .constants import (
     VD18_IDS_FILE,
     VD18_URL,
@@ -19,12 +28,19 @@ from .constants import (
 # will talk directly to the broker over the RabbitMQ.
 # The current Harvester section in the README file will also be removed.
 class Harvester:
-    def __init__(self):
+    def __init__(self, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT):
         self.vd18_file = VD18_IDS_FILE
         self.wtbs = WAIT_TIME_BETWEEN_SUBMITS
         if not os.path.exists(self.vd18_file) or not os.path.isfile(self.vd18_file):
             print(f"{self.vd18_file} file does not exist or is not a readable file!")
             exit(1)
+
+        self.__publisher = self.__initiate_publisher(rabbit_mq_host, rabbit_mq_port)
+        self.__publisher.create_queue(
+            queue_name=DEFAULT_QUEUE_HARVESTER_TO_BROKER,
+            exchange_name=DEFAULT_EXCHANGER_NAME,
+            exchange_type=DEFAULT_EXCHANGER_TYPE
+        )
 
     @staticmethod
     def url_exists(url):
@@ -67,13 +83,22 @@ class Harvester:
 
         mets_url = f"{VD18_URL}{mets_id}{VD18_METS_EXT}"
         if Harvester.url_exists(mets_url):
-            # print(f"INFO: Exists... {mets_id}")
-            success = self.__post_to_operandi(mets_id, mets_url)
-            if success:
-                print(f"INFO: Posted successfully... {mets_id}")
-                return True
+            # Create a timestamp
+            timestamp = datetime.datetime.now().strftime("_%Y%m%d_%H%M")
+            # Append the timestamp at the end of the provided workspace_id
+            mets_id += timestamp
+            publish_message = f"{mets_url},{mets_id}".encode('utf8')
 
-        print(f"INFO: Not posted... {mets_id}")
+            try:
+                self.__publisher.publish_to_queue(
+                    exchange_name=DEFAULT_EXCHANGER_NAME,
+                    queue_name=DEFAULT_QUEUE_HARVESTER_TO_BROKER,
+                    message=publish_message,
+                )
+                print(f"INFO: Sent to queue successfully: {mets_id}")
+                return True
+            except Exception as e:
+                print(f"ERROR: Mets `{mets_id}` was not posted successfully. Reason: {e}")
         return False
 
     def __print_waiting_message(self):
@@ -108,3 +133,18 @@ class Harvester:
     def stop_harvesting(self):
         print(f"{self}")
         print(f"INFO: Stopped harvesting")
+
+    @staticmethod
+    def __initiate_publisher(rabbit_mq_host, rabbit_mq_port):
+        publisher = RMQPublisher(
+            host=rabbit_mq_host,
+            port=rabbit_mq_port,
+            vhost="/"
+        )
+        publisher.authenticate_and_connect(
+            username="operandi-harvester",
+            password="operandi-harvester"
+        )
+        publisher.enable_delivery_confirmations()
+        print("Publisher initiated")
+        return publisher
