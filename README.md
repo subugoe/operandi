@@ -171,11 +171,18 @@ make start-server
 ```
 
 #### 6.5 Start the Harvester (currently, out of service, skip)
-The harvester module is not up-to-date. 
-The location of the harvester will change in the architecture.
-The harvester will no longer communicate with the Operandi server. 
-Instead, there will be direct communication 
-between the Harvester and the Service broker over RabbitMQ.
+As in `step 6.3`, activate the environment, then start the harvester.
+```bash
+source $HOME/venv-operandi/bin/activate
+make start-harvester
+```
+The harvesting module will harvest only a single mets url workspace by default.
+It is also possible to harvest more than one mets url. 
+To do so start the harvester by setting the desired limit.
+Currently, there are no limit checks, so do not use a big `N` value.
+```bash
+operandi-harvester start --limit N
+```
 
 #### 6.6 Interactive API documentation
 

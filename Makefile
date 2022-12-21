@@ -28,6 +28,7 @@ help:
 	@echo " start-rabbitmq          Start the RabbitMQ Server docker container"
 	@echo " start-broker-hpc        Start the Operandi Broker locally for hpc (workflows executed in HPC)"
 	@echo " start-broker-local      Start the Operandi Broker locally for local (workflows executed locally)"
+	@echo " start-harvester         Start the Operandi Harvester"
 	@echo " start-server            Start the Operandi Server"
 	@echo ""
 
@@ -80,10 +81,8 @@ start-broker-local:
 start-server:
 	operandi-server start
 
-# Currently, broken (the place of the harvester in the architecture will change)
 start-harvester:
-	echo "Harvester is out of service."
-	# operandi-harvester start --limit 1
+	operandi-harvester start --limit 1
 
 pyclean:
 	rm -f **/*.pyc
