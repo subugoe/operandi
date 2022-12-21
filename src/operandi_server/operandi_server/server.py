@@ -2,6 +2,8 @@ import os
 import datetime
 from shutil import make_archive
 
+import logging
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from ocrd_webapi.database import (
@@ -35,6 +37,8 @@ from .constants import (
     WORKFLOWS_DIR,
     WORKSPACES_DIR,
     DB_URL,
+    LOG_LEVEL,
+    LOG_FORMAT
 )
 
 # TODO: Optimize this. Workspace manager object is created twice.
@@ -43,11 +47,20 @@ workspace_manager = WorkspaceManager()
 
 
 class OperandiServer:
-    def __init__(self, host=HOST, port=PORT, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT):
+    def __init__(self, host=HOST, port=PORT, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT, logger=None):
         self.host = host
         self.port = port
         self.server_path = SERVER_PATH
         self._data_path = OPERANDI_DATA_PATH
+
+        if logger is None:
+            logger = logging.getLogger(__name__)
+        logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+        self._server_logger = logger
+
+        self._server_logger.info(f"Operandi host:{host}, port:{port}")
+        self._server_logger.info(f"RabbitMQ host:{host}, port:{rabbit_mq_port}")
+        self._server_logger.info(f"MongoDB URL: {DB_URL}")
 
         self.app = self.__initiate_fast_api_app()
 
@@ -58,7 +71,11 @@ class OperandiServer:
         # Don't put this out of comments yet - missing config files/malfunctioning
         # self.app.include_router(processor.router)
 
-        self.__publisher = self.__initiate_publisher(rabbit_mq_host, rabbit_mq_port)
+        self.__publisher = self.__initiate_publisher(
+            rabbit_mq_host,
+            rabbit_mq_port,
+            logger_name=logging.getLogger("operandi-server_publisher_server-queue")
+        )
         self.__publisher.create_queue(
             queue_name=DEFAULT_QUEUE_SERVER_TO_BROKER,
             exchange_name=DEFAULT_EXCHANGER_NAME,
@@ -185,16 +202,16 @@ class OperandiServer:
         return app
 
     @staticmethod
-    def __initiate_publisher(rabbit_mq_host, rabbit_mq_port):
+    def __initiate_publisher(rabbit_mq_host, rabbit_mq_port, logger_name):
         publisher = RMQPublisher(
             host=rabbit_mq_host,
             port=rabbit_mq_port,
-            vhost="/"
+            vhost="/",
+            logger=logger_name
         )
         publisher.authenticate_and_connect(
             username="operandi-server",
             password="operandi-server"
         )
         publisher.enable_delivery_confirmations()
-        print("Publisher initiated")
         return publisher

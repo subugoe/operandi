@@ -4,6 +4,7 @@ import requests
 import subprocess
 import shlex
 from clint.textui import progress
+import logging
 
 from ocrd_webapi.rabbitmq import RMQConsumer
 from rabbit_mq_utils.constants import (
@@ -18,6 +19,8 @@ from .constants import (
     HPC_HOST,
     HPC_USERNAME,
     HPC_KEY_PATH,
+    LOG_LEVEL,
+    LOG_FORMAT,
     WORKFLOWS_DIR,
     WORKSPACES_DIR
 )
@@ -35,13 +38,28 @@ class ServiceBroker:
                  hpc_host=HPC_HOST,
                  hpc_username=HPC_USERNAME,
                  hpc_key_path=HPC_KEY_PATH,
-                 local_execution=False):
+                 local_execution=False,
+                 logger=None):
+
+        if logger is None:
+            logger = logging.getLogger(__name__)
+        logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+        logging.getLogger("pika").setLevel(logging.WARNING)
+        self._logger = logger
 
         # Installation path of the module
         self._module_path = os.path.dirname(__file__)
         self._local_execution = local_execution
-        self.__consumer_from_server_queue = self.__initiate_consumer(rabbit_mq_host, rabbit_mq_port)
-        self.__consumer_from_harvester_queue = self.__initiate_consumer(rabbit_mq_host, rabbit_mq_port)
+        self.__consumer_from_server_queue = self.__initiate_consumer(
+            rabbit_mq_host,
+            rabbit_mq_port,
+            logger_name=logging.getLogger("operandi-broker_consumer_server-queue")
+        )
+        self.__consumer_from_harvester_queue = self.__initiate_consumer(
+            rabbit_mq_host,
+            rabbit_mq_port,
+            logger_name=logging.getLogger("operandi-broker_consumer_harvester-queue")
+        )
 
         # TODO: FIX THIS
         # Currently, the service broker cannot connect to the HPC environment
@@ -51,25 +69,25 @@ class ServiceBroker:
         # disable the self.ssh related commands manually!
         if self._local_execution:
             self.ssh = None
-            print("ServiceBroker>__init__.py(): SSH disabled. Nothing will be submitted to the HPC.")
-            print("ServiceBroker>__init__.py(): The mockup version of the Service broker will be used.")
+            self._logger.info("SSH disabled. Nothing will be submitted to the HPC.")
+            self._logger.info("The mockup version of the Service broker will be used.")
         else:
             self.ssh = SSHCommunication()
             self.ssh.connect_to_hpc(hpc_host, hpc_username, hpc_key_path)
-            print("ServiceBroker>__init__.py(): SSH connection successful")
+            self._logger.info("SSH connection successful.")
 
     @staticmethod
-    def __initiate_consumer(rabbit_mq_host, rabbit_mq_port):
+    def __initiate_consumer(rabbit_mq_host, rabbit_mq_port, logger_name):
         consumer = RMQConsumer(
             host=rabbit_mq_host,
             port=rabbit_mq_port,
-            vhost="/"
+            vhost="/",
+            logger=logger_name
         )
         consumer.authenticate_and_connect(
             username="operandi-broker",
             password="operandi-broker"
         )
-        print("ServiceBroker>__initiate_consumer(): Consumer initiated")
         return consumer
 
     def start_listening_to_server_queue(self):
@@ -95,13 +113,9 @@ class ServiceBroker:
     # The callback method provided to the Consumer listener
     def __mets_url_callback(self, ch, method, properties, body):
         if body:
-            print(f"INFO: Channel: {ch}")
-            print(f"INFO: Method: {method}")
-            print(f"INFO: Properties: {properties}")
-            print(f"INFO: Body: {body}")
+            self._logger.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
             mets_url, workspace_id = body.decode('utf8').split(',')
-            print(f"INFO: Mets URL: {mets_url}")
-            print(f"INFO: Workspace_ID: {workspace_id}")
+            self._logger.info(f"Received_URL: {mets_url} \n Received_WS_ID: {workspace_id}")
             if self._local_execution:
                 self.__execute_on_local(mets_url, workspace_id)
             else:
@@ -115,9 +129,9 @@ class ServiceBroker:
         return_code = self.__trigger_local_nf_execution(workspace_id)
         # Local execution started successfully
         if return_code == 0:
-            print(f"INFO: Execution started locally: {workspace_id}")
+            self._logger.info(f"Execution started locally for workspace: {workspace_id}")
         else:
-            print(f"ERROR: Failed local run: {workspace_id}")
+            self._logger.error(f"Failed to start local run for workspace: {workspace_id}")
 
     def __execute_on_hpc(self, mets_url, workspace_id):
         self.__prepare_hpc_workspace(mets_url, workspace_id)
@@ -125,9 +139,9 @@ class ServiceBroker:
         return_code, err, output = self.__trigger_hpc_nf_execution(workspace_id)
         # Job submitted successfully
         if return_code == 0:
-            print(f"INFO: Execution started on HPC: {workspace_id}")
+            self._logger.info(f"Execution started on HPC for workspace: {workspace_id}")
         else:
-            print(f"ERROR: Failed HPC run: {workspace_id}")
+            self._logger.error(f"Failed to start on HPC run for workspace: {workspace_id}")
 
     def __prepare_local_workspace(self, mets_url, workspace_id):
         ###########################################################
@@ -194,7 +208,7 @@ class ServiceBroker:
                 return True
 
         except requests.exceptions.RequestException as e:
-            print(f"ServiceBroker>__download_mets_file(): Exception: {e}")
+            self._logger.error(f"Failed to download mets file with id: {workspace_id}, reason: {e}")
             return False
 
     def __trigger_local_nf_execution(self, workspace_id):
@@ -228,7 +242,7 @@ class ServiceBroker:
         # TODO: Non-blocking process in the background must be started instead
         # TODO: The results of the output, err, and return_code must be written to a file
         output, err, return_code = self.ssh.execute_blocking(ssh_command)
-        print(f"ServiceBroker>__trigger_hpc_execution(): RC:{return_code}, ERR:{err}, O:{output}")
+        self._logger.debug(f"RC:{return_code}, ERR:{err}, O:{output}")
         return return_code, err, output
 
     @staticmethod
@@ -249,7 +263,6 @@ class ServiceBroker:
     def __get_nf_out_err_paths(workspace_dir):
         nf_out = f'{workspace_dir}/nextflow_out.txt'
         nf_err = f'{workspace_dir}/nextflow_err.txt'
-
         return nf_out, nf_err
 
     @staticmethod

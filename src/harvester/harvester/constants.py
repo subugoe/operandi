@@ -3,15 +3,15 @@ try:
     import tomllib
 except ModuleNotFoundError:
     import tomli as tomllib
+import logging
 
 __all__ = [
     "VD18_IDS_FILE",
     "VD18_URL",
     "VD18_METS_EXT",
     "WAIT_TIME_BETWEEN_SUBMITS",
-    "POST_METHOD_TO_OPERANDI",
-    "POST_METHOD_ID_PARAMETER",
-    "POST_METHOD_URL_PARAMETER"
+    "LOG_FORMAT",
+    "LOG_LEVEL"
 ]
 
 TOML_FILENAME: str = resource_filename(__name__, 'config.toml')
@@ -28,8 +28,5 @@ VD18_METS_EXT: str = TOML_CONFIG["vd18_mets_ext"]
 # This is the time waited between the POST requests to the OPERANDI Server
 WAIT_TIME_BETWEEN_SUBMITS: int = TOML_CONFIG["wait_time_between_submits"]  # seconds
 
-# This is the default POST method to OPERANDI
-# NOTE: Make sure that the OPERANDI Server's IP and PORT are correctly configured here!!!
-POST_METHOD_TO_OPERANDI: str = TOML_CONFIG["post_method_to_operandi"]
-POST_METHOD_ID_PARAMETER: str = TOML_CONFIG["post_method_id_parameter"]
-POST_METHOD_URL_PARAMETER: str = TOML_CONFIG["post_method_url_parameter"]
+LOG_FORMAT: str = '%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
+LOG_LEVEL: int = logging.INFO

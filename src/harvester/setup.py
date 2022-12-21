@@ -5,7 +5,7 @@ install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='harvester',
-    version='0.0.2',
+    version='1.0.0',
     description='OPERANDI - Harvester',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

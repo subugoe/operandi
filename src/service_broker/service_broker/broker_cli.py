@@ -80,13 +80,13 @@ def start_broker(rabbit_mq_host,
             time.sleep(3)
     # TODO: This won't work with SSH/Docker, a proper SIGINT handler required
     except KeyboardInterrupt:
-        print(f"INFO: CTRL+C detected. Sending SIGINT to child processes.")
+        service_broker._logger.info(f"PID:{getpid()}> CTRL+C detected. Sending SIGINT to child processes.")
         time.sleep(1)
         kill(child1_pid, signal.SIGINT)
         time.sleep(1)
         kill(child2_pid, signal.SIGINT)
         time.sleep(3)
-        print(f"INFO: {getpid()}: Closing Service Broker gracefully in 3 seconds!")
+        service_broker._logger.info(f"PID:{getpid()}> Closing Service Broker gracefully in 3 seconds!")
         time.sleep(3)
         sys.exit(0)
 
@@ -99,10 +99,10 @@ def create_child_process(broker_instance: ServiceBroker, tag):
     #  handle this properly
     pid = fork()
     if pid > 0:
-        print(f"INFO: {getpid()}: Created child process with PID: {pid}")
+        broker_instance._logger.debug(f"PID:{getpid()}> Created child process with PID: {pid}")
     else:
-        print(f"INFO: {getpid()}: I am a child process, about to listen on queue: {tag}")
-        print(f"INFO: {getpid()}: My parent has PID: {getppid()}")
+        broker_instance._logger.debug(f"PID:{getpid()}: I am a child process, about to listen on queue: {tag}")
+        broker_instance._logger.debug(f"PID:{getpid()}: My parent has PID: {getppid()}")
         try:
             setsid()  # run in the background
             if tag == 'server-to-broker':
@@ -114,7 +114,7 @@ def create_child_process(broker_instance: ServiceBroker, tag):
                 signal.signal(signal.SIGINT, signal_handle_harvester_queue)
                 broker_instance.start_listening_to_harvester_queue()
         except Exception as e:
-            print(f"ERROR: {e}")
+            broker_instance._logger.error(f"Service broker error:{e}")
             exit(-1)
     return pid
 
@@ -123,7 +123,7 @@ def signal_handler_server_queue(sig, frame):
     print(f"INFO: ServerQueueHandler[{getpid()}]> SIGINT received from my parent process.")
     time.sleep(1)
     # TODO: Do the cleaning here
-    print(f"INFO: {getpid()}: Closing ServerQueueHandler gracefully!")
+    print(f"INFO: ServerQueueHandler[{getpid()}]> Closing ServerQueueHandler gracefully!")
     sys.exit(0)
 
 
@@ -131,7 +131,7 @@ def signal_handle_harvester_queue(sig, frame):
     print(f"INFO: HarvesterQueueHandler[{getpid()}]> SIGINT received from my parent process.")
     time.sleep(1)
     # TODO: Do the cleaning here
-    print(f"INFO: {getpid()}: Closing HarvesterQueueHandler gracefully!")
+    print(f"INFO: HarvesterQueueHandler[{getpid()}]> Closing HarvesterQueueHandler gracefully!")
     sys.exit(0)
 
 # NOTE: Stop mechanism is not needed

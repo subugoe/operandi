@@ -3,6 +3,8 @@ import datetime
 import time
 import requests
 
+import logging
+
 from ocrd_webapi.rabbitmq import RMQPublisher
 from rabbit_mq_utils.constants import (
     RABBIT_MQ_HOST as RMQ_HOST,
@@ -16,9 +18,8 @@ from .constants import (
     VD18_URL,
     VD18_METS_EXT,
     WAIT_TIME_BETWEEN_SUBMITS,
-    POST_METHOD_TO_OPERANDI,
-    POST_METHOD_ID_PARAMETER,
-    POST_METHOD_URL_PARAMETER,
+    LOG_LEVEL,
+    LOG_FORMAT,
 )
 
 
@@ -28,14 +29,25 @@ from .constants import (
 # will talk directly to the broker over the RabbitMQ.
 # The current Harvester section in the README file will also be removed.
 class Harvester:
-    def __init__(self, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT):
+    def __init__(self, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT, logger=None):
+
+        if logger is None:
+            logger = logging.getLogger(__name__)
+        logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+        logging.getLogger("pika").setLevel(logging.WARNING)
+        self._logger = logger
+
         self.vd18_file = VD18_IDS_FILE
         self.wtbs = WAIT_TIME_BETWEEN_SUBMITS
         if not os.path.exists(self.vd18_file) or not os.path.isfile(self.vd18_file):
-            print(f"{self.vd18_file} file does not exist or is not a readable file!")
+            self._logger.error(f"{self.vd18_file} file does not exist or is not a readable file!")
             exit(1)
 
-        self.__publisher = self.__initiate_publisher(rabbit_mq_host, rabbit_mq_port)
+        self.__publisher = self.__initiate_publisher(
+            rabbit_mq_host,
+            rabbit_mq_port,
+            logger_name=logging.getLogger("operandi-harvester_publisher_harvester-queue")
+        )
         self.__publisher.create_queue(
             queue_name=DEFAULT_QUEUE_HARVESTER_TO_BROKER,
             exchange_name=DEFAULT_EXCHANGER_NAME,
@@ -55,27 +67,8 @@ class Harvester:
             # print(f"f:url_exists, Exception: {e}")
             return False
 
-    # Single POST requests to OPERANDI Server
-    # This request submits one mets file URL
-    def __post_to_operandi(self, mets_id, mets_url):
-        if not mets_id or not mets_url:
-            return False
-
-        # Construct the operandi request based on the mets_id and mets_url
-        operandi_request_url = f"{POST_METHOD_TO_OPERANDI}?" \
-                               f"{POST_METHOD_ID_PARAMETER}{mets_id}&" \
-                               f"{POST_METHOD_URL_PARAMETER}{mets_url}"
-
-        try:
-            response = requests.post(operandi_request_url)
-            return response.status_code // 100 == 2
-
-        except requests.exceptions.RequestException as e:
-            # print(f"f:post_to_operandi, Exception: {e}")
-            return False
-
     # 1. Checks if the mets_id exits
-    # 2. Submits the mets_id to the Operandi Server
+    # 2. Sends the mets_url, mets_id to the harvester-to-broker queue
     def __harvest_one_mets(self, mets_id):
         # print(f"INFO: Harvesting... {mets_id}")
         if not mets_id:
@@ -95,10 +88,10 @@ class Harvester:
                     queue_name=DEFAULT_QUEUE_HARVESTER_TO_BROKER,
                     message=publish_message,
                 )
-                print(f"INFO: Sent to queue successfully: {mets_id}")
+                self._logger.info(f"Mets `{mets_id}` was sent successfully.")
                 return True
             except Exception as e:
-                print(f"ERROR: Mets `{mets_id}` was not posted successfully. Reason: {e}")
+                self._logger.error(f"Mets `{mets_id}` was no sent successfully. Reason: {e}")
         return False
 
     def __print_waiting_message(self):
@@ -111,9 +104,8 @@ class Harvester:
 
     # TODO: implement proper start and stop mechanisms
     def start_harvesting(self, limit=0):
-        print(f"INFO: Starting harvesting...\n")
-        print(f"INFO: Mets URL will be submitted every {self.wtbs} seconds.")
-
+        self._logger.info(f"Harvesting started with limit:{limit}")
+        self._logger.info(f"Mets URL will be submitted every {self.wtbs} seconds.")
         harvested_counter = 0
 
         # Reads vd18 file line by line
@@ -131,20 +123,19 @@ class Harvester:
 
     # TODO: implement proper start and stop mechanisms
     def stop_harvesting(self):
-        print(f"{self}")
-        print(f"INFO: Stopped harvesting")
+        self._logger.info("Stopped harvesting")
 
     @staticmethod
-    def __initiate_publisher(rabbit_mq_host, rabbit_mq_port):
+    def __initiate_publisher(rabbit_mq_host, rabbit_mq_port, logger_name):
         publisher = RMQPublisher(
             host=rabbit_mq_host,
             port=rabbit_mq_port,
-            vhost="/"
+            vhost="/",
+            logger=logger_name
         )
         publisher.authenticate_and_connect(
             username="operandi-harvester",
             password="operandi-harvester"
         )
         publisher.enable_delivery_confirmations()
-        print("Publisher initiated")
         return publisher

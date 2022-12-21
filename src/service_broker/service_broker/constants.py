@@ -4,6 +4,7 @@ try:
 except ModuleNotFoundError:
     import tomli as tomllib
 import os
+import logging
 from pathlib import Path
 
 __all__ = [
@@ -18,7 +19,9 @@ __all__ = [
     "OPERANDI_DATA_PATH",
     "JOBS_DIR",
     "WORKFLOWS_DIR",
-    "WORKSPACES_DIR"
+    "WORKSPACES_DIR",
+    "LOG_LEVEL",
+    "LOG_FORMAT"
 ]
 
 TOML_FILENAME: str = resource_filename(__name__, 'config.toml')
@@ -48,3 +51,6 @@ JOBS_DIR: str = os.path.join(OPERANDI_DATA_PATH, "jobs")
 WORKFLOWS_DIR: str = os.path.join(OPERANDI_DATA_PATH, "workflows")
 WORKSPACES_DIR: str = os.path.join(OPERANDI_DATA_PATH, "workspaces")
 DB_URL: str = TOML_CONFIG["mongodb_url"]
+
+LOG_FORMAT: str = '%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
+LOG_LEVEL: int = logging.INFO

@@ -21,7 +21,6 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 @click.option('-l', '--limit', default=1, help='The amount of mets files to be harvested.')
 def start_harvesting(limit):
     harvester = Harvester()
-    print(f"Harvesting started with limit:{limit}")
     harvester.start_harvesting(limit)
 
 
