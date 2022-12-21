@@ -5,10 +5,13 @@ import subprocess
 import shlex
 from clint.textui import progress
 
-from rabbit_mq_utils.consumer import Consumer
+from ocrd_webapi.rabbitmq import RMQConsumer
 from rabbit_mq_utils.constants import (
     RABBIT_MQ_HOST as RMQ_HOST,
-    RABBIT_MQ_PORT as RMQ_PORT
+    RABBIT_MQ_PORT as RMQ_PORT,
+    DEFAULT_EXCHANGER_NAME,
+    DEFAULT_EXCHANGER_TYPE,
+    DEFAULT_QUEUE_SERVER_TO_BROKER
 )
 from .constants import (
     HPC_HOST,
@@ -55,11 +58,14 @@ class ServiceBroker:
 
     @staticmethod
     def __initiate_consumer(rabbit_mq_host, rabbit_mq_port):
-        consumer = Consumer(
+        consumer = RMQConsumer(
+            host=rabbit_mq_host,
+            port=rabbit_mq_port,
+            vhost="/"
+        )
+        consumer.authenticate_and_connect(
             username="operandi-broker",
-            password="operandi-broker",
-            rabbit_mq_host=rabbit_mq_host,
-            rabbit_mq_port=rabbit_mq_port
+            password="operandi-broker"
         )
         print("ServiceBroker>__initiate_consumer(): Consumer initiated")
         return consumer
@@ -67,9 +73,12 @@ class ServiceBroker:
     def start(self):
         # Specify the callback method, i.e.,
         # what to happen every time something is consumed
-        self.__consumer.define_queue_listener(
-            callback=self.__mets_url_callback
+        self.__consumer.configure_consuming(
+            queue_name=DEFAULT_QUEUE_SERVER_TO_BROKER,
+            callback_method=self.__mets_url_callback
         )
+        # The main thread blocks here
+        self.__consumer.start_consuming()
 
     # The callback method provided to the Consumer listener
     def __mets_url_callback(self, ch, method, properties, body):

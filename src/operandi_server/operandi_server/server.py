@@ -19,10 +19,13 @@ from ocrd_webapi.utils import (
     bagit_from_url
 )
 
-from rabbit_mq_utils.producer import Producer
+from ocrd_webapi.rabbitmq import RMQPublisher
 from rabbit_mq_utils.constants import (
     RABBIT_MQ_HOST as RMQ_HOST,
-    RABBIT_MQ_PORT as RMQ_PORT
+    RABBIT_MQ_PORT as RMQ_PORT,
+    DEFAULT_EXCHANGER_NAME,
+    DEFAULT_EXCHANGER_TYPE,
+    DEFAULT_QUEUE_SERVER_TO_BROKER
 )
 from .constants import (
     SERVER_HOST as HOST,
@@ -55,7 +58,12 @@ class OperandiServer:
         # Don't put this out of comments yet - missing config files/malfunctioning
         # self.app.include_router(processor.router)
 
-        self.producer = self.__initiate_producer(rabbit_mq_host, rabbit_mq_port)
+        self.__publisher = self.__initiate_publisher(rabbit_mq_host, rabbit_mq_port)
+        self.__publisher.create_queue(
+            queue_name=DEFAULT_QUEUE_SERVER_TO_BROKER,
+            exchange_name=DEFAULT_EXCHANGER_NAME,
+            exchange_type=DEFAULT_EXCHANGER_TYPE
+        )
 
         @self.app.on_event("startup")
         async def startup_event():
@@ -104,8 +112,11 @@ class OperandiServer:
             workspace_id += timestamp
             publish_message = f"{mets_url},{workspace_id}".encode('utf8')
 
-            # Send the posted mets_url to the priority queue (RabbitMQ)
-            self.producer.publish_mets_url(body=publish_message)
+            self.__publisher.publish_to_queue(
+                exchange_name=DEFAULT_EXCHANGER_NAME,
+                queue_name=DEFAULT_QUEUE_SERVER_TO_BROKER,
+                message=publish_message,
+            )
 
             message = f"Mets URL posted successfully!"
             json_message = {
@@ -174,12 +185,16 @@ class OperandiServer:
         return app
 
     @staticmethod
-    def __initiate_producer(rabbit_mq_host, rabbit_mq_port):
-        producer = Producer(
-            username="operandi-server",
-            password="operandi-server",
-            rabbit_mq_host=rabbit_mq_host,
-            rabbit_mq_port=rabbit_mq_port
+    def __initiate_publisher(rabbit_mq_host, rabbit_mq_port):
+        publisher = RMQPublisher(
+            host=rabbit_mq_host,
+            port=rabbit_mq_port,
+            vhost="/"
         )
-        print("Producer initiated")
-        return producer
+        publisher.authenticate_and_connect(
+            username="operandi-server",
+            password="operandi-server"
+        )
+        publisher.enable_delivery_confirmations()
+        print("Publisher initiated")
+        return publisher
