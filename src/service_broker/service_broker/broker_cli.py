@@ -21,6 +21,8 @@ from .constants import (
     HPC_KEY_PATH
 )
 
+from .batch_script_builder import BatchScriptBuilder
+
 __all__ = ['cli']
 
 
@@ -80,6 +82,7 @@ def run_multiprocessing_broker(rabbit_mq_host, rabbit_mq_port, hpc_host, hpc_use
         # Sleep the parent process till
         # a CTRL+C signal is received
         # signal.pause()
+        service_broker._logger.info("Created 2 child processes to listen to the 2 queues")
         while True:
             # Sleep the parent process
             time.sleep(3)
