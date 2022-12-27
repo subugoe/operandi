@@ -37,9 +37,11 @@ class SSHCommunication:
             keyfile = self.__check_default_keyfile()
 
         self.__connection_index = self.__ssh.open_connection(host=host)
-        self.__login = self.__ssh.login_with_public_key(username=username,
-                                                        keyfile=keyfile,
-                                                        allow_agent=True)
+        self.__login = self.__ssh.login_with_public_key(
+            username=username,
+            keyfile=keyfile,
+            allow_agent=True
+        )
 
     @staticmethod
     def __check_keyfile(hpc_key_path):
@@ -61,10 +63,12 @@ class SSHCommunication:
     # Execute blocking commands
     # Waiting for an output and return_code
     def execute_blocking(self, command, stdout=True, stderr=True, rc=True):
-        output, err, return_code = self.__ssh.execute_command(command=command,
-                                                              return_stdout=stdout,
-                                                              return_stderr=stderr,
-                                                              return_rc=rc)
+        output, err, return_code = self.__ssh.execute_command(
+            command=command,
+            return_stdout=stdout,
+            return_stderr=stderr,
+            return_rc=rc
+        )
 
         return output, err, return_code
 
@@ -74,29 +78,59 @@ class SSHCommunication:
         self.__ssh.start_command(command)
 
     def put_file(self, source, destination):
-        self.__ssh.put_file(source=source,
-                            destination=destination,
-                            mode=self._mode,
-                            scp=self._scp,
-                            scp_preserve_times=self._scp_preserve_times)
+        self.__ssh.put_file(
+            source=source,
+            destination=destination,
+            mode=self._mode,
+            scp=self._scp,
+            scp_preserve_times=self._scp_preserve_times
+        )
 
     def put_directory(self, source, destination, recursive=True):
-        self.__ssh.put_directory(source=source,
-                                 destination=destination,
-                                 mode=self._mode,
-                                 recursive=recursive,
-                                 scp=self._scp,
-                                 scp_preserve_times=self._scp_preserve_times)
+        self.__ssh.put_directory(
+            source=source,
+            destination=destination,
+            mode=self._mode,
+            recursive=recursive,
+            scp=self._scp,
+            scp_preserve_times=self._scp_preserve_times
+        )
 
     def get_file(self, source, destination):
-        self.__ssh.get_file(source=source,
-                            destination=destination,
-                            scp=self._scp,
-                            scp_preserve_times=self._scp_preserve_times)
+        self.__ssh.get_file(
+            source=source,
+            destination=destination,
+            scp=self._scp,
+            scp_preserve_times=self._scp_preserve_times
+        )
 
     def get_directory(self, source, destination, recursive=True):
-        self.__ssh.get_directory(source=source,
-                                 destination=destination,
-                                 recursive=recursive,
-                                 scp=self._scp,
-                                 scp_preserve_times=self._scp_preserve_times)
+        self.__ssh.get_directory(
+            source=source,
+            destination=destination,
+            recursive=recursive,
+            scp=self._scp,
+            scp_preserve_times=self._scp_preserve_times
+        )
+
+
+def build_sbatch_command(batch_script_path, workspace_dir):
+    # Bash reads shell setup files only if you log in interactively.
+    # You can bypass that by forcing bash to start a login shell.
+    # E.g.: $ ssh gwdu101.gwdg.de  "bash -lc 'srun --version'"
+
+    ssh_command = "bash -lc"
+    ssh_command += " 'sbatch"
+    ssh_command += f" {batch_script_path}"
+    ssh_command += f" {workspace_dir}'"
+    return ssh_command
+
+
+def build_hpc_batch_script_path(
+        hpc_home_path,
+        workspace_id,
+        script_id="base_script.sh"
+):
+    # This is the batch script submitted to the SLURM scheduler in HPC
+    script_path = f"{hpc_home_path}/{workspace_id}/{script_id}"
+    return script_path

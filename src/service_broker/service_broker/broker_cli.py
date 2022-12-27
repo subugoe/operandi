@@ -61,6 +61,11 @@ def start_broker(rabbit_mq_host,
                  hpc_username,
                  hpc_key_path,
                  mocked):
+
+    run_multiprocessing_broker(rabbit_mq_host, rabbit_mq_port, hpc_host, hpc_username, hpc_key_path, mocked)
+
+
+def run_multiprocessing_broker(rabbit_mq_host, rabbit_mq_port, hpc_host, hpc_username, hpc_key_path, mocked):
     service_broker = ServiceBroker(rabbit_mq_host=rabbit_mq_host,
                                    rabbit_mq_port=rabbit_mq_port,
                                    hpc_host=hpc_host,
@@ -135,4 +140,5 @@ def signal_handle_harvester_queue(sig, frame):
     sys.exit(0)
 
 # NOTE: Stop mechanism is not needed
-# The service broker could be simply stopped with a signal (CTRL+N)
+# The service broker could be simply stopped with a signal (CTRL+C)
+
