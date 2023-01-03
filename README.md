@@ -12,48 +12,39 @@ The goal of OPERANDI is to develop and build an OCR-D-based implementation packa
   <img src="https://raw.githubusercontent.com/subugoe/operandi/main/OPERANDI_arch.png">
 </picture>
 
-## 3. Accessing the development VM of OPERANDI
-This step is only for internal developers of OPERANDI.
-For installation from the source continue with the next step. 
-Connect to our development VM (cloud@141.5.99.32) via ssh:
-```sh
-ssh cloud@141.5.99.32 -i /path/to/your_key
-```
-(Currently, the dev VM is not up-to-date)
-
-## 4. Installation of OPERANDI from source
-#### 4.1. Clone the repository and enter its directory.
+## 3. Installation of OPERANDI from source
+#### 3.1. Clone the repository and enter its directory.
 ```sh
 git clone git@github.com:subugoe/operandi.git
 cd operandi
 ```
 
-#### 4.2. Install dependencies
+#### 3.2. Install dependencies
 ```sh
 sudo apt-get update
 sudo apt-get -y install make
 sudo make deps-ubuntu
 ```
 
-#### 4.3. Create a virtual Python environment and activate it.
+#### 3.3. Create a virtual Python environment and activate it.
 ```sh
 python3 -m venv $HOME/venv-operandi
 source $HOME/venv-operandi/bin/activate
 ```
 
-#### 4.4. Install the modules of OPERANDI.
+#### 3.4. Install the modules of OPERANDI.
 ```sh
 make install-dev
 ```
 
-## 5. Configurations
+## 4. Configurations
 
 Select either of the two options and fulfill the requirements.
 
-#### 5.1 Option 1: The service broker executes workflows on the local host
+#### 4.1 Option 1: The service broker executes workflows on the local host
 
 <details>
-<summary> 5.1.1 Requirements </summary>
+<summary> 4.1.1 Requirements </summary>
 
 1. OCR-D Software, check [here](https://ocr-d.de/en/setup) for more details. 
 For simplicity, just pull the docker image of `ocrd/all:maximum`. 
@@ -73,22 +64,22 @@ nextflow -v
 </details>
 
 <details>
- <summary> 5.1.2 Configurations </summary>
+ <summary> 4.1.2 Configurations </summary>
 By default the service broker is configured to run locally. 
 No further configurations needed.
 </details>
 
-#### 5.2 Option 2: The service broker executes workflows in the HPC environment
+#### 4.2 Option 2: The service broker executes workflows in the HPC environment
 
 <details>
-<summary> 5.2.1 Requirements </summary>
+<summary> 4.2.1 Requirements </summary>
 
 1. GWDG credentials, check [here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:account_activation).
 2. Access to the HPC environment, check [here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:connect_with_ssh).
 </details>
 
 <details>
-<summary> 5.2.2 Configurations </summary>
+<summary> 4.2.2 Configurations </summary>
 
 1. Set the HPC related credentials `HPC_USERNAME` and `HPC_KEY_PATH` inside the 
 `operandi/src/service_broker/service_broker/config.toml` file of the 
@@ -103,16 +94,16 @@ Soon there will be a more convenient way to configure things
 and reinstallation of modules will not be needed.
 </details>
 
-## 6. Executing one full cycle of OPERANDI
+## 5. Executing one full cycle of OPERANDI
 
-Executing steps `6.1` and `6.2` for the first time will take more time - downloading and building.
+Executing steps `5.1` and `5.2` for the first time will take more time - downloading and building.
 
-#### 6.1 Start the MongoDB docker container
+#### 5.1 Start the MongoDB docker container
 ```bash
 make start-mongo
 ```
 
-#### 6.2 Start the RabbitMQ docker container
+#### 5.2 Start the RabbitMQ docker container
 ```bash
 make start-rabbitmq
 ```
@@ -136,12 +127,12 @@ docker-pr 103141  root  4u  IPv6 642885  0t0  TCP *:5672 (LISTEN)
 ```
 </details>
 
-#### 6.3 Start the Operandi broker
-Depending on the configuration in `step 4`, there are two options. 
+#### 5.3 Start the Operandi broker
+Depending on the configuration in `step 3`, there are two options. 
 To run a service broker instance that executes workflows locally or 
 an instance that executes workflows in the HPC environment. 
 
-Open a new terminal, activate the virtual Python environment created in `step 4.3`, and 
+Open a new terminal, activate the virtual Python environment created in `step 3.3`, and 
 start one of the broker instances.
 
 <details>
@@ -162,16 +153,16 @@ make start-broker-hpc
 ```
 </details>
 
-#### 6.4 Start the Operandi server
+#### 5.4 Start the Operandi server
 
-As in `step 6.3`, activate the environment, then start the server.
+As in `step 5.3`, activate the environment, then start the server.
 ```bash
 source $HOME/venv-operandi/bin/activate
 make start-server
 ```
 
-#### 6.5 Start the Harvester (currently, out of service, skip)
-As in `step 6.3`, activate the environment, then start the harvester.
+#### 5.5 Start the Harvester (currently, out of service, skip)
+As in `step 5.3`, activate the environment, then start the harvester.
 ```bash
 source $HOME/venv-operandi/bin/activate
 make start-harvester
@@ -184,7 +175,7 @@ Currently, there are no limit checks, so do not use a big `N` value.
 operandi-harvester start --limit N
 ```
 
-#### 6.6 Interactive API documentation
+#### 5.6 Interactive API documentation
 
 Check the interactive API documentation of the Operandi server once there is a running server instance (http://localhost:8000/docs).
 Operandi reuses the provided API from OCR-D and extends it.
@@ -193,7 +184,7 @@ Operandi reuses the provided API from OCR-D and extends it.
 2. OCR-D WebAPI [swagger](https://app.swaggerhub.com/apis/kba/ocr-d_web_api/0.0.1#/).
 3. OCR-D WebAPI [repo](https://github.com/OCR-D/ocrd-webapi-implementation).
 
-#### 6.7 Curl requests
+#### 5.7 Curl requests
 These are the curl requests we support in the alpha release of Operandi, e.g., 
 the `default` tag in the interactive API documentation.
 
@@ -256,7 +247,7 @@ This is especially useful for debugging!
 
 </details>
 
-## 7. Solutions to potential problems
+## 6. Solutions to potential problems
 
 This section provides solutions for potential problems that may arise.
 
