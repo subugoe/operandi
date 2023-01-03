@@ -127,13 +127,40 @@ docker-pr 103141  root  4u  IPv6 642885  0t0  TCP *:5672 (LISTEN)
 ```
 </details>
 
-#### 5.3 Start the Operandi broker
+#### 5.3 Start the Operandi server
+Open a new terminal, activate the virtual Python environment created in `step 3.3`, and 
+start the Operandi server instance:
+```bash
+source $HOME/venv-operandi/bin/activate
+make start-server
+```
+
+Note: Starting the Operandi server for the first time creates a RabbitMQ message queue 
+used to communicate with the Operandi broker.
+
+#### 5.4 Start the Harvester
+As in `step 5.3`, activate the environment, then start the harvester.
+```bash
+source $HOME/venv-operandi/bin/activate
+make start-harvester
+```
+The harvesting module will harvest only a single mets url workspace by default.
+It is also possible to harvest more than one mets url. 
+To do so start the harvester by setting the desired limit.
+Currently, there are no limit checks, so do not use a big `N` value.
+```bash
+operandi-harvester start --limit N
+```
+
+Note: Starting the Harvester for the first time creates a RabbitMQ message queue 
+used to communicate with the Operandi broker.
+
+#### 5.5 Start the Operandi broker
 Depending on the configuration in `step 3`, there are two options. 
 To run a service broker instance that executes workflows locally or 
 an instance that executes workflows in the HPC environment. 
 
-Open a new terminal, activate the virtual Python environment created in `step 3.3`, and 
-start one of the broker instances.
+As in `step 5.3`, activate the environment, and start one of the broker instances.
 
 <details>
  <summary> Local instance </summary>
@@ -153,27 +180,13 @@ make start-broker-hpc
 ```
 </details>
 
-#### 5.4 Start the Operandi server
+Note: The broker listens for new requests comming from the 2 RabbitMQ message queues
+created in `step 5.3` and `step 5.4`.
 
-As in `step 5.3`, activate the environment, then start the server.
-```bash
-source $HOME/venv-operandi/bin/activate
-make start-server
-```
-
-#### 5.5 Start the Harvester (currently, out of service, skip)
-As in `step 5.3`, activate the environment, then start the harvester.
-```bash
-source $HOME/venv-operandi/bin/activate
-make start-harvester
-```
-The harvesting module will harvest only a single mets url workspace by default.
-It is also possible to harvest more than one mets url. 
-To do so start the harvester by setting the desired limit.
-Currently, there are no limit checks, so do not use a big `N` value.
-```bash
-operandi-harvester start --limit N
-```
+Warning: Running the Operandi broker first before Operandi Server and Harvester may result in errors. 
+As mentioned in the previous Notes, the respective message queues used for communication are created 
+by the Operandi server and the Harvester. 
+The Operandi broker does not create the queues if they're missing.
 
 #### 5.6 Interactive API documentation
 
