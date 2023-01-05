@@ -57,7 +57,7 @@ install:
 
 # Install with pip install -e
 install-dev: uninstall
-	$(MAKE) install PIP_INSTALL="pip install -e"
+	$(MAKE) install PIP3_INSTALL="pip install -e"
 
 # Uninstall the tool
 uninstall:
