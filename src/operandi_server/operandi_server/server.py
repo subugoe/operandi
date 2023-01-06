@@ -103,7 +103,7 @@ class OperandiServer:
             }
             return json_message
 
-        @self.app.post("/workspace_import_external", tags=["Workspace"])
+        @self.app.post("/workspace/import_external", tags=["Workspace"])
         async def operandi_import_from_mets_url(mets_url: str):
             bag_path = bagit_from_url(mets_url=mets_url, file_grp="DEFAULT")
             ws_url, ws_id = await workspace_manager.create_workspace_from_zip(bag_path, file_stream=False)
@@ -113,7 +113,7 @@ class OperandiServer:
 
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
 
-        @self.app.post("/workspace_import_local", tags=["Workspace"])
+        @self.app.post("/workspace/import_local", tags=["Workspace"])
         async def operandi_import_from_mets_dir(mets_dir: str):
             ws_url, ws_id = await workspace_manager.create_workspace_from_mets_dir(mets_dir)
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
