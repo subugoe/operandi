@@ -51,12 +51,12 @@ class ServiceBroker:
                  hpc_host=HPC_HOST,
                  hpc_username=HPC_USERNAME,
                  hpc_key_path=HPC_KEY_PATH,
-                 local_execution=False,
-                 logger=None):
+                 local_execution=False):
 
-        if logger is None:
-            logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.WARNING, format=LOG_FORMAT)
+        logger = logging.getLogger(__name__)
+        # Set the global logging level to INFO
+        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+        # Set the ServiceBroker logging level to LOG_LEVEL
         logging.getLogger(__name__).setLevel(LOG_LEVEL)
         self._logger = logger
 
@@ -66,12 +66,12 @@ class ServiceBroker:
         self.__consumer_from_server_queue = self.__initiate_consumer(
             rabbit_mq_host,
             rabbit_mq_port,
-            logger_name=logging.getLogger("operandi-broker_consumer_server-queue")
+            logger_name="operandi-broker_consumer_server-queue"
         )
         self.__consumer_from_harvester_queue = self.__initiate_consumer(
             rabbit_mq_host,
             rabbit_mq_port,
-            logger_name=logging.getLogger("operandi-broker_consumer_harvester-queue")
+            logger_name="operandi-broker_consumer_harvester-queue"
         )
 
         # TODO: FIX THIS
@@ -95,7 +95,7 @@ class ServiceBroker:
             host=rabbit_mq_host,
             port=rabbit_mq_port,
             vhost="/",
-            logger=logger_name
+            logger_name=logger_name
         )
         consumer.authenticate_and_connect(
             username="operandi-broker",
@@ -128,7 +128,7 @@ class ServiceBroker:
         if body:
             self._logger.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
             mets_url, workspace_id = body.decode('utf8').split(',')
-            self._logger.info(f"Received_URL: {mets_url} \n Received_WS_ID: {workspace_id}")
+            self._logger.info(f"Received_URL: {mets_url} Received_WS_ID: {workspace_id}")
             if self._local_execution:
                 self.__execute_on_local(mets_url, workspace_id)
             else:

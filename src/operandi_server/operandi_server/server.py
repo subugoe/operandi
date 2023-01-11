@@ -6,10 +6,7 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from ocrd_webapi.database import (
-    initiate_database,
-    save_workspace
-)
+from ocrd_webapi.database import initiate_database
 from ocrd_webapi.routers import (
     discovery,
     workflow,
@@ -17,9 +14,7 @@ from ocrd_webapi.routers import (
 )
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.models.workspace import WorkspaceRsrc
-from ocrd_webapi.utils import (
-    bagit_from_url
-)
+from ocrd_webapi.utils import bagit_from_url
 
 from ocrd_webapi.rabbitmq import RMQPublisher
 from rabbit_mq_utils.constants import (
@@ -41,27 +36,23 @@ from .constants import (
     LOG_FORMAT
 )
 
-# TODO: Optimize this. Workspace manager object is created twice.
-#  Once here, once when the Workspace router is included in the app
-workspace_manager = WorkspaceManager()
-
 
 class OperandiServer:
-    def __init__(self, host=HOST, port=PORT, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT, logger=None):
+    def __init__(self, host=HOST, port=PORT, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT):
         self.host = host
         self.port = port
         self.server_path = SERVER_PATH
         self._data_path = OPERANDI_DATA_PATH
+        self.workspace_manager = WorkspaceManager()
 
-        if logger is None:
-            logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.WARNING, format=LOG_FORMAT)
+        logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
         logging.getLogger(__name__).setLevel(LOG_LEVEL)
         self._server_logger = logger
 
         self._server_logger.info(f"Operandi host:{host}, port:{port}")
         self._server_logger.info(f"RabbitMQ host:{host}, port:{rabbit_mq_port}")
-        self._server_logger.info(f"MongoDB URL: {DB_URL}")
+        self._server_logger.info(f"Operandi MongoDB URL: {DB_URL}")
 
         self.app = self.__initiate_fast_api_app()
 
@@ -75,7 +66,7 @@ class OperandiServer:
         self.__publisher = self.__initiate_publisher(
             rabbit_mq_host,
             rabbit_mq_port,
-            logger_name=logging.getLogger("operandi-server_publisher_server-queue")
+            logger_name="operandi-server_publisher_server-queue"
         )
         self.__publisher.create_queue(
             queue_name=DEFAULT_QUEUE_SERVER_TO_BROKER,
@@ -106,7 +97,7 @@ class OperandiServer:
         @self.app.post("/workspace/import_external", tags=["Workspace"])
         async def operandi_import_from_mets_url(mets_url: str):
             bag_path = bagit_from_url(mets_url=mets_url, file_grp="DEFAULT")
-            ws_url, ws_id = await workspace_manager.create_workspace_from_zip(bag_path, file_stream=False)
+            ws_url, ws_id = await self.workspace_manager.create_workspace_from_zip(bag_path, file_stream=False)
 
             # Note, this only posts the mets_url and do not
             # trigger a workflow execution, unlike the old api call
@@ -115,15 +106,13 @@ class OperandiServer:
 
         @self.app.post("/workspace/import_local", tags=["Workspace"])
         async def operandi_import_from_mets_dir(mets_dir: str):
-            ws_url, ws_id = await workspace_manager.create_workspace_from_mets_dir(mets_dir)
+            ws_url, ws_id = await self.workspace_manager.create_workspace_from_mets_dir(mets_dir)
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
 
+        """
         # Used to accept Mets URLs from the user
         @self.app.post("/mets_url")
         async def operandi_post_mets_url(mets_url: str, workspace_id: str):
-            """
-            Operandi extension to Workspace
-            """
             # Create a timestamp
             timestamp = datetime.datetime.now().strftime("_%Y%m%d_%H%M")
             # Append the timestamp at the end of the provided workspace_id
@@ -184,6 +173,7 @@ class OperandiServer:
                     "message": message
                 }
                 return json_message
+        """
 
     def __initiate_fast_api_app(self):
         app = FastAPI(
@@ -208,7 +198,7 @@ class OperandiServer:
             host=rabbit_mq_host,
             port=rabbit_mq_port,
             vhost="/",
-            logger=logger_name
+            logger_name=logger_name
         )
         publisher.authenticate_and_connect(
             username="operandi-server",

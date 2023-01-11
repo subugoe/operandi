@@ -29,11 +29,12 @@ from .constants import (
 # will talk directly to the broker over the RabbitMQ.
 # The current Harvester section in the README file will also be removed.
 class Harvester:
-    def __init__(self, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT, logger=None):
+    def __init__(self, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT):
 
-        if logger is None:
-            logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.WARNING, format=LOG_FORMAT)
+        logger = logging.getLogger(__name__)
+        # Set the global logging level to INFO
+        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+        # Set the Harvester logging level to LOG_LEVEL
         logging.getLogger(__name__).setLevel(LOG_LEVEL)
         self._logger = logger
 
@@ -46,7 +47,7 @@ class Harvester:
         self.__publisher = self.__initiate_publisher(
             rabbit_mq_host,
             rabbit_mq_port,
-            logger_name=logging.getLogger("operandi-harvester_publisher_harvester-queue")
+            logger_name="operandi-harvester_publisher_harvester-queue"
         )
         self.__publisher.create_queue(
             queue_name=DEFAULT_QUEUE_HARVESTER_TO_BROKER,
@@ -131,7 +132,7 @@ class Harvester:
             host=rabbit_mq_host,
             port=rabbit_mq_port,
             vhost="/",
-            logger=logger_name
+            logger_name=logger_name
         )
         publisher.authenticate_and_connect(
             username="operandi-harvester",
