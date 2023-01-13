@@ -12,6 +12,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
   
 # these are the jobs that are executed. Currently, there are only two jobs - build and publish.
 jobs:
