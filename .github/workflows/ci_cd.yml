@@ -47,30 +47,30 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-  publish_all: 
-    needs: build
-    runs-on: ubuntu-latest
-
-    env:
-      DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      REPO_NAME: operandi-all-in-one
-      BASE_IMAGE: ubuntu:18.04
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Docker login
-      run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
-      
-    - name: Docker build
-      run: docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:latest --build-arg BASE_IMAGE=$BASE_IMAGE
-      
-    - name: Docker push
-      run: docker push $DOCKER_USER/$REPO_NAME:latest
-      
-    - name: Docker logout
-      # To delete the password from potential temporary config files
-      run: docker logout
+#  publish_all: 
+#    needs: build
+#    runs-on: ubuntu-latest
+#
+#    env:
+#      DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
+#      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+#      REPO_NAME: operandi-all-in-one
+#      BASE_IMAGE: ubuntu:18.04
+#
+#    steps:
+#    - uses: actions/checkout@v2
+#    - name: Docker login
+#      run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin
+#      
+#    - name: Docker build
+#      run: docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:latest --build-arg BASE_IMAGE=$BASE_IMAGE
+#      
+#    - name: Docker push
+#      run: docker push $DOCKER_USER/$REPO_NAME:latest
+#      
+#    - name: Docker logout
+#      # To delete the password from potential temporary config files
+#      run: docker logout#
 
   build-and-push-operandi-broker-image:
     name: Push operandi-broker images to registry
