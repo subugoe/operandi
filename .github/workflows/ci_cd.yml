@@ -6,9 +6,9 @@ name: OPERANDI CI/CD
 # the workflow executes on pushes or pull requests to the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 # these are the jobs that are executed. Currently, there are only two jobs - build and publish.
 jobs:
