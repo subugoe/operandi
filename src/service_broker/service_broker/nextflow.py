@@ -11,6 +11,11 @@ def build_nf_command(nf_script_path, workspace_dir):
     nf_command += f" --volume_dir {workspace_dir}"
     # nf_command += f" --workspace {workspace_dir}/"
     # nf_command += f" --mets {workspace_dir}/mets.xml"
+    # TODO: read user and pw from file or env. Leave blank skips storing in olahd
+    nf_command += " --olahd_username admin"
+    nf_command += ' --olahd_endpoint "http://141.5.104.244/api"'
+    nf_command += " --olahd_password JW24G.xR"
+    nf_command += " --nein oder"
     nf_command += " -with-report"  # produce report.html
     return nf_command
 
