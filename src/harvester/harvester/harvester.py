@@ -1,99 +1,107 @@
-import os
-import datetime
-import time
-import requests
-
 import logging
+import time
 
-from ocrd_webapi.rabbitmq import RMQPublisher
-from rabbit_mq_utils.constants import (
-    RABBIT_MQ_HOST as RMQ_HOST,
-    RABBIT_MQ_PORT as RMQ_PORT,
-    DEFAULT_EXCHANGER_NAME,
-    DEFAULT_EXCHANGER_TYPE,
-    DEFAULT_QUEUE_HARVESTER_TO_BROKER
-)
 from .constants import (
     VD18_IDS_FILE,
-    VD18_URL,
-    VD18_METS_EXT,
     WAIT_TIME_BETWEEN_SUBMITS,
     LOG_LEVEL,
     LOG_FORMAT,
 )
 
+from .server_requests import (
+    get_workflow_job_status,
+    post_workflow_job,
+    post_workspace_url
+)
 
-# TODO: The harvester module will change completely
-# Currently, the harvester communicates with the Service broker
-# over the Operandi Server. This should change. The harvester
-# will talk directly to the broker over the RabbitMQ.
-# The current Harvester section in the README file will also be removed.
+from .utils import (
+    build_mets_url,
+    file_exists,
+    is_url_responsive
+)
+
+
 class Harvester:
-    def __init__(self, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT):
-
-        logger = logging.getLogger(__name__)
-        # Set the global logging level to INFO
-        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-        # Set the Harvester logging level to LOG_LEVEL
+    def __init__(self, server_address):
+        self.logger = logging.getLogger(__name__)
         logging.getLogger(__name__).setLevel(LOG_LEVEL)
-        self._logger = logger
+        # Change global logger configuration
+        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+
+        self.server_address = server_address
+        # The default workflow to be used.
+        # This id is received when the default script is posted to the Operandi Server
+        self.default_nf_workflow_id = "8071fcc3-4969-4c44-b7f8-5bc8068ae5e3"
+        self.wtbs = WAIT_TIME_BETWEEN_SUBMITS
 
         self.vd18_file = VD18_IDS_FILE
-        self.wtbs = WAIT_TIME_BETWEEN_SUBMITS
-        if not os.path.exists(self.vd18_file) or not os.path.isfile(self.vd18_file):
-            self._logger.error(f"{self.vd18_file} file does not exist or is not a readable file!")
+        if not file_exists(self.vd18_file):
+            self.logger.error(f"File does not exist or is not a readable file: {self.vd18_file}")
             exit(1)
 
-        self.__publisher = self.__initiate_publisher(
-            rabbit_mq_host,
-            rabbit_mq_port,
-            logger_name="operandi-harvester_publisher_harvester-queue"
-        )
-        self.__publisher.create_queue(
-            queue_name=DEFAULT_QUEUE_HARVESTER_TO_BROKER,
-            exchange_name=DEFAULT_EXCHANGER_NAME,
-            exchange_type=DEFAULT_EXCHANGER_TYPE
-        )
-
-    @staticmethod
-    def url_exists(url):
-        try:
-            response = requests.get(url, stream=True)
-            if response.status_code == 200:
-                # print(f"Headers: {response.headers}")
-                # print(f"Content size: {response.content.__sizeof__() - 33}")
-                return True
-
-        except requests.exceptions.RequestException as e:
-            # print(f"f:url_exists, Exception: {e}")
-            return False
-
-    # 1. Checks if the mets_id exits
-    # 2. Sends the mets_url, mets_id to the harvester-to-broker queue
     def __harvest_one_mets(self, mets_id):
-        # print(f"INFO: Harvesting... {mets_id}")
         if not mets_id:
             return False
 
-        mets_url = f"{VD18_URL}{mets_id}{VD18_METS_EXT}"
-        if Harvester.url_exists(mets_url):
-            # Create a timestamp
-            timestamp = datetime.datetime.now().strftime("_%Y%m%d_%H%M")
-            # Append the timestamp at the end of the provided workspace_id
-            mets_id += timestamp
-            publish_message = f"{mets_url},{mets_id}".encode('utf8')
+        # mets_url = build_mets_url(mets_id)
 
-            try:
-                self.__publisher.publish_to_queue(
-                    exchange_name=DEFAULT_EXCHANGER_NAME,
-                    queue_name=DEFAULT_QUEUE_HARVESTER_TO_BROKER,
-                    message=publish_message,
-                )
-                self._logger.info(f"Mets `{mets_id}` was sent successfully.")
-                return True
-            except Exception as e:
-                self._logger.error(f"Mets `{mets_id}` was no sent successfully. Reason: {e}")
-        return False
+        # TODO: Hard-coded for testing (takes less time with less things to download)
+        mets_url = f"https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
+
+        # Check if the VD18 repository responds to the url
+        if not is_url_responsive(mets_url):
+            return False
+
+        # Post Workspace URL to get workspace_id
+        try:
+            self.logger.info(f"Trying to post mets url: {mets_url}")
+            workspace_id = post_workspace_url(
+                server_address=self.server_address,
+                mets_url=mets_url
+            )
+            self.logger.info(f"Mets was posted successfully. Response workspace_id: {workspace_id}")
+        except Exception as e:
+            self.logger.error(f"Mets was no posted. Fail reason: {e}")
+            return False
+
+        # Post Workflow Job with workflow_id (uploaded before starting the harvester)
+        # and workspace_id (got from previous request)
+        try:
+            self.logger.info(f"Trying to post workflow job with "
+                             f"workflow_id: {self.default_nf_workflow_id}, "
+                             f"workspace_id: {workspace_id}"
+                             )
+            workflow_job_id = post_workflow_job(
+                server_address=self.server_address,
+                workflow_id=self.default_nf_workflow_id,
+                workspace_id=workspace_id
+            )
+            self.logger.info(f"Workflow job was posted successfully. Response workflow_job_id: {workflow_job_id}")
+        except Exception as e:
+            self.logger.error(f"Workflow job was not posted. Fail reason: {e}")
+            return False
+
+        secs = 5
+        self.logger.info(f"Sleeping for {secs} seconds before checking the job status")
+        time.sleep(secs)
+
+        # Check job status
+        try:
+            self.logger.info(f"Trying to check workflow job status for "
+                             f"workflow_id: {self.default_nf_workflow_id}, "
+                             f"workflow_job_id: {workflow_job_id}"
+                             )
+            workflow_job_status = get_workflow_job_status(
+                server_address=self.server_address,
+                workflow_id=self.default_nf_workflow_id,
+                job_id=workflow_job_id
+            )
+            self.logger.info(f"Workflow job status: {workflow_job_status}")
+        except Exception as e:
+            self.logger.error(f"Checking workflow job status was unsuccessful. Fail reason: {e}")
+            return False
+
+        return True
 
     def __print_waiting_message(self):
         print(f"INFO: Waiting for few seconds... ", end=" ")
@@ -105,8 +113,8 @@ class Harvester:
 
     # TODO: implement proper start and stop mechanisms
     def start_harvesting(self, limit=0):
-        self._logger.info(f"Harvesting started with limit:{limit}")
-        self._logger.info(f"Mets URL will be submitted every {self.wtbs} seconds.")
+        self.logger.info(f"Harvesting started with limit:{limit}")
+        self.logger.info(f"Mets URL will be submitted every {self.wtbs} seconds.")
         harvested_counter = 0
 
         # Reads vd18 file line by line
@@ -124,19 +132,4 @@ class Harvester:
 
     # TODO: implement proper start and stop mechanisms
     def stop_harvesting(self):
-        self._logger.info("Stopped harvesting")
-
-    @staticmethod
-    def __initiate_publisher(rabbit_mq_host, rabbit_mq_port, logger_name):
-        publisher = RMQPublisher(
-            host=rabbit_mq_host,
-            port=rabbit_mq_port,
-            vhost="/",
-            logger_name=logger_name
-        )
-        publisher.authenticate_and_connect(
-            username="operandi-harvester",
-            password="operandi-harvester"
-        )
-        publisher.enable_delivery_confirmations()
-        return publisher
+        self.logger.info("Stopped harvesting")

@@ -1,6 +1,0 @@
-# These are the VD18 constants
-vd18_url = "https://gdz.sub.uni-goettingen.de/mets/"
-vd18_mets_ext = ".mets.xml"
-
-# This is the time waited between the POST requests to the OPERANDI Server
-wait_time_between_submits = 10
