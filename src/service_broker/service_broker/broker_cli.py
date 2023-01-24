@@ -77,7 +77,7 @@ def run_multiprocessing_broker(rabbit_mq_host, rabbit_mq_port, hpc_host, hpc_use
 
     child1_pid = create_child_process(service_broker, tag='server-to-broker')
     time.sleep(1)
-    child2_pid = create_child_process(service_broker, tag='harvester-to-broker')
+    # child2_pid = create_child_process(service_broker, tag='harvester-to-broker')
     try:
         # Sleep the parent process till
         # a CTRL+C signal is received
@@ -91,8 +91,8 @@ def run_multiprocessing_broker(rabbit_mq_host, rabbit_mq_port, hpc_host, hpc_use
         service_broker._logger.info(f"PID:{getpid()}> CTRL+C detected. Sending SIGINT to child processes.")
         time.sleep(1)
         kill(child1_pid, signal.SIGINT)
-        time.sleep(1)
-        kill(child2_pid, signal.SIGINT)
+        # time.sleep(1)
+        # kill(child2_pid, signal.SIGINT)
         time.sleep(3)
         service_broker._logger.info(f"PID:{getpid()}> Closing Service Broker gracefully in 3 seconds!")
         time.sleep(3)
@@ -117,10 +117,12 @@ def create_child_process(broker_instance: ServiceBroker, tag):
                 # Configure signal handler
                 signal.signal(signal.SIGINT, signal_handler_server_queue)
                 broker_instance.start_listening_to_server_queue()
+            """
             elif tag == 'harvester-to-broker':
                 # Configure signal handler
                 signal.signal(signal.SIGINT, signal_handle_harvester_queue)
                 broker_instance.start_listening_to_harvester_queue()
+            """
         except Exception as e:
             broker_instance._logger.error(f"Service broker error:{e}")
             exit(-1)
