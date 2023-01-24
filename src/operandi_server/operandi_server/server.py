@@ -109,72 +109,6 @@ class OperandiServer:
             ws_url, ws_id = await self.workspace_manager.create_workspace_from_mets_dir(mets_dir)
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
 
-        """
-        # Used to accept Mets URLs from the user
-        @self.app.post("/mets_url")
-        async def operandi_post_mets_url(mets_url: str, workspace_id: str):
-            # Create a timestamp
-            timestamp = datetime.datetime.now().strftime("_%Y%m%d_%H%M")
-            # Append the timestamp at the end of the provided workspace_id
-            workspace_id += timestamp
-            publish_message = f"{mets_url},{workspace_id}".encode('utf8')
-
-            self.__publisher.publish_to_queue(
-                exchange_name=DEFAULT_EXCHANGER_NAME,
-                queue_name=DEFAULT_QUEUE_SERVER_TO_BROKER,
-                message=publish_message,
-            )
-
-            message = f"Mets URL posted successfully!"
-            json_message = {
-                "message": message,
-                "mets_url": mets_url,
-                "workspace_id": workspace_id
-            }
-            return json_message
-
-        # List available workspaces
-        @self.app.get("/workspaces")
-        async def get_workspaces():
-            # TODO: Provide more appropriate way for paths
-            local_workspace_path = f"{WORKSPACES_DIR}/ws_local"
-            # For the Alpha release only mockup is used, so no hpc workspace checked
-            # hpc_workspace_path = f"{WORKSPACES_DIR}/ws_hpc"
-
-            workspaces = []
-            for filename in os.listdir(local_workspace_path):
-                workspace = os.path.join(local_workspace_path, filename)
-                if os.path.isdir(workspace):
-                    workspaces.append(filename)
-
-            json_message = {
-                "workspaces": workspaces
-            }
-            return json_message
-
-        # Download workspace
-        @self.app.get("/workspaces/workspace_id")
-        async def get_workspaces(workspace_id: str):
-            # TODO: Provide more appropriate way for paths
-            local_workspace_path = f"{WORKSPACES_DIR}/ws_local"
-            workspace_path = f"{local_workspace_path}/{workspace_id}"
-            # For the Alpha release only mockup is used, so no hpc workspace checked
-            # hpc_workspace_path = f"{WORKSPACES_DIR}/ws_hpc"
-
-            if os.path.exists(workspace_path) and \
-                    os.path.isdir(workspace_path):
-                make_archive(workspace_path, "zip", workspace_path)
-                return FileResponse(path=f"{workspace_path}.zip",
-                                    media_type='application/zip',
-                                    filename=f"{workspace_id}.zip")
-            else:
-                message = f"workspace with id: {workspace_id} was not found!"
-                json_message = {
-                    "message": message
-                }
-                return json_message
-        """
-
     def __initiate_fast_api_app(self):
         app = FastAPI(
             title="OPERANDI Server",
@@ -189,7 +123,6 @@ class OperandiServer:
                 "description": "The URL of the OPERANDI server.",
             }],
         )
-
         return app
 
     @staticmethod
@@ -201,8 +134,8 @@ class OperandiServer:
             logger_name=logger_name
         )
         publisher.authenticate_and_connect(
-            username="operandi-server",
-            password="operandi-server"
+            username="default-publisher",
+            password="default-publisher"
         )
         publisher.enable_delivery_confirmations()
         return publisher

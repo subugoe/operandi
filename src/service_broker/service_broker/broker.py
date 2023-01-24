@@ -98,8 +98,8 @@ class ServiceBroker:
             logger_name=logger_name
         )
         consumer.authenticate_and_connect(
-            username="operandi-broker",
-            password="operandi-broker"
+            username="default-consumer",
+            password="default-consumer"
         )
         return consumer
 
