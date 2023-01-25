@@ -1,87 +1,49 @@
-import os
 import datetime
-from shutil import make_archive
-
 import logging
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
+
 from ocrd_webapi.database import initiate_database
-from ocrd_webapi.routers import (
-    discovery,
-    workflow,
-    workspace,
-)
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.models.workspace import WorkspaceRsrc
+from ocrd_webapi.rabbitmq import RMQPublisher
+from ocrd_webapi.routers import discovery, workflow, workspace
 from ocrd_webapi.utils import bagit_from_url
 
-from ocrd_webapi.rabbitmq import RMQPublisher
-from rabbit_mq_utils.constants import (
-    RABBIT_MQ_HOST as RMQ_HOST,
-    RABBIT_MQ_PORT as RMQ_PORT,
-    DEFAULT_EXCHANGER_NAME,
-    DEFAULT_EXCHANGER_TYPE,
-    DEFAULT_QUEUE_SERVER_TO_BROKER
-)
-from .constants import (
-    SERVER_HOST as HOST,
-    SERVER_PORT as PORT,
-    SERVER_PATH,
-    OPERANDI_DATA_PATH,
-    WORKFLOWS_DIR,
-    WORKSPACES_DIR,
-    DB_URL,
-    LOG_LEVEL,
-    LOG_FORMAT
-)
+from .constants import LOG_FORMAT, LOG_LEVEL
 
 
 class OperandiServer:
-    def __init__(self, host=HOST, port=PORT, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT):
-        self.host = host
-        self.port = port
-        self.server_path = SERVER_PATH
-        self._data_path = OPERANDI_DATA_PATH
-        self.workspace_manager = WorkspaceManager()
-
-        logger = logging.getLogger(__name__)
+    def __init__(self, host, port, server_url, db_url, rmq_host, rmq_port, rmq_vhost):
+        self.log = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
         logging.getLogger(__name__).setLevel(LOG_LEVEL)
-        self._server_logger = logger
 
-        self._server_logger.info(f"Operandi host:{host}, port:{port}")
-        self._server_logger.info(f"RabbitMQ host:{host}, port:{rabbit_mq_port}")
-        self._server_logger.info(f"Operandi MongoDB URL: {DB_URL}")
+        self.host = host
+        self.port = port
+        self.server_url = server_url
+        self.db_url = db_url
 
-        self.app = self.__initiate_fast_api_app()
+        self.rmq_host = rmq_host
+        self.rmq_port = rmq_port
+        self.rmq_vhost = rmq_vhost
+        self.rmq_publisher = None
 
-        # The following lines reuse the routers from the OCR-D WebAPI
-        self.app.include_router(discovery.router)
-        self.app.include_router(workflow.router)
-        self.app.include_router(workspace.router)
-        # Don't put this out of comments yet - missing config files/malfunctioning
-        # self.app.include_router(processor.router)
+        # Used to extend the Workspace endpoint of the OCR-D WebAPI
+        self.workspace_manager = WorkspaceManager()
 
-        self.__publisher = self.__initiate_publisher(
-            rabbit_mq_host,
-            rabbit_mq_port,
-            logger_name="operandi-server_publisher_server-queue"
-        )
-        self.__publisher.create_queue(
-            queue_name=DEFAULT_QUEUE_SERVER_TO_BROKER,
-            exchange_name=DEFAULT_EXCHANGER_NAME,
-            exchange_type=DEFAULT_EXCHANGER_TYPE
-        )
+        self.app = self.initiate_fast_api_app()
+        self.include_webapi_routers()
 
         @self.app.on_event("startup")
         async def startup_event():
-            os.makedirs(WORKSPACES_DIR, exist_ok=True)
-            os.makedirs(WORKFLOWS_DIR, exist_ok=True)
-            await initiate_database(DB_URL)
+            self.log.info(f"Operandi server url: {self.server_url}")
+            self.log.info(f"Connecting to the MongoDB URL: {self.db_url}")
+            await initiate_database(self.db_url)
 
         @self.app.on_event("shutdown")
         def shutdown_event():
+            self.log.info(f"The Operandi Server is shutting down.")
             pass
 
         @self.app.get("/")
@@ -109,7 +71,7 @@ class OperandiServer:
             ws_url, ws_id = await self.workspace_manager.create_workspace_from_mets_dir(mets_dir)
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
 
-    def __initiate_fast_api_app(self):
+    def initiate_fast_api_app(self):
         app = FastAPI(
             title="OPERANDI Server",
             description="REST API of the OPERANDI",
@@ -119,23 +81,39 @@ class OperandiServer:
             },
             version="1.2.0",
             servers=[{
-                "url": self.server_path,
+                "url": self.server_url,
                 "description": "The URL of the OPERANDI server.",
             }],
         )
         return app
 
-    @staticmethod
-    def __initiate_publisher(rabbit_mq_host, rabbit_mq_port, logger_name):
-        publisher = RMQPublisher(
-            host=rabbit_mq_host,
-            port=rabbit_mq_port,
-            vhost="/",
-            logger_name=logger_name
+    def connect_publisher(
+            self,
+            username: str,
+            password: str,
+            enable_acks: bool = True
+    ) -> None:
+        self.log.info(f"Connecting RMQPublisher to RabbitMQ server: "
+                      f"{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
+        self.rmq_publisher = RMQPublisher(
+            host=self.rmq_host,
+            port=self.rmq_port,
+            vhost=self.rmq_vhost,
         )
-        publisher.authenticate_and_connect(
-            username="default-publisher",
-            password="default-publisher"
-        )
-        publisher.enable_delivery_confirmations()
-        return publisher
+        # TODO: Remove this information before the release
+        self.log.debug(f"RMQPublisher authenticates with username: "
+                       f"{username}, password: {password}")
+        self.rmq_publisher.authenticate_and_connect(username=username, password=password)
+        if enable_acks:
+            self.rmq_publisher.enable_delivery_confirmations()
+            self.log.debug(f"Delivery confirmations are enabled")
+        else:
+            self.log.debug(f"Delivery confirmations are disabled")
+        self.log.debug(f"Successfully connected RMQPublisher.")
+
+    def include_webapi_routers(self):
+        self.app.include_router(discovery.router)
+        # Don't put this out of comments yet - still missing
+        # self.app.include_router(processor.router)
+        self.app.include_router(workflow.router)
+        self.app.include_router(workspace.router)

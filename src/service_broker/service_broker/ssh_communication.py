@@ -4,9 +4,6 @@ import SSHLibrary
 from .constants import (
     HPC_KEY_PATH,
     HPC_HOME_PATH,
-    SCP,
-    SCP_PRESERVE_TIMES,
-    MODE
 )
 
 
@@ -14,12 +11,12 @@ from .constants import (
 # to communicate with the HPC environment
 # TODO: Implement appropriate error handling
 class SSHCommunication:
-    def __init__(self):
+    def __init__(self, scp="ON", scp_preserve_times=True, mode="0755"):
         # TODO: Handle the exceptions properly
         # E.g., when not connected to GOENET the SSH connection fails
-        self._scp = SCP
-        self._scp_preserve_times = SCP_PRESERVE_TIMES
-        self._mode = MODE
+        self.scp = scp
+        self.scp_preserve_times = scp_preserve_times
+        self.mode = mode
         self.hpc_home_path = HPC_HOME_PATH
 
         self.__ssh = SSHLibrary.SSHLibrary()
@@ -81,27 +78,27 @@ class SSHCommunication:
         self.__ssh.put_file(
             source=source,
             destination=destination,
-            mode=self._mode,
-            scp=self._scp,
-            scp_preserve_times=self._scp_preserve_times
+            mode=self.mode,
+            scp=self.scp,
+            scp_preserve_times=self.scp_preserve_times
         )
 
     def put_directory(self, source, destination, recursive=True):
         self.__ssh.put_directory(
             source=source,
             destination=destination,
-            mode=self._mode,
+            mode=self.mode,
             recursive=recursive,
-            scp=self._scp,
-            scp_preserve_times=self._scp_preserve_times
+            scp=self.scp,
+            scp_preserve_times=self.scp_preserve_times
         )
 
     def get_file(self, source, destination):
         self.__ssh.get_file(
             source=source,
             destination=destination,
-            scp=self._scp,
-            scp_preserve_times=self._scp_preserve_times
+            scp=self.scp,
+            scp_preserve_times=self.scp_preserve_times
         )
 
     def get_directory(self, source, destination, recursive=True):
@@ -109,8 +106,8 @@ class SSHCommunication:
             source=source,
             destination=destination,
             recursive=recursive,
-            scp=self._scp,
-            scp_preserve_times=self._scp_preserve_times
+            scp=self.scp,
+            scp_preserve_times=self.scp_preserve_times
         )
 
 
@@ -126,11 +123,7 @@ def build_sbatch_command(batch_script_path, workspace_dir):
     return ssh_command
 
 
-def build_hpc_batch_script_path(
-        hpc_home_path,
-        workspace_id,
-        script_id="base_script.sh"
-):
+def build_hpc_batch_script_path(hpc_home_path, workspace_id, script_id="base_script.sh"):
     # This is the batch script submitted to the SLURM scheduler in HPC
     script_path = f"{hpc_home_path}/{workspace_id}/{script_id}"
     return script_path

@@ -15,19 +15,10 @@ def build_nf_command(nf_script_path, workspace_dir):
     return nf_command
 
 
-def build_nf_out_err_paths(
-        workspace_dir,
-        out="nextflow_out.txt",
-        err="nextflow_err.txt"
-):
-    nf_out = f'{workspace_dir}/{out}'
-    nf_err = f'{workspace_dir}/{err}'
-    return nf_out, nf_err
-
-
 def trigger_nf_process(nf_workspace_dir, nf_script_path, ocrd_workspace_dir):
     nf_command = build_nf_command(nf_script_path, ocrd_workspace_dir)
-    nf_out, nf_err = build_nf_out_err_paths(nf_workspace_dir)
+    nf_out = f"{nf_workspace_dir}/nf_out.txt"
+    nf_err = f"{nf_workspace_dir}/nf_err.txt"
 
     # TODO: Not a big fan of the nested structure, fix this to open/close files separately
     # TODO: Exception handling related to fd should be then more clear

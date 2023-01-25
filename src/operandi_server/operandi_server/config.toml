@@ -1,5 +1,0 @@
-server_host = "localhost"
-server_port = 8000
-# server_data_path = "/tmp/operandi-data"
-server_data_path = "/tmp/ocrd-webapi-data"
-mongodb_url = "mongodb://localhost:27018"

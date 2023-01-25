@@ -21,5 +21,5 @@ VD18_METS_EXT: str = ".mets.xml"
 # This is the time waited between the POST requests to the OPERANDI Server
 WAIT_TIME_BETWEEN_SUBMITS: int = 10  # seconds
 
-LOG_FORMAT: str = '%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
+LOG_FORMAT: str = '%(levelname) -7s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
 LOG_LEVEL: int = logging.INFO

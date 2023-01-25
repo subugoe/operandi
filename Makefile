@@ -6,8 +6,8 @@ PIP3 = pip3
 PIP3_INSTALL = pip3 install
 TESTDIR = tests
 
-BUILD_ORDER = src/rabbit_mq_utils src/operandi_server src/service_broker src/harvester
-UNINSTALL_ORDER = rabbit_mq_utils operandi_server service_broker harvester
+BUILD_ORDER = src/operandi_server src/service_broker src/harvester
+UNINSTALL_ORDER = operandi_server service_broker harvester
 
 # BEGIN-EVAL makefile-parser --make-help Makefile
   # TODO: "    test           Run all unit tests"
