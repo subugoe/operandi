@@ -66,10 +66,14 @@ class OperandiServer:
 
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
 
+        """
+        This causes problems in the WebAPI part. Disabled for now.
+        
         @self.app.post("/workspace/import_local", tags=["Workspace"])
         async def operandi_import_from_mets_dir(mets_dir: str):
             ws_url, ws_id = await self.workspace_manager.create_workspace_from_mets_dir(mets_dir)
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
+        """
 
     def initiate_fast_api_app(self):
         app = FastAPI(
