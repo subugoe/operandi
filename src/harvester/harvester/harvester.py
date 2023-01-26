@@ -31,7 +31,7 @@ class Harvester:
         self.server_address = server_address
         # The default workflow to be used.
         # This id is received when the default script is posted to the Operandi Server
-        self.default_nf_workflow_id = "8071fcc3-4969-4c44-b7f8-5bc8068ae5e3"
+        self.default_nf_workflow_id = "e25cd96d-75cc-4d0a-863f-0155eba07e0f"
         self.wtbs = WAIT_TIME_BETWEEN_SUBMITS
 
         self.vd18_file = VD18_IDS_FILE
@@ -74,7 +74,8 @@ class Harvester:
             workflow_job_id = post_workflow_job(
                 server_address=self.server_address,
                 workflow_id=self.default_nf_workflow_id,
-                workspace_id=workspace_id
+                workspace_id=workspace_id,
+                user_id="harvester"
             )
             self.logger.info(f"Workflow job was posted successfully. Response workflow_job_id: {workflow_job_id}")
         except Exception as e:

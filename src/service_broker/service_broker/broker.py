@@ -7,13 +7,14 @@ from .worker import Worker
 
 
 class ServiceBroker:
-    def __init__(self, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path):
+    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path):
         broker_logger_name = f"{__name__}[{getpid()}]"
         self.log = logging.getLogger(__name__)
         logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
         logging.getLogger('pika').setLevel(logging.WARNING)
         logging.getLogger(broker_logger_name).setLevel(LOG_LEVEL)
 
+        self.db_url = db_url
         self.rmq_host = rmq_host
         self.rmq_port = rmq_port
         self.rmq_vhost = rmq_vhost
@@ -54,7 +55,7 @@ class ServiceBroker:
             try:
                 # Clean unnecessary data
                 # self.queues_and_workers = None
-                child_worker = Worker(self.rmq_host, self.rmq_port, self.rmq_vhost, queue_name)
+                child_worker = Worker(self.db_url, self.rmq_host, self.rmq_port, self.rmq_vhost, queue_name)
                 child_worker.run()
                 exit(0)
             except Exception as e:

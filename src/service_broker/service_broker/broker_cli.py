@@ -1,9 +1,14 @@
+import asyncio
 import click
 from time import sleep
 
+import ocrd_webapi.database as db
+
 from .broker import ServiceBroker
 from .constants import (
-    DEFAULT_QUEUE_SERVER_TO_BROKER,
+    DB_URL,
+    DEFAULT_QUEUE_FOR_HARVESTER,
+    DEFAULT_QUEUE_FOR_USERS,
     HPC_HOST,
     HPC_KEY_PATH,
     HPC_USERNAME
@@ -24,6 +29,7 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 
 
 @cli.command('start')
+@click.option('--db-url', default=DB_URL, help='The URL of the MongoDB.')
 @click.option('--rmq-host', default="localhost", help='The host of the RabbitMQ.')
 @click.option('--rmq-port', default="5672", help='The port of the RabbitMQ.')
 @click.option('--rmq-vhost', default="/", help='The vhost of the RabbitMQ.')
@@ -31,8 +37,9 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 @click.option('--hpc-username', default=HPC_USERNAME, help='The username used to login to the HPC.')
 @click.option('--hpc-key-path', default=HPC_KEY_PATH, help='The path of the key file used for authentication.')
 @click.option('-m', '--mocked', is_flag=True, default=False, help='Toggle between HPC and Local execution')
-def start_broker(rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path, mocked):
+def start_broker(db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path, mocked):
     service_broker = ServiceBroker(
+        db_url=db_url,
         rmq_host=rmq_host,
         rmq_port=rmq_port,
         rmq_vhost=rmq_vhost,
@@ -43,14 +50,21 @@ def start_broker(rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_
 
     # A list of queues for which a worker process should be created
     queues = [
-        DEFAULT_QUEUE_SERVER_TO_BROKER,
-        DEFAULT_QUEUE_SERVER_TO_BROKER
+        DEFAULT_QUEUE_FOR_USERS,
+        DEFAULT_QUEUE_FOR_HARVESTER
     ]
-    for queue_name in queues:
-        service_broker.log.info(f"Creating a worker processes to consume from queue: {queue_name}")
-        service_broker.create_worker_process(queue_name)
+    try:
+        for queue_name in queues:
+            service_broker.log.info(f"Creating a worker processes to consume from queue: {queue_name}")
+            service_broker.create_worker_process(queue_name)
+    except Exception as error:
+        service_broker.log.error(f"Error while creating worker processes: {error}")
 
     try:
+        loop = asyncio.get_event_loop()
+        db_coroutine = db.initiate_database(db_url)
+        loop.run_until_complete(db_coroutine)
+
         # Sleep the parent process till a signal is invoked
         # Better than sleeping in loop, not tested yet
         # signal.pause()
@@ -67,3 +81,6 @@ def start_broker(rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_
         service_broker.log.info(f"Closing gracefully in 3 seconds!")
         sleep(3)
         exit(0)
+    except Exception as error:
+        # This is for logging any other errors
+        service_broker.log.error(f"Unexpected error: {error}")

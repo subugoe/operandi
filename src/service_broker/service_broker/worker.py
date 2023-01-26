@@ -1,9 +1,13 @@
+import asyncio
+import json
 import logging
 import signal
 from os import getpid, getppid, setsid
 from sys import exit
 from time import sleep
 
+import ocrd_webapi.database as db
+from ocrd_webapi.managers.nextflow_manager import NextflowManager
 from ocrd_webapi.rabbitmq import RMQConsumer
 from .constants import LOG_FORMAT, LOG_LEVEL
 
@@ -11,7 +15,7 @@ from .constants import LOG_FORMAT, LOG_LEVEL
 # Each worker class listens to a specific queue,
 # consume messages, and process messages.
 class Worker:
-    def __init__(self, rmq_host, rmq_port, rmq_vhost, queue_name):
+    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, queue_name):
         worker_logger_name = f"{__name__}[{getpid()}]"
         self.log = logging.getLogger(worker_logger_name)
         # Set the global logging level to INFO
@@ -26,6 +30,7 @@ class Worker:
         self.ppid = getppid()
         self.queue_name = queue_name
 
+        self.db_url = db_url
         self.rmq_host = rmq_host
         self.rmq_port = rmq_port
         self.rmq_vhost = rmq_vhost
@@ -40,6 +45,9 @@ class Worker:
             setsid()
             self.log.debug(f"Activating signal handler for SIGINT")
             signal.signal(signal.SIGINT, sigint_signal_handler)
+            loop = asyncio.get_event_loop()
+            db_coroutine = db.initiate_database(self.db_url)
+            loop.run_until_complete(db_coroutine)
             self.connect_consumer()
             self.configure_consuming(self.queue_name, self.__default_callback)
             self.start_consuming()
@@ -80,8 +88,38 @@ class Worker:
     # The arguments to this method are passed by the caller
     def __default_callback(self, ch, method, properties, body):
         # Print information of the consumed message
-        self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
-        self.log.info(f"Consumed message: {body}")
+        # self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
+        # self.log.debug(f"Consumed message: {body}")
+
+        workflow_message = json.loads(body)
+        self.log.info(f"Workflow Message: {workflow_message}")
+        workflow_id = workflow_message.get("workflow_id", None)
+        workspace_id = workflow_message.get("workspace_id", None)
+        job_id = workflow_message.get("job_id", None)
+        mets_name = workflow_message.get("mets_name", None)
+        input_file_group = workflow_message.get("input_file_group", None)
+
+        if not (workflow_id and workspace_id and job_id and mets_name and input_file_group):
+            self.log.warning("A workflow message parameter is None")
+            loop = asyncio.get_event_loop()
+            self.log.debug(f"Setting new job state[FAILED] of job_id: {job_id}")
+            db_coroutine = db.set_workflow_job_state(job_id, job_state="FAILED")
+            loop.run_until_complete(db_coroutine)
+            # ch.basic_nack(delivery_tag=method.delivery_tag)
+            return
+
+        loop = asyncio.get_event_loop()
+        self.log.debug(f"Setting new job state[RUNNING] of job_id: {job_id}")
+        db_coroutine = db.set_workflow_job_state(job_id, job_state="RUNNING")
+        loop.run_until_complete(db_coroutine)
+
+        # Simulate processing action
+        sleep(15)
+        loop = asyncio.get_event_loop()
+        self.log.debug(f"Setting new job state[FINISHED] to of job_id: {job_id}")
+        db_coroutine = db.set_workflow_job_state(job_id, job_state="FINISHED")
+        loop.run_until_complete(db_coroutine)
+
         # Acknowledge back that message has been processed successfully
         ch.basic_ack(delivery_tag=method.delivery_tag)
 

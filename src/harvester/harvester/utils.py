@@ -28,3 +28,7 @@ def is_url_responsive(url: str) -> bool:
 
 def parse_resource_id(json_response):
     return json_response['resource_url'].split("/")[-1]
+
+
+def parse_job_id(json_response):
+    return json_response['job_id']

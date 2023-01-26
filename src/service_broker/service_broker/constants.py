@@ -3,7 +3,8 @@ from pathlib import Path
 
 __all__ = [
     "DB_URL",
-    "DEFAULT_QUEUE_SERVER_TO_BROKER",
+    "DEFAULT_QUEUE_FOR_HARVESTER",
+    "DEFAULT_QUEUE_FOR_USERS",
     "HPC_HOME_PATH",
     "HPC_HOST",
     "HPC_KEY_PATH",
@@ -14,7 +15,8 @@ __all__ = [
 ]
 
 DB_URL: str = "mongodb://localhost:27018"
-DEFAULT_QUEUE_SERVER_TO_BROKER: str = "operandi-server-to-broker"
+DEFAULT_QUEUE_FOR_HARVESTER: str = "operandi-for-harvester"
+DEFAULT_QUEUE_FOR_USERS: str = "operandi-for-users"
 
 LOG_FORMAT: str = '%(levelname) -7s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
 LOG_LEVEL: int = logging.DEBUG

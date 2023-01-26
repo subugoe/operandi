@@ -3,7 +3,8 @@ import uvicorn
 
 from .constants import (
     DB_URL,
-    DEFAULT_QUEUE_SERVER_TO_BROKER,
+    DEFAULT_QUEUE_FOR_HARVESTER,
+    DEFAULT_QUEUE_FOR_USERS,
     SERVER_HOST as HOST,
     SERVER_PORT as PORT,
 )
@@ -46,10 +47,10 @@ def start_server(host, port, db_url, rmq_host, rmq_port, rmq_vhost):
         password="default-publisher",
         enable_acks=True
     )
-    # Create the queue to which the Operandi Server pushes messages
-    operandi_server.rmq_publisher.create_queue(
-        queue_name=DEFAULT_QUEUE_SERVER_TO_BROKER
-    )
+    # Requests coming from the Harvester are sent to this queue
+    operandi_server.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
+    # Requests coming from other users are sent to this queue
+    operandi_server.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
     uvicorn.run(
         operandi_server.app,
         host=operandi_server.host,

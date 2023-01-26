@@ -1,16 +1,25 @@
 import datetime
 import logging
+import json
 
 from fastapi import FastAPI
 
-from ocrd_webapi.database import initiate_database
+import ocrd_webapi.database as db
+from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
+from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.models.workspace import WorkspaceRsrc
 from ocrd_webapi.rabbitmq import RMQPublisher
 from ocrd_webapi.routers import discovery, workflow, workspace
 from ocrd_webapi.utils import bagit_from_url
 
-from .constants import LOG_FORMAT, LOG_LEVEL
+from .constants import (
+    DEFAULT_QUEUE_FOR_HARVESTER,
+    DEFAULT_QUEUE_FOR_USERS,
+    LOG_FORMAT,
+    LOG_LEVEL
+)
+from .models import WorkflowArguments
 
 
 class OperandiServer:
@@ -29,8 +38,10 @@ class OperandiServer:
         self.rmq_vhost = rmq_vhost
         self.rmq_publisher = None
 
-        # Used to extend the Workspace endpoint of the OCR-D WebAPI
+        # Used to extend/overwrite the Workspace routing endpoint of the OCR-D WebAPI
         self.workspace_manager = WorkspaceManager()
+        # Used to extend/overwrite the Workflow routing endpoint of the OCR-D WebAPI
+        self.workflow_manager = WorkflowManager()
 
         self.app = self.initiate_fast_api_app()
         self.include_webapi_routers()
@@ -38,8 +49,7 @@ class OperandiServer:
         @self.app.on_event("startup")
         async def startup_event():
             self.log.info(f"Operandi server url: {self.server_url}")
-            self.log.info(f"Connecting to the MongoDB URL: {self.db_url}")
-            await initiate_database(self.db_url)
+            await db.initiate_database(self.db_url)
 
         @self.app.on_event("shutdown")
         def shutdown_event():
@@ -65,6 +75,50 @@ class OperandiServer:
             # trigger a workflow execution, unlike the old api call
 
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
+
+        # Submits a workflow execution request to the RabbitMQ
+        @self.app.post("/workflow/run_workflow/{user_id}", tags=["Workflow"])
+        async def operandi_run_workflow(user_id: str, workflow_args: WorkflowArguments):
+            try:
+                workflow_id = workflow_args.workflow_id
+                workspace_id = workflow_args.workspace_id
+                mets_name = workflow_args.mets_name
+                input_file_group = workflow_args.input_file_grp
+
+                job_id, job_dir = self.workflow_manager.create_workflow_execution_space(workflow_id)
+                await db.save_workflow_job(job_id=job_id, workspace_id=workspace_id,
+                                           workflow_id=workflow_id, job_path=job_dir, job_state="QUEUED")
+
+                # Create the message to be sent to the RabbitMQ queue
+                workflow_message = {
+                    "workflow_id": f"{workflow_id}",
+                    "workspace_id": f"{workspace_id}",
+                    "job_id": f"{job_id}",
+                    "mets_name": f"{mets_name}",
+                    "input_file_group": f"{input_file_group}"
+                }
+
+                encoded_workflow_message = json.dumps(workflow_message)
+
+                # TODO: Remove this
+                self.log.info("Posting a workflow message to RabbitMQ Server")
+
+                # Send the message to a queue based on the user_id
+                if user_id == "harvester":
+                    self.rmq_publisher.publish_to_queue(
+                        queue_name=DEFAULT_QUEUE_FOR_HARVESTER,
+                        message=encoded_workflow_message
+                    )
+                else:
+                    self.rmq_publisher.publish_to_queue(
+                        queue_name=DEFAULT_QUEUE_FOR_USERS,
+                        message=encoded_workflow_message
+                    )
+            except Exception as error:
+                self.log.error(f"SERVER ERROR: {error}")
+                raise ResponseException(500, {"error": f"internal server error: {error}"})
+
+            return {"job_id": f"{job_id}"}
 
         """
         This causes problems in the WebAPI part. Disabled for now.
