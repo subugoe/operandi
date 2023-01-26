@@ -137,7 +137,7 @@ class OperandiServer:
                 "name": "Apache 2.0",
                 "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
             },
-            version="1.2.0",
+            version="1.3.0",
             servers=[{
                 "url": self.server_url,
                 "description": "The URL of the OPERANDI server.",
