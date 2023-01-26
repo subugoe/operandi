@@ -5,7 +5,7 @@ install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='operandi_server',
-    version='1.2.0',
+    version='1.3.0',
     description='OPERANDI - Server',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
