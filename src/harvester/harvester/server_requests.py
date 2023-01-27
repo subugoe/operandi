@@ -25,9 +25,7 @@ def post_workflow_job(server_address: str, workflow_id: str, workspace_id: str, 
     req_url = f'{server_address}/workflow/run_workflow/{user_id}'
     req_data = {
         'workflow_id': f'{workflow_id}',
-        'workspace_id': f'{workspace_id}',
-        'input_file_group': 'DEFAULT',
-        'mets_name': 'mets.xml'
+        'workspace_id': f'{workspace_id}'
     }
     req_headers = {'content-Type': 'application/json'}
     response = requests.post(url=req_url, json=req_data, headers=req_headers)

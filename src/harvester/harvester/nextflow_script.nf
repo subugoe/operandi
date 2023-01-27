@@ -4,8 +4,9 @@ nextflow.enable.dsl = 2
 
 // pipeline parameters
 params.venv = "\$HOME/venv37-ocrd/bin/activate"
-params.workspace = "$projectDir/ocrd-workspace/"
-params.mets = "$projectDir/ocrd-workspace/mets.xml"
+// Set this appropriately from the ocrd webapi NextflowManager
+params.mets = "mets.xml"
+// Set this appropriately from the ocrd webapi NextflowManager
 params.input_group = "DEFAULT"
 
 process ocrd_cis_ocropy_binarize {
@@ -22,7 +23,7 @@ process ocrd_cis_ocropy_binarize {
 	script:
 	"""
 	source "${params.venv}"
-	ocrd-cis-ocropy-binarize -I ${input_dir} -O ${output_dir}
+	ocrd-cis-ocropy-binarize --mets ${mets_file} -I ${input_dir} -O ${output_dir}
 	deactivate
 	"""
 }
@@ -41,7 +42,7 @@ process ocrd_anybaseocr_crop {
 	script:
 	"""
 	source "${params.venv}"
-	ocrd-anybaseocr-crop -I ${input_dir} -O ${output_dir}
+	ocrd-anybaseocr-crop --mets ${mets_file} -I ${input_dir} -O ${output_dir}
 	deactivate
 	"""
 }
@@ -60,7 +61,7 @@ process ocrd_skimage_binarize {
 	script:
 	"""
 	source "${params.venv}"
-	ocrd-skimage-binarize -I ${input_dir} -O ${output_dir} -P method li
+	ocrd-skimage-binarize --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P method li
 	deactivate
 	"""
 }
@@ -79,7 +80,7 @@ process ocrd_skimage_denoise {
 	script:
 	"""
 	source "${params.venv}"
-	ocrd-skimage-denoise -I ${input_dir} -O ${output_dir} -P level-of-operation page
+	ocrd-skimage-denoise --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P level-of-operation page
 	deactivate
 	"""
 }
@@ -98,7 +99,7 @@ process ocrd_tesserocr_deskew {
 	script:
 	"""
 	source "${params.venv}"
-	ocrd-tesserocr-deskew -I ${input_dir} -O ${output_dir} -P operation_level page
+	ocrd-tesserocr-deskew --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P operation_level page
 	deactivate
 	"""
 }
@@ -117,7 +118,7 @@ process ocrd_cis_ocropy_segment {
 	script:
 	"""
 	source "${params.venv}"
-	ocrd-cis-ocropy-segment -I ${input_dir} -O ${output_dir} -P level-of-operation page
+	ocrd-cis-ocropy-segment --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P level-of-operation page
 	deactivate
 	"""
 }
@@ -136,7 +137,7 @@ process ocrd_cis_ocropy_dewarp {
 	script:
 	"""
 	source "${params.venv}"
-	ocrd-cis-ocropy-dewarp -I ${input_dir} -O ${output_dir}
+	ocrd-cis-ocropy-dewarp --mets ${mets_file} -I ${input_dir} -O ${output_dir}
 	deactivate
 	"""
 }
@@ -155,7 +156,7 @@ process ocrd_calamari_recognize {
 	script:
 	"""
 	source "${params.venv}"
-	ocrd-calamari-recognize -I ${input_dir} -O ${output_dir} -P checkpoint_dir qurator-gt4histocr-1.0
+	ocrd-calamari-recognize --mets ${mets_file} -I ${input_dir} -O ${output_dir} -P checkpoint_dir qurator-gt4histocr-1.0
 	deactivate
 	"""
 }

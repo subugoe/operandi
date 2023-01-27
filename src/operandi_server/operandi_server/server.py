@@ -82,8 +82,6 @@ class OperandiServer:
             try:
                 workflow_id = workflow_args.workflow_id
                 workspace_id = workflow_args.workspace_id
-                mets_name = workflow_args.mets_name
-                input_file_group = workflow_args.input_file_grp
 
                 job_id, job_dir = self.workflow_manager.create_workflow_execution_space(workflow_id)
                 await db.save_workflow_job(job_id=job_id, workspace_id=workspace_id,
@@ -93,9 +91,7 @@ class OperandiServer:
                 workflow_message = {
                     "workflow_id": f"{workflow_id}",
                     "workspace_id": f"{workspace_id}",
-                    "job_id": f"{job_id}",
-                    "mets_name": f"{mets_name}",
-                    "input_file_group": f"{input_file_group}"
+                    "job_id": f"{job_id}"
                 }
 
                 encoded_workflow_message = json.dumps(workflow_message)

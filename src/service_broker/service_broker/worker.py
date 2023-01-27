@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import signal
@@ -45,11 +44,9 @@ class Worker:
             setsid()
             self.log.debug(f"Activating signal handler for SIGINT")
             signal.signal(signal.SIGINT, sigint_signal_handler)
-            loop = asyncio.get_event_loop()
-            db_coroutine = db.initiate_database(self.db_url)
-            loop.run_until_complete(db_coroutine)
+            db.sync_initiate_database(self.db_url)
             self.connect_consumer()
-            self.configure_consuming(self.queue_name, self.__default_callback)
+            self.configure_consuming(self.queue_name, self.__on_message_consumed_callback)
             self.start_consuming()
         except Exception as e:
             self.log.error(f"The worker failed to run, reason: {e}")
@@ -86,7 +83,7 @@ class Worker:
 
     # The callback method provided to the Consumer listener
     # The arguments to this method are passed by the caller
-    def __default_callback(self, ch, method, properties, body):
+    def __on_message_consumed_callback(self, ch, method, properties, body):
         # Print information of the consumed message
         # self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
         # self.log.debug(f"Consumed message: {body}")
@@ -96,32 +93,45 @@ class Worker:
         workflow_id = workflow_message.get("workflow_id", None)
         workspace_id = workflow_message.get("workspace_id", None)
         job_id = workflow_message.get("job_id", None)
-        mets_name = workflow_message.get("mets_name", None)
-        input_file_group = workflow_message.get("input_file_group", None)
 
-        if not (workflow_id and workspace_id and job_id and mets_name and input_file_group):
-            self.log.warning("A workflow message parameter is None")
-            loop = asyncio.get_event_loop()
+        should_fail = False
+        if not workflow_id:
+            self.log.error("A workflow_id parameter is None")
+            should_fail = True
+        if not workspace_id:
+            self.log.error("A workspace_id parameter is None")
+            should_fail = True
+
+        if should_fail:
             self.log.debug(f"Setting new job state[STOPPED] of job_id: {job_id}")
-            db_coroutine = db.set_workflow_job_state(job_id, job_state="STOPPED")
-            loop.run_until_complete(db_coroutine)
-            # ch.basic_nack(delivery_tag=method.delivery_tag)
+            db.sync_set_workflow_job_state(job_id, job_state="STOPPED")
+            # This is acking the failed message
+            ch.basic_ack(delivery_tag=method.delivery_tag)
             return
 
-        loop = asyncio.get_event_loop()
-        self.log.debug(f"Setting new job state[RUNNING] of job_id: {job_id}")
-        db_coroutine = db.set_workflow_job_state(job_id, job_state="RUNNING")
-        loop.run_until_complete(db_coroutine)
+        try:
+            self.log.debug(f"Setting new job state[RUNNING] of job_id: {job_id}")
+            db.sync_set_workflow_job_state(job_id, job_state="RUNNING")
+            workflow_script_path = db.sync_get_workflow_script_path(workflow_id)
+            workspace_mets_path = db.sync_get_workspace_mets_path(workspace_id)
+            job_dir = db.sync_get_workflow_job(job_id).job_path
 
-        # Simulate processing action
-        sleep(5)
-        loop = asyncio.get_event_loop()
+            NextflowManager.execute_workflow(
+                nf_script_path=workflow_script_path,
+                workspace_mets_path=workspace_mets_path,
+                job_dir=job_dir
+            )
+        except Exception as error:
+            self.log.error(f"Executing nextflow workflow has failed, error: {error}")
+            self.log.debug(f"Setting new job state[STOPPED] to of job_id: {job_id}")
+            db.sync_set_workflow_job_state(job_id, job_state="STOPPED")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
+
         self.log.debug(f"Setting new job state[SUCCESS] to of job_id: {job_id}")
-        db_coroutine = db.set_workflow_job_state(job_id, job_state="SUCCESS")
-        loop.run_until_complete(db_coroutine)
-
-        # Acknowledge back that message has been processed successfully
+        db.sync_set_workflow_job_state(job_id, job_state="SUCCESS")
         ch.basic_ack(delivery_tag=method.delivery_tag)
+        return
 
 
 # TODO: Ideally this method should be wrapped to be able
