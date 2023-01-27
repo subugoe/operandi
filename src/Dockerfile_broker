@@ -7,7 +7,6 @@ ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
 COPY ./service_broker/ /usr/src/service_broker
-COPY ./rabbit_mq_utils/ /usr/src/rabbit_mq_utils
 
 WORKDIR /usr/src/service_broker/service_broker
 

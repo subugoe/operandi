@@ -7,7 +7,6 @@ ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
 COPY ./operandi_server/ /usr/src/operandi_server
-COPY ./rabbit_mq_utils/ /usr/src/rabbit_mq_utils
 
 WORKDIR /usr/src/operandi_server/operandi_server
 
