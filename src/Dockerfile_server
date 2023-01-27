@@ -27,7 +27,8 @@ RUN apt-get update && apt-get -y install \
     python3-venv \
     sudo \
     time \
-    wget  
+    wget  \
+    libmagic-dev
 
 RUN python3 -m pip install --upgrade pip setuptools
 RUN pip3 install -U pip wheel
