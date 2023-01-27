@@ -1,6 +1,10 @@
 FROM ubuntu:22.04
 
-MAINTAINER OPERANDI
+LABEL org.opencontainers.image.authors="DFG OCR-D OPERANDI Project"
+LABEL version="0.1"
+LABEL description="This Dockerfile builds the OPERANDI Server.\
+The OPERANDI Server establishes a Service endpoint for batch requests and also for processing on demand, it accepts job requests and enqueues these job descriptions to the message queue of another service, the OPERANDI Broker Service.\
+see https://github.com/subugoe/operandi"
 ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
 ENV LC_ALL=C.UTF-8

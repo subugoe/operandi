@@ -1,6 +1,12 @@
 FROM ubuntu:22.04
 
-MAINTAINER OPERANDI
+LABEL org.opencontainers.image.authors="DFG OCR-D OPERANDI Project"
+LABEL version="0.1"
+LABEL description="This Dockerfile builds the OPERANDI Broker Server.\
+The OPERANDI Broker is responsible for the processing, it dequeues jobs from the message queue, creates the workspace, stages the data to HPC, creates HPC jobs from the user prepared job description and starts/contoles the execution and updates the processing status. In the end the broker deliver processing results or updates the status for failed jobs in the task management.\
+see https://github.com/subugoe/operandi"
+
+
 ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONIOENCODING utf8
 ENV LC_ALL=C.UTF-8
