@@ -102,8 +102,8 @@ class Worker:
         if not (workflow_id and workspace_id and job_id and mets_name and input_file_group):
             self.log.warning("A workflow message parameter is None")
             loop = asyncio.get_event_loop()
-            self.log.debug(f"Setting new job state[FAILED] of job_id: {job_id}")
-            db_coroutine = db.set_workflow_job_state(job_id, job_state="FAILED")
+            self.log.debug(f"Setting new job state[STOPPED] of job_id: {job_id}")
+            db_coroutine = db.set_workflow_job_state(job_id, job_state="STOPPED")
             loop.run_until_complete(db_coroutine)
             # ch.basic_nack(delivery_tag=method.delivery_tag)
             return
@@ -114,10 +114,10 @@ class Worker:
         loop.run_until_complete(db_coroutine)
 
         # Simulate processing action
-        sleep(15)
+        sleep(5)
         loop = asyncio.get_event_loop()
-        self.log.debug(f"Setting new job state[FINISHED] to of job_id: {job_id}")
-        db_coroutine = db.set_workflow_job_state(job_id, job_state="FINISHED")
+        self.log.debug(f"Setting new job state[SUCCESS] to of job_id: {job_id}")
+        db_coroutine = db.set_workflow_job_state(job_id, job_state="SUCCESS")
         loop.run_until_complete(db_coroutine)
 
         # Acknowledge back that message has been processed successfully
