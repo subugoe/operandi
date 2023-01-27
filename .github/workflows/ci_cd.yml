@@ -97,7 +97,7 @@ jobs:
         environment: [
           {service: "operandi-broker", dockerfile: "Dockerfile_broker"}, 
           {service: "operandi-server", dockerfile: "Dockerfile_server"}, 
-          {service: "operandi-rabbitsmq", dockerfile: "Dockerfile_rabbitsmq"}]
+          {service: "operandi-rabbitsmq", dockerfile: "Dockerfile_rabbitmq"}]
         # other possible options for os are: [windows-latest, macOS-latest]
         os: [ubuntu-latest]
     
@@ -126,7 +126,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: ./src
-          file: ./src/${{matrix.environment.dockefile}}
+          file: ./src/${{matrix.environment.dockerfile}}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }} 
