@@ -116,10 +116,11 @@ class Worker:
             workspace_mets_path = db.sync_get_workspace_mets_path(workspace_id)
             job_dir = db.sync_get_workflow_job(job_id).job_path
 
-            NextflowManager.execute_workflow(
+            nf_process = NextflowManager.execute_workflow(
                 nf_script_path=workflow_script_path,
                 workspace_mets_path=workspace_mets_path,
-                job_dir=job_dir
+                job_dir=job_dir,
+                in_background=False
             )
         except Exception as error:
             self.log.error(f"Executing nextflow workflow has failed, error: {error}")
@@ -128,10 +129,14 @@ class Worker:
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
 
-        self.log.debug(f"Setting new job state[SUCCESS] to of job_id: {job_id}")
-        db.sync_set_workflow_job_state(job_id, job_state="SUCCESS")
+        if nf_process.returncode != 0:
+            self.log.debug(f"Setting new job state[STOPPED] to of job_id: {job_id}")
+            db.sync_set_workflow_job_state(job_id, job_state="STOPPED")
+        else:
+            self.log.debug(f"Setting new job state[SUCCESS] to of job_id: {job_id}")
+            db.sync_set_workflow_job_state(job_id, job_state="SUCCESS")
+
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        return
 
 
 # TODO: Ideally this method should be wrapped to be able
