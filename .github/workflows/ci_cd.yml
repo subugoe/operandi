@@ -16,6 +16,7 @@ env:
   
 # these are the jobs that are executed. Currently, there are only two jobs - build and publish.
 jobs:
+
   build:
 
     # the CI pipeline runs on the operating systems mentioned in matrix.os (below)
@@ -27,10 +28,6 @@ jobs:
       # matrices define different versions or operating systems
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
-        environment: [
-          {service: "operandi-broker", dockerfile: "Dockerfile_broker"}, 
-          {service: "operandi-server", dockerfile: "Dockerfile_server"}, 
-          {service: "operandi-rabbitsmq", dockerfile: "Dockerfile_rabbitsmq"}]
         # other possible options for os are: [windows-latest, macOS-latest]
         os: [ubuntu-latest]
     
@@ -87,10 +84,23 @@ jobs:
     environment:
       name: production
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
       packages: write
+   
+    strategy:
+      # when fail-fast is set to true, GitHub cancels all in-progress jobs if any matrix job fails. Default: true
+      fail-fast: false
+      # matrices define different versions or operating systems
+      matrix:
+        environment: [
+          {service: "operandi-broker", dockerfile: "Dockerfile_broker"}, 
+          {service: "operandi-server", dockerfile: "Dockerfile_server"}, 
+          {service: "operandi-rabbitsmq", dockerfile: "Dockerfile_rabbitsmq"}]
+        # other possible options for os are: [windows-latest, macOS-latest]
+        os: [ubuntu-latest]
+    
 
     steps:
       - name: Checkout repository
