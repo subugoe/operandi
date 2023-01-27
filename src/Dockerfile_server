@@ -29,8 +29,6 @@ RUN python3 -m pip install --upgrade pip setuptools
 RUN pip3 install -U pip wheel
 RUN python3 -m pip install -r /usr/src/operandi_server/requirements.txt
 RUN pip3 install /usr/src/operandi_server
-RUN python3 -m pip install -r /usr/src/rabbit_mq_utils/requirements.txt
-RUN pip3 install /usr/src/rabbit_mq_utils
 
 EXPOSE 8000
 

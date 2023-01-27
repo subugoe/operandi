@@ -29,7 +29,5 @@ RUN python3 -m pip install --upgrade pip setuptools
 RUN pip3 install -U pip wheel
 RUN python3 -m pip install -r /usr/src/service_broker/requirements.txt
 RUN pip3 install /usr/src/service_broker
-RUN python3 -m pip install -r /usr/src/rabbit_mq_utils/requirements.txt
-RUN pip3 install /usr/src/rabbit_mq_utils
 
 RUN echo "Operandi broker build success"
