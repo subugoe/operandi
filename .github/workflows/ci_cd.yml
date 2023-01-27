@@ -25,7 +25,7 @@ jobs:
       fail-fast: false
       # matrices define different versions or operating systems
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8.16", "3.9.16", "3.10.9"]
         # other possible options for os are: [windows-latest, macOS-latest]
         os: [ubuntu-latest]
     
@@ -33,11 +33,23 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
+    - name: Install sudo package
+      run: apt update && apt install sudo
+
+    - name: Setup agent tools directory
+      run: |
+        sudo mkdir -p -m 777 /opt/hostedtoolcache
+        export AGENT_TOOLSDIRECTORY=/opt/hostedtoolcache
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-        
+        cache: "pip"
+        architecture: 'x64'
+      env:
+        AGENT_TOOLSDIRECTORY: /opt/hostedtoolcache
+              
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
@@ -104,6 +116,7 @@ jobs:
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-operandi-broker
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
@@ -143,6 +156,7 @@ jobs:
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-operandi-server
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
