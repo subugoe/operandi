@@ -30,6 +30,7 @@ class Worker:
         self.queue_name = queue_name
 
         self.db_url = db_url
+        # Connection to RabbitMQ related parameters
         self.rmq_host = rmq_host
         self.rmq_port = rmq_port
         self.rmq_vhost = rmq_vhost
@@ -37,13 +38,21 @@ class Worker:
         self.rmq_password = "default-consumer"
         self.rmq_consumer = None
 
+        # Currently consumed message related parameters
+        self.current_message_delivery_tag = None
+        self.current_message_ws_id = None
+        self.current_message_wf_id = None
+        self.current_message_job_id = None
+        self.has_consumed_message = False
+
     def run(self):
         try:
             # Source: https://unix.stackexchange.com/questions/18166/what-are-session-leaders-in-ps
             # Make the current process session leader
             setsid()
-            self.log.debug(f"Activating signal handler for SIGINT")
-            signal.signal(signal.SIGINT, sigint_signal_handler)
+            self.log.debug(f"Activating signal handler for SIGINT, SIGTERM")
+            signal.signal(signal.SIGINT, self.signal_handler)
+            signal.signal(signal.SIGTERM, self.signal_handler)
             db.sync_initiate_database(self.db_url)
             self.connect_consumer()
             self.configure_consuming(self.queue_name, self.__on_message_consumed_callback)
@@ -84,38 +93,41 @@ class Worker:
     # The callback method provided to the Consumer listener
     # The arguments to this method are passed by the caller
     def __on_message_consumed_callback(self, ch, method, properties, body):
-        # Print information of the consumed message
         # self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
         # self.log.debug(f"Consumed message: {body}")
 
-        workflow_message = json.loads(body)
-        self.log.info(f"Workflow Message: {workflow_message}")
-        workflow_id = workflow_message.get("workflow_id", None)
-        workspace_id = workflow_message.get("workspace_id", None)
-        job_id = workflow_message.get("job_id", None)
+        self.current_message_delivery_tag = method.delivery_tag
+        self.has_consumed_message = True
 
-        should_fail = False
-        if not workflow_id:
-            self.log.error("A workflow_id parameter is None")
-            should_fail = True
-        if not workspace_id:
-            self.log.error("A workspace_id parameter is None")
-            should_fail = True
-
-        if should_fail:
-            self.log.debug(f"Setting new job state[STOPPED] of job_id: {job_id}")
-            db.sync_set_workflow_job_state(job_id, job_state="STOPPED")
-            # This is acking the failed message
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+        # Since the workflow_message is constructed by the Operandi Server,
+        # it should not fail here when parsing under normal circumstances.
+        try:
+            consumed_message = json.loads(body)
+            self.log.debug(f"Consumed message: {consumed_message}")
+            self.current_message_ws_id = consumed_message["workspace_id"]
+            self.current_message_wf_id = consumed_message["workflow_id"]
+            self.current_message_job_id = consumed_message["job_id"]
+        except Exception as error:
+            self.log.error(f"Parsing the consumed message has failed: {error}")
+            self.__handle_message_failure(interruption=False)
             return
 
+        # Handle database related reads and set the workflow job status to RUNNING
         try:
-            self.log.debug(f"Setting new job state[RUNNING] of job_id: {job_id}")
-            db.sync_set_workflow_job_state(job_id, job_state="RUNNING")
-            workflow_script_path = db.sync_get_workflow_script_path(workflow_id)
-            workspace_mets_path = db.sync_get_workspace_mets_path(workspace_id)
-            job_dir = db.sync_get_workflow_job(job_id).job_path
+            # TODO: This should be optimized, i.e., single read to the DB instead of three
+            workflow_script_path = db.sync_get_workflow_script_path(self.current_message_wf_id)
+            workspace_mets_path = db.sync_get_workspace_mets_path(self.current_message_ws_id)
+            job_dir = db.sync_get_workflow_job(self.current_message_job_id).job_path
+            job_state = "RUNNING"
+            self.log.debug(f"Setting new job state[{job_state}] of job_id: {self.current_message_job_id}")
+            db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
+        except Exception as error:
+            self.log.error(f"Database related error has occurred: {error}")
+            self.__handle_message_failure(interruption=False)
+            return
 
+        # Trigger a Nextflow process
+        try:
             nf_process = NextflowManager.execute_workflow(
                 nf_script_path=workflow_script_path,
                 workspace_mets_path=workspace_mets_path,
@@ -123,32 +135,61 @@ class Worker:
                 in_background=False
             )
         except Exception as error:
-            self.log.error(f"Executing nextflow workflow has failed, error: {error}")
-            self.log.debug(f"Setting new job state[STOPPED] to of job_id: {job_id}")
-            db.sync_set_workflow_job_state(job_id, job_state="STOPPED")
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self.log.error(f"Triggering a nextflow process has failed: {error}")
+            self.__handle_message_failure(interruption=False)
             return
 
-        if nf_process.returncode != 0:
-            self.log.debug(f"Setting new job state[STOPPED] to of job_id: {job_id}")
-            db.sync_set_workflow_job_state(job_id, job_state="STOPPED")
-        else:
-            self.log.debug(f"Setting new job state[SUCCESS] to of job_id: {job_id}")
-            db.sync_set_workflow_job_state(job_id, job_state="SUCCESS")
+        # The worker blocks here till the nextflow process finishes
 
+        if nf_process.returncode != 0:
+            self.log.error(f"The Nextflow process exited with return code: {nf_process.returncode}")
+            self.__handle_message_failure(interruption=False)
+            return
+
+        self.log.debug(f"The Nextflow process has finished successfully")
+        job_state = "SUCCESS"
+        self.log.debug(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
+        db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
+        self.has_consumed_message = False
+        self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
+    def __handle_message_failure(self, interruption: bool = False):
+        job_state = "STOPPED"
+        self.log.debug(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
+        db.sync_set_workflow_job_state(
+            job_id=self.current_message_job_id,
+            job_state=job_state
+        )
+        self.has_consumed_message = False
 
-# TODO: Ideally this method should be wrapped to be able
-#  to pass internal data from the Worker class required for the cleaning
-# The arguments to this method are passed by the caller from the OS
-def sigint_signal_handler(sig, frame):
-    print(f"pid: {getpid()}, received SIGINT signal from the service broker")
-    # Sleeping to wait for some time before exiting
-    sleep(1)
-    # TODO: Nack the message that is currently being processed.
-    # TODO: Disconnect the RMQConsumer properly
-    # TODO: Clean the remaining leftovers (if any)
-    sleep(1)
-    print(f"pid: {getpid()}, the worker is exiting gracefully")
-    exit(0)
+        if interruption:
+            # self.log.debug(f"Nacking delivery tag: {self.current_message_delivery_tag}")
+            # self.rmq_consumer._channel.basic_nack(delivery_tag=self.current_message_delivery_tag)
+            # TODO: Sending ACK for now because it is hard to clean up without a mets workspace backup mechanism
+            self.log.debug(f"Interruption Acking delivery tag: {self.current_message_delivery_tag}")
+            self.rmq_consumer._channel.basic_ack(delivery_tag=self.current_message_delivery_tag)
+            return
+
+        self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
+        self.rmq_consumer._channel.basic_ack(delivery_tag=self.current_message_delivery_tag)
+
+        # Reset the current message related parameters
+        self.current_message_delivery_tag = None
+        self.current_message_ws_id = None
+        self.current_message_wf_id = None
+        self.current_message_job_id = None
+
+    # TODO: Ideally this method should be wrapped to be able
+    #  to pass internal data from the Worker class required for the cleaning
+    # The arguments to this method are passed by the caller from the OS
+    def signal_handler(self, sig, frame):
+        signal_name = signal.Signals(sig).name
+        self.log.debug(f"{signal_name} received from parent process[{getppid()}].")
+        if self.has_consumed_message:
+            self.log.debug(f"Handling the message failure due to interruption: {signal_name}")
+            self.__handle_message_failure(interruption=True)
+        # TODO: Disconnect the RMQConsumer properly
+        # TODO: Clean the remaining leftovers (if any)
+        self.log.debug("Exiting gracefully.")
+        exit(0)
