@@ -28,3 +28,10 @@ def is_url_responsive(url: str) -> bool:
 
 def parse_resource_id(json_response):
     return json_response['resource_url'].split("/")[-1]
+
+
+def receive_file(response, download_path):
+    with open(download_path, 'wb') as filePtr:
+        for chunk in response.iter_content(chunk_size=1024):
+            if chunk:
+                filePtr.write(chunk)

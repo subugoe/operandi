@@ -83,7 +83,7 @@ class Harvester:
             return False
 
         # Post Workspace URL constructed by using the mets_id
-        workspace_id = self._post_workspace(mets_url=mets_url)
+        workspace_id = self._post_workspace_url(mets_url=mets_url)
         if not workspace_id:
             return False
 
@@ -93,7 +93,7 @@ class Harvester:
             return False
 
         while True:
-            secs = 4
+            secs = 10
             self.logger.info(f"Checking the job status after {secs} seconds")
             time.sleep(secs)
 
@@ -106,7 +106,7 @@ class Harvester:
 
         return True
 
-    def _post_workspace(self, mets_url: str) -> Union[str, None]:
+    def _post_workspace_url(self, mets_url: str) -> Union[str, None]:
         # Check if the VD18 repository responds to the url
         if not is_url_responsive(mets_url):
             self.logger.error(f"Mets url is not responsive: {mets_url}")
