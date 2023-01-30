@@ -9,6 +9,7 @@ from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.models.workspace import WorkspaceRsrc
+from ocrd_webapi.models.workflow import WorkflowJobRsrc
 from ocrd_webapi.rabbitmq import RMQPublisher
 from ocrd_webapi.routers import discovery, workflow, workspace
 from ocrd_webapi.utils import bagit_from_url
@@ -70,34 +71,41 @@ class OperandiServer:
         async def operandi_import_from_mets_url(mets_url: str):
             bag_path = bagit_from_url(mets_url=mets_url, file_grp="DEFAULT")
             ws_url, ws_id = await self.workspace_manager.create_workspace_from_zip(bag_path, file_stream=False)
-
-            # Note, this only posts the mets_url and do not
-            # trigger a workflow execution, unlike the old api call
-
             return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
 
         # Submits a workflow execution request to the RabbitMQ
         @self.app.post("/workflow/run_workflow/{user_id}", tags=["Workflow"])
         async def operandi_run_workflow(user_id: str, workflow_args: WorkflowArguments):
             try:
-                workflow_id = workflow_args.workflow_id
+                # Extract workflow arguments
                 workspace_id = workflow_args.workspace_id
+                workflow_id = workflow_args.workflow_id
 
-                job_id, job_dir = self.workflow_manager.create_workflow_execution_space(workflow_id)
-                await db.save_workflow_job(job_id=job_id, workspace_id=workspace_id,
-                                           workflow_id=workflow_id, job_path=job_dir, job_state="QUEUED")
+                # Create job request parameters
+                job_id, job_dir_path = self.workflow_manager.create_workflow_execution_space(workflow_id)
+                job_state = "QUEUED"
+
+                # Build urls to be sent as a response
+                workspace_url = self.workspace_manager.get_resource(workspace_id, local=False)
+                workflow_url = self.workflow_manager.get_resource(workflow_id, local=False)
+                job_url = self.workflow_manager.get_resource_job(workflow_id, job_id, local=False)
+
+                # Save to the workflow job to the database
+                await db.save_workflow_job(
+                    workspace_id=workspace_id,
+                    workflow_id=workflow_id,
+                    job_id=job_id,
+                    job_path=job_dir_path,
+                    job_state=job_state
+                )
 
                 # Create the message to be sent to the RabbitMQ queue
-                workflow_message = {
+                workflow_processing_message = {
                     "workflow_id": f"{workflow_id}",
                     "workspace_id": f"{workspace_id}",
                     "job_id": f"{job_id}"
                 }
-
-                encoded_workflow_message = json.dumps(workflow_message)
-
-                # TODO: Remove this
-                self.log.info("Posting a workflow message to RabbitMQ Server")
+                encoded_workflow_message = json.dumps(workflow_processing_message)
 
                 # Send the message to a queue based on the user_id
                 if user_id == "harvester":
@@ -114,7 +122,12 @@ class OperandiServer:
                 self.log.error(f"SERVER ERROR: {error}")
                 raise ResponseException(500, {"error": f"internal server error: {error}"})
 
-            return {"job_id": f"{job_id}"}
+            return WorkflowJobRsrc.create(
+                job_url=job_url,
+                workflow_url=workflow_url,
+                workspace_url=workspace_url,
+                job_state=job_state
+            )
 
         """
         This causes problems in the WebAPI part. Disabled for now.
