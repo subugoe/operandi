@@ -4,4 +4,4 @@ fastapi>=0.75.1
 pydantic>=1.9.1
 pytest>=7.0.0
 click >=7
-ocrd_webapi @ git+https://github.com/OCR-D/ocrd-webapi-implementation.git@v0.7.0#egg=ocrd_webapi
+ocrd_webapi @ git+https://github.com/OCR-D/ocrd-webapi-implementation.git@v0.8.0#egg=ocrd_webapi
