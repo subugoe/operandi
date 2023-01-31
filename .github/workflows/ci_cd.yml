@@ -79,7 +79,7 @@ jobs:
 #      # To delete the password from potential temporary config files
 #      run: docker logout#
 
-  build-and-push:
+  build-and-push-production:
     name: Push images to registry ${{matrix.environment.service}}
     environment:
       name: production
@@ -130,4 +130,23 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }} 
-          
+
+  deploy-production:
+    name: Deploy to production
+    environment:
+      name: production
+    needs: build-and-push-production
+    runs-on: ubuntu-latest
+    steps:
+      - name: copy key
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+        env:
+          SSH_KEY: ${{ secrets.OPERANDI_SSH_KEY }}
+      - name: deploy to server
+        run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/operandi/start-olahd-docker.sh
+        env:
+          SSH_USER: ${{ secrets.OPERANDI_SSH_USER }}
+          SSH_HOST: ${{ secrets.OPERANDI_SSH_HOST_PROD }}   
