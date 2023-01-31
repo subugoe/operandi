@@ -1,112 +1,53 @@
-import os
-import datetime
-import time
-import requests
-
 import logging
+import os
+import time
+from typing import Union
 
-from ocrd_webapi.rabbitmq import RMQPublisher
-from rabbit_mq_utils.constants import (
-    RABBIT_MQ_HOST as RMQ_HOST,
-    RABBIT_MQ_PORT as RMQ_PORT,
-    DEFAULT_EXCHANGER_NAME,
-    DEFAULT_EXCHANGER_TYPE,
-    DEFAULT_QUEUE_HARVESTER_TO_BROKER
-)
 from .constants import (
     VD18_IDS_FILE,
-    VD18_URL,
-    VD18_METS_EXT,
     WAIT_TIME_BETWEEN_SUBMITS,
     LOG_LEVEL,
     LOG_FORMAT,
 )
 
+from .server_requests import (
+    get_workflow_job_status,
+    post_workflow_job,
+    post_workflow_script,
+    post_workspace_url
+)
 
-# TODO: The harvester module will change completely
-# Currently, the harvester communicates with the Service broker
-# over the Operandi Server. This should change. The harvester
-# will talk directly to the broker over the RabbitMQ.
-# The current Harvester section in the README file will also be removed.
+from .utils import (
+    build_mets_url,
+    file_exists,
+    is_url_responsive
+)
+
+
 class Harvester:
-    def __init__(self, rabbit_mq_host=RMQ_HOST, rabbit_mq_port=RMQ_PORT):
-
-        logger = logging.getLogger(__name__)
-        # Set the global logging level to INFO
-        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-        # Set the Harvester logging level to LOG_LEVEL
+    def __init__(self, server_address):
+        self.logger = logging.getLogger(__name__)
         logging.getLogger(__name__).setLevel(LOG_LEVEL)
-        self._logger = logger
+        # Change global logger configuration
+        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+
+        self.module_path = os.path.dirname(__file__)
+
+        self.server_address = server_address
+        # The default workflow to be used.
+        # This id is received when the default script is posted to the Operandi Server
+        self.default_nf_workflow_id = "e25cd96d-75cc-4d0a-863f-0155eba07e0f"
+        self.wtbs = WAIT_TIME_BETWEEN_SUBMITS
 
         self.vd18_file = VD18_IDS_FILE
-        self.wtbs = WAIT_TIME_BETWEEN_SUBMITS
-        if not os.path.exists(self.vd18_file) or not os.path.isfile(self.vd18_file):
-            self._logger.error(f"{self.vd18_file} file does not exist or is not a readable file!")
+        if not file_exists(self.vd18_file):
+            self.logger.error(f"File does not exist or is not a readable file: {self.vd18_file}")
             exit(1)
-
-        self.__publisher = self.__initiate_publisher(
-            rabbit_mq_host,
-            rabbit_mq_port,
-            logger_name="operandi-harvester_publisher_harvester-queue"
-        )
-        self.__publisher.create_queue(
-            queue_name=DEFAULT_QUEUE_HARVESTER_TO_BROKER,
-            exchange_name=DEFAULT_EXCHANGER_NAME,
-            exchange_type=DEFAULT_EXCHANGER_TYPE
-        )
-
-    @staticmethod
-    def url_exists(url):
-        try:
-            response = requests.get(url, stream=True)
-            if response.status_code == 200:
-                # print(f"Headers: {response.headers}")
-                # print(f"Content size: {response.content.__sizeof__() - 33}")
-                return True
-
-        except requests.exceptions.RequestException as e:
-            # print(f"f:url_exists, Exception: {e}")
-            return False
-
-    # 1. Checks if the mets_id exits
-    # 2. Sends the mets_url, mets_id to the harvester-to-broker queue
-    def __harvest_one_mets(self, mets_id):
-        # print(f"INFO: Harvesting... {mets_id}")
-        if not mets_id:
-            return False
-
-        mets_url = f"{VD18_URL}{mets_id}{VD18_METS_EXT}"
-        if Harvester.url_exists(mets_url):
-            # Create a timestamp
-            timestamp = datetime.datetime.now().strftime("_%Y%m%d_%H%M")
-            # Append the timestamp at the end of the provided workspace_id
-            mets_id += timestamp
-            publish_message = f"{mets_url},{mets_id}".encode('utf8')
-
-            try:
-                self.__publisher.publish_to_queue(
-                    exchange_name=DEFAULT_EXCHANGER_NAME,
-                    queue_name=DEFAULT_QUEUE_HARVESTER_TO_BROKER,
-                    message=publish_message,
-                )
-                self._logger.info(f"Mets `{mets_id}` was sent successfully.")
-                return True
-            except Exception as e:
-                self._logger.error(f"Mets `{mets_id}` was no sent successfully. Reason: {e}")
-        return False
-
-    def __print_waiting_message(self):
-        print(f"INFO: Waiting for few seconds... ", end=" ")
-        for i in range(self.wtbs, 0, -1):
-            print(f"{i}", end=" ")
-            if i == 1:
-                print()
-            time.sleep(1)
 
     # TODO: implement proper start and stop mechanisms
     def start_harvesting(self, limit=0):
-        self._logger.info(f"Harvesting started with limit:{limit}")
-        self._logger.info(f"Mets URL will be submitted every {self.wtbs} seconds.")
+        self.logger.info(f"Harvesting started with limit:{limit}")
+        self.logger.info(f"Mets URL will be submitted every {self.wtbs} seconds.")
         harvested_counter = 0
 
         # Reads vd18 file line by line
@@ -115,7 +56,7 @@ class Harvester:
                 if not line:
                     break
                 mets_id = line.strip()
-                self.__harvest_one_mets(mets_id)
+                self._harvest_one_cycle(mets_id)
                 harvested_counter += 1
                 # If the limit is reached stop harvesting
                 if harvested_counter == limit:
@@ -124,19 +65,122 @@ class Harvester:
 
     # TODO: implement proper start and stop mechanisms
     def stop_harvesting(self):
-        self._logger.info("Stopped harvesting")
+        self.logger.info("Stopped harvesting")
 
-    @staticmethod
-    def __initiate_publisher(rabbit_mq_host, rabbit_mq_port, logger_name):
-        publisher = RMQPublisher(
-            host=rabbit_mq_host,
-            port=rabbit_mq_port,
-            vhost="/",
-            logger_name=logger_name
-        )
-        publisher.authenticate_and_connect(
-            username="operandi-harvester",
-            password="operandi-harvester"
-        )
-        publisher.enable_delivery_confirmations()
-        return publisher
+    def _harvest_one_cycle(self, mets_id):
+        if not mets_id:
+            self.logger.error(f"The mets_id is None")
+            return False
+
+        # mets_url = build_mets_url(mets_id)
+
+        # TODO: Hard-coded for testing (takes less time with less things to download)
+        mets_url = f"https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
+
+        # Post default Nextflow workflow script from local path
+        workflow_id = self._post_workflow()
+        if not workflow_id:
+            return False
+
+        # Post Workspace URL constructed by using the mets_id
+        workspace_id = self._post_workspace_url(mets_url=mets_url)
+        if not workspace_id:
+            return False
+
+        # Post Workflow Job with workflow_id and workspace_id obtained previously
+        job_id = self._post_workflow_job(workflow_id=workflow_id, workspace_id=workspace_id)
+        if not job_id:
+            return False
+
+        while True:
+            secs = 10
+            self.logger.info(f"Checking the job status after {secs} seconds")
+            time.sleep(secs)
+
+            job_status = self._get_workflow_job_status(workflow_id, job_id)
+            if not job_status:
+                return False
+            end_states = ["STOPPED", "SUCCESS"]
+            if job_status in end_states:
+                break
+
+        return True
+
+    def _post_workspace_url(self, mets_url: str) -> Union[str, None]:
+        # Check if the VD18 repository responds to the url
+        if not is_url_responsive(mets_url):
+            self.logger.error(f"Mets url is not responsive: {mets_url}")
+            return None
+
+        # Post Workspace URL to get workspace_id
+        try:
+            self.logger.info(f"Trying to post mets url: {mets_url}")
+            workspace_id = post_workspace_url(
+                server_address=self.server_address,
+                mets_url=mets_url
+            )
+            self.logger.info(f"Mets was posted successfully. Response workspace_id: {workspace_id}")
+        except Exception as e:
+            self.logger.error(f"Mets was not posted. Fail reason: {e}")
+            return None
+        return workspace_id
+
+    def _post_workflow(self) -> Union[str, None]:
+        # Post default Nextflow workflow script from local path
+        nextflow_script_path = f"{self.module_path}/nextflow_script.nf"
+        try:
+            self.logger.info(f"Trying to nextflow script path: {nextflow_script_path}")
+            workflow_id = post_workflow_script(
+                server_address=self.server_address,
+                local_script_path=nextflow_script_path
+            )
+            self.logger.info(f"Nextflow script was posted successfully. Response workflow_id: {workflow_id}")
+        except Exception as e:
+            self.logger.error(f"Nextflow script was not posted. Fail reason: {e}")
+            return None
+        return workflow_id
+
+    def _post_workflow_job(self, workflow_id: str, workspace_id: str) -> Union[str, None]:
+        # Post Workflow Job with workflow_id and workspace_id obtained previously
+        try:
+            self.logger.info(f"Trying to post workflow job with "
+                             f"workflow_id: {workflow_id}, "
+                             f"workspace_id: {workspace_id}"
+                             )
+            workflow_job_id = post_workflow_job(
+                server_address=self.server_address,
+                workflow_id=workflow_id,
+                workspace_id=workspace_id,
+                user_id="harvester"
+            )
+            self.logger.info(f"Workflow job was posted successfully. Response workflow_job_id: {workflow_job_id}")
+        except Exception as e:
+            self.logger.error(f"Workflow job was not posted. Fail reason: {e}")
+            return None
+        return workflow_job_id
+
+    def _get_workflow_job_status(self, workflow_id: str, job_id: str) -> Union[str, None]:
+        # Check job status
+        try:
+            self.logger.info(f"Trying to check job status for "
+                             f"workflow_id: {workflow_id}, "
+                             f"job_id: {job_id}"
+                             )
+            workflow_job_status = get_workflow_job_status(
+                server_address=self.server_address,
+                workflow_id=workflow_id,
+                job_id=job_id
+            )
+            self.logger.info(f"Workflow job status: {workflow_job_status}")
+        except Exception as e:
+            self.logger.error(f"Checking workflow job status was unsuccessful. Fail reason: {e}")
+            return None
+        return workflow_job_status
+
+    def __print_waiting_message(self):
+        print(f"INFO: Waiting for few seconds... ", end=" ")
+        for i in range(self.wtbs, 0, -1):
+            print(f"{i}", end=" ")
+            if i == 1:
+                print()
+            time.sleep(1)

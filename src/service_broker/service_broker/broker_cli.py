@@ -1,27 +1,18 @@
+import asyncio
 import click
-import time
-from os import (
-    fork,
-    getpid,
-    getppid,
-    kill,
-    setsid
-)
-import signal
-import sys
+from time import sleep
 
-from rabbit_mq_utils.constants import (
-    RABBIT_MQ_HOST,
-    RABBIT_MQ_PORT
-)
+import ocrd_webapi.database as db
+
 from .broker import ServiceBroker
 from .constants import (
+    DB_URL,
+    DEFAULT_QUEUE_FOR_HARVESTER,
+    DEFAULT_QUEUE_FOR_USERS,
     HPC_HOST,
-    HPC_USERNAME,
-    HPC_KEY_PATH
+    HPC_KEY_PATH,
+    HPC_USERNAME
 )
-
-from .batch_script_builder import BatchScriptBuilder
 
 __all__ = ['cli']
 
@@ -38,110 +29,58 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 
 
 @cli.command('start')
-@click.option('--rabbit-mq-host',
-              default=RABBIT_MQ_HOST,
-              help='The host of the RabbitMQ.')
-@click.option('--rabbit-mq-port',
-              default=RABBIT_MQ_PORT,
-              help='The port of the RabbitMQ.')
-@click.option('--hpc-host',
-              default=HPC_HOST,
-              help='The host of the HPC.')
-@click.option('-l', '--hpc-username',
-              default=HPC_USERNAME,
-              help='The username used to login to the HPC.')
-@click.option('-i', '--hpc-key-path',
-              default=HPC_KEY_PATH,
-              help='The path of the key file used for authentication.')
-@click.option('-m', '--mocked',
-              is_flag=True,
-              default=False,
-              help='Toggle between HPC and Local execution')
-def start_broker(rabbit_mq_host,
-                 rabbit_mq_port,
-                 hpc_host,
-                 hpc_username,
-                 hpc_key_path,
-                 mocked):
+@click.option('--db-url', default=DB_URL, help='The URL of the MongoDB.')
+@click.option('--rmq-host', default="localhost", help='The host of the RabbitMQ.')
+@click.option('--rmq-port', default="5672", help='The port of the RabbitMQ.')
+@click.option('--rmq-vhost', default="/", help='The vhost of the RabbitMQ.')
+@click.option('--hpc-host', default=HPC_HOST, help='The host of the HPC.')
+@click.option('--hpc-username', default=HPC_USERNAME, help='The username used to login to the HPC.')
+@click.option('--hpc-key-path', default=HPC_KEY_PATH, help='The path of the key file used for authentication.')
+@click.option('-m', '--mocked', is_flag=True, default=False, help='Toggle between HPC and Local execution')
+def start_broker(db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path, mocked):
+    service_broker = ServiceBroker(
+        db_url=db_url,
+        rmq_host=rmq_host,
+        rmq_port=rmq_port,
+        rmq_vhost=rmq_vhost,
+        hpc_host=hpc_host,
+        hpc_username=hpc_username,
+        hpc_key_path=hpc_key_path
+    )
 
-    run_multiprocessing_broker(rabbit_mq_host, rabbit_mq_port, hpc_host, hpc_username, hpc_key_path, mocked)
-
-
-def run_multiprocessing_broker(rabbit_mq_host, rabbit_mq_port, hpc_host, hpc_username, hpc_key_path, mocked):
-    service_broker = ServiceBroker(rabbit_mq_host=rabbit_mq_host,
-                                   rabbit_mq_port=rabbit_mq_port,
-                                   hpc_host=hpc_host,
-                                   hpc_username=hpc_username,
-                                   hpc_key_path=hpc_key_path,
-                                   local_execution=mocked)
-
-    child1_pid = create_child_process(service_broker, tag='server-to-broker')
-    time.sleep(1)
-    child2_pid = create_child_process(service_broker, tag='harvester-to-broker')
+    # A list of queues for which a worker process should be created
+    queues = [
+        DEFAULT_QUEUE_FOR_USERS,
+        DEFAULT_QUEUE_FOR_HARVESTER
+    ]
     try:
-        # Sleep the parent process till
-        # a CTRL+C signal is received
+        for queue_name in queues:
+            service_broker.log.info(f"Creating a worker processes to consume from queue: {queue_name}")
+            service_broker.create_worker_process(queue_name)
+    except Exception as error:
+        service_broker.log.error(f"Error while creating worker processes: {error}")
+
+    try:
+        loop = asyncio.get_event_loop()
+        db_coroutine = db.initiate_database(db_url)
+        loop.run_until_complete(db_coroutine)
+
+        # Sleep the parent process till a signal is invoked
+        # Better than sleeping in loop, not tested yet
         # signal.pause()
-        service_broker._logger.info("Created 2 child processes to listen to the 2 queues")
+
+        # Loop and sleep
         while True:
-            # Sleep the parent process
-            time.sleep(3)
-    # TODO: This won't work with SSH/Docker, a proper SIGINT handler required
+            sleep(5)
+    # TODO: Check this in docker environment
+    # This may not work with SSH/Docker, SIGINT may not be caught with KeyboardInterrupt.
     except KeyboardInterrupt:
-        service_broker._logger.info(f"PID:{getpid()}> CTRL+C detected. Sending SIGINT to child processes.")
-        time.sleep(1)
-        kill(child1_pid, signal.SIGINT)
-        time.sleep(1)
-        kill(child2_pid, signal.SIGINT)
-        time.sleep(3)
-        service_broker._logger.info(f"PID:{getpid()}> Closing Service Broker gracefully in 3 seconds!")
-        time.sleep(3)
-        sys.exit(0)
-
-
-# TODO: Refactor and refine things
-#  time.sleep() method is used for a synchronized output during development
-#  However, the flow itself does not depend on any timers!
-def create_child_process(broker_instance: ServiceBroker, tag):
-    # TODO: OSError will be raised if something goes wrong
-    #  handle this properly
-    pid = fork()
-    if pid > 0:
-        broker_instance._logger.debug(f"PID:{getpid()}> Created child process with PID: {pid}")
-    else:
-        broker_instance._logger.debug(f"PID:{getpid()}: I am a child process, about to listen on queue: {tag}")
-        broker_instance._logger.debug(f"PID:{getpid()}: My parent has PID: {getppid()}")
-        try:
-            setsid()  # run in the background
-            if tag == 'server-to-broker':
-                # Configure signal handler
-                signal.signal(signal.SIGINT, signal_handler_server_queue)
-                broker_instance.start_listening_to_server_queue()
-            elif tag == 'harvester-to-broker':
-                # Configure signal handler
-                signal.signal(signal.SIGINT, signal_handle_harvester_queue)
-                broker_instance.start_listening_to_harvester_queue()
-        except Exception as e:
-            broker_instance._logger.error(f"Service broker error:{e}")
-            exit(-1)
-    return pid
-
-
-def signal_handler_server_queue(sig, frame):
-    print(f"INFO: ServerQueueHandler[{getpid()}]> SIGINT received from my parent process.")
-    time.sleep(1)
-    # TODO: Do the cleaning here
-    print(f"INFO: ServerQueueHandler[{getpid()}]> Closing ServerQueueHandler gracefully!")
-    sys.exit(0)
-
-
-def signal_handle_harvester_queue(sig, frame):
-    print(f"INFO: HarvesterQueueHandler[{getpid()}]> SIGINT received from my parent process.")
-    time.sleep(1)
-    # TODO: Do the cleaning here
-    print(f"INFO: HarvesterQueueHandler[{getpid()}]> Closing HarvesterQueueHandler gracefully!")
-    sys.exit(0)
-
-# NOTE: Stop mechanism is not needed
-# The service broker could be simply stopped with a signal (CTRL+C)
-
+        service_broker.log.info(f"SIGINT signal received. Sending SIGINT to worker processes.")
+        # Sends SIGINT to workers
+        service_broker.kill_workers()
+        service_broker.log.info(f"Closing gracefully in 3 seconds!")
+        sleep(3)
+        exit(0)
+    except Exception as error:
+        # This is for logging any other errors
+        service_broker.log.error(f"Unexpected error: {error}")

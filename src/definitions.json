@@ -13,20 +13,20 @@
       "tags": "administrator"
     },
     {
-      "name": "operandi-server",
-      "password": "operandi-server",
+      "name": "default-publisher",
+      "password": "default-publisher",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
       "tags": "administrator"
     },
     {
-      "name": "operandi-broker",
-      "password": "operandi-broker",
+      "name": "default-consumer",
+      "password": "default-consumer",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
       "tags": "administrator"
     },
     {
-      "name": "operandi-harvester",
-      "password": "operandi-harvester",
+      "name": "test-session",
+      "password": "test-session",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
       "tags": "administrator"
     }
@@ -34,6 +34,9 @@
   "vhosts": [
     {
       "name": "/"
+    },
+    {
+      "name": "test"
     }
   ],
   "permissions": [
@@ -52,22 +55,22 @@
       "read": ".*"
     },
     {
-      "user": "operandi-server",
+      "user": "default-publisher",
       "vhost": "/",
       "configure": ".*",
       "write": ".*",
       "read": ".*"
     },
     {
-      "user": "operandi-broker",
+      "user": "default-consumer",
       "vhost": "/",
       "configure": ".*",
       "write": ".*",
       "read": ".*"
     },
     {
-      "user": "operandi-harvester",
-      "vhost": "/",
+      "user": "test-session",
+      "vhost": "test",
       "configure": ".*",
       "write": ".*",
       "read": ".*"

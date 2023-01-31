@@ -1,13 +1,12 @@
 import click
 import uvicorn
 
-from rabbit_mq_utils.constants import (
-    RABBIT_MQ_HOST,
-    RABBIT_MQ_PORT
-)
 from .constants import (
+    DB_URL,
+    DEFAULT_QUEUE_FOR_HARVESTER,
+    DEFAULT_QUEUE_FOR_USERS,
     SERVER_HOST as HOST,
-    SERVER_PORT as PORT
+    SERVER_PORT as PORT,
 )
 from .server import OperandiServer
 
@@ -26,23 +25,34 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 
 
 @cli.command('start')
-@click.option('-h', '--host',
-              default=HOST,
-              help='The host of the Operandi server.')
-@click.option('-p', '--port',
-              default=PORT,
-              help='The port of the Operandi server.')
-@click.option('--rabbit-mq-host',
-              default=RABBIT_MQ_HOST,
-              help='The host of the RabbitMQ.')
-@click.option('--rabbit-mq-port',
-              default=RABBIT_MQ_PORT,
-              help='The port of the RabbitMQ.')
-def start_server(host, port, rabbit_mq_host, rabbit_mq_port):
-    operandi_server = OperandiServer(host=host,
-                                     port=port,
-                                     rabbit_mq_host=rabbit_mq_host,
-                                     rabbit_mq_port=rabbit_mq_port)
-    uvicorn.run(operandi_server.app,
-                host=operandi_server.host,
-                port=operandi_server.port)
+@click.option('--host', default=HOST, help='The host of the Operandi Server.')
+@click.option('--port', default=PORT, help='The port of the Operandi Server.')
+@click.option('--db-url', default=DB_URL, help='The URL of the MongoDB.')
+@click.option('--rmq-host', default="localhost", help='The host of the RabbitMQ Server.')
+@click.option('--rmq-port', default="5672", help='The port of the RabbitMQ Server.')
+@click.option('--rmq-vhost', default="/", help='The virtual host of the RabbitMQ Server.')
+def start_server(host, port, db_url, rmq_host, rmq_port, rmq_vhost):
+    server_url = f'http://{host}:{port}'
+    operandi_server = OperandiServer(
+        host=host,
+        port=port,
+        server_url=server_url,
+        db_url=db_url,
+        rmq_host=rmq_host,
+        rmq_port=rmq_port,
+        rmq_vhost=rmq_vhost
+    )
+    operandi_server.connect_publisher(
+        username="default-publisher",
+        password="default-publisher",
+        enable_acks=True
+    )
+    # Requests coming from the Harvester are sent to this queue
+    operandi_server.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
+    # Requests coming from other users are sent to this queue
+    operandi_server.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
+    uvicorn.run(
+        operandi_server.app,
+        host=operandi_server.host,
+        port=operandi_server.port
+    )
