@@ -88,6 +88,6 @@ workflow {
     download_workspace(params.mets, params.file_group)
     input_dir_ch = Channel.fromPath(params.reads, type: 'dir')
     ocrd_cis_ocropy_binarize(params.mets, input_dir_ch)
-    if (params.olahd_username)
+    if (params.olahd_endpoint && params.olahd_username && params.olahd_password)
         save_to_olahd(params.mets, ocrd_cis_ocropy_binarize.out, params.olahd_endpoint, params.olahd_username, params.olahd_password)
 }
