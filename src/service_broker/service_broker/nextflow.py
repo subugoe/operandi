@@ -2,7 +2,7 @@ import subprocess
 import shlex
 
 
-def build_nf_command(nf_script_path, workspace_dir):
+def build_nf_command(nf_script_path, workspace_dir, save_to_olahd=False):
     nf_command = "nextflow -bg"  # -bg - run in the background
     nf_command += f" run {nf_script_path}"
     # When running an OCR-D docker container
@@ -11,6 +11,11 @@ def build_nf_command(nf_script_path, workspace_dir):
     nf_command += f" --volume_dir {workspace_dir}"
     # nf_command += f" --workspace {workspace_dir}/"
     # nf_command += f" --mets {workspace_dir}/mets.xml"
+    if save_to_olahd:
+        # TODO: read user and pw from file or env. Leave blank skips storing in olahd
+        nf_command += " --olahd_username admin"
+        nf_command += ' --olahd_endpoint "http://141.5.104.244/api"'
+        nf_command += " --olahd_password JW24G.xR"
     nf_command += " -with-report"  # produce report.html
     return nf_command
 
