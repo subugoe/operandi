@@ -100,12 +100,12 @@ Executing steps `5.1` and `5.2` for the first time will take more time - downloa
 
 #### 5.1 Start the MongoDB docker container
 ```bash
-make start-mongo
+make start-mongo-docker
 ```
 
 #### 5.2 Start the RabbitMQ docker container
 ```bash
-make start-rabbitmq
+make start-rabbitmq-docker
 ```
 
 <details>
@@ -132,7 +132,7 @@ Open a new terminal, activate the virtual Python environment created in `step 3.
 start the Operandi server instance:
 ```bash
 source $HOME/venv-operandi/bin/activate
-make start-server
+make start-server-native
 ```
 
 Note: Starting the Operandi server for the first time creates a RabbitMQ message queue 
@@ -142,7 +142,7 @@ used to communicate with the Operandi broker.
 As in `step 5.3`, activate the environment, then start the harvester.
 ```bash
 source $HOME/venv-operandi/bin/activate
-make start-harvester
+make start-harvester-native
 ```
 The harvesting module will harvest only a single mets url workspace by default.
 It is also possible to harvest more than one mets url. 
@@ -157,8 +157,7 @@ used to communicate with the Operandi broker.
 
 #### 5.5 Start the Operandi broker
 Depending on the configuration in `step 3`, there are two options. 
-To run a service broker instance that executes workflows locally or 
-an instance that executes workflows in the HPC environment. 
+To run a service broker instance that executes workflows locally:
 
 As in `step 5.3`, activate the environment, and start one of the broker instances.
 
@@ -167,17 +166,12 @@ As in `step 5.3`, activate the environment, and start one of the broker instance
 
 ```bash
 source $HOME/venv-operandi/bin/activate
-make start-broker-local 
+make start-broker-native
 ```
 </details>
 
 <details>
- <summary> HPC instance </summary>
-
-```bash
-source $HOME/venv-operandi/bin/activate
-make start-broker-hpc 
-```
+ <summary> HPC instance - disabled till we have a proper authentication </summary>
 </details>
 
 Note: The broker listens for new requests comming from the 2 RabbitMQ message queues

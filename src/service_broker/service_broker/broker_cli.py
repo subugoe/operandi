@@ -36,8 +36,7 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 @click.option('--hpc-host', default=HPC_HOST, help='The host of the HPC.')
 @click.option('--hpc-username', default=HPC_USERNAME, help='The username used to login to the HPC.')
 @click.option('--hpc-key-path', default=HPC_KEY_PATH, help='The path of the key file used for authentication.')
-@click.option('-m', '--mocked', is_flag=True, default=False, help='Toggle between HPC and Local execution')
-def start_broker(db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path, mocked):
+def start_broker(db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path):
     service_broker = ServiceBroker(
         db_url=db_url,
         rmq_host=rmq_host,

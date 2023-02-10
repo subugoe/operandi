@@ -24,22 +24,17 @@ help:
 	@echo " install-dev             Install with pip install -e"
 	@echo " uninstall               Uninstall the modules"
 	@echo ""
-	@echo " start-mongo             Start the Mongo DB docker container"
-	@echo " start-rabbitmq          Start the RabbitMQ Server docker container"
-	@echo " start-broker-hpc        Start the Operandi Broker locally for hpc (workflows executed in HPC)"
-	@echo " start-broker-local      Start the Operandi Broker locally for local (workflows executed locally)"
-	@echo " start-harvester         Start the Operandi Harvester"
-	@echo " start-server            Start the Operandi Server"
+	@echo " start-mongo-docker      Start the dockerized MongoDB"
+	@echo " start-rabbitmq-docker   Start the dockerized RabbitMQ Server"
+	@echo " start-broker-docker     Start the dockerized Operandi Broker"
+	@echo " start-server-docker     Start the dockerized Operandi Server"
+	@echo ""
+	@echo " start-broker-native     Start the native Operandi Broker"
+	@echo " start-server-native     Start the native Operandi Server"
+	@echo " start-harvester-native  Start the native Operandi Harvester"
 	@echo ""
 
 # END-EVAL
-
-# Docker tags - used previously, not used currently
-# Left for reference before we have a working docker registry
-DOCKER_ALL = operandi-all-in-one
-DOCKER_HARVESTER = operandi-harvester
-DOCKER_SERVER = operandi-server
-DOCKER_BROKER = operandi-service-broker
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
@@ -66,23 +61,26 @@ uninstall:
 	$(PIP3) uninstall -y ocrd_webapi
 
 
-start-mongo:
-	docker-compose up -d operandi-mongodb
+start-mongo-docker:
+	docker-compose -f ./docker-compose.yml up -d operandi-mongodb
 
-start-rabbitmq:
-	docker-compose up -d operandi-rabbit-mq
+start-rabbitmq-docker:
+	docker-compose -f ./docker-compose.yml up -d operandi-rabbit-mq
 
-start-broker-hpc:
+start-broker-docker:
+	docker-compose -f ./docker-compose.yml up -d operandi-broker
+
+start-server-docker:
+	docker-compose -f ./docker-compose.yml up -d operandi-server
+
+start-broker-native:
 	operandi-broker start
 
-start-broker-local:
-	operandi-broker start --mocked
-
-start-server:
+start-server-native:
 	operandi-server start
 
-start-harvester:
-	operandi-harvester start --limit 1
+start-harvester-native:
+	operandi-harvester start --address http://localhost:8000 --limit 1
 
 pyclean:
 	rm -f **/*.pyc

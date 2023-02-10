@@ -17,7 +17,7 @@ services:
       - operandi
     healthcheck:
       test: [ "CMD", "nc", "-z", "0.0.0.0", "5672" ]
-      interval: 120s
+      interval: 30s
       timeout: 30s
       retries: 5
       
@@ -28,6 +28,8 @@ services:
       - "27018:27017"
     volumes:
       - "/tmp/operandi-mongo-data:/data/db"
+    networks:
+      - operandi
 
   operandi-server:
     image: ghcr.io/subugoe/operandi-operandi-server:main
@@ -40,7 +42,7 @@ services:
       - "8000:8000"
     networks:
       - operandi
-    command: operandi-server server start --host 0.0.0.0 --port 8000 --rabbit-mq-host rabbit-mq-host
+    command: operandi-server start --host 0.0.0.0 --port 8000 --db-url mongodb://localhost:27018 --rmq-host rabbit-mq-host --rmq-port 5672
 
   operandi-broker:
     image: ghcr.io/subugoe/operandi-operandi-broker:main
@@ -51,7 +53,7 @@ services:
     restart: on-failure
     networks:
       - operandi
-    command: operandi-broker broker start --rabbit-mq-host rabbit-mq-host
+    command: operandi-broker start --db-url mongodb://localhost:27018 --rmq-host rabbit-mq-host --rmq-port 5672
 
 networks:
   operandi:
@@ -59,4 +61,3 @@ networks:
     driver: bridge
     driver_opts:                         
       com.docker.network.driver.mtu: 1450
-
