@@ -23,7 +23,7 @@ services:
       interval: 30s
       timeout: 30s
       retries: 5
-      
+
   operandi-mongodb:
     image: "mongo"
     container_name: operandi-mongodb
@@ -43,11 +43,14 @@ services:
     depends_on:
       operandi-rabbit-mq:
         condition: service_healthy
+    restart: on-failure
     ports:
       - "8000:8000"
     networks:
       - operandi
-    command: operandi-server start --host 0.0.0.0 --port 8000 --db-url mongodb://localhost:27018 --rmq-host rabbit-mq-host --rmq-port 5672
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: operandi-server start --host 0.0.0.0 --port 8000 --db-url mongodb://172.17.0.1:27018 --rmq-host rabbit-mq-host --rmq-port 5672
 
   operandi-broker:
     image: operandi-broker
@@ -61,7 +64,7 @@ services:
     restart: on-failure
     networks:
       - operandi
-    command: operandi-broker start --db-url mongodb://localhost:27018 --rmq-host rabbit-mq-host --rmq-port 5672
+    command: operandi-broker start --db-url mongodb://172.17.0.1:27018 --rmq-host rabbit-mq-host --rmq-port 5672
 
 networks:
   operandi:
