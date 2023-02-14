@@ -3,11 +3,12 @@ import uvicorn
 
 from .constants import (
     DB_URL,
-    DEFAULT_QUEUE_FOR_HARVESTER,
-    DEFAULT_QUEUE_FOR_USERS,
+    LOG_FILE_PATH,
+    LOG_LEVEL,
     SERVER_HOST as HOST,
     SERVER_PORT as PORT,
 )
+from .logging import reconfigure_all_loggers
 from .server import OperandiServer
 
 __all__ = ['cli']
@@ -42,17 +43,16 @@ def start_server(host, port, db_url, rmq_host, rmq_port, rmq_vhost):
         rmq_port=rmq_port,
         rmq_vhost=rmq_vhost
     )
-    operandi_server.connect_publisher(
-        username="default-publisher",
-        password="default-publisher",
-        enable_acks=True
+
+    # Reconfigure all loggers to the same format
+    reconfigure_all_loggers(
+        log_level=LOG_LEVEL,
+        log_file_path=LOG_FILE_PATH
     )
-    # Requests coming from the Harvester are sent to this queue
-    operandi_server.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
-    # Requests coming from other users are sent to this queue
-    operandi_server.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
+
     uvicorn.run(
         operandi_server.app,
         host=operandi_server.host,
-        port=operandi_server.port
+        port=operandi_server.port,
+        log_config=None  # Disable log configuration overwriting
     )

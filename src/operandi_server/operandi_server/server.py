@@ -15,10 +15,10 @@ from ocrd_webapi.routers import discovery, workflow, workspace
 from ocrd_webapi.utils import bagit_from_url
 
 from .constants import (
+    # Requests coming from the Harvester are sent to this queue
     DEFAULT_QUEUE_FOR_HARVESTER,
+    # Requests coming from other users are sent to this queue
     DEFAULT_QUEUE_FOR_USERS,
-    LOG_FORMAT,
-    LOG_LEVEL
 )
 from .models import WorkflowArguments
 
@@ -26,9 +26,6 @@ from .models import WorkflowArguments
 class OperandiServer:
     def __init__(self, host, port, server_url, db_url, rmq_host, rmq_port, rmq_vhost):
         self.log = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-        logging.getLogger(__name__).setLevel(LOG_LEVEL)
-
         self.host = host
         self.port = port
         self.server_url = server_url
@@ -37,25 +34,44 @@ class OperandiServer:
         self.rmq_host = rmq_host
         self.rmq_port = rmq_port
         self.rmq_vhost = rmq_vhost
-        self.rmq_publisher = None
 
-        # Used to extend/overwrite the Workspace routing endpoint of the OCR-D WebAPI
-        self.workspace_manager = WorkspaceManager()
-        # Used to extend/overwrite the Workflow routing endpoint of the OCR-D WebAPI
-        self.workflow_manager = WorkflowManager()
+        # These are initialized on startup_event of the server
+        self.rmq_publisher = None
+        self.workflow_manager = None
+        self.workspace_manager = None
 
         self.app = self.initiate_fast_api_app()
-        self.include_webapi_routers()
 
         @self.app.on_event("startup")
         async def startup_event():
             self.log.info(f"Operandi server url: {self.server_url}")
+
+            # Initiate database client
             await db.initiate_database(self.db_url)
+
+            # Connect the publisher to the RabbitMQ Server
+            self.connect_publisher(
+                username="default-publisher",
+                password="default-publisher",
+                enable_acks=True
+            )
+
+            # Create the message queues (nothing happens if they already exist)
+            self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
+            self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
+
+            # Include the endpoints of the OCR-D WebAPI
+            self.include_webapi_routers()
+
+            # Used to extend/overwrite the Workflow routing endpoint of the OCR-D WebAPI
+            self.workflow_manager = WorkflowManager()
+            # Used to extend/overwrite the Workspace routing endpoint of the OCR-D WebAPI
+            self.workspace_manager = WorkspaceManager()
 
         @self.app.on_event("shutdown")
         def shutdown_event():
+            # TODO: Gracefully shutdown and clean things here if needed
             self.log.info(f"The Operandi Server is shutting down.")
-            pass
 
         @self.app.get("/")
         async def home():
@@ -139,6 +155,8 @@ class OperandiServer:
         """
 
     def initiate_fast_api_app(self):
+        live_server = {"url": "http://operandi.ocr-de.de", "description": "The URL of the live OPERANDI server."}
+        local_server = {"url": self.server_url, "description": "The URL of the local OPERANDI server."}
         app = FastAPI(
             title="OPERANDI Server",
             description="REST API of the OPERANDI",
@@ -147,10 +165,7 @@ class OperandiServer:
                 "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
             },
             version="1.3.0",
-            servers=[{
-                "url": self.server_url,
-                "description": "The URL of the OPERANDI server.",
-            }],
+            servers=[live_server, local_server]
         )
         return app
 
