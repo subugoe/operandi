@@ -17,7 +17,7 @@ DB_URL: str = "mongodb://localhost:27018"
 DEFAULT_QUEUE_FOR_HARVESTER: str = "operandi-for-harvester"
 DEFAULT_QUEUE_FOR_USERS: str = "operandi-for-users"
 
-LOG_FOLDER_PATH: str = environ.get(OPERANDI_LOGS_DIR, "~/operandi-logs")
+LOG_FOLDER_PATH: str = environ.get("OPERANDI_LOGS_DIR", "~/operandi-logs")
 if not exists(LOG_FOLDER_PATH):
     mkdir(LOG_FOLDER_PATH)
 
