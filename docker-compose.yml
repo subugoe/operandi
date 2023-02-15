@@ -13,9 +13,9 @@ services:
       - 15672:15672
       - 25672:25672
     volumes:
-      - ~/.docker-conf/rabbitmq/etc/:/var/etc/rabbitmq/
-      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq/
+      - "~/.docker-conf/rabbitmq/etc/:/var/etc/rabbitmq/"
+      - "~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/"
+      - "~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq/"
     networks:
       - operandi
     healthcheck:
@@ -30,7 +30,7 @@ services:
     ports:
       - 27018:27017
     volumes:
-      - "/tmp/operandi-mongo-data:/data/db"
+      - "~/operandi-mongo-data:/data/db"
     networks:
       - operandi
 
@@ -47,7 +47,8 @@ services:
     ports:
       - 80:8000
     volumes:
-      - ~/operandi-logs/:/tmp/operandi-logs/
+      - "~/operandi-logs/:/tmp/operandi-logs/"
+      - "~/operandi-data/:/tmp/operandi-webapi-data/"
     networks:
       - operandi
     command: operandi-server start --host 0.0.0.0 --port 8000 --db-url mongodb://172.17.0.1:27018 --rmq-host rabbit-mq-host --rmq-port 5672
