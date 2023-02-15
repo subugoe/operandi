@@ -1,5 +1,5 @@
 import datetime
-from os import mkdir
+from os import environ, mkdir
 from os.path import exists
 
 __all__ = [
@@ -17,11 +17,11 @@ DB_URL: str = "mongodb://localhost:27018"
 DEFAULT_QUEUE_FOR_HARVESTER: str = "operandi-for-harvester"
 DEFAULT_QUEUE_FOR_USERS: str = "operandi-for-users"
 
-LOG_FOLDER_PATH: str = "/tmp/operandi-logs"
+LOG_FOLDER_PATH: str = environ.get(OPERANDI_LOGS_DIR, "~/operandi-logs")
 if not exists(LOG_FOLDER_PATH):
     mkdir(LOG_FOLDER_PATH)
 
-current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M")
+current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
 LOG_FILE_PATH: str = f"{LOG_FOLDER_PATH}/operandi-server_{current_time}.log"
 LOG_LEVEL: str = "INFO"
 

@@ -155,7 +155,8 @@ class OperandiServer:
         """
 
     def initiate_fast_api_app(self):
-        live_server = {"url": "http://operandi.ocr-d.de", "description": "The URL of the live OPERANDI server."}
+        live_server_8000 = {"url": "http://operandi.ocr-d.de:8000", "description": "The URL of the live OPERANDI server."}
+        live_server_80 = {"url": "http://operandi.ocr-d.de", "description": "The URL of the live OPERANDI server."}
         local_server = {"url": self.server_url, "description": "The URL of the local OPERANDI server."}
         app = FastAPI(
             title="OPERANDI Server",
@@ -165,7 +166,7 @@ class OperandiServer:
                 "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
             },
             version="1.3.0",
-            servers=[live_server, local_server]
+            servers=[live_server_8000, live_server_80, local_server]
         )
         return app
 
