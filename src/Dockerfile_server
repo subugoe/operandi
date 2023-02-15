@@ -30,6 +30,5 @@ RUN pip3 install -U pip wheel
 RUN python3 -m pip install -r /usr/src/operandi_server/requirements.txt
 RUN pip3 install /usr/src/operandi_server
 
-EXPOSE 8000
-
 RUN echo "Operandi server build success"
+

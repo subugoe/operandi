@@ -31,3 +31,4 @@ RUN python3 -m pip install -r /usr/src/service_broker/requirements.txt
 RUN pip3 install /usr/src/service_broker
 
 RUN echo "Operandi broker build success"
+
