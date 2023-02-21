@@ -78,7 +78,20 @@
   ],
   "parameters": [],
   "policies": [],
-  "queues": ["operandi-for-harvester", "operandi-for-users"],
+  "queues": [
+    {
+    "name": "operandi-for-users",
+    "vhost": "/",
+    "durable": false,
+    "auto_delete": false
+    },
+    {
+    "name": "operandi-for-harvester",
+    "vhost": "/",
+    "durable": false,
+    "auto_delete": false
+    }
+  ],
   "exchanges": [],
   "bindings": []
 }
