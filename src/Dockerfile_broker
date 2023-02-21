@@ -25,10 +25,14 @@ RUN apt-get update && apt-get -y install \
     time \
     wget  
 
+# Install Nextflow
+RUN wget -qO- https://get.nextflow.io | bash
+RUN chmod +x nextflow
+RUN mv nextflow /usr/local/bin/
+
 RUN python3 -m pip install --upgrade pip setuptools
 RUN pip3 install -U pip wheel
 RUN python3 -m pip install -r /usr/src/service_broker/requirements.txt
 RUN pip3 install /usr/src/service_broker
 
 RUN echo "Operandi broker build success"
-
