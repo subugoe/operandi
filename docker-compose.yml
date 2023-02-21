@@ -9,9 +9,9 @@ services:
       context: ./src
       dockerfile: ./Dockerfile_rabbitmq
     ports:
-      - 5672:5672
-      - 15672:15672
-      - 25672:25672
+      - "5672:5672"
+      - "15672:15672"
+      - "25672:25672"
     volumes:
       - "~/.docker-conf/rabbitmq/etc/:/var/etc/rabbitmq/"
       - "~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/"
@@ -28,7 +28,7 @@ services:
     image: "mongo"
     container_name: operandi-mongodb
     ports:
-      - 27018:27017
+      - "27018:27017"
     volumes:
       - "~/operandi-mongo-data:/data/db"
     networks:
@@ -45,7 +45,7 @@ services:
         condition: service_healthy
     restart: on-failure
     ports:
-      - 8000:8000
+      - "80:8000"
     environment:
       - OCRD_WEBAPI_BASE_DIR=/usr/operandi-webapi-data
       - OCRD_WEBAPI_DB_URL=mongodb://172.17.0.1:27018
@@ -67,6 +67,10 @@ services:
       operandi-rabbit-mq:
         condition: service_healthy
     restart: on-failure
+    environment:
+      - OPERANDI_LOGS_DIR=/usr/operandi-logs
+    volumes:
+        - "~/operandi-logs/:/usr/operandi-logs/"
     networks:
       - operandi
     command: operandi-broker start --db-url mongodb://172.17.0.1:27018 --rmq-host rabbit-mq-host --rmq-port 5672
