@@ -3,12 +3,12 @@ import logging
 import signal
 from os import getpid, getppid, setsid
 from sys import exit
-from time import sleep
 
 import ocrd_webapi.database as db
 from ocrd_webapi.managers.nextflow_manager import NextflowManager
 from ocrd_webapi.rabbitmq import RMQConsumer
-from .constants import LOG_FORMAT, LOG_LEVEL
+from .constants import LOG_FOLDER_PATH, LOG_LEVEL_WORKER
+from .logging import reconfigure_all_loggers
 
 
 # Each worker class listens to a specific queue,
@@ -17,11 +17,6 @@ class Worker:
     def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, queue_name):
         worker_logger_name = f"{__name__}[{getpid()}]"
         self.log = logging.getLogger(worker_logger_name)
-        # Set the global logging level to INFO
-        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-        logging.getLogger('pika').setLevel(logging.WARNING)
-        # Set the ServiceBroker logging level to LOG_LEVEL
-        logging.getLogger(worker_logger_name).setLevel(LOG_LEVEL)
 
         # Process ID of this worker
         self.pid = getpid()
@@ -50,7 +45,12 @@ class Worker:
             # Source: https://unix.stackexchange.com/questions/18166/what-are-session-leaders-in-ps
             # Make the current process session leader
             setsid()
-            self.log.debug(f"Activating signal handler for SIGINT, SIGTERM")
+            # Reconfigure all loggers to the same format
+            reconfigure_all_loggers(
+                log_level=LOG_LEVEL_WORKER,
+                log_file_path=f"{LOG_FOLDER_PATH}/worker_{self.queue_name}_{getpid()}"
+            )
+            self.log.info(f"Activating signal handler for SIGINT, SIGTERM")
             signal.signal(signal.SIGINT, self.signal_handler)
             signal.signal(signal.SIGTERM, self.signal_handler)
             db.sync_initiate_database(self.db_url)
@@ -66,19 +66,19 @@ class Worker:
             # If for some reason connect_consumer() is called more than once.
             self.log.warning(f"The RMQConsumer was already instantiated. "
                              f"Overwriting the existing RMQConsumer.")
-        self.log.debug(f"Connecting RMQConsumer to RabbitMQ server: "
-                       f"{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
+        self.log.info(f"Connecting RMQConsumer to RabbitMQ server: "
+                      f"{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
         self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
         # TODO: Remove this information before the release
         self.log.debug(f"RMQConsumer authenticates with username: "
                        f"{self.rmq_username}, password: {self.rmq_password}")
         self.rmq_consumer.authenticate_and_connect(username=self.rmq_username, password=self.rmq_password)
-        self.log.debug(f"Successfully connected RMQConsumer.")
+        self.log.info(f"Successfully connected RMQConsumer.")
 
     def configure_consuming(self, queue_name, callback_method):
         if not self.rmq_consumer:
             raise Exception("The RMQConsumer connection is not configured or broken")
-        self.log.debug(f"Configuring the consuming for queue: {queue_name}")
+        self.log.info(f"Configuring the consuming for queue: {queue_name}")
         self.rmq_consumer.configure_consuming(
             queue_name=queue_name,
             callback_method=callback_method
@@ -87,7 +87,7 @@ class Worker:
     def start_consuming(self):
         if not self.rmq_consumer:
             raise Exception("The RMQConsumer connection is not configured or broken")
-        self.log.debug(f"Starting consuming from queue: {self.queue_name}")
+        self.log.info(f"Starting consuming from queue: {self.queue_name}")
         self.rmq_consumer.start_consuming()
 
     # The callback method provided to the Consumer listener
@@ -103,7 +103,7 @@ class Worker:
         # it should not fail here when parsing under normal circumstances.
         try:
             consumed_message = json.loads(body)
-            self.log.debug(f"Consumed message: {consumed_message}")
+            self.log.info(f"Consumed message: {consumed_message}")
             self.current_message_ws_id = consumed_message["workspace_id"]
             self.current_message_wf_id = consumed_message["workflow_id"]
             self.current_message_job_id = consumed_message["job_id"]
@@ -119,7 +119,7 @@ class Worker:
             workspace_mets_path = db.sync_get_workspace_mets_path(self.current_message_ws_id)
             job_dir = db.sync_get_workflow_job(self.current_message_job_id).job_path
             job_state = "RUNNING"
-            self.log.debug(f"Setting new job state[{job_state}] of job_id: {self.current_message_job_id}")
+            self.log.info(f"Setting new job state[{job_state}] of job_id: {self.current_message_job_id}")
             db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
         except Exception as error:
             self.log.error(f"Database related error has occurred: {error}")
@@ -148,7 +148,7 @@ class Worker:
 
         self.log.debug(f"The Nextflow process has finished successfully")
         job_state = "SUCCESS"
-        self.log.debug(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
+        self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
         db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
         self.has_consumed_message = False
         self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
@@ -156,7 +156,7 @@ class Worker:
 
     def __handle_message_failure(self, interruption: bool = False):
         job_state = "STOPPED"
-        self.log.debug(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
+        self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
         db.sync_set_workflow_job_state(
             job_id=self.current_message_job_id,
             job_state=job_state
@@ -185,11 +185,11 @@ class Worker:
     # The arguments to this method are passed by the caller from the OS
     def signal_handler(self, sig, frame):
         signal_name = signal.Signals(sig).name
-        self.log.debug(f"{signal_name} received from parent process[{getppid()}].")
+        self.log.info(f"{signal_name} received from parent process[{getppid()}].")
         if self.has_consumed_message:
-            self.log.debug(f"Handling the message failure due to interruption: {signal_name}")
+            self.log.info(f"Handling the message failure due to interruption: {signal_name}")
             self.__handle_message_failure(interruption=True)
         # TODO: Disconnect the RMQConsumer properly
         # TODO: Clean the remaining leftovers (if any)
-        self.log.debug("Exiting gracefully.")
+        self.log.info("Exiting gracefully.")
         exit(0)

@@ -11,8 +11,11 @@ from .constants import (
     DEFAULT_QUEUE_FOR_USERS,
     HPC_HOST,
     HPC_KEY_PATH,
-    HPC_USERNAME
+    HPC_USERNAME,
+    LOG_FILE_PATH,
+    LOG_LEVEL,
 )
+from .logging import reconfigure_all_loggers
 
 __all__ = ['cli']
 
@@ -58,6 +61,12 @@ def start_broker(db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, 
             service_broker.create_worker_process(queue_name)
     except Exception as error:
         service_broker.log.error(f"Error while creating worker processes: {error}")
+
+    # Reconfigure all loggers to the same format
+    reconfigure_all_loggers(
+        log_level=LOG_LEVEL,
+        log_file_path=LOG_FILE_PATH
+    )
 
     try:
         loop = asyncio.get_event_loop()

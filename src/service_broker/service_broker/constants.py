@@ -1,4 +1,5 @@
-import logging
+import datetime
+from os import environ
 from pathlib import Path
 
 __all__ = [
@@ -9,8 +10,10 @@ __all__ = [
     "HPC_HOST",
     "HPC_KEY_PATH",
     "HPC_USERNAME",
-    "LOG_FORMAT",
+    "LOG_FOLDER_PATH",
+    "LOG_FILE_PATH",
     "LOG_LEVEL",
+    "LOG_LEVEL_WORKER",
     "OPERANDI_ROOT_DATA_PATH"
 ]
 
@@ -18,8 +21,13 @@ DB_URL: str = "mongodb://localhost:27018"
 DEFAULT_QUEUE_FOR_HARVESTER: str = "operandi-for-harvester"
 DEFAULT_QUEUE_FOR_USERS: str = "operandi-for-users"
 
-LOG_FORMAT: str = '%(levelname) -7s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
-LOG_LEVEL: int = logging.DEBUG
+LOG_FOLDER_PATH: str = environ.get("OPERANDI_LOGS_DIR", f"{Path.home()}/operandi-logs")
+Path(LOG_FOLDER_PATH).mkdir(parents=True, exist_ok=True)
+
+current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+LOG_FILE_PATH: str = f"{LOG_FOLDER_PATH}/broker_{current_time}.log"
+LOG_LEVEL: str = "INFO"
+LOG_LEVEL_WORKER: str = "INFO"
 
 # HPC related constants
 # Must be either gwdu101 or gwdu102 (have /scratch1 access)

@@ -2,17 +2,13 @@ import logging
 from os import fork, getpid, kill
 from signal import SIGINT
 
-from .constants import LOG_FORMAT, LOG_LEVEL
 from .worker import Worker
 
 
 class ServiceBroker:
     def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path):
         broker_logger_name = f"{__name__}[{getpid()}]"
-        self.log = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
-        logging.getLogger('pika').setLevel(logging.WARNING)
-        logging.getLogger(broker_logger_name).setLevel(LOG_LEVEL)
+        self.log = logging.getLogger(broker_logger_name)
 
         self.db_url = db_url
         self.rmq_host = rmq_host
