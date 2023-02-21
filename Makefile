@@ -33,6 +33,9 @@ help:
 	@echo " start-server-native     Start the native Operandi Server"
 	@echo " start-harvester-native  Start the native Operandi Harvester"
 	@echo ""
+	@echo " start-all-modules	Start all image based docker modules"
+	@echo " stop-all-modules     Stop all image based docker modules"
+	@echo " clean-all-modules    Clean all image based docker modules"
 
 # END-EVAL
 
@@ -60,6 +63,16 @@ uninstall:
 	# Uninstall ocr-d webapi to force pulling the newest version
 	$(PIP3) uninstall -y ocrd_webapi
 
+start-all-modules:
+	docker compose -f ./docker-compose_image_based.yml up -d
+
+stop-all-modules:
+	docker compose -f ./docker-compose_image_based.yml down --remove-orphans
+
+clean-all-modules:
+	docker rmi -f ghcr.io/subugoe/operandi-operandi-server:main
+	docker rmi -f ghcr.io/subugoe/operandi-operandi-broker:main
+	docker rmi -f ghcr.io/subugoe/operandi-operandi-rabbitsmq:main
 
 start-mongo-docker:
 	docker-compose -f ./docker-compose.yml up -d operandi-mongodb
