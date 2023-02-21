@@ -71,6 +71,7 @@ services:
       - OPERANDI_LOGS_DIR=/usr/operandi-logs
     volumes:
         - "~/operandi-logs/:/usr/operandi-logs/"
+        - "~/operandi-data/:/usr/operandi-webapi-data/"
     networks:
       - operandi
     command: operandi-broker start --db-url mongodb://172.17.0.1:27018 --rmq-host rabbit-mq-host --rmq-port 5672
