@@ -78,7 +78,7 @@
   ],
   "parameters": [],
   "policies": [],
-  "queues": [],
+  "queues": ["operandi-for-harvester", "operandi-for-users"],
   "exchanges": [],
   "bindings": []
 }
