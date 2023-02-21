@@ -52,7 +52,7 @@ def copy_batch_script(workspace_id, script_id="base_script.sh"):
 
 
 def copy_nextflow_config(workspace_id, config_id="nextflow.config"):
-    src_path = f"{MODULE_PATH}/nextflow/configs/{config_id}"
+    src_path = f"{MODULE_PATH}/nextflow_files/configs/{config_id}"
     workspace_dir = get_nf_workspace_dir(workspace_id, local=False)
     dst_path = f"{workspace_dir}/bin"
 
@@ -71,7 +71,7 @@ def copy_nextflow_script(workspace_id, local):
         nf_script_id = "hpc_nextflow.nf"
         workspace_dir = get_nf_workspace_dir(workspace_id, local=False)
 
-    src_path = f"{MODULE_PATH}/nextflow/scripts/{nf_script_id}"
+    src_path = f"{MODULE_PATH}/nextflow_files/scripts/{nf_script_id}"
     dst_path = f"{workspace_dir}/bin"
 
     if not os.path.exists(dst_path):
