@@ -53,7 +53,7 @@ services:
     volumes:
       - "~/operandi-logs/:/usr/operandi-logs/"
       - "~/operandi-data/:/usr/operandi-webapi-data/"
-      - "~/venv37-ocrd/bin/:/root/venv37-ocrd/bin/"
+      - "~/venv37-ocrd/:/root/venv37-ocrd/"
     networks:
       - operandi
     command: operandi-server start --host 0.0.0.0 --port 8000 --db-url mongodb://172.17.0.1:27018 --rmq-host rabbit-mq-host --rmq-port 5672
@@ -73,7 +73,7 @@ services:
     volumes:
         - "~/operandi-logs/:/usr/operandi-logs/"
         - "~/operandi-data/:/usr/operandi-webapi-data/"
-        - "~/venv37-ocrd/bin/:/root/venv37-ocrd/bin/"
+        - "~/venv37-ocrd/:/root/venv37-ocrd/"
     networks:
       - operandi
     command: operandi-broker start --db-url mongodb://172.17.0.1:27018 --rmq-host rabbit-mq-host --rmq-port 5672
