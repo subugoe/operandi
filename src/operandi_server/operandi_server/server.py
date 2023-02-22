@@ -165,7 +165,7 @@ class OperandiServer:
                 "name": "Apache 2.0",
                 "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
             },
-            version="1.3.0",
+            version="1.4.2",
             servers=[live_server_80, live_server_8000, local_server]
         )
         return app
