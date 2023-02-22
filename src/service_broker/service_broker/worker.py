@@ -117,6 +117,7 @@ class Worker:
             # TODO: This should be optimized, i.e., single read to the DB instead of three
             workflow_script_path = db.sync_get_workflow_script_path(self.current_message_wf_id)
             workspace_mets_path = db.sync_get_workspace_mets_path(self.current_message_ws_id)
+            workspace_path = db.sync_get_workspace(self.current_message_ws_id).workspace_path
             job_dir = db.sync_get_workflow_job(self.current_message_job_id).job_path
             job_state = "RUNNING"
             self.log.info(f"Setting new job state[{job_state}] of job_id: {self.current_message_job_id}")
@@ -131,6 +132,7 @@ class Worker:
             nf_process = NextflowManager.execute_workflow(
                 nf_script_path=workflow_script_path,
                 workspace_mets_path=workspace_mets_path,
+                workspace_path=workspace_path,
                 job_dir=job_dir,
                 in_background=False
             )
