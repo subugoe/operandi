@@ -62,6 +62,7 @@ services:
     environment:
       - OPERANDI_LOGS_DIR=/usr/operandi-logs
     volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
       - "~/operandi-logs/:/usr/operandi-logs/"
       - "~/operandi-data/:/usr/operandi-webapi-data/"
       - "~/venv37-ocrd/:/root/venv37-ocrd/"
