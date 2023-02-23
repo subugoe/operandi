@@ -96,11 +96,10 @@ jobs:
       matrix:
         environment: [
           {service: "operandi-broker", dockerfile: "Dockerfile_broker"}, 
-          {service: "operandi-server", dockerfile: "Dockerfile_server"}, 
-          {service: "operandi-rabbitsmq", dockerfile: "Dockerfile_rabbitmq"}]
+          {service: "operandi-server", dockerfile: "Dockerfile_server"}
+        ]
         # other possible options for os are: [windows-latest, macOS-latest]
         os: [ubuntu-latest]
-    
 
     steps:
       - name: Checkout repository
