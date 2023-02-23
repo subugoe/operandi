@@ -2,27 +2,29 @@ version: '3.8'
 
 services:
   operandi-rabbit-mq:
-    image: rabbit-mq
-    container_name: operandi-rabbit-mq
+    image: "rabbitmq:3-management"
+    container_name: operandi-rabbitmq
     hostname: rabbit-mq-host
-    build:
-      context: ./src
-      dockerfile: ./Dockerfile_rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
       - "25672:25672"
     volumes:
-      - "~/.docker-conf/rabbitmq/etc/:/var/etc/rabbitmq/"
-      - "~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/"
-      - "~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq/"
+      - "/rabbitmq-data/etc/:/var/etc/rabbitmq/"
+      - "/rabbitmq-data/data/:/var/lib/rabbitmq/"
+      - "/rabbitmq-data/log/:/var/log/rabbitmq/"
+      - type: bind
+        source: /home/cloud/repos/operandi/src/definitions.json
+        target: /rmq_definitions.json
+    environment:
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
     networks:
       - operandi
     healthcheck:
-      test: [ "CMD", "nc", "-z", "0.0.0.0", "5672" ]
-      interval: 10s
-      timeout: 10s
-      retries: 15
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 1s
+      timeout: 3s
+      retries: 30
 
   operandi-mongodb:
     image: "mongo"
@@ -41,7 +43,7 @@ services:
       context: ./src
       dockerfile: ./Dockerfile_server  
     depends_on:
-      operandi-rabbit-mq:
+      operandi-rabbitmq:
         condition: service_healthy
     restart: on-failure
     ports:
@@ -65,7 +67,7 @@ services:
       context: ./src
       dockerfile: ./Dockerfile_broker
     depends_on:
-      operandi-rabbit-mq:
+      operandi-rabbitmq:
         condition: service_healthy
     restart: on-failure
     environment:
