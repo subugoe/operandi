@@ -17,9 +17,9 @@ services:
       - operandi
     healthcheck:
       test: [ "CMD", "nc", "-z", "0.0.0.0", "5672" ]
-      interval: 30s
-      timeout: 30s
-      retries: 5
+      interval: 10s
+      timeout: 10s
+      retries: 15
 
   operandi-mongodb:
     image: "mongo"
@@ -27,7 +27,7 @@ services:
     ports:
       - "27018:27017"
     volumes:
-      - "~/operandi-mongo-data:/data/db"
+      - "/operandi-mongodb:/data/db"
     networks:
       - operandi
 
@@ -41,12 +41,12 @@ services:
     ports:
       - "80:8000"
     environment:
-      - OCRD_WEBAPI_BASE_DIR=/usr/operandi-webapi-data
+      - OCRD_WEBAPI_BASE_DIR=/operandi-data
       - OCRD_WEBAPI_DB_URL=mongodb://172.17.0.1:27018
-      - OPERANDI_LOGS_DIR=/usr/operandi-logs
+      - OPERANDI_LOGS_DIR=/operandi-logs
     volumes:
-      - "~/operandi-logs/:/usr/operandi-logs/"
-      - "~/operandi-data/:/usr/operandi-webapi-data/"
+      - "/operandi-logs/:/operandi-logs/"
+      - "/operandi-data/:/operandi-data/"
       - "~/venv37-ocrd/:/root/venv37-ocrd/"
     networks:
       - operandi
@@ -63,8 +63,8 @@ services:
       - OPERANDI_LOGS_DIR=/usr/operandi-logs
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "~/operandi-logs/:/usr/operandi-logs/"
-      - "~/operandi-data/:/usr/operandi-webapi-data/"
+      - "/operandi-logs/:/operandi-logs/"
+      - "/operandi-data/:/operandi-data/"
       - "~/venv37-ocrd/:/root/venv37-ocrd/"
     networks:
       - operandi
