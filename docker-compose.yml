@@ -62,6 +62,24 @@ services:
       - operandi
     command: operandi-broker broker start --rabbit-mq-host rabbit-mq-host
 
+  haproxy:
+    image: haproxy:2.3
+    volumes:
+      - "./cfg/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg"
+    ports:
+      - "80:80"
+    links:
+      - web
+      
+  web:
+    build:
+      context: web
+    command: /usr/local/bin/web 
+    ports:
+      - "8080:1323"
+    
+
+
 networks:
   operandi:
     name: operandi
