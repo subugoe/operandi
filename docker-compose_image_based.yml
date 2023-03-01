@@ -46,6 +46,7 @@ services:
     ports:
       - "80:8000"
     environment:
+      - OCRD_WEBAPI_SERVER_PATH=http://operandi.ocr-d.de
       - OCRD_WEBAPI_BASE_DIR=/operandi-data
       - OCRD_WEBAPI_DB_URL=mongodb://172.17.0.1:27018
       - OPERANDI_LOGS_DIR=/operandi-logs
