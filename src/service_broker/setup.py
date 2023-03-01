@@ -5,7 +5,7 @@ install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='service_broker',
-    version='1.3.2',
+    version='1.3.3',
     description='OPERANDI - Service Broker',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
