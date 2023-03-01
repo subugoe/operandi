@@ -19,6 +19,7 @@ from .constants import (
     DEFAULT_QUEUE_FOR_HARVESTER,
     # Requests coming from other users are sent to this queue
     DEFAULT_QUEUE_FOR_USERS,
+    LIVE_SERVER_URL
 )
 from .models import WorkflowArguments
 
@@ -155,8 +156,7 @@ class OperandiServer:
         """
 
     def initiate_fast_api_app(self):
-        live_server_8000 = {"url": "http://operandi.ocr-d.de:8000", "description": "The URL of the live OPERANDI server."}
-        live_server_80 = {"url": "http://operandi.ocr-d.de", "description": "The URL of the live OPERANDI server."}
+        live_server_80 = {"url": LIVE_SERVER_URL, "description": "The URL of the live OPERANDI server."}
         local_server = {"url": self.server_url, "description": "The URL of the local OPERANDI server."}
         app = FastAPI(
             title="OPERANDI Server",
@@ -166,7 +166,7 @@ class OperandiServer:
                 "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
             },
             version="1.4.2",
-            servers=[live_server_80, live_server_8000, local_server]
+            servers=[live_server_80, local_server]
         )
         return app
 

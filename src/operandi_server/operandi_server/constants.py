@@ -11,7 +11,8 @@ __all__ = [
     "LOG_LEVEL",
     "OPERANDI_ROOT_DATA_PATH",
     "SERVER_HOST",
-    "SERVER_PORT"
+    "SERVER_PORT",
+    "LIVE_SERVER_URL"
 ]
 
 DB_URL: str = "mongodb://localhost:27018"
@@ -30,3 +31,4 @@ OPERANDI_ROOT_DATA_PATH: str = "/tmp/operandi-data"
 
 SERVER_HOST: str = "localhost"
 SERVER_PORT: int = 8000
+LIVE_SERVER_URL: str = environ.get("OPERANDI_LIVE_SERVER_URL", f"http://{SERVER_HOST}:{SERVER_PORT}")
