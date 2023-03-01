@@ -88,7 +88,11 @@ class OperandiServer:
         async def operandi_import_from_mets_url(mets_url: str):
             bag_path = bagit_from_url(mets_url=mets_url, file_grp="DEFAULT")
             ws_url, ws_id = await self.workspace_manager.create_workspace_from_zip(bag_path, file_stream=False)
-            return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
+            return WorkspaceRsrc.create(
+                workspace_id=ws_id,
+                workspace_url=ws_url,
+                description="Workspace from Mets URL"
+            )
 
         # Submits a workflow execution request to the RabbitMQ
         @self.app.post("/workflow/run_workflow/{user_id}", tags=["Workflow"])
@@ -140,8 +144,11 @@ class OperandiServer:
                 raise ResponseException(500, {"error": f"internal server error: {error}"})
 
             return WorkflowJobRsrc.create(
+                job_id=job_id,
                 job_url=job_url,
+                workflow_id=workflow_id,
                 workflow_url=workflow_url,
+                workspace_id=workspace_id,
                 workspace_url=workspace_url,
                 job_state=job_state
             )
