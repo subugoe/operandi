@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import signal
@@ -15,8 +16,7 @@ from .logging import reconfigure_all_loggers
 # consume messages, and process messages.
 class Worker:
     def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, queue_name):
-        worker_logger_name = f"{__name__}[{getpid()}]"
-        self.log = logging.getLogger(worker_logger_name)
+        self.log = logging.getLogger(__name__)
 
         # Process ID of this worker
         self.pid = getpid()
@@ -45,10 +45,11 @@ class Worker:
             # Source: https://unix.stackexchange.com/questions/18166/what-are-session-leaders-in-ps
             # Make the current process session leader
             setsid()
+            current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
             # Reconfigure all loggers to the same format
             reconfigure_all_loggers(
                 log_level=LOG_LEVEL_WORKER,
-                log_file_path=f"{LOG_FOLDER_PATH}/worker_{self.queue_name}_{getpid()}"
+                log_file_path=f"{LOG_FOLDER_PATH}/worker_{self.queue_name}_{current_time}.log"
             )
             self.log.info(f"Activating signal handler for SIGINT, SIGTERM")
             signal.signal(signal.SIGINT, self.signal_handler)

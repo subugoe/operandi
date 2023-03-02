@@ -1,4 +1,3 @@
-import datetime
 from os import environ
 from pathlib import Path
 
@@ -11,7 +10,6 @@ __all__ = [
     "HPC_KEY_PATH",
     "HPC_USERNAME",
     "LOG_FOLDER_PATH",
-    "LOG_FILE_PATH",
     "LOG_LEVEL",
     "LOG_LEVEL_WORKER",
     "OPERANDI_ROOT_DATA_PATH"
@@ -24,8 +22,6 @@ DEFAULT_QUEUE_FOR_USERS: str = "operandi-for-users"
 LOG_FOLDER_PATH: str = environ.get("OPERANDI_LOGS_DIR", f"{Path.home()}/operandi-logs")
 Path(LOG_FOLDER_PATH).mkdir(parents=True, exist_ok=True)
 
-current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-LOG_FILE_PATH: str = f"{LOG_FOLDER_PATH}/broker_{current_time}.log"
 LOG_LEVEL: str = "INFO"
 LOG_LEVEL_WORKER: str = "INFO"
 

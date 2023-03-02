@@ -1,5 +1,6 @@
 import asyncio
 import click
+import datetime
 from time import sleep
 
 import ocrd_webapi.database as db
@@ -12,7 +13,7 @@ from .constants import (
     HPC_HOST,
     HPC_KEY_PATH,
     HPC_USERNAME,
-    LOG_FILE_PATH,
+    LOG_FOLDER_PATH,
     LOG_LEVEL,
 )
 from .logging import reconfigure_all_loggers
@@ -62,10 +63,11 @@ def start_broker(db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, 
     except Exception as error:
         service_broker.log.error(f"Error while creating worker processes: {error}")
 
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
     # Reconfigure all loggers to the same format
     reconfigure_all_loggers(
         log_level=LOG_LEVEL,
-        log_file_path=LOG_FILE_PATH
+        log_file_path=f"{LOG_FOLDER_PATH}/broker_{current_time}.log"
     )
 
     try:

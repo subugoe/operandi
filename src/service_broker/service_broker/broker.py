@@ -1,5 +1,5 @@
 import logging
-from os import fork, getpid, kill
+from os import fork, kill
 from signal import SIGINT
 
 from .worker import Worker
@@ -7,8 +7,7 @@ from .worker import Worker
 
 class ServiceBroker:
     def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path):
-        broker_logger_name = f"{__name__}[{getpid()}]"
-        self.log = logging.getLogger(broker_logger_name)
+        self.log = logging.getLogger(__name__)
 
         self.db_url = db_url
         self.rmq_host = rmq_host
