@@ -67,7 +67,7 @@ services:
         condition: service_healthy
     restart: on-failure
     environment:
-      - OPERANDI_LOGS_DIR=/usr/operandi-logs
+      - OPERANDI_LOGS_DIR=/operandi-logs
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/operandi-logs/:/operandi-logs/"
