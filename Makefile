@@ -70,8 +70,8 @@ stop-all-modules:
 	docker compose -f ./docker-compose_image_based.yml down --remove-orphans
 
 clean-all-modules:
-	docker rmi -f ghcr.io/subugoe/operandi-operandi-server:main
-	docker rmi -f ghcr.io/subugoe/operandi-operandi-broker:main
+	docker rmi -f ghcr.io/subugoe/operandi-server:main
+	docker rmi -f ghcr.io/subugoe/operandi-broker:main
 
 start-mongo-docker:
 	docker-compose -f ./docker-compose.yml up -d operandi-mongodb
