@@ -294,3 +294,145 @@ curl -X 'POST' 'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.s
 ```
 </details>
 
+## 7. Some insights regarding Operandi, Nextflow, and GWDG HPC cluser:
+Consider the following 3 files and their contents:
+<details>
+<summary> batch_script.sh </summary>
+
+```bash
+#!/bin/bash
+#SBATCH --partition medium
+#SBATCH --constraint scratch
+#SBATCH --cpus-per-task 4
+#SBATCH --mem 16G
+#SBATCH --output /home/users/mmustaf/jobs_output/job-%J.txt
+
+# clear the environment then load singularity and nextflow
+module purge
+module load singularity  # loads "git" and "go" as well
+module load nextflow  # loads "openjdk" as well
+
+... 
+# managing the creation of directories and moving files here 
+...
+
+# execute the main Nextflow script
+nextflow run ./simple.nf --file_group "DEFAULT" --volumedir "path/to/workspace"
+
+... 
+# transferring the results from the scratch storage to somewhere else
+# cleaning no longer needed files
+...
+```
+</details>
+
+<details>
+<summary> nextflow.config </summary>
+
+```nextflow
+singularity {
+  enabled = true
+  // Path to the singularity SIF file of the OCR-D all software
+  cacheDir = '/scratch1/users/mmustaf/singularityCache'
+}
+
+executor {
+  name = 'slurm'
+  // ...
+  // Other SLURM related configurations 
+  // ...
+}
+
+process {
+  withName: download_workspace {
+    cpus = 1
+    memory = 8.GB
+    queue = 'medium'  // partition
+  }
+  withName: ocrd_cis_ocropy_binarize {
+    cpus = 4
+    memory = 16.GB
+  }
+  withLabel: active_gpu {
+     queue = 'gpu'  // partition
+     containerOptions = '--nv'  // to make GPU drivers accessible in the singularity container
+  }
+}
+```
+</details>
+
+<details>
+<summary> simple.nf </summary>
+
+```nextflow
+nextflow.enable.dsl=2
+
+params.file_group = ""
+params.volume_dir = ""
+// $projectDir is the directory where this NF script is located
+params.mets_path = "$projectDir/ocrd-workspace/mets.xml"
+
+process download_workspace {
+  input:
+    val file_group
+  output:
+    val file_group
+
+  script:
+  """
+  singularity exec --bind ${params.volume_dir} docker://ocrd/all:maximum ocrd workspace find --file-grp ${file_group} --download --wait 1
+  """
+}
+
+process ocrd_cis_ocropy_binarize {
+  label 'active_gpu'
+  input:
+    path mets_file 
+    path dir_name
+  output:
+    val "OCR-D-BIN"
+  
+  script:
+  """
+  singularity exec --bind ${params.volume_dir} docker://ocrd/all:maximum ocrd-cis-ocropy-binarize -m ${mets_file} -I ${dir_name} -O "OCR-D-BIN"
+  """
+}
+
+// This is the main workflow
+workflow {
+  main:
+    download_workspace(params.file_group)
+    ocrd_cis_ocropy_binarize(params.mets_path, download_workspace.out)
+}
+```
+</details>
+
+NOTE: The examples are not tested/executed, and are provided as a reference.
+
+1. The `batch_script.sh` is submitted to the SLURM scheduler through the front-end node of the HPC by the Service Broker module worker. The SLURM scheduler then starts the workflow job, i.e., the submitted Nextflow script with the number of resources and conditions specified inside the batch script.
+2. The SLURM executor of Nextflow then manages the allocation of separate jobs for each Nextflow process by talking to the SLURM scheduler of HPC and requesting resources specified inside the `nextflow.config` file. The upper limit for a resource is the resource allocated when executing the Nextflow script. In this example, 4 CPUs and 16GBs of memory.
+3. With the `nextflow.config` (check [here](https://www.nextflow.io/docs/latest/config.html#config-scopes) regarding the scopes) it's possible to configure resources to be allocated for each step inside the NF script. So, that single configuration file could be used with any number of NF scripts as long as 1) the process names are consistent between the two files, or 2) specific labels are added inside the NF script inside processes as a directive to tag them into a group.
+4. Using the GPU resource is possible when running the job inside the GPU partition (according to the [GWDG documentation](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:running_jobs_slurm), this may be different for other HPC environments). So inside the batch script, the partition parameter should be replaced and the GPU unit specified with format `name:cores`:
+```bash
+#SBATCH --partition gpu
+#SBATCH -G gtx1080:6
+```
+or just allocating 6 cores of any available GPU: `#SBATCH -G 6`. 
+
+Overall, it's very hard to estimate the required resources for each OCR-D processor step in the OCR-D workflow based on the provided workspace (images). To provide more flexible configurations, it is required to produce the batch scripts and the nextflow config files dynamically. 
+
+The `errorStrategy` and `maxErrors` directives inside the process block could help with the dynamic allocation of resources when a process failes due to lack of enough resources (i.e. memory). These directives can, of course, be specified in a `nextflow.config` file as well in order to group the error strategy and max retries for a group of processes. Consider this simple example below: 
+```nextflow
+process binarization {
+  memory { 2.GB * task.attempt }
+  errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+  maxRetries 3
+
+  script:
+  """
+  call the ocr-d processor here
+  """
+}
+```
+
+The binarization process is executed and if the task fails due to out of memory error, the next execution attempts will increase the memory allocation and try again. Also note that the task exit status codes are not standard and can change depending on the resource manager used in the HPC cluster.
