@@ -2,7 +2,6 @@ from os import environ
 from pathlib import Path
 
 __all__ = [
-    "DB_URL",
     "DEFAULT_QUEUE_FOR_HARVESTER",
     "DEFAULT_QUEUE_FOR_USERS",
     "HPC_HOME_PATH",
@@ -15,7 +14,6 @@ __all__ = [
     "OPERANDI_ROOT_DATA_PATH"
 ]
 
-DB_URL: str = "mongodb://localhost:27018"
 DEFAULT_QUEUE_FOR_HARVESTER: str = "operandi-for-harvester"
 DEFAULT_QUEUE_FOR_USERS: str = "operandi-for-users"
 

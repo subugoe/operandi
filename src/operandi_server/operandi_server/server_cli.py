@@ -1,8 +1,8 @@
 import click
+from os import environ
 import uvicorn
 
 from .constants import (
-    DB_URL,
     LOG_FILE_PATH,
     LOG_LEVEL,
     SERVER_HOST as HOST,
@@ -28,12 +28,18 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 @cli.command('start')
 @click.option('--host', default=HOST, help='The host of the Operandi Server.')
 @click.option('--port', default=PORT, help='The port of the Operandi Server.')
-@click.option('--db-url', default=DB_URL, help='The URL of the MongoDB.')
-@click.option('--rmq-host', default="localhost", help='The host of the RabbitMQ Server.')
-@click.option('--rmq-port', default="5672", help='The port of the RabbitMQ Server.')
-@click.option('--rmq-vhost', default="/", help='The virtual host of the RabbitMQ Server.')
-def start_server(host, port, db_url, rmq_host, rmq_port, rmq_vhost):
+def start_server(host, port):
     server_url = f'http://{host}:{port}'
+    db_url = environ.get("OPERANDI_URL_DB")
+    # TODO: Currently, this URL consists of only host, port, and vhost
+    #  Ideally, this should be extended to support the full URL
+    rabbitmq_url = environ.get("OPERANDI_URL_RABBITMQ_SERVER")
+    splits = rabbitmq_url.split(":")
+    if len(splits) != 2:
+        raise ValueError(f"Wrong RabbitMQ URL: {rabbitmq_url}")
+    rmq_host = splits[0]
+    rmq_port = splits[1]
+
     operandi_server = OperandiServer(
         host=host,
         port=port,
@@ -41,7 +47,7 @@ def start_server(host, port, db_url, rmq_host, rmq_port, rmq_vhost):
         db_url=db_url,
         rmq_host=rmq_host,
         rmq_port=rmq_port,
-        rmq_vhost=rmq_vhost
+        rmq_vhost='/'
     )
 
     # Reconfigure all loggers to the same format

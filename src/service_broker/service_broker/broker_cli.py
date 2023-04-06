@@ -2,12 +2,12 @@ import asyncio
 import click
 import datetime
 from time import sleep
+from os import environ
 
 import ocrd_webapi.database as db
 
 from .broker import ServiceBroker
 from .constants import (
-    DB_URL,
     DEFAULT_QUEUE_FOR_HARVESTER,
     DEFAULT_QUEUE_FOR_USERS,
     HPC_HOST,
@@ -33,19 +33,25 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 
 
 @cli.command('start')
-@click.option('--db-url', default=DB_URL, help='The URL of the MongoDB.')
-@click.option('--rmq-host', default="localhost", help='The host of the RabbitMQ.')
-@click.option('--rmq-port', default="5672", help='The port of the RabbitMQ.')
-@click.option('--rmq-vhost', default="/", help='The vhost of the RabbitMQ.')
 @click.option('--hpc-host', default=HPC_HOST, help='The host of the HPC.')
 @click.option('--hpc-username', default=HPC_USERNAME, help='The username used to login to the HPC.')
 @click.option('--hpc-key-path', default=HPC_KEY_PATH, help='The path of the key file used for authentication.')
-def start_broker(db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path):
+def start_broker(hpc_host, hpc_username, hpc_key_path):
+    db_url = environ.get("OPERANDI_URL_DB")
+    # TODO: Currently, this URL consists of only host, port, and vhost
+    #  Ideally, this should be extended to support the full URL
+    rabbitmq_url = environ.get("OPERANDI_URL_RABBITMQ_SERVER")
+    splits = rabbitmq_url.split(":")
+    if len(splits) != 2:
+        raise ValueError(f"Wrong RabbitMQ URL: {rabbitmq_url}")
+    rmq_host = splits[0]
+    rmq_port = splits[1]
+
     service_broker = ServiceBroker(
         db_url=db_url,
         rmq_host=rmq_host,
         rmq_port=rmq_port,
-        rmq_vhost=rmq_vhost,
+        rmq_vhost='/',
         hpc_host=hpc_host,
         hpc_username=hpc_username,
         hpc_key_path=hpc_key_path
