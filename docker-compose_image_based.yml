@@ -37,7 +37,7 @@ services:
       - operandi
 
   operandi-server:
-    image: ghcr.io/subugoe/operandi-operandi-server:main
+    image: ghcr.io/subugoe/operandi-server:main
     container_name: operandi-server
     depends_on:
       operandi-rabbitmq:
@@ -60,7 +60,7 @@ services:
     command: operandi-server start --host 0.0.0.0 --port 8000 --db-url mongodb://172.17.0.1:27018 --rmq-host rabbit-mq-host --rmq-port 5672
 
   operandi-broker:
-    image: ghcr.io/subugoe/operandi-operandi-broker:main
+    image: ghcr.io/subugoe/operandi-broker:main
     container_name: operandi-broker
     depends_on:
       operandi-rabbitmq:
