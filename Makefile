@@ -77,7 +77,7 @@ start-mongo-docker:
 	docker-compose -f ./docker-compose.yml up -d operandi-mongodb
 
 start-rabbitmq-docker:
-	docker-compose -f ./docker-compose.yml up -d operandi-rabbit-mq
+	docker-compose -f ./docker-compose.yml up -d operandi-rabbitmq
 
 start-broker-docker:
 	docker-compose -f ./docker-compose.yml up -d operandi-broker
