@@ -3,6 +3,7 @@ clint==0.5.1
 fastapi>=0.75.1
 pydantic>=1.9.1
 pytest>=7.0.0
+python-dotenv>=1.0.0
 click>=7
 loguru>=0.6.0
 ocrd_webapi @ git+https://github.com/OCR-D/ocrd-webapi-implementation.git@v0.9.0#egg=ocrd_webapi

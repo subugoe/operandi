@@ -1,4 +1,5 @@
 import datetime
+from dotenv import load_dotenv
 from os import environ
 from pathlib import Path
 
@@ -14,6 +15,8 @@ __all__ = [
     "LIVE_SERVER_URL"
 ]
 
+load_dotenv()
+
 DEFAULT_QUEUE_FOR_HARVESTER: str = "operandi-for-harvester"
 DEFAULT_QUEUE_FOR_USERS: str = "operandi-for-users"
 
@@ -25,8 +28,7 @@ LOG_FILE_PATH: str = f"{LOG_FOLDER_PATH}/server_{current_time}.log"
 LOG_LEVEL: str = "INFO"
 
 # TODO: Use this as a root data directory
-OPERANDI_ROOT_DATA_PATH: str = "/tmp/operandi-data"
-
+OPERANDI_ROOT_DATA_PATH: str = environ.get("OPERANDI_ROOT_DATA_PATH", "/tmp/operandi-data")
 SERVER_HOST: str = "localhost"
 SERVER_PORT: int = 8000
 LIVE_SERVER_URL: str = environ.get("OPERANDI_LIVE_SERVER_URL", f"http://{SERVER_HOST}:{SERVER_PORT}")
