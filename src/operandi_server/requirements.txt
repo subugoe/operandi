@@ -2,7 +2,6 @@ uvicorn
 clint==0.5.1
 fastapi>=0.75.1
 pydantic>=1.9.1
-pytest>=7.0.0
 python-dotenv>=1.0.0
 click>=7
 loguru>=0.6.0
