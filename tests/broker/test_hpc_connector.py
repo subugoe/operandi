@@ -1,8 +1,7 @@
 import os
-import pytest
 from service_broker.hpc_connector import HPCConnector
-from .conftest import OPERANDI_TESTS_PATH
-from .utils_test import to_asset_path
+from tests.broker.conftest import OPERANDI_TESTS_PATH
+from ..utils_test import to_asset_path
 
 
 def test_hpc_connector_ssh_key_file_availability(hpc_ssh_key):
