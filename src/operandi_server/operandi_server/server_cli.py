@@ -31,9 +31,15 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 def start_server(host, port):
     server_url = f'http://{host}:{port}'
     db_url = environ.get("OPERANDI_URL_DB")
+    if not db_url:
+        raise ValueError("The MongoDB URL is not set! Set the environment variable OPERANDI_URL_DB")
+
     # TODO: Currently, this URL consists of only host, port, and vhost
     #  Ideally, this should be extended to support the full URL
     rabbitmq_url = environ.get("OPERANDI_URL_RABBITMQ_SERVER")
+    if not rabbitmq_url:
+        raise ValueError("The RabbitMQ Server URL is not set! Set the environment variable OPERANDI_URL_RABBITMQ_SERVER")
+
     splits = rabbitmq_url.split(":")
     if len(splits) != 2:
         raise ValueError(f"Wrong RabbitMQ URL: {rabbitmq_url}")
@@ -57,7 +63,7 @@ def start_server(host, port):
     )
 
     uvicorn.run(
-        operandi_server.app,
+        operandi_server,
         host=operandi_server.host,
         port=operandi_server.port,
         log_config=None  # Disable log configuration overwriting
