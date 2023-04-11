@@ -10,7 +10,7 @@ from .constants import (
 # The Service broker uses the SSHCommunication class
 # to communicate with the HPC environment
 # TODO: Implement appropriate error handling
-class SSHCommunication:
+class HPCConnector:
     def __init__(self, scp="ON", scp_preserve_times=True, mode="0755"):
         # TODO: Handle the exceptions properly
         # E.g., when not connected to GOENET the SSH connection fails
