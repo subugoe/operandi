@@ -1,6 +1,6 @@
 import os
 from service_broker.hpc_connector import HPCConnector
-from tests.broker.conftest import OPERANDI_TESTS_PATH
+from ..conftest import OPERANDI_TESTS_PATH
 from ..utils_test import to_asset_path
 
 

@@ -19,8 +19,11 @@ from .constants import (
     DEFAULT_QUEUE_FOR_HARVESTER,
     # Requests coming from other users are sent to this queue
     DEFAULT_QUEUE_FOR_USERS,
-    LIVE_SERVER_URL
+    LIVE_SERVER_URL,
+    LOG_FILE_PATH,
+    LOG_LEVEL,
 )
+from .logging import reconfigure_all_loggers
 from .models import WorkflowArguments
 
 
@@ -91,6 +94,12 @@ class OperandiServer(FastAPI):
     async def startup_event(self):
         self.log.info(f"Operandi server url: {self.server_url}")
 
+        # Reconfigure all loggers to the same format
+        reconfigure_all_loggers(
+            log_level=LOG_LEVEL,
+            log_file_path=LOG_FILE_PATH
+        )
+
         # Initiate database client
         await db.initiate_database(self.db_url)
 
@@ -113,7 +122,7 @@ class OperandiServer(FastAPI):
         # Used to extend/overwrite the Workspace routing endpoint of the OCR-D WebAPI
         self.workspace_manager = WorkspaceManager()
 
-    def shutdown_event(self):
+    async def shutdown_event(self):
         # TODO: Gracefully shutdown and clean things here if needed
         self.log.info(f"The Operandi Server is shutting down.")
 
