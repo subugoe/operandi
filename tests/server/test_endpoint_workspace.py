@@ -1,4 +1,4 @@
-from os.path import exists, join
+from ..conftest import OPERANDI_TESTS_DIR
 
 
 def parse_resource_id(response):
@@ -14,7 +14,7 @@ def assert_status_code(status_code, expected_floor):
         f"Response status code expected:{expected_floor}xx, got: {status_code}."
 
 
-def assert_db_entry_created(resource_from_db, resource_id, db_key="_id"):
+def assert_db_entry_created(resource_from_db, resource_id, db_key):
     assert resource_from_db, \
         "Resource entry was not created in mongodb"
     db_id = resource_from_db[db_key]
@@ -23,8 +23,8 @@ def assert_db_entry_created(resource_from_db, resource_id, db_key="_id"):
 
 
 def assert_workspace_dir(workspace_id):
-    assert exists(join("/tmp/ocrd-webapi-data/workspaces", workspace_id)), \
-        "workspace-dir not existing"
+    workspace_dir = f"{OPERANDI_TESTS_DIR}/workspaces/{workspace_id}"
+    assert workspace_dir, "workspace-dir not existing"
 
 
 def test_post_workspace(operandi_client, auth, workspace_mongo_coll, asset_workspace1):
@@ -44,4 +44,4 @@ def test_post_workspace(operandi_client, auth, workspace_mongo_coll, asset_works
 
     # Database checks
     resource_from_db = workspace_mongo_coll.find_one()
-    assert_db_entry_created(resource_from_db, workspace_id)
+    assert_db_entry_created(resource_from_db, workspace_id, db_key="workspace_id")

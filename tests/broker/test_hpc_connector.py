@@ -1,6 +1,6 @@
 import os
 from service_broker.hpc_connector import HPCConnector
-from ..conftest import OPERANDI_TESTS_PATH
+from ..conftest import OPERANDI_TESTS_DIR
 from ..utils_test import to_asset_path
 
 
@@ -24,7 +24,7 @@ def test_hpc_connector_put_directory(hpc_connector, hpc_home_path):
 
 def test_hpc_connector_get_directory(hpc_connector, hpc_home_path):
     dir_src = f"{hpc_home_path}/tests/dummy_ws"
-    dir_dest = f"{OPERANDI_TESTS_PATH}/"
+    dir_dest = f"{OPERANDI_TESTS_DIR}/"
     hpc_connector.get_directory(source=dir_src, destination=dir_dest)
     assert os.path.exists(dir_dest), f"Expected path nonexistent: {dir_dest}"
     assert os.path.isdir(dir_dest), f"Expected path not dir: {dir_dest}"

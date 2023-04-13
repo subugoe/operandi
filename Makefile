@@ -4,7 +4,6 @@ SHELL = /bin/bash
 PYTHON = python
 PIP3 = pip3
 PIP3_INSTALL = pip3 install
-TESTDIR = tests
 
 BUILD_ORDER = src/operandi_server src/service_broker src/harvester
 UNINSTALL_ORDER = operandi_server service_broker harvester
@@ -33,9 +32,14 @@ help:
 	@echo " start-server-native     Start the native Operandi Server"
 	@echo " start-harvester-native  Start the native Operandi Harvester"
 	@echo ""
-	@echo " start-all-modules	    Start all image based docker modules"
+	@echo " start-all-modules       Start all image based docker modules"
 	@echo " stop-all-modules        Stop all image based docker modules"
 	@echo " clean-all-modules       Clean all image based docker modules"
+	@echo ""
+	@echo " run-tests               Run all tests"
+	@echo " run-tests-broker        Run all broker tests"
+	@echo " run-tests-server        Run all server tests"
+	@echo ""
 
 # END-EVAL
 
@@ -93,6 +97,21 @@ start-server-native:
 
 start-harvester-native:
 	operandi-harvester start --address http://localhost:8000 --limit 1
+
+run-tests: run-tests-broker run-tests-server
+
+run-tests-broker:
+	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
+	pytest tests/broker/*.py
+
+run-tests-server:
+	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
+	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
+	OCRD_WEBAPI_DB_URL='mongodb://localhost:47017' \
+	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
+	OCRD_WEBAPI_USERNAME='test' \
+	OCRD_WEBAPI_PASSWORD='test' \
+	pytest tests/server/*.py
 
 pyclean:
 	rm -f **/*.pyc

@@ -7,10 +7,8 @@ import os
 from operandi_server.server import OperandiServer
 from ..utils_test import allocate_asset
 
-
-OPERANDI_TESTS_PATH = "/tmp/operandi_tests"
-DB_URL = "mongodb://localhost:27018"
-# os.environ["OCRD_WEBAPI_DB_URL"] = "mongodb://localhost:47017/ocrd-webapi-db"
+OCRD_WEBAPI_DB_URL = os.environ["OCRD_WEBAPI_DB_URL"]
+OCRD_WEBAPI_DB_NAME = os.environ["OCRD_WEBAPI_DB_NAME"]
 
 
 @pytest.fixture(scope='session')
@@ -19,7 +17,7 @@ def operandi_client(start_docker_mongodb):
         host="localhost",
         port=8000,
         server_url=f"http://localhost:8000",
-        db_url="mongodb://172.17.0.1:27018",
+        db_url=OCRD_WEBAPI_DB_URL,
         rmq_host="localhost",
         rmq_port=5672,
         rmq_vhost='/'
@@ -55,20 +53,20 @@ def is_url_responsive(url, retries: int = 0):
 
 @pytest.fixture(scope="session", name='mongo_client')
 def _fixture_mongo_client(start_docker_mongodb):
-    mongo_client = MongoClient(DB_URL, serverSelectionTimeoutMS=3000)
+    mongo_client = MongoClient(OCRD_WEBAPI_DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
 
 
 @pytest.fixture(scope="session", name='auth')
 def _fixture_auth():
-    user = os.getenv("OCRD_WEBAPI_USERNAME", "test")
-    pw = os.getenv("OCRD_WEBAPI_PASSWORD", "test")
+    user = os.getenv("OCRD_WEBAPI_USERNAME")
+    pw = os.getenv("OCRD_WEBAPI_PASSWORD")
     yield user, pw
 
 
 @pytest.fixture(scope="session", name='workspace_mongo_coll')
 def _fixture_workspace_mongo_coll(mongo_client):
-    mydb = mongo_client["ocrd-webapi-db"]
+    mydb = mongo_client[OCRD_WEBAPI_DB_NAME]
     workspace_coll = mydb["workspace"]
     yield workspace_coll
     workspace_coll.drop()
