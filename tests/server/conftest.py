@@ -3,12 +3,12 @@ from pytest import fixture
 
 from operandi_server.server import OperandiServer
 from ..helpers_asserts import assert_availability_db
-from ..helpers_utils import to_asset_path
+from ..helpers_utils import allocate_asset
 from ..constants import OCRD_WEBAPI_DB_URL
 from .constants import OCRD_WEBAPI_USERNAME, OCRD_WEBAPI_PASSWORD
 
 
-@fixture(scope="module", name="operandi")
+@fixture(scope="session", name="operandi")
 def fixture_operandi_server():
     assert_availability_db(OCRD_WEBAPI_DB_URL)
     operandi_app = OperandiServer(
@@ -24,13 +24,20 @@ def fixture_operandi_server():
         yield client
 
 
-@fixture(scope="module", name="auth")
+@fixture(scope="session", name="auth")
 def fixture_auth():
     yield OCRD_WEBAPI_USERNAME, OCRD_WEBAPI_PASSWORD
 
 
-@fixture(scope="module")
+@fixture(name="workspace1")
 def fixture_workspace1():
-    workspace_fp = open(to_asset_path("workspaces", "dummy_ws.ocrd.zip"), "rb")
+    workspace_fp = allocate_asset("workspaces", "dummy_ws.ocrd.zip")
+    file = {"workspace": workspace_fp}
+    yield file
+
+
+@fixture(name="workspace2")
+def fixture_workspace2():
+    workspace_fp = allocate_asset("workspaces", "example_ws_different_mets.ocrd.zip")
     file = {"workspace": workspace_fp}
     yield file
