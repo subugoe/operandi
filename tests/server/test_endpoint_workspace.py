@@ -39,7 +39,6 @@ def test_post_workspace_zip_different_mets(operandi, auth, workspace_collection,
     assert_exists_db_resource(db_workspace, "workspace_id", workspace_id)
 
 
-# Test is broken
 def test_put_workspace_zip(operandi, auth, workspace_collection, workspace1, workspace2):
     put_workspace_id = "put_workspace_id"
     # The first put request creates a new workspace
