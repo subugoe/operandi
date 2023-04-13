@@ -10,5 +10,4 @@ click
 twine
 wheel
 pytest >= 7.0.0
-pytest-mock
 requests==2.27.0

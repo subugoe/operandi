@@ -1,34 +1,23 @@
-import os
-import pathlib
-import pytest
+from pytest import fixture
 from service_broker.hpc_connector import HPCConnector
+from ..helpers_asserts import assert_exists_file
+from .constants import (
+    OPERANDI_HPC_HOST,
+    OPERANDI_HPC_SSH_KEYPATH,
+    OPERANDI_HPC_USERNAME,
+)
 
 
-@pytest.fixture(scope="session", name="hpc_host")
-def _fixture_hpc_host():
-    yield os.environ.get("OPERANDI_HPC_HOST", "gwdu101.gwdg.de")
-
-
-@pytest.fixture(scope="session", name="hpc_ssh_key")
-def _fixture_hpc_ssh_key():
-    yield os.environ.get("OPERANDI_HPC_SSH_KEYPATH", f"{pathlib.Path.home()}/.ssh/gwdg-cluster.pub")
-
-
-@pytest.fixture(scope="session", name="hpc_username")
-def _fixture_hpc_username():
-    yield os.environ.get("OPERANDI_HPC_USERNAME", "mmustaf")
-
-
-@pytest.fixture(scope="session", name="hpc_home_path")
-def _fixture_hpc_home_path(hpc_username):
-    yield os.environ.get("OPERANDI_HPC_HOME_PATH", f"/home/users/{hpc_username}")
-
-
-@pytest.fixture(scope="session", name="hpc_connector")
-def _fixture_hpc_connector(hpc_host, hpc_username, hpc_ssh_key):
+@fixture(scope="module")
+def fixture_hpc_connector():
+    assert_exists_file(OPERANDI_HPC_SSH_KEYPATH)
     try:
         hpc_connector = HPCConnector()
-        hpc_connector.connect_to_hpc(hpc_host, hpc_username, hpc_ssh_key)
+        hpc_connector.connect_to_hpc(
+            OPERANDI_HPC_HOST,
+            OPERANDI_HPC_USERNAME,
+            OPERANDI_HPC_SSH_KEYPATH
+        )
     except Exception as err:
-        raise "SSH connection to the HPC has failed"
+        raise Exception(f"SSH connection to the HPC has failed: {err}")
     yield hpc_connector

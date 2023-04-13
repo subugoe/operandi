@@ -104,13 +104,16 @@ run-tests: run-tests-broker run-tests-server
 
 run-tests-broker:
 	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
+	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
+	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
+	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	pytest tests/broker/*.py
 
 run-tests-server:
 	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
 	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
-	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
+	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	OCRD_WEBAPI_USERNAME='test' \
 	OCRD_WEBAPI_PASSWORD='test' \
 	pytest tests/server/*.py

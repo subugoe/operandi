@@ -1,7 +1,7 @@
+from .helpers_asserts import assert_response_status_code
 
 
-def test_get_root_info(operandi_client):
-    response = operandi_client.get('/')
-    assert response.status_code == 200, "The status code is not 200"
-    json = response.json()
-    assert json['message'] == "The home page of the OPERANDI Server"
+def test_get_root_info(operandi):
+    response = operandi.get('/')
+    assert_response_status_code(response.status_code, expected_floor=2)
+    assert response.json()['message'] == "The home page of the OPERANDI Server"
