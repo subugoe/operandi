@@ -12,7 +12,9 @@ OCRD_WEBAPI_DB_NAME = os.environ["OCRD_WEBAPI_DB_NAME"]
 
 
 @pytest.fixture(scope='session')
-def operandi_client(start_docker_mongodb):
+def operandi_client():
+    if not (is_mongodb_responsive(OCRD_WEBAPI_DB_URL)):
+        raise Exception(f"DB not running on {OCRD_WEBAPI_DB_URL}")
     operandi_app = OperandiServer(
         host="localhost",
         port=8000,
@@ -26,33 +28,18 @@ def operandi_client(start_docker_mongodb):
         yield client
 
 
-@pytest.fixture(scope="session")
-def start_docker_mongodb(docker_ip, docker_services, do_before_all_tests):
-    # This returns 47017, the port configured inside tests/docker-compose.yml
-    port = docker_services.port_for("mongo", 27017)
-    url = f"http://{docker_ip}:{port}"
-
-    docker_services.wait_until_responsive(
-        timeout=10.0,
-        pause=0.1,
-        check=lambda: is_url_responsive(url, retries=10)
-    )
-
-
-def is_url_responsive(url, retries: int = 0):
-    while True:
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                return True
-        except Exception:
-            if retries <= 0:
-                return False
-            retries -= 1
+def is_mongodb_responsive(url):
+    http_url = url.replace("mongodb", "http")
+    response = requests.get(http_url)
+    if response.status_code == 200:
+        return True
+    return False
 
 
 @pytest.fixture(scope="session", name='mongo_client')
-def _fixture_mongo_client(start_docker_mongodb):
+def _fixture_mongo_client():
+    if not (is_mongodb_responsive(OCRD_WEBAPI_DB_URL)):
+        raise Exception(f"DB not running on {OCRD_WEBAPI_DB_URL}")
     mongo_client = MongoClient(OCRD_WEBAPI_DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
 
@@ -69,7 +56,7 @@ def _fixture_workspace_mongo_coll(mongo_client):
     mydb = mongo_client[OCRD_WEBAPI_DB_NAME]
     workspace_coll = mydb["workspace"]
     yield workspace_coll
-    workspace_coll.drop()
+    # workspace_coll.drop()
 
 
 @pytest.fixture(name='asset_workspace1')

@@ -19,7 +19,7 @@ def assert_db_entry_created(resource_from_db, resource_id, db_key):
         "Resource entry was not created in mongodb"
     db_id = resource_from_db[db_key]
     assert db_id == resource_id, \
-        "Wrong resource id. Expected: {resource_id}, found {db_id}"
+        f"Wrong resource id. Expected: {resource_id}, found {db_id}"
 
 
 def assert_workspace_dir(workspace_id):
@@ -43,5 +43,5 @@ def test_post_workspace(operandi_client, auth, workspace_mongo_coll, asset_works
     assert_workspace_dir(workspace_id)
 
     # Database checks
-    resource_from_db = workspace_mongo_coll.find_one()
+    resource_from_db = workspace_mongo_coll.find_one({"workspace_id": workspace_id})
     assert_db_entry_created(resource_from_db, workspace_id, db_key="workspace_id")

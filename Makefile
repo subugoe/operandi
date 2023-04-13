@@ -36,6 +36,8 @@ help:
 	@echo " stop-all-modules        Stop all image based docker modules"
 	@echo " clean-all-modules       Clean all image based docker modules"
 	@echo ""
+	@echo " In order to run the tests, MongoDB must be running on port 27018"
+	@echo ""
 	@echo " run-tests               Run all tests"
 	@echo " run-tests-broker        Run all broker tests"
 	@echo " run-tests-server        Run all server tests"
@@ -107,7 +109,7 @@ run-tests-broker:
 run-tests-server:
 	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
 	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
-	OCRD_WEBAPI_DB_URL='mongodb://localhost:47017' \
+	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
 	OCRD_WEBAPI_USERNAME='test' \
 	OCRD_WEBAPI_PASSWORD='test' \
