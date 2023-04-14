@@ -1,13 +1,8 @@
 autopep8
-generateDS == 2.35.20
-coverage >= 4.5.2
-sphinx
-sphinx_click
-codecov >= 2.0.15
-docstr-coverage
-pylint
 click
-twine
-wheel
+generateDS == 2.35.20
+pylint
 pytest >= 7.0.0
 requests==2.27.0
+twine
+wheel
