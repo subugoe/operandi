@@ -31,3 +31,12 @@ def fixture_mongo_workspace_collection(fixture_mongo_client):
     yield workspace_collection
     # The collections gets dropped when the fixture is torn down
     workspace_collection.drop()
+
+
+@fixture(scope="session", name="workflow_collection")
+def fixture_mongo_workflow_collection(fixture_mongo_client):
+    mydb = fixture_mongo_client[OCRD_WEBAPI_DB_NAME]
+    workflow_collection = mydb["workflow"]
+    yield workflow_collection
+    # The collections gets dropped when the fixture is torn down
+    workflow_collection.drop()
