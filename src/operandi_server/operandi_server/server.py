@@ -150,6 +150,7 @@ class OperandiServer(FastAPI):
             # Extract workflow arguments
             workspace_id = workflow_args.workspace_id
             workflow_id = workflow_args.workflow_id
+            input_file_grp = workflow_args.input_file_grp
 
             # Create job request parameters
             job_id, job_dir_path = self.workflow_manager.create_workflow_execution_space(workflow_id)
@@ -173,7 +174,8 @@ class OperandiServer(FastAPI):
             workflow_processing_message = {
                 "workflow_id": f"{workflow_id}",
                 "workspace_id": f"{workspace_id}",
-                "job_id": f"{job_id}"
+                "job_id": f"{job_id}",
+                "input_file_grp": f"{input_file_grp}"
             }
             encoded_workflow_message = json.dumps(workflow_processing_message)
 

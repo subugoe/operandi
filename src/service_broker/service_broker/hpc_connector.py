@@ -109,21 +109,3 @@ class HPCConnector:
             scp=self.scp,
             scp_preserve_times=self.scp_preserve_times
         )
-
-
-def build_sbatch_command(batch_script_path, workspace_dir):
-    # Bash reads shell setup files only if you log in interactively.
-    # You can bypass that by forcing bash to start a login shell.
-    # E.g.: $ ssh gwdu101.gwdg.de  "bash -lc 'srun --version'"
-
-    ssh_command = "bash -lc"
-    ssh_command += " 'sbatch"
-    ssh_command += f" {batch_script_path}"
-    ssh_command += f" {workspace_dir}'"
-    return ssh_command
-
-
-def build_hpc_batch_script_path(hpc_home_path, workspace_id, script_id="base_script.sh"):
-    # This is the batch script submitted to the SLURM scheduler in HPC
-    script_path = f"{hpc_home_path}/{workspace_id}/{script_id}"
-    return script_path

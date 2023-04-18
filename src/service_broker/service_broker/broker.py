@@ -50,7 +50,7 @@ class ServiceBroker:
             try:
                 # Clean unnecessary data
                 # self.queues_and_workers = None
-                child_worker = Worker(self.db_url, self.rmq_host, self.rmq_port, self.rmq_vhost, queue_name)
+                child_worker = Worker(self.db_url, self.rmq_host, self.rmq_port, self.rmq_vhost, queue_name, native=False)
                 child_worker.run()
                 exit(0)
             except Exception as e:
