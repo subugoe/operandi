@@ -6,6 +6,7 @@ params.input_file_group = "null"
 params.mets = "null"
 params.volume_map_dir = "null"
 params.sif_path = "null"
+params.singularity_wrapper = "singularity exec --bind ${params.volume_map_dir} ${params.sif_path}"
 
 log.info """\
          O P E R A N D I - H P C - T E S T  P I P E L I N E
@@ -27,7 +28,7 @@ process ocrd_cis_ocropy_binarize {
 
   script:
   """
-  singularity exec --bind ${params.volume_map_dir} ${params.sif_path} ocrd-cis-ocropy-binarize -m ${mets_file} -I ${input_group} -O "OCR-D-BIN"
+  ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -m ${mets_file} -I ${input_group} -O "OCR-D-BIN"
   """
 }
 
