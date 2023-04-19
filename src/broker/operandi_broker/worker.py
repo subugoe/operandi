@@ -19,7 +19,7 @@ from operandi_utils import (
 
 from .constants import (
     LOG_LEVEL_WORKER,
-    LOG_FILE_PATH_WORKER
+    LOG_FILE_PATH_WORKER_PREFIX
 )
 
 
@@ -29,6 +29,7 @@ class Worker:
     def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, queue_name, native=True):
         self.log = logging.getLogger(__name__)
         self.queue_name = queue_name
+        self.log_file_path = f"{LOG_FILE_PATH_WORKER_PREFIX}_{queue_name}.log"
 
         self.db_url = db_url
         # Connection to RabbitMQ related parameters
@@ -57,7 +58,7 @@ class Worker:
             # Reconfigure all loggers to the same format
             reconfigure_all_loggers(
                 log_level=LOG_LEVEL_WORKER,
-                log_file_path=LOG_FILE_PATH_WORKER
+                log_file_path=self.log_file_path
             )
             self.log.info(f"Activating signal handler for SIGINT, SIGTERM")
             signal.signal(signal.SIGINT, self.signal_handler)
