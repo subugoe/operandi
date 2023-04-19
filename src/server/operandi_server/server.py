@@ -13,7 +13,10 @@ from ocrd_webapi.models.workflow import WorkflowJobRsrc
 from ocrd_webapi.rabbitmq import RMQPublisher
 from ocrd_webapi.routers import discovery, workflow, workspace
 from ocrd_webapi.utils import bagit_from_url
-from operandi_utils import reconfigure_all_loggers
+from operandi_utils import (
+    OPERANDI_VERSION,
+    reconfigure_all_loggers
+)
 
 from .constants import (
     # Requests coming from the Harvester are sent to this queue
@@ -49,7 +52,7 @@ class OperandiServer(FastAPI):
         super().__init__(
             title="OPERANDI Server",
             description="REST API of the OPERANDI",
-            version="1.4.3",
+            version=OPERANDI_VERSION,
             license={
                 "name": "Apache 2.0",
                 "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
