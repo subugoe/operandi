@@ -3,8 +3,10 @@ import logging
 import signal
 from os import getppid, setsid, makedirs, symlink
 from os.path import dirname
+from shutil import rmtree
 from sys import exit
 from time import sleep
+from pathlib import Path
 
 import ocrd_webapi.database as db
 from ocrd_webapi.managers import NextflowManager
@@ -307,7 +309,8 @@ class Worker:
             src_nextflow_script_path = f"{dirname(__file__)}/nextflow_workflows/{nextflow_script_id}"
             dst_nextflow_script_path = f"/tmp/{job_id}/{nextflow_script_id}"
 
-        makedirs(f"/tmp/{job_id}")
+        symlink_job_id_dir = f"/tmp/{job_id}"
+        makedirs(symlink_job_id_dir)
         # Symlink the nextflow script
         symlink(
             src=src_nextflow_script_path,
@@ -316,10 +319,10 @@ class Worker:
         # Symlink the ocrd workspace
         symlink(
             src=workspace_dir,
-            dst=f"/tmp/{job_id}/data"
+            dst=f"{symlink_job_id_dir}/data"
         )
 
-        src_slurm_workspace = f"/tmp/{job_id}"
+        src_slurm_workspace = symlink_job_id_dir
         dst_slurm_workspace = f"{self.hpc_connector.hpc_home_path}/workflow_jobs/{job_id}/"
         self.hpc_connector.put_directory(
             source=src_slurm_workspace,
@@ -364,9 +367,14 @@ class Worker:
             if slurm_job_state not in slurm_waiting_states:
                 break
 
+        # Get the parent directory of the received job_dir
+        job_dir_parent = Path(job_dir).parent.absolute()
+
         # Get the result dir from the HPC home folder
-        self.hpc_connector.get_directory(source=dst_slurm_workspace, destination=job_dir, recursive=True)
+        self.hpc_connector.get_directory(source=dst_slurm_workspace, destination=job_dir_parent, recursive=True)
 
         # Delete the result dir from the HPC home folder
         self.hpc_connector.execute_blocking(f"bash -lc 'rm -rf {dst_slurm_workspace}'")
+        # Delete the previously created symlink directory
+        rmtree(symlink_job_id_dir, ignore_errors=True)
         return return_code
