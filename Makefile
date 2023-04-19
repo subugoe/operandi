@@ -75,16 +75,16 @@ clean-all-modules:
 	docker rmi -f ghcr.io/subugoe/operandi-broker:main
 
 start-mongo-docker:
-	docker-compose -f ./docker-compose.yml up -d operandi-mongodb
+	docker compose -f ./docker-compose.yml up -d operandi-mongodb
 
 start-rabbitmq-docker:
-	docker-compose -f ./docker-compose.yml up -d operandi-rabbitmq
+	docker compose -f ./docker-compose.yml up -d operandi-rabbitmq
 
 start-broker-docker:
-	docker-compose -f ./docker-compose.yml up -d operandi-broker
+	docker compose -f ./docker-compose.yml up -d operandi-broker
 
 start-server-docker:
-	docker-compose -f ./docker-compose.yml up -d operandi-server
+	docker compose -f ./docker-compose.yml up -d operandi-server
 
 start-broker-native:
 	operandi-broker start
