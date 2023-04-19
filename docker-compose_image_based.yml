@@ -14,7 +14,7 @@ services:
       - "/rabbitmq-data/data/:/var/lib/rabbitmq/"
       - "/rabbitmq-data/log/:/var/log/rabbitmq/"
       - type: bind
-        source: ./src/definitions.json
+        source: ./src/rabbitmq_definitions.json
         target: /rmq_definitions.json
     environment:
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
