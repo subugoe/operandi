@@ -11,6 +11,7 @@ from typing import List
 from .hpc_constants import OPERANDI_HPC_USERNAME
 
 
+# TODO: This is currently outdated and not used
 class BatchScriptBuilder:
     def __init__(self):
         pass

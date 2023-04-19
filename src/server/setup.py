@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
+from operandi_utils import OPERANDI_VERSION
 
 install_requires = open('requirements.txt').read().split('\n')
+install_requires.append(f'operandi_utils == {OPERANDI_VERSION}')
 
 setup(
     name='operandi_server',
-    version='1.5.0',
+    version=OPERANDI_VERSION,
     description='OPERANDI - Server',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

@@ -6,7 +6,7 @@ PIP3 = pip3
 PIP3_INSTALL = pip3 install
 
 BUILD_ORDER = src/utils src/server src/broker src/harvester
-UNINSTALL_ORDER = operandi_utils operandi_server operandi_broker operandi_harvester
+UNINSTALL_ORDER = operandi_harvester operandi_broker operandi_server operandi_utils
 
 help:
 	@echo ""
