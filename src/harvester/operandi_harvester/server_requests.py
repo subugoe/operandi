@@ -1,70 +1,122 @@
-import requests
+from requests import get, post
 from requests.auth import HTTPBasicAuth
-from .utils import parse_resource_id, receive_file
-from os.path import join
+from os.path import join, dirname
+
+__all__ = [
+    "get_workflow_job",
+    "get_workflow_job_status",
+    "get_workspace",
+    "post_workflow_job",
+    "post_workflow_script",
+    "post_workspace",
+    "post_workspace_url",
+]
 
 
-def post_workspace_url(server_address: str, mets_url: str):
+def __receive_file(response, download_path):
+    with open(download_path, 'wb') as filePtr:
+        for chunk in response.iter_content(chunk_size=1024):
+            if chunk:
+                filePtr.write(chunk)
+
+
+def post_workspace_url(
+        server_address: str,
+        auth: HTTPBasicAuth,
+        mets_url: str
+):
     req_url = f'{server_address}/workspace/import_external?mets_url={mets_url}'
     req_headers = {'accept': 'application/json'}
-    response = requests.post(url=req_url, headers=req_headers)
-    workspace_id = parse_resource_id(response.json())
+    response = post(url=req_url, headers=req_headers, auth=auth)
+    workspace_id = response.json()['resource_id']
     return workspace_id
 
 
-def post_workspace(server_address: str, ocrd_zip_path: str):
+def post_workspace(
+        server_address: str,
+        auth: HTTPBasicAuth,
+        ocrd_zip_name: str
+):
+    ocrd_zip_path = f"{dirname(__file__)}/assets/{ocrd_zip_name}"
     workspace_zip = {'workspace': open(f'{ocrd_zip_path}', 'rb')}
     req_url = f'{server_address}/workspace'
-    response = requests.post(url=req_url, files=workspace_zip)
-    workspace_id = parse_resource_id(response.json())
+    response = post(url=req_url, files=workspace_zip, auth=auth)
+    workspace_id = response.json()['resource_id']
     return workspace_id
 
 
-def post_workflow_script(server_address: str, local_script_path: str):
-    nextflow_file = {'nextflow_script': open(f'{local_script_path}', 'rb')}
+def post_workflow_script(
+        server_address: str,
+        auth: HTTPBasicAuth,
+        nf_script_name: str
+):
+    nextflow_script_path = f"{dirname(__file__)}/assets/{nf_script_name}"
+    nextflow_file = {'nextflow_script': open(f'{nextflow_script_path}', 'rb')}
     req_url = f'{server_address}/workflow'
-    req_auth = HTTPBasicAuth('test', 'test')
-    response = requests.post(url=req_url, files=nextflow_file, auth=req_auth)
-    workflow_id = parse_resource_id(response.json())
+    response = post(url=req_url, files=nextflow_file, auth=auth)
+    workflow_id = response.json()['resource_id']
     return workflow_id
 
 
-def post_workflow_job(server_address: str, workflow_id: str, workspace_id: str, user_id: str):
+def post_workflow_job(
+        server_address: str,
+        auth: HTTPBasicAuth,
+        workflow_id: str,
+        workspace_id: str,
+        input_file_grp: str,
+        user_id: str
+):
     req_url = f'{server_address}/workflow/run_workflow/{user_id}'
     req_data = {
         'workflow_id': f'{workflow_id}',
-        'workspace_id': f'{workspace_id}'
+        'workspace_id': f'{workspace_id}',
+        'input_file_grp': f'{input_file_grp}'
     }
     req_headers = {'accept': 'application/json'}
-    response = requests.post(url=req_url, json=req_data, headers=req_headers)
-    workflow_job_id = parse_resource_id(response.json())
+    response = post(url=req_url, json=req_data, headers=req_headers, auth=auth)
+    workflow_job_id = response.json()['resource_id']
     return workflow_job_id
 
 
-def download_workspace(server_address: str, workspace_id: str, download_path: str):
+def get_workspace(
+        server_address: str,
+        auth: HTTPBasicAuth,
+        workspace_id: str,
+        download_path: str
+):
     req_url = f'{server_address}/workspace/{workspace_id}'
     req_headers = {'accept': 'application/vnd.ocrd+zip'}
-    response = requests.get(url=req_url, headers=req_headers)
+    response = get(url=req_url, headers=req_headers, auth=auth)
 
     local_filename = f"{workspace_id}.ocrd.zip"
     download_path = join(download_path, local_filename)
-    receive_file(response=response, download_path=download_path)
+    __receive_file(response=response, download_path=download_path)
 
 
-def download_workflow_job(server_address: str, workflow_id, job_id, download_path: str):
+def get_workflow_job(
+        server_address: str,
+        auth: HTTPBasicAuth,
+        workflow_id: str,
+        job_id: str,
+        download_path: str
+):
     req_url = f'{server_address}/workflow/{workflow_id}/{job_id}'
     req_headers = {'accept': 'application/vnd.zip'}
-    response = requests.get(url=req_url, headers=req_headers)
+    response = get(url=req_url, headers=req_headers, auth=auth)
 
     local_filename = f"{job_id}.zip"
     download_path = join(download_path, local_filename)
-    receive_file(response=response, download_path=download_path)
+    __receive_file(response=response, download_path=download_path)
 
 
-def get_workflow_job_status(server_address: str, workflow_id: str, job_id: str):
+def get_workflow_job_status(
+        server_address: str,
+        auth: HTTPBasicAuth,
+        workflow_id: str,
+        job_id: str
+):
     req_url = f'{server_address}/workflow/{workflow_id}/{job_id}'
     req_headers = {'accept': 'application/json'}
-    response = requests.get(url=req_url, headers=req_headers)
-    job_resource = response.json()
-    job_status = job_resource['job_state']
+    response = get(url=req_url, headers=req_headers, auth=auth)
+    job_status = response.json()['job_state']
     return job_status

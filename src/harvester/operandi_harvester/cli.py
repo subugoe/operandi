@@ -19,5 +19,16 @@ def cli(**kwargs):  # pylint: disable=unused-argument
               default='http://localhost:8000',
               help='The address of the Operandi Server.')
 def start_harvesting(limit, address):
+    if limit > 1:
+        raise ValueError("Temporary: the limit cannot be bigger than 1")
     harvester = Harvester(server_address=address)
     harvester.start_harvesting(limit)
+
+
+@cli.command('start-dummy')
+@click.option('-a', '--address', required=True,
+              default='http://localhost:8000',
+              help='The address of the Operandi Server.')
+def start_harvesting(address):
+    harvester = Harvester(server_address=address)
+    harvester.harvest_once_dummy()

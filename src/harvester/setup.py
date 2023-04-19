@@ -16,7 +16,7 @@ setup(
     url='https://github.com/subugoe/operandi',
     license='Apache License 2.0',
     packages=['operandi_harvester'],
-    package_data={'': ['*.txt', '*.nf']},
+    package_data={'': ['assets/*.ocrd.zip', 'assets/*.txt', 'assets/*.nf']},
     install_requires=install_requires,
     entry_points={
         'console_scripts': [

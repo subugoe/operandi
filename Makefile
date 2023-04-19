@@ -93,7 +93,7 @@ start-server-native:
 	operandi-server start
 
 start-harvester-native:
-	operandi-harvester start --address http://localhost:8000 --limit 1
+	operandi-harvester start-dummy --address http://localhost:8000
 
 run-tests: run-tests-utils run-tests-broker run-tests-harvester run-tests-server
 

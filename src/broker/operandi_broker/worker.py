@@ -161,11 +161,11 @@ class Worker:
         # Trigger a Nextflow process
         try:
             nf_process = NextflowManager.execute_workflow(
-                nf_script_path=workflow_script_path,
                 workspace_mets_path=workspace_mets_path,
                 workspace_path=workspace_path,
                 job_dir=job_dir,
-                in_background=False
+                in_background=False,
+                nf_script_path=workflow_script_path
             )
         except Exception as error:
             self.log.error(f"Triggering a nextflow process has failed: {error}")
@@ -228,6 +228,7 @@ class Worker:
             # TODO: Use the actual nextflow workflow script here,
             #  instead of using the nextflow_workflows/template_workflow.nf
             slurm_job_return_code = self.trigger_slurm_job(
+                nf_workflow_script=workflow_script_path,
                 workspace_dir=workspace_path,
                 job_dir=job_dir,
                 job_id=self.current_message_job_id,
@@ -295,7 +296,7 @@ class Worker:
         exit(0)
 
     # TODO: This should be further refined, currently it's just everything in one place
-    def trigger_slurm_job(self, workspace_dir, job_dir, job_id, input_file_grp):
+    def trigger_slurm_job(self, workspace_dir, job_dir, job_id, input_file_grp, nf_workflow_script=None):
         batch_script_id = "submit_workflow_job.sh"
         nextflow_script_id = "template_workflow.nf"
 
@@ -303,12 +304,20 @@ class Worker:
         dst_batch_script_path = f"{self.hpc_connector.hpc_home_path}/batch_scripts/{batch_script_id}"
         self.hpc_connector.put_file(source=src_batch_script_path, destination=dst_batch_script_path)
 
-        src_nextflow_script_path = f"{dirname(__file__)}/nextflow_workflows/{nextflow_script_id}"
+        if nf_workflow_script:
+            nextflow_script_id = "user_workflow.nf"
+            src_nextflow_script_path = nf_workflow_script
+            dst_nextflow_script_path = f"/tmp/{job_id}/{nextflow_script_id}"
+        else:
+            nextflow_script_id = "template_workflow.nf"
+            src_nextflow_script_path = f"{dirname(__file__)}/nextflow_workflows/{nextflow_script_id}"
+            dst_nextflow_script_path = f"/tmp/{job_id}/{nextflow_script_id}"
+
         makedirs(f"/tmp/{job_id}")
         # Symlink the nextflow script
         os.symlink(
             src=src_nextflow_script_path,
-            dst=f"/tmp/{job_id}/{nextflow_script_id}"
+            dst=dst_nextflow_script_path
         )
         # Symlink the ocrd workspace
         os.symlink(
