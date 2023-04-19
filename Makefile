@@ -87,9 +87,17 @@ start-server-docker:
 	docker compose -f ./docker-compose.yml up -d operandi-server
 
 start-broker-native:
+	OPERANDI_URL_RABBITMQ_SERVER='localhost:5672' \
+	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
+	OCRD_WEBAPI_DB_NAME='operandi_db' \
 	operandi-broker start
 
 start-server-native:
+	OPERANDI_URL_RABBITMQ_SERVER='localhost:5672' \
+	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
+	OCRD_WEBAPI_DB_NAME='operandi_db' \
+	OPERANDI_URL_RABBITMQ_SERVER='localhost:5672' \
+	OCRD_WEBAPI_BASE_DIR='/tmp/operandi-data' \
 	operandi-server start
 
 start-harvester-native:

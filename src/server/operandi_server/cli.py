@@ -3,12 +3,7 @@ from os import environ
 import uvicorn
 
 from operandi_utils import reconfigure_all_loggers
-from .constants import (
-    LOG_FILE_PATH,
-    LOG_LEVEL,
-    SERVER_HOST as HOST,
-    SERVER_PORT as PORT,
-)
+from .constants import LOG_FILE_PATH, LOG_LEVEL
 from .server import OperandiServer
 
 __all__ = ['cli']
@@ -23,17 +18,18 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 
 
 @cli.command('start')
-@click.option('--host', default=HOST, help='The host of the Operandi Server.')
-@click.option('--port', default=PORT, help='The port of the Operandi Server.')
+@click.option('--host', default="localhost", help='The host of the Operandi Server.')
+@click.option('--port', default="8000", help='The port of the Operandi Server.')
 def start_server(host, port):
-    server_url = f'http://{host}:{port}'
-    db_url = environ.get("OPERANDI_URL_DB", "mongodb://localhost:27018")
+    local_server_url = f"http://{host}:{port}"
+    live_server_url = environ.get("OPERANDI_LIVE_SERVER_URL", f"http://{host}:{port}")
+    db_url = environ.get("OCRD_WEBAPI_DB_URL", None)
     if not db_url:
-        raise ValueError("The MongoDB URL is not set! Set the environment variable OPERANDI_URL_DB")
+        raise ValueError("The MongoDB URL is not set! Set the environment variable OCRD_WEBAPI_DB_URL")
 
     # TODO: Currently, this URL consists of only host, port, and vhost
     #  Ideally, this should be extended to support the full URL
-    rabbitmq_url = environ.get("OPERANDI_URL_RABBITMQ_SERVER", "localhost:5672")
+    rabbitmq_url = environ.get("OPERANDI_URL_RABBITMQ_SERVER", None)
     if not rabbitmq_url:
         raise ValueError("The RabbitMQ Server URL is not set! Set the environment variable OPERANDI_URL_RABBITMQ_SERVER")
 
@@ -44,9 +40,8 @@ def start_server(host, port):
     rmq_port = splits[1]
 
     operandi_server = OperandiServer(
-        host=host,
-        port=port,
-        server_url=server_url,
+        local_server_url=local_server_url,
+        live_server_url=live_server_url,
         db_url=db_url,
         rmq_host=rmq_host,
         rmq_port=rmq_port,
@@ -61,7 +56,7 @@ def start_server(host, port):
 
     uvicorn.run(
         operandi_server,
-        host=operandi_server.host,
-        port=operandi_server.port,
+        host=host,
+        port=int(port),
         log_config=None  # Disable log configuration overwriting
     )

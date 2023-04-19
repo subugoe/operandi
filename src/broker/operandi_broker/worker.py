@@ -1,15 +1,13 @@
-import datetime
 import json
 import logging
 import signal
-from os import getpid, getppid, setsid, makedirs
+from os import getppid, setsid, makedirs, symlink
 from os.path import dirname
-import os
 from sys import exit
 from time import sleep
 
 import ocrd_webapi.database as db
-from ocrd_webapi.managers.nextflow_manager import NextflowManager
+from ocrd_webapi.managers import NextflowManager
 from ocrd_webapi.rabbitmq import RMQConsumer
 
 from operandi_utils import (
@@ -17,7 +15,10 @@ from operandi_utils import (
     reconfigure_all_loggers
 )
 
-from .constants import LOG_FOLDER_PATH, LOG_LEVEL_WORKER
+from .constants import (
+    LOG_LEVEL_WORKER,
+    LOG_FILE_PATH_WORKER_SUFFIX
+)
 
 
 # Each worker class listens to a specific queue,
@@ -25,11 +26,7 @@ from .constants import LOG_FOLDER_PATH, LOG_LEVEL_WORKER
 class Worker:
     def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, queue_name, native=True):
         self.log = logging.getLogger(__name__)
-
-        # Process ID of this worker
-        self.pid = getpid()
-        # Process ID of the service broker (parent)
-        self.ppid = getppid()
+        self.log_file_path = f"{queue_name}_{LOG_FILE_PATH_WORKER_SUFFIX}"
         self.queue_name = queue_name
 
         self.db_url = db_url
@@ -56,11 +53,10 @@ class Worker:
             # Source: https://unix.stackexchange.com/questions/18166/what-are-session-leaders-in-ps
             # Make the current process session leader
             setsid()
-            current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
             # Reconfigure all loggers to the same format
             reconfigure_all_loggers(
                 log_level=LOG_LEVEL_WORKER,
-                log_file_path=f"{LOG_FOLDER_PATH}/worker_{self.queue_name}_{current_time}.log"
+                log_file_path=self.log_file_path
             )
             self.log.info(f"Activating signal handler for SIGINT, SIGTERM")
             signal.signal(signal.SIGINT, self.signal_handler)
@@ -298,8 +294,6 @@ class Worker:
     # TODO: This should be further refined, currently it's just everything in one place
     def trigger_slurm_job(self, workspace_dir, job_dir, job_id, input_file_grp, nf_workflow_script=None):
         batch_script_id = "submit_workflow_job.sh"
-        nextflow_script_id = "template_workflow.nf"
-
         src_batch_script_path = f"{dirname(__file__)}/batch_scripts/{batch_script_id}"
         dst_batch_script_path = f"{self.hpc_connector.hpc_home_path}/batch_scripts/{batch_script_id}"
         self.hpc_connector.put_file(source=src_batch_script_path, destination=dst_batch_script_path)
@@ -315,12 +309,12 @@ class Worker:
 
         makedirs(f"/tmp/{job_id}")
         # Symlink the nextflow script
-        os.symlink(
+        symlink(
             src=src_nextflow_script_path,
             dst=dst_nextflow_script_path
         )
         # Symlink the ocrd workspace
-        os.symlink(
+        symlink(
             src=workspace_dir,
             dst=f"/tmp/{job_id}/data"
         )

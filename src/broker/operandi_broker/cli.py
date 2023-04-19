@@ -1,19 +1,17 @@
-import asyncio
 import click
-import datetime
+
 from time import sleep
 from os import environ
 
 import ocrd_webapi.database as db
-from operandi_utils import reconfigure_all_loggers
+from operandi_utils import (
+    DEFAULT_QUEUE_FOR_USERS,
+    DEFAULT_QUEUE_FOR_HARVESTER,
+    reconfigure_all_loggers
+)
 
 from .broker import ServiceBroker
-from .constants import (
-    DEFAULT_QUEUE_FOR_HARVESTER,
-    DEFAULT_QUEUE_FOR_USERS,
-    LOG_FOLDER_PATH,
-    LOG_LEVEL,
-)
+from .constants import LOG_LEVEL_BROKER, LOG_FILE_PATH_BROKER
 
 
 __all__ = ['cli']
@@ -29,13 +27,13 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 
 @cli.command('start')
 def start_broker():
-    db_url = environ.get("OPERANDI_URL_DB", "mongodb://localhost:27018")
+    db_url = environ.get("OCRD_WEBAPI_DB_URL", None)
     if not db_url:
-        raise ValueError("The MongoDB URL is not set! Set the environment variable OPERANDI_URL_DB")
+        raise ValueError("The MongoDB URL is not set! Set the environment variable OCRD_WEBAPI_DB_URL")
 
     # TODO: Currently, this URL consists of only host, port, and vhost
     #  Ideally, this should be extended to support the full URL
-    rabbitmq_url = environ.get("OPERANDI_URL_RABBITMQ_SERVER", "localhost:5672")
+    rabbitmq_url = environ.get("OPERANDI_URL_RABBITMQ_SERVER", None)
     if not rabbitmq_url:
         raise ValueError("The RabbitMQ Server URL is not set! Set the environment variable OPERANDI_URL_RABBITMQ_SERVER")
 
@@ -64,17 +62,14 @@ def start_broker():
     except Exception as error:
         service_broker.log.error(f"Error while creating worker processes: {error}")
 
-    current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
     # Reconfigure all loggers to the same format
     reconfigure_all_loggers(
-        log_level=LOG_LEVEL,
-        log_file_path=f"{LOG_FOLDER_PATH}/broker_{current_time}.log"
+        log_level=LOG_LEVEL_BROKER,
+        log_file_path=LOG_FILE_PATH_BROKER
     )
 
     try:
-        loop = asyncio.get_event_loop()
-        db_coroutine = db.initiate_database(db_url)
-        loop.run_until_complete(db_coroutine)
+        db.sync_initiate_database(db_url)
 
         # Sleep the parent process till a signal is invoked
         # Better than sleeping in loop, not tested yet

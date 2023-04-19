@@ -6,36 +6,30 @@ from fastapi import FastAPI, status
 
 import ocrd_webapi.database as db
 from ocrd_webapi.exceptions import ResponseException
-from ocrd_webapi.managers.workspace_manager import WorkspaceManager
-from ocrd_webapi.managers.workflow_manager import WorkflowManager
-from ocrd_webapi.models.workspace import WorkspaceRsrc
-from ocrd_webapi.models.workflow import WorkflowJobRsrc
+from ocrd_webapi.managers import WorkflowManager, WorkspaceManager
+from ocrd_webapi.models import WorkspaceRsrc, WorkflowJobRsrc
 from ocrd_webapi.rabbitmq import RMQPublisher
 from ocrd_webapi.routers import discovery, workflow, workspace
 from ocrd_webapi.utils import bagit_from_url
-from operandi_utils import (
-    OPERANDI_VERSION,
-    reconfigure_all_loggers
-)
 
-from .constants import (
+from operandi_utils import (
     # Requests coming from the Harvester are sent to this queue
     DEFAULT_QUEUE_FOR_HARVESTER,
     # Requests coming from other users are sent to this queue
     DEFAULT_QUEUE_FOR_USERS,
-    LIVE_SERVER_URL,
-    LOG_FILE_PATH,
-    LOG_LEVEL,
+    OPERANDI_VERSION,
+    reconfigure_all_loggers
 )
+
+from .constants import LOG_FILE_PATH, LOG_LEVEL
 from .models import WorkflowArguments
 
 
 class OperandiServer(FastAPI):
-    def __init__(self, host, port, server_url, db_url, rmq_host, rmq_port, rmq_vhost):
+    def __init__(self, live_server_url, local_server_url, db_url, rmq_host, rmq_port, rmq_vhost):
         self.log = logging.getLogger(__name__)
-        self.host = host
-        self.port = port
-        self.server_url = server_url
+        self.live_server_url = live_server_url
+        self.local_server_url = local_server_url
         self.db_url = db_url
 
         self.rmq_host = rmq_host
@@ -47,8 +41,8 @@ class OperandiServer(FastAPI):
         self.workflow_manager = None
         self.workspace_manager = None
 
-        live_server_80 = {"url": LIVE_SERVER_URL, "description": "The URL of the live OPERANDI server."}
-        local_server = {"url": self.server_url, "description": "The URL of the local OPERANDI server."}
+        live_server_80 = {"url": self.live_server_url, "description": "The URL of the live OPERANDI server."}
+        local_server = {"url": self.local_server_url, "description": "The URL of the local OPERANDI server."}
         super().__init__(
             title="OPERANDI Server",
             description="REST API of the OPERANDI",
@@ -84,7 +78,7 @@ class OperandiServer(FastAPI):
 
         self.router.add_api_route(
             path="/workflow/run_workflow/{user_id}",
-            endpoint=self.operandi_run_workflow,
+            endpoint=self.submit_to_rabbitmq_queue,
             methods=["POST"],
             tags=["Workflow"],
             status_code=status.HTTP_201_CREATED,
@@ -95,7 +89,8 @@ class OperandiServer(FastAPI):
         )
 
     async def startup_event(self):
-        self.log.info(f"Operandi server url: {self.server_url}")
+        self.log.info(f"Operandi local server url: {self.local_server_url}")
+        self.log.info(f"Operandi live server url: {self.live_server_url}")
 
         # Reconfigure all loggers to the same format
         reconfigure_all_loggers(
@@ -148,7 +143,7 @@ class OperandiServer(FastAPI):
         )
 
     # Submits a workflow execution request to the RabbitMQ
-    async def operandi_run_workflow(self, user_id: str, workflow_args: WorkflowArguments):
+    async def submit_to_rabbitmq_queue(self, user_id: str, workflow_args: WorkflowArguments):
         try:
             # Extract workflow arguments
             workspace_id = workflow_args.workspace_id

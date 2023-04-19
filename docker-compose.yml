@@ -54,7 +54,6 @@ services:
       - OCRD_WEBAPI_SERVER_PATH=http://operandi.ocr-d.de
       - OPERANDI_LIVE_SERVER_URL=http://operandi.ocr-d.de
       - OPERANDI_LOGS_DIR=/operandi-logs
-      - OPERANDI_URL_DB=mongodb://172.17.0.1:27018
       - OPERANDI_URL_RABBITMQ_SERVER=rabbit-mq-host:5672
     volumes:
       - "/operandi-data/:/operandi-data/"
@@ -75,8 +74,8 @@ services:
         condition: service_healthy
     restart: on-failure
     environment:
+      - OCRD_WEBAPI_DB_URL=mongodb://172.17.0.1:27018
       - OPERANDI_LOGS_DIR=/operandi-logs
-      - OPERANDI_URL_DB=mongodb://172.17.0.1:27018
       - OPERANDI_URL_RABBITMQ_SERVER=rabbit-mq-host:5672
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
