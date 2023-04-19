@@ -6,16 +6,16 @@ ENV PYTHONIOENCODING utf8
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-COPY ./operandi_server/ /usr/src/operandi_server
+COPY server/ /usr/src/server
+COPY utils/ /usr/src/utils
 
-WORKDIR /usr/src/operandi_server/operandi_server
+WORKDIR /usr/src/server/operandi_server
 
 # install dependencies    
 RUN apt-get update && apt-get -y install \
     git \
     curl \
     git  \
-    libmagic-dev \
     make \
     python3 \
     python3-dev \
@@ -28,7 +28,9 @@ RUN apt-get update && apt-get -y install \
 
 RUN python3 -m pip install --upgrade pip setuptools
 RUN pip3 install -U pip wheel
-RUN python3 -m pip install -r /usr/src/operandi_server/requirements.txt
-RUN pip3 install /usr/src/operandi_server
+RUN python3 -m pip install -r /usr/src/utils/requirements.txt
+RUN pip3 install /usr/src/utils
+RUN python3 -m pip install -r /usr/src/server/requirements.txt
+RUN pip3 install /usr/src/server
 
 RUN echo "Operandi server build success"

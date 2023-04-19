@@ -8,9 +8,7 @@
 # under service_broker/batch_scripts/base_script.sh
 
 from typing import List
-from .constants import (
-    HPC_USERNAME
-)
+from .hpc_constants import OPERANDI_HPC_USERNAME
 
 
 class BatchScriptBuilder:
@@ -180,7 +178,7 @@ class BatchScriptBuilder:
             partition="medium",
             cpus_per_task=2,
             mem="32G",
-            output=f"/home/users/{HPC_USERNAME}/jobs_output/job-%J.txt"
+            output=f"/home/users/{OPERANDI_HPC_USERNAME}/jobs_output/job-%J.txt"
         )
         sbatch_modules = BatchScriptBuilder.build_modules(
             clean=True,

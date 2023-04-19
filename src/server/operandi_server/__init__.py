@@ -3,5 +3,5 @@ __all__ = [
   "OperandiServer",
 ]
 
-from .server_cli import cli
+from .cli import cli
 from .server import OperandiServer

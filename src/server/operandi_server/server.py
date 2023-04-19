@@ -13,6 +13,7 @@ from ocrd_webapi.models.workflow import WorkflowJobRsrc
 from ocrd_webapi.rabbitmq import RMQPublisher
 from ocrd_webapi.routers import discovery, workflow, workspace
 from ocrd_webapi.utils import bagit_from_url
+from operandi_utils import reconfigure_all_loggers
 
 from .constants import (
     # Requests coming from the Harvester are sent to this queue
@@ -23,7 +24,6 @@ from .constants import (
     LOG_FILE_PATH,
     LOG_LEVEL,
 )
-from .logging import reconfigure_all_loggers
 from .models import WorkflowArguments
 
 

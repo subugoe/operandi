@@ -6,17 +6,13 @@ from .worker import Worker
 
 
 class ServiceBroker:
-    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, hpc_host, hpc_username, hpc_key_path):
+    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost):
         self.log = logging.getLogger(__name__)
 
         self.db_url = db_url
         self.rmq_host = rmq_host
         self.rmq_port = rmq_port
         self.rmq_vhost = rmq_vhost
-
-        self.hpc_host = hpc_host
-        self.hpc_username = hpc_username
-        self.hpc_key_path = hpc_key_path
 
         # A dictionary to keep track of queues and worker pids
         # Keys: Each key is a unique queue name
@@ -50,7 +46,14 @@ class ServiceBroker:
             try:
                 # Clean unnecessary data
                 # self.queues_and_workers = None
-                child_worker = Worker(self.db_url, self.rmq_host, self.rmq_port, self.rmq_vhost, queue_name, native=False)
+                child_worker = Worker(
+                    self.db_url,
+                    self.rmq_host,
+                    self.rmq_port,
+                    self.rmq_vhost,
+                    queue_name,
+                    native=False
+                )
                 child_worker.run()
                 exit(0)
             except Exception as e:

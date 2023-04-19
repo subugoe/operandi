@@ -5,15 +5,9 @@ PYTHON = python
 PIP3 = pip3
 PIP3_INSTALL = pip3 install
 
-BUILD_ORDER = src/operandi_server src/service_broker src/harvester
-UNINSTALL_ORDER = operandi_server service_broker harvester
+BUILD_ORDER = src/utils src/server src/broker src/harvester
+UNINSTALL_ORDER = operandi_utils operandi_server operandi_broker operandi_harvester
 
-# BEGIN-EVAL makefile-parser --make-help Makefile
-  # TODO: "    test           Run all unit tests"
-  # TODO: "    docs           Build documentation"
-  # TODO: "    docs-clean     Clean docs"
-  # TODO: "    docs-coverage  Calculate docstring coverage"
-  
 help:
 	@echo ""
 	@echo "Targets"
@@ -40,10 +34,11 @@ help:
 	@echo ""
 	@echo " run-tests               Run all tests"
 	@echo " run-tests-broker        Run all broker tests"
+	@echo " run-tests-harvester     Run all harvester tests"
 	@echo " run-tests-server        Run all server tests"
+	@echo " run-tests-utils         Run all utils tests"
 	@echo ""
 
-# END-EVAL
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
@@ -100,7 +95,7 @@ start-server-native:
 start-harvester-native:
 	operandi-harvester start --address http://localhost:8000 --limit 1
 
-run-tests: run-tests-broker run-tests-server
+run-tests: run-tests-utils run-tests-broker run-tests-harvester run-tests-server
 
 run-tests-broker:
 	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
@@ -108,6 +103,15 @@ run-tests-broker:
 	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
 	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	pytest tests/broker/*.py
+
+run-tests-harvester:
+	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
+	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
+	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
+	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
+	OCRD_WEBAPI_USERNAME='test' \
+	OCRD_WEBAPI_PASSWORD='test' \
+	pytest tests/harvester/*.py
 
 run-tests-server:
 	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
@@ -117,6 +121,15 @@ run-tests-server:
 	OCRD_WEBAPI_USERNAME='test' \
 	OCRD_WEBAPI_PASSWORD='test' \
 	pytest tests/server/*.py
+
+run-tests-utils:
+	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
+	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
+	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
+	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
+	OCRD_WEBAPI_USERNAME='test' \
+	OCRD_WEBAPI_PASSWORD='test' \
+	pytest tests/utils/*.py
 
 pyclean:
 	rm -f **/*.pyc

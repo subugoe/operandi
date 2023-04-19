@@ -1,7 +1,7 @@
-from ..constants import OPERANDI_TESTS_DIR
-from ..helpers_asserts import assert_exists_dir
-from ..helpers_utils import to_asset_path
-from .constants import OPERANDI_HPC_HOME_PATH
+from tests.constants import OPERANDI_TESTS_DIR
+from tests.helpers_asserts import assert_exists_dir
+from tests.helpers_utils import to_asset_path
+from tests.utils.constants import OPERANDI_HPC_HOME_PATH
 
 
 def test_hpc_connector_put_directory(fixture_hpc_connector):

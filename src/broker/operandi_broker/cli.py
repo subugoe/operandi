@@ -5,25 +5,20 @@ from time import sleep
 from os import environ
 
 import ocrd_webapi.database as db
+from operandi_utils import reconfigure_all_loggers
 
 from .broker import ServiceBroker
 from .constants import (
     DEFAULT_QUEUE_FOR_HARVESTER,
     DEFAULT_QUEUE_FOR_USERS,
-    HPC_HOST,
-    HPC_KEY_PATH,
-    HPC_USERNAME,
     LOG_FOLDER_PATH,
     LOG_LEVEL,
 )
-from .logging import reconfigure_all_loggers
+
 
 __all__ = ['cli']
 
 
-# ----------------------------------------------------------------------
-# operandi-broker
-# ----------------------------------------------------------------------
 @click.group()
 @click.version_option()
 def cli(**kwargs):  # pylint: disable=unused-argument
@@ -33,10 +28,7 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 
 
 @cli.command('start')
-@click.option('--hpc-host', default=HPC_HOST, help='The host of the HPC.')
-@click.option('--hpc-username', default=HPC_USERNAME, help='The username used to login to the HPC.')
-@click.option('--hpc-key-path', default=HPC_KEY_PATH, help='The path of the key file used for authentication.')
-def start_broker(hpc_host, hpc_username, hpc_key_path):
+def start_broker():
     db_url = environ.get("OPERANDI_URL_DB", "mongodb://localhost:27018")
     if not db_url:
         raise ValueError("The MongoDB URL is not set! Set the environment variable OPERANDI_URL_DB")
@@ -57,10 +49,7 @@ def start_broker(hpc_host, hpc_username, hpc_key_path):
         db_url=db_url,
         rmq_host=rmq_host,
         rmq_port=rmq_port,
-        rmq_vhost='/',
-        hpc_host=hpc_host,
-        hpc_username=hpc_username,
-        hpc_key_path=hpc_key_path
+        rmq_vhost='/'
     )
 
     # A list of queues for which a worker process should be created

@@ -11,16 +11,13 @@ from time import sleep
 import ocrd_webapi.database as db
 from ocrd_webapi.managers.nextflow_manager import NextflowManager
 from ocrd_webapi.rabbitmq import RMQConsumer
-from .constants import (
-    LOG_FOLDER_PATH,
-    LOG_LEVEL_WORKER,
-    HPC_HOST,
-    HPC_USERNAME,
-    HPC_KEY_PATH
+
+from operandi_utils import (
+    HPCConnector,
+    reconfigure_all_loggers
 )
 
-from .logging import reconfigure_all_loggers
-from .hpc_connector import HPCConnector
+from .constants import LOG_FOLDER_PATH, LOG_LEVEL_WORKER
 
 
 # Each worker class listens to a specific queue,
@@ -73,7 +70,7 @@ class Worker:
             if not self.native:
                 self.hpc_connector = HPCConnector()
                 if self.hpc_connector:
-                    self.hpc_connector.connect_to_hpc(HPC_HOST, HPC_USERNAME, HPC_KEY_PATH)
+                    self.hpc_connector.connect_to_hpc()
                     self.log.info("HPC connection successful.")
                     self.log.info("Worker runs jobs in HPC.")
                 else:

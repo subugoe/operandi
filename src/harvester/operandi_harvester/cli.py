@@ -1,18 +1,14 @@
 import click
 from .harvester import Harvester
 
-
 __all__ = ['cli']
 
 
-# ----------------------------------------------------------------------
-# perandi-harvester
-# ----------------------------------------------------------------------
 @click.group()
 @click.version_option()
 def cli(**kwargs):  # pylint: disable=unused-argument
     """
-    Entry-point of multipurpose CLI for Harvester
+    Entry-point of multipurpose CLI for Operandi Harvester
     """
 
 
@@ -25,11 +21,3 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 def start_harvesting(limit, address):
     harvester = Harvester(server_address=address)
     harvester.start_harvesting(limit)
-
-
-# TODO: Not functional yet
-"""
-@harvester_cli.command('stop')
-def stop_harvesting():
-  print(f"Stopped harvesting.")
-"""

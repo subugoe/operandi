@@ -6,16 +6,16 @@ ENV PYTHONIOENCODING utf8
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-COPY ./service_broker/ /usr/src/service_broker
+COPY broker/ /usr/src/broker
+COPY utils/ /usr/src/utils
 
-WORKDIR /usr/src/service_broker/service_broker
+WORKDIR /usr/src/broker/operandi_broker
 
 # install dependencies    
 RUN apt-get update && apt-get -y install \
     git \
     curl \
     git  \
-    libmagic-dev \
     make \
     openjdk-11-jdk \
     python3 \
@@ -42,7 +42,9 @@ RUN mv nextflow /usr/local/bin/
 
 RUN python3 -m pip install --upgrade pip setuptools
 RUN pip3 install -U pip wheel
-RUN python3 -m pip install -r /usr/src/service_broker/requirements.txt
-RUN pip3 install /usr/src/service_broker
+RUN python3 -m pip install -r /usr/src/utils/requirements.txt
+RUN pip3 install /usr/src/utils
+RUN python3 -m pip install -r /usr/src/broker/requirements.txt
+RUN pip3 install /usr/src/broker
 
 RUN echo "Operandi broker build success"

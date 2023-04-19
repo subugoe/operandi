@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from pytest import fixture
 
-from operandi_server.server import OperandiServer
+from operandi_server import OperandiServer
 from ..helpers_asserts import assert_availability_db
 from ..helpers_utils import allocate_asset
 from ..constants import OCRD_WEBAPI_DB_URL

@@ -2,21 +2,18 @@ import click
 from os import environ
 import uvicorn
 
+from operandi_utils import reconfigure_all_loggers
 from .constants import (
     LOG_FILE_PATH,
     LOG_LEVEL,
     SERVER_HOST as HOST,
     SERVER_PORT as PORT,
 )
-from .logging import reconfigure_all_loggers
 from .server import OperandiServer
 
 __all__ = ['cli']
 
 
-# ----------------------------------------------------------------------
-# operandi-server
-# ----------------------------------------------------------------------
 @click.group()
 @click.version_option()
 def cli(**kwargs):  # pylint: disable=unused-argument
