@@ -5,7 +5,6 @@ from os import getppid, setsid, makedirs, symlink
 from os.path import dirname
 from shutil import rmtree
 from sys import exit
-from time import sleep
 from pathlib import Path
 
 import ocrd_webapi.database as db
@@ -68,6 +67,8 @@ class Worker:
             if not self.native:
                 self.hpc_connector = HPCConnector()
                 if self.hpc_connector:
+                    self.hpc_connector.connect_to_hpc_io_transfer()
+                    self.log.info("HPC transfer connection successful.")
                     self.hpc_connector.connect_to_hpc()
                     self.log.info("HPC connection successful.")
                     self.log.info("Worker runs jobs in HPC.")
@@ -225,7 +226,7 @@ class Worker:
         try:
             # TODO: Use the actual nextflow workflow script here,
             #  instead of using the nextflow_workflows/template_workflow.nf
-            slurm_job_return_code = self.trigger_slurm_job(
+            slurm_job_return_code = self.prepare_and_trigger_slurm_job(
                 nf_workflow_script=workflow_script_path,
                 workspace_dir=workspace_path,
                 job_dir=job_dir,
@@ -294,7 +295,7 @@ class Worker:
         exit(0)
 
     # TODO: This should be further refined, currently it's just everything in one place
-    def trigger_slurm_job(self, workspace_dir, job_dir, job_id, input_file_grp, nf_workflow_script=None):
+    def prepare_and_trigger_slurm_job(self, workspace_dir, job_dir, job_id, input_file_grp, nf_workflow_script=None) -> int:
         batch_script_id = "submit_workflow_job.sh"
         src_batch_script_path = f"{dirname(__file__)}/batch_scripts/{batch_script_id}"
         dst_batch_script_path = f"{self.hpc_connector.hpc_home_path}/batch_scripts/{batch_script_id}"
@@ -334,47 +335,30 @@ class Worker:
         # submit_slurm_workspace() method
         batch_script_path = f"{self.hpc_connector.hpc_home_path}/batch_scripts/{batch_script_id}"
 
-        ssh_command = "bash -lc"
-        ssh_command += " 'sbatch"
-        ssh_command += f" {batch_script_path}"
-        ssh_command += f" {job_id}"
-        ssh_command += f" {nextflow_script_id}"
-        ssh_command += f" {input_file_grp}'"
+        slurm_job_id = self.hpc_connector.trigger_slurm_job(
+            batch_script_path=batch_script_path,
+            workflow_job_id=job_id,
+            nextflow_script_id=nextflow_script_id,
+            input_file_grp=input_file_grp
+        )
 
-        # TODO: Non-blocking process in the background must be started instead
-        # TODO: The results of the output, err, and return_code must be written to a file
-        output, err, return_code = self.hpc_connector.execute_blocking(ssh_command)
-        slurm_job_id = output.split(' ')[-1]
+        finished_successfully = self.hpc_connector.poll_till_end_slurm_job_state(
+            slurm_job_id=slurm_job_id,
+            interval=10,
+            timeout=1800  # seconds, i.e., 30 minutes
+        )
 
-        self.log.info(f"Sbatch stdout: {output}")
-        self.log.info(f"Sbatch job id: {slurm_job_id}")
-        self.log.info(f"Sbatch stderr: {err}")
-        self.log.info(f"Sbatch return code: {return_code}")
+        if finished_successfully:
+            # Get the parent directory of the received job_dir
+            job_dir_parent = Path(job_dir).parent.absolute()
 
-        sacct_command = "bash -lc"
-        sacct_command += f" 'sacct -j {slurm_job_id} --format=jobid,state,exitcode'"
+            # Get the result dir from the HPC home folder
+            self.hpc_connector.get_directory(source=dst_slurm_workspace, destination=job_dir_parent, recursive=True)
 
-        while True:
-            sleep(5)
-            sacct_output, sacct_err, sacct_return_code = self.hpc_connector.execute_blocking(sacct_command)
-
-            slurm_job_state = sacct_output.split('\n')[-1].split()[1]
-            self.log.info(f"Sacct job state: {slurm_job_state}")
-            if not slurm_job_state:
-                continue
-
-            slurm_waiting_states = ["PENDING", "RUNNING", "REQUEUED", "RESIZING"]
-            if slurm_job_state not in slurm_waiting_states:
-                break
-
-        # Get the parent directory of the received job_dir
-        job_dir_parent = Path(job_dir).parent.absolute()
-
-        # Get the result dir from the HPC home folder
-        self.hpc_connector.get_directory(source=dst_slurm_workspace, destination=job_dir_parent, recursive=True)
-
-        # Delete the result dir from the HPC home folder
-        self.hpc_connector.execute_blocking(f"bash -lc 'rm -rf {dst_slurm_workspace}'")
-        # Delete the previously created symlink directory
-        rmtree(symlink_job_id_dir, ignore_errors=True)
-        return return_code
+            # Delete the result dir from the HPC home folder
+            self.hpc_connector.execute_blocking(f"bash -lc 'rm -rf {dst_slurm_workspace}'")
+            # Delete the previously created symlink directory
+            rmtree(symlink_job_id_dir, ignore_errors=True)
+        else:
+            raise Exception(f"Slurm job has failed: {slurm_job_id}")
+        return 0
