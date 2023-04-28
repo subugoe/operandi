@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --constraint scratch
 #SBATCH --partition medium
-#SBATCH --cpus-per-task 1
-#SBATCH --mem 2G
+#SBATCH --cpus-per-task 8
+#SBATCH --mem 32G
 #SBATCH --output ./jobs_output/workflow-job-%J.txt
 
 # Parameters are as follows:
@@ -25,6 +25,11 @@ module load nextflow
 SIF_PATH="/scratch1/users/mmustaf/ocrd_all_image_2023_04_17_1422.sif"
 HOME_BASE="/home/users/${USER}/workflow_jobs"
 SCRATCH_BASE="/scratch1/users/${USER}/workflow_jobs"
+
+if [ ! -f "${SIF_PATH}" ]; then
+  echo "Required ocrd_all_image sif file not found at: ${SIF_PATH}"
+  exit 1
+fi
 
 if [ ! -d "${SCRATCH_BASE}" ]; then
   mkdir -p "${SCRATCH_BASE}"
