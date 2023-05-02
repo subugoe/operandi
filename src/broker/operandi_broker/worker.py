@@ -306,7 +306,7 @@ class Worker:
             src_nextflow_script_path = nf_workflow_script
             dst_nextflow_script_path = f"/tmp/{job_id}/{nextflow_script_id}"
         else:
-            nextflow_script_id = "template_workflow.nf"
+            nextflow_script_id = "default_workflow.nf"
             src_nextflow_script_path = f"{dirname(__file__)}/nextflow_workflows/{nextflow_script_id}"
             dst_nextflow_script_path = f"/tmp/{job_id}/{nextflow_script_id}"
 

@@ -37,7 +37,7 @@ class Harvester:
         self.auth = HTTPBasicAuth('test', 'test')
 
     def harvest_once_dummy(self):
-        workflow_id = self._post_workflow(nf_script_name="nextflow_script.nf")
+        workflow_id = self._post_workflow(nf_script_name="default_workflow.nf")
         if not workflow_id:
             raise ValueError("Failed to upload workflow script")
         workspace_id = self._post_workspace(ocrd_zip_name="dummy_ws.ocrd.zip")
