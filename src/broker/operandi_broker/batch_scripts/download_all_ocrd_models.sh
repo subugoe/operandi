@@ -13,7 +13,7 @@ hostname
 slurm_resources
 
 # This sif file is generated with another batch script
-SIF_PATH="/scratch1/users/mmustaf/ocrd_all_image_2023_04_17_1422.sif"
+SIF_PATH="/scratch1/users/${USER}/ocrd_all_image_2023_04_17_1422.sif"
 SCRATCH_OCRD_MODELS_BASE="/scratch1/users/${USER}/ocrd_models"
 
 if [ ! -f "${SIF_PATH}" ]; then

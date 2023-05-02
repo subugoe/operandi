@@ -65,9 +65,9 @@ def test_hpc_connector_get_directory(
     dir_dest = f"{OPERANDI_TESTS_DIR}/workflow_jobs/{workflow_job_id}"
 
     # Remove the dir left from previous tests
-    rmtree(dir_src, ignore_errors=True)
+    rmtree(dir_dest, ignore_errors=True)
     fixture_hpc_io_transfer_connector.get_directory(source=dir_src, destination=dir_dest)
     assert_exists_dir(dir_dest)
 
     # Remove the workflow job folder from the HPC storage
-    fixture_hpc_paramiko_connector.execute_blocking(f"bash -lc 'rm -rf {dir_dest}'")
+    fixture_hpc_paramiko_connector.execute_blocking(f"bash -lc 'rm -rf {dir_src}'")

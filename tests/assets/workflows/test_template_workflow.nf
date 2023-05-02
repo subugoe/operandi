@@ -5,16 +5,19 @@ nextflow.enable.dsl=2
 params.input_file_group = "null"
 params.mets = "null"
 params.volume_map_dir = "null"
+params.models_mapping = "null"
 params.sif_path = "null"
-params.singularity_wrapper = "singularity exec --bind ${params.volume_map_dir} ${params.sif_path}"
+params.singularity_wrapper = "singularity exec --bind ${params.volume_map_dir} --bind ${params.models_mapping} ${params.sif_path}"
 
 log.info """\
-         O P E R A N D I - H P C - T E S T  P I P E L I N E
+         O P E R A N D I - H P C - TEMPLATE  P I P E L I N E
          ===========================================
-         volume_map_dir   : ${params.volume_map_dir}
-         sif_path         : ${params.sif_path}
-         mets             : ${params.mets}
-         input_file_group : ${params.input_file_group}
+         input_file_group    : ${params.input_file_group}
+         mets                : ${params.mets}
+         volume_map_dir      : ${params.volume_map_dir}
+         models_mapping      : ${params.models_mapping}
+         sif_path            : ${params.sif_path}
+         singularity_wrapper : ${params.singularity_wrapper}
          """
          .stripIndent()
 

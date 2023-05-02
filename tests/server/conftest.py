@@ -37,14 +37,14 @@ def fixture_auth():
 
 @fixture(name="workflow1")
 def fixture_workflow1():
-    workflow_fp = allocate_asset("workflows", "nextflow_dummy.nf")
+    workflow_fp = allocate_asset("workflows", "test_template_workflow.nf")
     file = {"nextflow_script": workflow_fp}
     yield file
 
 
 @fixture(name="workflow2")
 def fixture_workflow2():
-    workflow_fp = allocate_asset("workflows", "nextflow_dummy_no_params.nf")
+    workflow_fp = allocate_asset("workflows", "test_default_workflow.nf")
     file = {"nextflow_script": workflow_fp}
     yield file
 
