@@ -6,7 +6,6 @@ from fastapi import FastAPI, status
 
 import ocrd_webapi.database as db
 from ocrd_webapi.exceptions import ResponseException
-from ocrd_webapi.managers import WorkflowManager, WorkspaceManager
 from ocrd_webapi.models import WorkspaceRsrc, WorkflowJobRsrc
 from ocrd_webapi.rabbitmq import RMQPublisher
 from ocrd_webapi.routers import discovery, workflow, workspace
@@ -116,9 +115,9 @@ class OperandiServer(FastAPI):
         self.include_webapi_routers()
 
         # Used to extend/overwrite the Workflow routing endpoint of the OCR-D WebAPI
-        self.workflow_manager = WorkflowManager()
+        self.workflow_manager = workflow.workflow_manager
         # Used to extend/overwrite the Workspace routing endpoint of the OCR-D WebAPI
-        self.workspace_manager = WorkspaceManager()
+        self.workspace_manager = workspace.workspace_manager
 
     async def shutdown_event(self):
         # TODO: Gracefully shutdown and clean things here if needed

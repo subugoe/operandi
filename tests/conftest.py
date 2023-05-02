@@ -15,6 +15,9 @@ from .helpers_asserts import assert_availability_db
 def do_before_all_tests():
     rmtree(OPERANDI_TESTS_DIR, ignore_errors=True)
     mkdir(OPERANDI_TESTS_DIR)
+    mkdir(f"{OPERANDI_TESTS_DIR}/jobs")
+    mkdir(f"{OPERANDI_TESTS_DIR}/workflows")
+    mkdir(f"{OPERANDI_TESTS_DIR}/workspaces")
 
 
 @fixture(scope="session")
