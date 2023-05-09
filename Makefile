@@ -103,7 +103,7 @@ start-server-native:
 start-harvester-native:
 	operandi-harvester start-dummy --address http://localhost:8000
 
-run-tests: run-tests-utils run-tests-broker run-tests-harvester run-tests-server
+run-tests: run-tests-broker run-tests-harvester run-tests-server run-tests-utils
 
 run-tests-broker:
 	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \

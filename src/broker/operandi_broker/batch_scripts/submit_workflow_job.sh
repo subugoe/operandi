@@ -11,6 +11,12 @@
 # $2 - Nextflow script id
 # $3 - Entry input file group
 
+SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
+HOME_BASE="/home/users/${USER}/workflow_jobs"
+SCRATCH_BASE="/scratch1/users/${USER}/workflow_jobs"
+OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
+OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
+
 WORKFLOW_JOB_ID=$1
 NEXTFLOW_SCRIPT_ID=$2
 IN_FILE_GRP=$3
@@ -21,12 +27,6 @@ slurm_resources
 module purge
 module load singularity
 module load nextflow
-
-SIF_PATH="/scratch1/users/${USER}/ocrd_all_image_2023_04_17_1422.sif"
-HOME_BASE="/home/users/${USER}/workflow_jobs"
-SCRATCH_BASE="/scratch1/users/${USER}/workflow_jobs"
-OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
-OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
 
 # The SIF file of the OCR-D All docker image must be previously created
 if [ ! -f "${SIF_PATH}" ]; then

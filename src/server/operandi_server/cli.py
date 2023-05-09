@@ -21,8 +21,8 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 @click.option('--host', default="localhost", help='The host of the Operandi Server.')
 @click.option('--port', default="8000", help='The port of the Operandi Server.')
 def start_server(host, port):
-    local_server_url = f"http://{host}:{port}"
-    live_server_url = environ.get("OPERANDI_LIVE_SERVER_URL", f"http://{host}:{port}")
+    local_server_url = environ.get("OPERANDI_LOCAL_SERVER_URL", f"http://{host}:{port}")
+    live_server_url = environ.get("OPERANDI_LIVE_SERVER_URL", local_server_url)
     db_url = environ.get("OCRD_WEBAPI_DB_URL", None)
     if not db_url:
         raise ValueError("The MongoDB URL is not set! Set the environment variable OCRD_WEBAPI_DB_URL")

@@ -8,6 +8,12 @@ def assert_availability_db(url):
     assert response.status_code == 200, f"DB not running on: {url}"
 
 
+def assert_availability_rabbitmq(url):
+    http_url = url.replace("amqp", "http")
+    response = get(http_url)
+    assert response.status_code == 200, f"RabbitMQ Server not running on: {url}"
+
+
 def assert_exists_db_resource(db_resource, resource_key, resource_id):
     assert db_resource, "Resource not existing in the database"
     assert db_resource[resource_key], f"Nonexistent resource key: {resource_key}"

@@ -9,9 +9,13 @@ from .helpers_asserts import (
 )
 
 
-def test_post_workflow_script(operandi, auth, workflow_collection, workflow1):
+def test_post_workflow_script(operandi, auth, workflow_collection, bytes_workflow1):
     # Post a new workflow script
-    response = operandi.post("/workflow", files=workflow1, auth=auth)
+    response = operandi.post(
+        "/workflow",
+        files={"nextflow_script": bytes_workflow1},
+        auth=auth
+    )
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
@@ -21,10 +25,14 @@ def test_post_workflow_script(operandi, auth, workflow_collection, workflow1):
     assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
 
 
-def test_put_workflow_script(operandi, auth, workflow_collection, workflow1, workflow2):
+def test_put_workflow_script(operandi, auth, workflow_collection, bytes_workflow1, bytes_workflow2):
     put_workflow_id = "put_workflow_id"
     # The first put request creates a new workflow
-    response = operandi.put(f"/workflow/{put_workflow_id}", files=workflow1, auth=auth)
+    response = operandi.put(
+        f"/workflow/{put_workflow_id}",
+        files={"nextflow_script": bytes_workflow1},
+        auth=auth
+    )
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
@@ -39,7 +47,11 @@ def test_put_workflow_script(operandi, auth, workflow_collection, workflow1, wor
     assert workflow_path1, "Failed to extract workflow path 1"
 
     # The second put request replaces the previously created workflow
-    response = operandi.put(f"/workflow/{put_workflow_id}", files=workflow2, auth=auth)
+    response = operandi.put(
+        f"/workflow/{put_workflow_id}",
+        files={"nextflow_script": bytes_workflow2},
+        auth=auth
+    )
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
@@ -69,16 +81,22 @@ def _test_delete_workflow_non_existing():
     pass
 
 
-def test_get_workflow_script(operandi, auth, workflow1):
+def test_get_workflow_script(operandi, auth, bytes_workflow1):
     # Post a new workflow script
-    response = operandi.post("/workflow", files=workflow1, auth=auth)
+    response = operandi.post(
+        "/workflow",
+        files={"nextflow_script": bytes_workflow1},
+        auth=auth
+    )
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
 
     # Get the same workflow script
-    headers = {"accept": "text/vnd.ocrd.workflow"}
-    response = operandi.get(f"/workflow/{workflow_id}", headers=headers)
+    response = operandi.get(
+        f"/workflow/{workflow_id}",
+        headers={"accept": "text/vnd.ocrd.workflow"}
+    )
     assert_response_status_code(response.status_code, expected_floor=2)
     print(response.headers)
     assert response.headers.get('content-disposition').find(".nf") > -1, \

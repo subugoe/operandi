@@ -4,6 +4,7 @@ from pathlib import Path
 
 __all__ = [
     "OPERANDI_HPC_HOME_PATH",
+    "OPERANDI_HPC_HOME_PATH_SCRATCH",
     "OPERANDI_HPC_HOST",
     "OPERANDI_HPC_HOST_PROXY",
     "OPERANDI_HPC_HOST_TRANSFER",
@@ -21,5 +22,15 @@ OPERANDI_HPC_HOST: str = environ.get("OPERANDI_HPC_HOST", "login-mdc.hpc.gwdg.de
 OPERANDI_HPC_HOST_PROXY: str = environ.get("OPERANDI_HPC_HOST_PROXY", "login.gwdg.de")
 OPERANDI_HPC_HOST_TRANSFER: str = environ.get("OPERANDI_HPC_HOST_TRANSFER", "transfer.gwdg.de")
 OPERANDI_HPC_USERNAME: str = environ.get("OPERANDI_HPC_USERNAME", "mmustaf")
-OPERANDI_HPC_SSH_KEYPATH: str = environ.get("OPERANDI_HPC_SSH_KEYPATH", f"{Path.home()}/.ssh/gwdg-cluster.pub")
-OPERANDI_HPC_HOME_PATH: str = environ.get("OPERANDI_HPC_HOME_PATH", f"/home/users/{OPERANDI_HPC_USERNAME}")
+OPERANDI_HPC_SSH_KEYPATH: str = environ.get(
+    "OPERANDI_HPC_SSH_KEYPATH",
+    f"{Path.home()}/.ssh/gwdg-cluster.pub"
+)
+OPERANDI_HPC_HOME_PATH: str = environ.get(
+    "OPERANDI_HPC_HOME_PATH",
+    f"/home/users/{OPERANDI_HPC_USERNAME}"
+)
+OPERANDI_HPC_HOME_PATH_SCRATCH: str = environ.get(
+    "OPERANDI_HPC_HOME_PATH_SCRATCH",
+    f"/scratch1/users/{OPERANDI_HPC_USERNAME}"
+)
