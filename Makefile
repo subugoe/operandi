@@ -90,20 +90,20 @@ start-broker-native:
 	OPERANDI_URL_RABBITMQ_SERVER='localhost:5672' \
 	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	OCRD_WEBAPI_DB_NAME='operandi_db' \
+	OCRD_WEBAPI_BASE_DIR='/tmp/operandi-data' \
 	operandi-broker start
 
 start-server-native:
 	OPERANDI_URL_RABBITMQ_SERVER='localhost:5672' \
 	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	OCRD_WEBAPI_DB_NAME='operandi_db' \
-	OPERANDI_URL_RABBITMQ_SERVER='localhost:5672' \
 	OCRD_WEBAPI_BASE_DIR='/tmp/operandi-data' \
 	operandi-server start
 
 start-harvester-native:
 	operandi-harvester start-dummy --address http://localhost:8000
 
-run-tests: run-tests-broker run-tests-harvester run-tests-server run-tests-utils
+run-tests: run-tests-server run-tests-broker run-tests-utils run-tests-harvester
 
 run-tests-broker:
 	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
