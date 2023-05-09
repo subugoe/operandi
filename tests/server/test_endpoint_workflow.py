@@ -1,4 +1,4 @@
-from ..helpers_asserts import (
+from tests.helpers_asserts import (
     assert_exists_db_resource,
     assert_exists_db_resource_not
 )

@@ -1,5 +1,6 @@
 __all__ = [
-    "HPCConnector",
+    "HPCIOTransfer",
+    "HPCExecutor",
     "OPERANDI_VERSION",
     "reconfigure_all_loggers",
     "OPERANDI_LOGS_DIR",
@@ -7,8 +8,9 @@ __all__ = [
     "DEFAULT_QUEUE_FOR_USERS"
 ]
 
-from .constants import OPERANDI_VERSION
-from .hpc_connector import HPCConnector
+from operandi_utils.constants import OPERANDI_VERSION
+from operandi_utils.hpc.executor import HPCExecutor
+from operandi_utils.hpc.io_transfer import HPCIOTransfer
 from .logging import reconfigure_all_loggers
 from .logging_constants import OPERANDI_LOGS_DIR
 from .rabbitmq_constants import (

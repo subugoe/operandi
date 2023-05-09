@@ -1,10 +1,10 @@
 from os.path import join
-from ..constants import (
+from tests.constants import (
     OPERANDI_TESTS_LOCAL_DIR_WORKFLOW_JOBS,
     OPERANDI_TESTS_LOCAL_DIR_WORKFLOWS,
     OPERANDI_TESTS_LOCAL_DIR_WORKSPACES
 )
-from ..helpers_asserts import (
+from tests.helpers_asserts import (
     assert_exists_dir,
     assert_exists_not
 )

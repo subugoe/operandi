@@ -1,5 +1,8 @@
 from pytest import fixture
-from src.utils.operandi_utils import HPCConnector
+from src.utils.operandi_utils import (
+    HPCExecutor,
+    HPCIOTransfer
+)
 from tests.helpers_asserts import assert_exists_file
 from tests.constants import (
     OPERANDI_HPC_HOST,
@@ -15,10 +18,10 @@ from tests.constants import (
 def fixture_hpc_io_transfer_connector():
     assert_exists_file(OPERANDI_HPC_SSH_KEYPATH)
     try:
-        hpc_transfer_connector = HPCConnector(
+        hpc_transfer_connector = HPCIOTransfer(
             hpc_home_path=OPERANDI_HPC_HOME_PATH
         )
-        hpc_transfer_connector.connect_to_hpc_io_transfer(
+        hpc_transfer_connector.connect(
             OPERANDI_HPC_HOST_TRANSFER,
             OPERANDI_HPC_USERNAME,
             OPERANDI_HPC_SSH_KEYPATH
@@ -29,13 +32,11 @@ def fixture_hpc_io_transfer_connector():
 
 
 @fixture(scope="module", name="hpc_command_executor")
-def fixture_hpc_paramiko_connector():
+def fixture_hpc_execution_connector():
     assert_exists_file(OPERANDI_HPC_SSH_KEYPATH)
     try:
-        hpc_paramiko_connector = HPCConnector(
-            hpc_home_path=OPERANDI_HPC_HOME_PATH
-        )
-        hpc_paramiko_connector.connect_to_hpc(
+        hpc_paramiko_connector = HPCExecutor()
+        hpc_paramiko_connector.connect(
             OPERANDI_HPC_HOST,
             OPERANDI_HPC_HOST_PROXY,
             OPERANDI_HPC_USERNAME,

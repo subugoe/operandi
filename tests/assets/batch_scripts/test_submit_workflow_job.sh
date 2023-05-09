@@ -3,23 +3,25 @@
 #SBATCH --partition medium
 #SBATCH --cpus-per-task 2
 #SBATCH --mem 2G
-#SBATCH --output ./tests/workflow_jobs/test_workflow-job-%J.txt
+#SBATCH --output ./operandi_tests/test-slurm-job-%J.txt
 
 # Parameters are as follows:
 # S0 - This batch script
 # $1 - Workflow job id
 # $2 - Nextflow script id
 # $3 - Entry input file group
+# $4 - Workspace id
 
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
-HOME_BASE="/home/users/${USER}/tests/workflow_jobs"
-SCRATCH_BASE="/scratch1/users/${USER}/tests/workflow_jobs"
+HOME_BASE="/home/users/${USER}/operandi_tests/slurm_workspaces"
+SCRATCH_BASE="/scratch1/users/${USER}/operandi_tests/slurm_workspaces"
 OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
 
 WORKFLOW_JOB_ID=$1
 NEXTFLOW_SCRIPT_ID=$2
 IN_FILE_GRP=$3
+WORKSPACE_ID=$4
 
 hostname
 slurm_resources
@@ -62,7 +64,7 @@ nextflow run "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}/${NEXTFLOW_SCRIPT_ID}" \
 --models_mapping "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" \
 --sif_path "${SIF_PATH}" \
 --input_file_group "${IN_FILE_GRP}" \
---mets "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}/data/mets.xml"
+--mets "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}/${WORKSPACE_ID}/mets.xml"
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete

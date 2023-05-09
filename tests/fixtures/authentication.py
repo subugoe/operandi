@@ -1,5 +1,5 @@
 from pytest import fixture
-from ..constants import (
+from tests.constants import (
     OCRD_WEBAPI_PASSWORD,
     OCRD_WEBAPI_USERNAME
 )

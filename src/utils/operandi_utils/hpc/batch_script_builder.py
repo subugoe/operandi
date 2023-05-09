@@ -8,7 +8,7 @@
 # under service_broker/batch_scripts/base_script.sh
 
 from typing import List
-from .hpc_constants import OPERANDI_HPC_USERNAME
+from .constants import OPERANDI_HPC_USERNAME
 
 
 # TODO: This is currently outdated and not used

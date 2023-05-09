@@ -2,11 +2,11 @@ from pytest import fixture
 from fastapi.testclient import TestClient
 
 from operandi_server import OperandiServer
-from ..helpers_asserts import (
+from tests.helpers_asserts import (
     assert_availability_db,
     assert_availability_rabbitmq
 )
-from ..constants import (
+from tests.constants import (
     OCRD_WEBAPI_DB_URL,
     OPERANDI_LIVE_SERVER_ADDR,
     OPERANDI_LOCAL_SERVER_ADDR

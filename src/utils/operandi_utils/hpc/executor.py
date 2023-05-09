@@ -1,56 +1,22 @@
 from os.path import exists, isfile
 import paramiko
-import SSHLibrary
 from time import sleep
 
-from .hpc_constants import (
+from .constants import (
     OPERANDI_HPC_HOST,
     OPERANDI_HPC_HOST_PROXY,
-    OPERANDI_HPC_HOST_TRANSFER,
     OPERANDI_HPC_USERNAME,
-    OPERANDI_HPC_SSH_KEYPATH,
-    OPERANDI_HPC_HOME_PATH
+    OPERANDI_HPC_SSH_KEYPATH
 )
 
 
-# TODO: Refining is needed since the connections were separated
-# TODO: Implement appropriate error handling
-class HPCConnector:
-    def __init__(self, hpc_home_path: str = OPERANDI_HPC_HOME_PATH, scp="ON", scp_preserve_times=True, mode="0755"):
+class HPCExecutor:
+    def __init__(self):
         # TODO: Handle the exceptions properly
-        self.scp = scp
-        self.scp_preserve_times = scp_preserve_times
-        self.mode = mode
-        self.hpc_home_path = hpc_home_path
-        self.__ssh_io_transfer = None
         self.__ssh_paramiko = None
 
-    # This connection is used only
-    # for IO transfers to/from HPC cluster
-    def connect_to_hpc_io_transfer(
-            self,
-            host=OPERANDI_HPC_HOST_TRANSFER,
-            username=OPERANDI_HPC_USERNAME,
-            key_path=OPERANDI_HPC_SSH_KEYPATH
-    ):
-        self.__ssh_io_transfer = SSHLibrary.SSHLibrary()
-        keyfile = self.__check_keyfile_existence(key_path)
-        if not keyfile:
-            print(f"Error: HPC key path does not exist or is not readable!")
-            print(f"Checked path: \n{key_path}")
-            exit(1)
-
-        self.__ssh_io_transfer.open_connection(host=host)
-        self.__ssh_io_transfer.login_with_public_key(
-            username=username,
-            keyfile=keyfile,
-            allow_agent=True
-        )
-
-    # This connection uses proxy jump host to
-    # connect to the front-end node of the HPC cluster
-    def connect_to_hpc(
-            self,
+    @staticmethod
+    def create_proxy_jump(
             host=OPERANDI_HPC_HOST,
             proxy_host=OPERANDI_HPC_HOST_PROXY,
             username=OPERANDI_HPC_USERNAME,
@@ -67,20 +33,42 @@ class HPCConnector:
             username=username,
             key_filename=key_path
         )
-
         jump_box_channel = jump_box.get_transport().open_channel(
             "direct-tcpip",
             (jump_box_private_addr, 22),
             (target_addr, 22)
         )
+        return jump_box_channel
+
+    # This connection uses proxy jump host to
+    # connect to the front-end node of the HPC cluster
+    def connect(
+            self,
+            host=OPERANDI_HPC_HOST,
+            proxy_host=OPERANDI_HPC_HOST_PROXY,
+            username=OPERANDI_HPC_USERNAME,
+            key_path=OPERANDI_HPC_SSH_KEYPATH
+    ):
+        keyfile = self.__check_keyfile_existence(key_path)
+        if not keyfile:
+            print(f"Error: HPC key path does not exist or is not readable!")
+            print(f"Checked path: \n{key_path}")
+            exit(1)
+
+        proxy_channel = self.create_proxy_jump(
+            host=host,
+            proxy_host=proxy_host,
+            username=username,
+            key_path=key_path
+        )
 
         self.__ssh_paramiko = paramiko.SSHClient()
         self.__ssh_paramiko.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.__ssh_paramiko.connect(
-            target_addr,
+            hostname=host,
             username=username,
             key_filename=key_path,
-            sock=jump_box_channel
+            sock=proxy_channel
         )
 
     @staticmethod
@@ -115,7 +103,8 @@ class HPCConnector:
             batch_script_path: str,
             workflow_job_id: str,
             nextflow_script_id: str,
-            input_file_grp: str
+            input_file_grp: str,
+            workspace_id: str
     ) -> str:
 
         command = "bash -lc"
@@ -123,7 +112,8 @@ class HPCConnector:
         command += f" {batch_script_path}"
         command += f" {workflow_job_id}"
         command += f" {nextflow_script_id}"
-        command += f" {input_file_grp}'"
+        command += f" {input_file_grp}"
+        command += f" {workspace_id}'"
 
         output, err, return_code = self.execute_blocking(command)
         slurm_job_id = output[0].strip('\n').split(' ')[-1]
@@ -166,39 +156,3 @@ class HPCConnector:
 
         # Timeout reached
         return False
-
-    def put_file(self, source, destination):
-        self.__ssh_io_transfer.put_file(
-            source=source,
-            destination=destination,
-            mode=self.mode,
-            scp=self.scp,
-            scp_preserve_times=self.scp_preserve_times
-        )
-
-    def put_directory(self, source, destination, recursive=True):
-        self.__ssh_io_transfer.put_directory(
-            source=source,
-            destination=destination,
-            mode=self.mode,
-            recursive=recursive,
-            scp=self.scp,
-            scp_preserve_times=self.scp_preserve_times
-        )
-
-    def get_file(self, source, destination):
-        self.__ssh_io_transfer.get_file(
-            source=source,
-            destination=destination,
-            scp=self.scp,
-            scp_preserve_times=self.scp_preserve_times
-        )
-
-    def get_directory(self, source, destination, recursive=True):
-        self.__ssh_io_transfer.get_directory(
-            source=source,
-            destination=destination,
-            recursive=recursive,
-            scp=self.scp,
-            scp_preserve_times=self.scp_preserve_times
-        )

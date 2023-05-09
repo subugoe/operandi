@@ -16,7 +16,7 @@ setup(
     url='https://github.com/subugoe/operandi',
     license='Apache License 2.0',
     packages=['operandi_broker'],
-    package_data={'': ['batch_scripts/*.sh', 'nextflow_workflows/*.nf']},
+    package_data={},
     install_requires=install_requires,
     entry_points={
         'console_scripts': [

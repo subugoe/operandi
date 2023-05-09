@@ -20,9 +20,9 @@ VD18_METS_EXT: str = ".mets.xml"
 
 # Harvesting related constants
 # This is the time waited between the POST requests to the OPERANDI Server
-WAIT_TIME_BETWEEN_SUBMITS: int = 10  # seconds
+WAIT_TIME_BETWEEN_SUBMITS: int = 15  # seconds
 # This is the time waited between checking the submitted workflow job status
-WAIT_TIME_BETWEEN_POLLS: int = 10  # seconds
+WAIT_TIME_BETWEEN_POLLS: int = 15  # seconds
 
 LOG_FORMAT: str = '%(levelname) -7s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
 LOG_LEVEL: int = logging.INFO

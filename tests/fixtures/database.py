@@ -1,11 +1,11 @@
 from pymongo import MongoClient
 from pytest import fixture
 
-from ..constants import (
+from tests.constants import (
     OCRD_WEBAPI_DB_NAME,
     OCRD_WEBAPI_DB_URL
 )
-from ..helpers_asserts import assert_availability_db
+from tests.helpers_asserts import assert_availability_db
 
 
 @fixture(scope="session")
