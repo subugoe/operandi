@@ -3,7 +3,7 @@
 #SBATCH --partition medium
 #SBATCH --cpus-per-task 16
 #SBATCH --mem 32G
-#SBATCH --time 120
+#SBATCH --time 240
 #SBATCH --output ./jobs_output/create_sif_job-%J.txt
 
 module purge
