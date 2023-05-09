@@ -9,8 +9,7 @@ from tests.constants import (
     OPERANDI_HPC_HOST_PROXY,
     OPERANDI_HPC_HOST_TRANSFER,
     OPERANDI_HPC_SSH_KEYPATH,
-    OPERANDI_HPC_USERNAME,
-    OPERANDI_HPC_HOME_PATH
+    OPERANDI_HPC_USERNAME
 )
 
 
@@ -18,9 +17,7 @@ from tests.constants import (
 def fixture_hpc_io_transfer_connector():
     assert_exists_file(OPERANDI_HPC_SSH_KEYPATH)
     try:
-        hpc_transfer_connector = HPCIOTransfer(
-            hpc_home_path=OPERANDI_HPC_HOME_PATH
-        )
+        hpc_transfer_connector = HPCIOTransfer()
         hpc_transfer_connector.connect(
             OPERANDI_HPC_HOST_TRANSFER,
             OPERANDI_HPC_USERNAME,

@@ -8,5 +8,5 @@ __all__ = [
 
 load_dotenv()
 
-OPERANDI_LOGS_DIR: str = environ.get("OPERANDI_LOGS_DIR", f"{Path.home()}/operandi-logs")
+OPERANDI_LOGS_DIR: str = environ.get("OPERANDI_LOGS_DIR", f"{Path.home()}/operandi_logs")
 Path(OPERANDI_LOGS_DIR).mkdir(parents=True, exist_ok=True)

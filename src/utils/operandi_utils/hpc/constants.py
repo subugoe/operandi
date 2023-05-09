@@ -1,8 +1,12 @@
 from dotenv import load_dotenv
 from os import environ
+from os.path import join
 from pathlib import Path
 
 __all__ = [
+    "OPERANDI_HPC_DIR",
+    "OPERANDI_HPC_DIR_BATCH_SCRIPTS",
+    "OPERANDI_HPC_DIR_SLURM_WORKSPACES",
     "OPERANDI_HPC_HOME_PATH",
     "OPERANDI_HPC_HOME_PATH_SCRATCH",
     "OPERANDI_HPC_HOST",
@@ -34,3 +38,7 @@ OPERANDI_HPC_HOME_PATH_SCRATCH: str = environ.get(
     "OPERANDI_HPC_HOME_PATH_SCRATCH",
     f"/scratch1/users/{OPERANDI_HPC_USERNAME}"
 )
+
+OPERANDI_HPC_DIR = join(OPERANDI_HPC_HOME_PATH, "operandi")
+OPERANDI_HPC_DIR_BATCH_SCRIPTS = join(OPERANDI_HPC_DIR, "batch_scripts")
+OPERANDI_HPC_DIR_SLURM_WORKSPACES = join(OPERANDI_HPC_DIR, "slurm_workspaces")

@@ -6,17 +6,17 @@ from shutil import rmtree
 from typing import Tuple
 
 from .constants import (
+    OPERANDI_HPC_DIR_BATCH_SCRIPTS,
+    OPERANDI_HPC_DIR_SLURM_WORKSPACES,
     OPERANDI_HPC_HOST_TRANSFER,
     OPERANDI_HPC_USERNAME,
-    OPERANDI_HPC_SSH_KEYPATH,
-    OPERANDI_HPC_HOME_PATH
+    OPERANDI_HPC_SSH_KEYPATH
 )
 
 
 class HPCIOTransfer:
     def __init__(
             self,
-            hpc_home_path: str = OPERANDI_HPC_HOME_PATH,
             scp="ON",
             scp_preserve_times=True,
             mode="0755"
@@ -25,7 +25,6 @@ class HPCIOTransfer:
         self.scp = scp
         self.scp_preserve_times = scp_preserve_times
         self.mode = mode
-        self.hpc_home_path = hpc_home_path
         self.__ssh_io_transfer = None
 
     # This connection is used only
@@ -52,7 +51,7 @@ class HPCIOTransfer:
 
     def put_batch_script(self, batch_script_id: str) -> str:
         local_batch_script_path = join(dirname(__file__), "batch_scripts", batch_script_id)
-        hpc_batch_script_path = join(self.hpc_home_path, "operandi", "batch_scripts", batch_script_id)
+        hpc_batch_script_path = join(OPERANDI_HPC_DIR_BATCH_SCRIPTS, batch_script_id)
         self._put_file(
             source=local_batch_script_path,
             destination=hpc_batch_script_path
@@ -80,7 +79,7 @@ class HPCIOTransfer:
             nextflow_script_id = "default_workflow.nf"
             nextflow_script_path = join(dirname(__file__), "nextflow_workflows", nextflow_script_id)
 
-        hpc_slurm_workspace_path = join(self.hpc_home_path, "operandi", "slurm_workspaces", workflow_job_id)
+        hpc_slurm_workspace_path = join(OPERANDI_HPC_DIR_SLURM_WORKSPACES, workflow_job_id)
         # put the nextflow script
         self._put_file(
             source=nextflow_script_path,
