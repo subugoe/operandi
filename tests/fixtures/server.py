@@ -24,7 +24,9 @@ def fixture_operandi_server():
         db_url=OCRD_WEBAPI_DB_URL,
         rmq_host="localhost",
         rmq_port=5672,
-        rmq_vhost="/"
+        rmq_vhost="test",
+        rmq_username="test-session",
+        rmq_password="test-session"
     )
     with TestClient(operandi_app) as client:
         yield client

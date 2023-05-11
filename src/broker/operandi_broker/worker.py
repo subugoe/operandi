@@ -23,7 +23,7 @@ from .constants import (
 # Each worker class listens to a specific queue,
 # consume messages, and process messages.
 class Worker:
-    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, queue_name, native=True):
+    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, rmq_username, rmq_password, queue_name, native=True):
         self.log = logging.getLogger(__name__)
         self.queue_name = queue_name
         self.log_file_path = f"{LOG_FILE_PATH_WORKER_PREFIX}_{queue_name}.log"
@@ -33,8 +33,8 @@ class Worker:
         self.rmq_host = rmq_host
         self.rmq_port = rmq_port
         self.rmq_vhost = rmq_vhost
-        self.rmq_username = "default-consumer"
-        self.rmq_password = "default-consumer"
+        self.rmq_username = rmq_username
+        self.rmq_password = rmq_password
         self.rmq_consumer = None
 
         self.native = native
@@ -296,8 +296,11 @@ class Worker:
         if self.has_consumed_message:
             self.log.info(f"Handling the message failure due to interruption: {signal_name}")
             self.__handle_message_failure(interruption=True)
+
         # TODO: Disconnect the RMQConsumer properly
         # TODO: Clean the remaining leftovers (if any)
+        self.rmq_consumer._channel.close()
+        self.rmq_consumer = None
         self.log.info("Exiting gracefully.")
         exit(0)
 

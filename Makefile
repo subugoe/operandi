@@ -95,6 +95,8 @@ start-broker-native:
 
 start-server-native:
 	OPERANDI_URL_RABBITMQ_SERVER='localhost:5672' \
+	OPERANDI_RABBITMQ_USERNAME='default-publisher' \
+	OPERANDI_RABBITMQ_PASSWORD='default-publisher' \
 	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	OCRD_WEBAPI_DB_NAME='operandi_db' \
 	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_data' \
@@ -110,7 +112,9 @@ run-tests-broker:
 	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
 	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
 	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
-	pytest tests/broker/*.py
+	OCRD_WEBAPI_USERNAME='test' \
+	OCRD_WEBAPI_PASSWORD='test' \
+	pytest tests/broker/test_*.py
 
 run-tests-harvester:
 	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
@@ -119,7 +123,7 @@ run-tests-harvester:
 	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	OCRD_WEBAPI_USERNAME='test' \
 	OCRD_WEBAPI_PASSWORD='test' \
-	pytest tests/harvester/*.py
+	pytest tests/harvester/test_*.py
 
 run-tests-server:
 	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
@@ -128,7 +132,7 @@ run-tests-server:
 	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	OCRD_WEBAPI_USERNAME='test' \
 	OCRD_WEBAPI_PASSWORD='test' \
-	pytest tests/server/*.py
+	pytest tests/server/test_*.py
 
 run-tests-utils:
 	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
@@ -137,7 +141,7 @@ run-tests-utils:
 	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	OCRD_WEBAPI_USERNAME='test' \
 	OCRD_WEBAPI_PASSWORD='test' \
-	pytest tests/utils/*.py
+	pytest tests/utils/test_*.py
 
 pyclean:
 	rm -f **/*.pyc

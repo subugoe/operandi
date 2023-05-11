@@ -90,6 +90,12 @@
     "vhost": "/",
     "durable": false,
     "auto_delete": false
+    },
+    {
+    "name": "operandi-for-harvester",
+    "vhost": "test",
+    "durable": false,
+    "auto_delete": false
     }
   ],
   "exchanges": [],

@@ -46,8 +46,7 @@ def start_broker():
     service_broker = ServiceBroker(
         db_url=db_url,
         rmq_host=rmq_host,
-        rmq_port=rmq_port,
-        rmq_vhost='/'
+        rmq_port=rmq_port
     )
 
     # A list of queues for which a worker process should be created

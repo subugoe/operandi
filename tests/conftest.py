@@ -10,7 +10,10 @@ from .constants import (
 )
 
 pytest_plugins = [
-    "tests.fixtures.database"
+    "tests.fixtures.authentication",
+    "tests.fixtures.database",
+    "tests.fixtures.workflow",
+    "tests.fixtures.workspace"
 ]
 
 

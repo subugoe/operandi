@@ -44,8 +44,7 @@ def start_server(host, port):
         live_server_url=live_server_url,
         db_url=db_url,
         rmq_host=rmq_host,
-        rmq_port=rmq_port,
-        rmq_vhost='/'
+        rmq_port=rmq_port
     )
 
     # Reconfigure all loggers to the same format

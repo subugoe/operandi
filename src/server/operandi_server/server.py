@@ -1,6 +1,7 @@
 import datetime
 import logging
 import json
+from os import environ
 
 from fastapi import FastAPI, status
 
@@ -25,7 +26,17 @@ from .models import WorkflowArguments
 
 
 class OperandiServer(FastAPI):
-    def __init__(self, live_server_url, local_server_url, db_url, rmq_host, rmq_port, rmq_vhost):
+    def __init__(
+            self,
+            live_server_url,
+            local_server_url,
+            db_url,
+            rmq_host,
+            rmq_port,
+            rmq_vhost='/',
+            rmq_username=environ.get("OPERANDI_RABBITMQ_USERNAME", "default-publisher"),
+            rmq_password=environ.get("OPERANDI_RABBITMQ_PASSWORD", "default-publisher")
+    ):
         self.log = logging.getLogger(__name__)
         self.live_server_url = live_server_url
         self.local_server_url = local_server_url
@@ -34,6 +45,8 @@ class OperandiServer(FastAPI):
         self.rmq_host = rmq_host
         self.rmq_port = rmq_port
         self.rmq_vhost = rmq_vhost
+        self.rmq_username = rmq_username
+        self.rmq_password = rmq_password
 
         # These are initialized on startup_event of the server
         self.rmq_publisher = None
@@ -102,8 +115,8 @@ class OperandiServer(FastAPI):
 
         # Connect the publisher to the RabbitMQ Server
         self.connect_publisher(
-            username="default-publisher",
-            password="default-publisher",
+            username=self.rmq_username,
+            password=self.rmq_password,
             enable_acks=True
         )
 

@@ -1,18 +1,28 @@
 import logging
-from os import fork, kill
+from os import environ, fork, kill
 from signal import SIGINT
 
 from .worker import Worker
 
 
 class ServiceBroker:
-    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost):
+    def __init__(
+            self,
+            db_url,
+            rmq_host,
+            rmq_port,
+            rmq_vhost='/',
+            rmq_username=environ.get("OPERANDI_RABBITMQ_USERNAME", "default-consumer"),
+            rmq_password=environ.get("OPERANDI_RABBITMQ_PASSWORD", "default-consumer")
+    ):
         self.log = logging.getLogger(__name__)
 
         self.db_url = db_url
         self.rmq_host = rmq_host
         self.rmq_port = rmq_port
         self.rmq_vhost = rmq_vhost
+        self.rmq_username = rmq_username
+        self.rmq_password = rmq_password
 
         # A dictionary to keep track of queues and worker pids
         # Keys: Each key is a unique queue name
@@ -47,11 +57,13 @@ class ServiceBroker:
                 # Clean unnecessary data
                 # self.queues_and_workers = None
                 child_worker = Worker(
-                    self.db_url,
-                    self.rmq_host,
-                    self.rmq_port,
-                    self.rmq_vhost,
-                    queue_name,
+                    db_url=self.db_url,
+                    rmq_host=self.rmq_host,
+                    rmq_port=self.rmq_port,
+                    rmq_vhost=self.rmq_vhost,
+                    rmq_username=self.rmq_username,
+                    rmq_password=self.rmq_password,
+                    queue_name=queue_name,
                     native=False
                 )
                 child_worker.run()
