@@ -95,8 +95,6 @@ start-broker-native:
 
 start-server-native:
 	OPERANDI_URL_RABBITMQ_SERVER='localhost:5672' \
-	OPERANDI_RABBITMQ_USERNAME='default-publisher' \
-	OPERANDI_RABBITMQ_PASSWORD='default-publisher' \
 	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
 	OCRD_WEBAPI_DB_NAME='operandi_db' \
 	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_data' \
