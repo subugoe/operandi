@@ -1,4 +1,5 @@
 from clint.textui import progress
+from functools import wraps
 from os import makedirs
 from os.path import exists
 from re import match as re_match
@@ -6,6 +7,20 @@ from requests import get, post
 from requests.exceptions import RequestException
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
+
+
+# Based on:
+# https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
+def call_sync(func):
+    import asyncio
+
+    @wraps(func)
+    def func_wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        if asyncio.iscoroutine(result):
+            return asyncio.get_event_loop().run_until_complete(result)
+        return result
+    return func_wrapper
 
 
 def download_mets_file(mets_url, ocrd_workspace_dir):

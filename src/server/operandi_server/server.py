@@ -5,13 +5,6 @@ from os import environ
 
 from fastapi import FastAPI, status
 
-import ocrd_webapi.database as db
-from ocrd_webapi.authentication import (
-    AuthenticationError,
-    authenticate_user,
-    register_user,
-)
-from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.models import WorkspaceRsrc, WorkflowJobRsrc
 from ocrd_webapi.routers import discovery, workflow, workspace
 from ocrd_webapi.utils import bagit_from_url
@@ -20,6 +13,7 @@ from operandi_utils import (
     OPERANDI_VERSION,
     reconfigure_all_loggers
 )
+import operandi_utils.database.database as db
 from operandi_utils.rabbitmq import (
     # Requests coming from the Harvester are sent to this queue
     DEFAULT_QUEUE_FOR_HARVESTER,
@@ -28,7 +22,13 @@ from operandi_utils.rabbitmq import (
     RMQPublisher
 )
 
+from .authentication import (
+    AuthenticationError,
+    authenticate_user,
+    register_user,
+)
 from .constants import LOG_FILE_PATH, LOG_LEVEL
+from .exceptions import ResponseException
 from .models import WorkflowArguments
 
 

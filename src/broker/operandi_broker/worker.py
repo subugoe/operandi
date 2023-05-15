@@ -4,9 +4,8 @@ import signal
 from os import getppid, setsid
 from sys import exit
 
-import ocrd_webapi.database as db
-
 from operandi_utils import reconfigure_all_loggers
+import operandi_utils.database.database as db
 from operandi_utils.hpc import HPCExecutor, HPCIOTransfer
 from operandi_utils.rabbitmq import RMQConsumer
 
