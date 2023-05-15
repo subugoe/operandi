@@ -6,6 +6,11 @@ from os import environ
 from fastapi import FastAPI, status
 
 import ocrd_webapi.database as db
+from ocrd_webapi.authentication import (
+    AuthenticationError,
+    authenticate_user,
+    register_user,
+)
 from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.models import WorkspaceRsrc, WorkflowJobRsrc
 from ocrd_webapi.rabbitmq import RMQPublisher
@@ -112,6 +117,21 @@ class OperandiServer(FastAPI):
 
         # Initiate database client
         await db.initiate_database(self.db_url)
+
+        default_admin_user = environ.get("OCRD_WEBAPI_USERNAME", "test")
+        default_admin_pass = environ.get("OCRD_WEBAPI_PASSWORD", "test")
+
+        # If the default admin user account is not available in the DB, create it
+        try:
+            await authenticate_user(default_admin_user, default_admin_pass)
+        except AuthenticationError:
+            # TODO: Note that this account is never removed from
+            #  the DB automatically in the current implementation
+            await register_user(
+                default_admin_user,
+                default_admin_pass,
+                approved_user=True
+            )
 
         # Connect the publisher to the RabbitMQ Server
         self.connect_publisher(
