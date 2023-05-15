@@ -63,8 +63,7 @@ class ServiceBroker:
                     rmq_vhost=self.rmq_vhost,
                     rmq_username=self.rmq_username,
                     rmq_password=self.rmq_password,
-                    queue_name=queue_name,
-                    native=False
+                    queue_name=queue_name
                 )
                 child_worker.run()
                 exit(0)

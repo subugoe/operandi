@@ -1,7 +1,5 @@
 from datetime import datetime
-from operandi_utils import (
-    OPERANDI_LOGS_DIR
-)
+from operandi_utils import OPERANDI_LOGS_DIR
 
 __all__ = [
     "LOG_LEVEL_BROKER",

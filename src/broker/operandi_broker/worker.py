@@ -5,13 +5,9 @@ from os import getppid, setsid
 from sys import exit
 
 import ocrd_webapi.database as db
-from ocrd_webapi.managers import NextflowManager
 
-from operandi_utils import (
-    HPCExecutor,
-    HPCIOTransfer,
-    reconfigure_all_loggers
-)
+from operandi_utils import reconfigure_all_loggers
+from operandi_utils.hpc import HPCExecutor, HPCIOTransfer
 from operandi_utils.rabbitmq import RMQConsumer
 
 from .constants import (
@@ -23,7 +19,7 @@ from .constants import (
 # Each worker class listens to a specific queue,
 # consume messages, and process messages.
 class Worker:
-    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, rmq_username, rmq_password, queue_name, native=True):
+    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, rmq_username, rmq_password, queue_name):
         self.log = logging.getLogger(__name__)
         self.queue_name = queue_name
         self.log_file_path = f"{LOG_FILE_PATH_WORKER_PREFIX}_{queue_name}.log"
@@ -37,7 +33,6 @@ class Worker:
         self.rmq_password = rmq_password
         self.rmq_consumer = None
 
-        self.native = native
         self.hpc_executor = None
         self.hpc_io_transfer = None
 
@@ -63,33 +58,25 @@ class Worker:
             signal.signal(signal.SIGTERM, self.signal_handler)
             db.sync_initiate_database(self.db_url)
 
-            if not self.native:
-                # Connect the HPC Executor
-                self.hpc_executor = HPCExecutor()
-                if self.hpc_executor:
-                    self.hpc_executor.connect()
-                    self.log.info("HPC executor connection successful.")
-                else:
-                    self.log.error("HPC executor connection has failed.")
-
-                # Connect the HPC IO Transfer
-                self.hpc_io_transfer = HPCIOTransfer()
-                if self.hpc_io_transfer:
-                    self.hpc_io_transfer.connect()
-                    self.log.info("HPC transfer connection successful.")
-                else:
-                    self.log.error("HPC transfer connection has failed.")
-                self.log.info("Worker runs jobs in HPC.")
+            # Connect the HPC Executor
+            self.hpc_executor = HPCExecutor()
+            if self.hpc_executor:
+                self.hpc_executor.connect()
+                self.log.info("HPC executor connection successful.")
             else:
-                self.log.info("Worker runs jobs natively.")
+                self.log.error("HPC executor connection has failed.")
+
+            # Connect the HPC IO Transfer
+            self.hpc_io_transfer = HPCIOTransfer()
+            if self.hpc_io_transfer:
+                self.hpc_io_transfer.connect()
+                self.log.info("HPC transfer connection successful.")
+            else:
+                self.log.error("HPC transfer connection has failed.")
+            self.log.info("Worker runs jobs in HPC.")
 
             self.connect_consumer()
-
-            # Different handlers based on the worker type: native/hpc
-            if self.native:
-                self.configure_consuming(self.queue_name, self.__on_message_consumed_callback)
-            else:
-                self.configure_consuming(self.queue_name, self.__on_message_consumed_callback_hpc)
+            self.configure_consuming(self.queue_name, self.__on_message_consumed_callback_hpc)
 
             self.start_consuming()
         except Exception as e:
@@ -125,6 +112,8 @@ class Worker:
         self.log.info(f"Starting consuming from queue: {self.queue_name}")
         self.rmq_consumer.start_consuming()
 
+    # TODO: Remove, currently left for reference
+    """
     # The callback method provided to the Consumer listener
     # The arguments to this method are passed by the caller
     def __on_message_consumed_callback(self, ch, method, properties, body):
@@ -191,6 +180,7 @@ class Worker:
         self.has_consumed_message = False
         self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
+        """
 
     def __on_message_consumed_callback_hpc(self, ch, method, properties, body):
         # self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
