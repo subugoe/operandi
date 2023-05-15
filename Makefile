@@ -5,6 +5,21 @@ PYTHON = python
 PIP3 = pip3
 PIP3_INSTALL = pip3 install
 
+DB_NAME='operandi_db'
+DB_URL='mongodb://localhost:27018'
+RABBITMQ_URL='localhost:5672'
+BASE_DIR='/tmp/operandi_data'
+
+TEST_DB_NAME='test_operandi_db'
+# TEST_DB_URL='mongodb://141.5.99.32:27018'
+TEST_DB_URL='mongodb://localhost:27018'
+# TEST_RABBITMQ_URL='141.5.99.32:5672'
+TEST_RABBITMQ_URL='localhost:5672'
+TEST_BASE_DIR='/tmp/operandi_tests'
+
+OPERANDI_USERNAME='test'
+OPERANDI_PASSWORD='test'
+
 BUILD_ORDER = src/utils src/server src/broker src/harvester
 UNINSTALL_ORDER = operandi_harvester operandi_broker operandi_server operandi_utils
 
@@ -87,17 +102,17 @@ start-server-docker:
 	docker compose -f ./docker-compose.yml up -d operandi-server
 
 start-broker-native:
-	OPERANDI_URL_RABBITMQ_SERVER='localhost:5672' \
-	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
-	OCRD_WEBAPI_DB_NAME='operandi_db' \
-	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_data' \
+	OPERANDI_URL_RABBITMQ_SERVER=$(RABBITMQ_URL) \
+	OCRD_WEBAPI_DB_URL=$(DB_URL) \
+	OCRD_WEBAPI_DB_NAME=$(DB_NAME) \
+	OCRD_WEBAPI_BASE_DIR=$(BASE_DIR) \
 	operandi-broker start
 
 start-server-native:
-	OPERANDI_URL_RABBITMQ_SERVER='localhost:5672' \
-	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
-	OCRD_WEBAPI_DB_NAME='operandi_db' \
-	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_data' \
+	OPERANDI_URL_RABBITMQ_SERVER=$(RABBITMQ_URL) \
+	OCRD_WEBAPI_DB_URL=$(DB_URL) \
+	OCRD_WEBAPI_DB_NAME=$(DB_NAME) \
+	OCRD_WEBAPI_BASE_DIR=$(BASE_DIR) \
 	operandi-server start
 
 start-harvester-native:
@@ -106,39 +121,43 @@ start-harvester-native:
 run-tests: run-tests-server run-tests-broker run-tests-utils run-tests-harvester
 
 run-tests-broker:
-	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
-	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
-	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
-	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
-	OCRD_WEBAPI_USERNAME='test' \
-	OCRD_WEBAPI_PASSWORD='test' \
+	OPERANDI_URL_RABBITMQ_SERVER=$(TEST_RABBITMQ_URL) \
+	OPERANDI_TESTS_DIR=$(TEST_BASE_DIR) \
+	OCRD_WEBAPI_BASE_DIR=$(TEST_BASE_DIR) \
+	OCRD_WEBAPI_DB_NAME=$(TEST_DB_NAME) \
+	OCRD_WEBAPI_DB_URL=$(TEST_DB_URL) \
+	OCRD_WEBAPI_USERNAME=$(OPERANDI_USERNAME) \
+	OCRD_WEBAPI_PASSWORD=$(OPERANDI_PASSWORD) \
 	pytest tests/broker/test_*.py
 
 run-tests-harvester:
-	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
-	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
-	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
-	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
-	OCRD_WEBAPI_USERNAME='test' \
-	OCRD_WEBAPI_PASSWORD='test' \
+	OPERANDI_URL_RABBITMQ_SERVER=$(TEST_RABBITMQ_URL) \
+	OPERANDI_TESTS_DIR=$(TEST_BASE_DIR) \
+	OCRD_WEBAPI_BASE_DIR=$(TEST_BASE_DIR) \
+	OCRD_WEBAPI_DB_NAME=$(TEST_DB_NAME) \
+	OCRD_WEBAPI_DB_URL=$(TEST_DB_URL) \
+	OCRD_WEBAPI_USERNAME=$(OPERANDI_USERNAME) \
+	OCRD_WEBAPI_PASSWORD=$(OPERANDI_PASSWORD) \
 	pytest tests/harvester/test_*.py
 
 run-tests-server:
-	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
-	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
-	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
-	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
-	OCRD_WEBAPI_USERNAME='test' \
-	OCRD_WEBAPI_PASSWORD='test' \
+	OPERANDI_URL_RABBITMQ_SERVER=$(TEST_RABBITMQ_URL) \
+	OPERANDI_TESTS_DIR=$(TEST_BASE_DIR) \
+	OCRD_WEBAPI_BASE_DIR=$(TEST_BASE_DIR) \
+	OCRD_WEBAPI_DB_NAME=$(TEST_DB_NAME) \
+	OCRD_WEBAPI_DB_URL=$(TEST_DB_URL) \
+	OCRD_WEBAPI_USERNAME=$(OPERANDI_USERNAME) \
+	OCRD_WEBAPI_PASSWORD=$(OPERANDI_PASSWORD) \
 	pytest tests/server/test_*.py
 
 run-tests-utils:
-	OPERANDI_TESTS_DIR='/tmp/operandi_tests' \
-	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_tests' \
-	OCRD_WEBAPI_DB_NAME='test_operandi_db' \
-	OCRD_WEBAPI_DB_URL='mongodb://localhost:27018' \
-	OCRD_WEBAPI_USERNAME='test' \
-	OCRD_WEBAPI_PASSWORD='test' \
+	OPERANDI_URL_RABBITMQ_SERVER=$(TEST_RABBITMQ_URL) \
+	OPERANDI_TESTS_DIR=$(TEST_BASE_DIR) \
+	OCRD_WEBAPI_BASE_DIR=$(TEST_BASE_DIR) \
+	OCRD_WEBAPI_DB_NAME=$(TEST_DB_NAME) \
+	OCRD_WEBAPI_DB_URL=$(TEST_DB_URL) \
+	OCRD_WEBAPI_USERNAME=$(OPERANDI_USERNAME) \
+	OCRD_WEBAPI_PASSWORD=$(OPERANDI_PASSWORD) \
 	pytest tests/utils/test_*.py
 
 pyclean:

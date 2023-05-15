@@ -4,6 +4,7 @@ from os.path import join
 from pathlib import Path
 
 __all__ = [
+    "OCRD_RABBITMQ_URL",
     "OCRD_WEBAPI_DB_NAME",
     "OCRD_WEBAPI_DB_URL",
     "OCRD_WEBAPI_PASSWORD",
@@ -35,6 +36,7 @@ OCRD_WEBAPI_DB_NAME = environ.get("OCRD_WEBAPI_DB_NAME", "test_operandi_db")
 OCRD_WEBAPI_DB_URL = environ.get("OCRD_WEBAPI_DB_URL", "mongodb://localhost:27018")
 OCRD_WEBAPI_USERNAME = environ.get("OCRD_WEBAPI_USERNAME", "test")
 OCRD_WEBAPI_PASSWORD = environ.get("OCRD_WEBAPI_PASSWORD", "test")
+OCRD_RABBITMQ_URL = environ.get("OPERANDI_URL_RABBITMQ_SERVER", "localhost:5672")
 
 # HPC related constants
 # The host must be either `gwdu101.gwdg.de` or `gwdu102.gwdg.de` (to have /scratch1 access)
