@@ -5,9 +5,8 @@ from os import environ
 
 from fastapi import FastAPI, status
 
-from ocrd_webapi.models import WorkspaceRsrc, WorkflowJobRsrc
+
 from ocrd_webapi.routers import discovery, workflow, workspace
-from ocrd_webapi.utils import bagit_from_url
 
 from operandi_utils import (
     OPERANDI_VERSION,
@@ -29,7 +28,12 @@ from .authentication import (
 )
 from .constants import LOG_FILE_PATH, LOG_LEVEL
 from .exceptions import ResponseException
-from .models import WorkflowArguments
+from .models import (
+    WorkflowArguments,
+    WorkflowJobRsrc,
+    WorkspaceRsrc
+)
+from .utils import bagit_from_url
 
 
 class OperandiServer(FastAPI):
