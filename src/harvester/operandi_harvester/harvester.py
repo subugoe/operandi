@@ -22,7 +22,7 @@ from .server_requests import (
     post_workspace
 )
 
-from .utils import is_url_responsive
+from operandi_utils import is_url_responsive
 
 
 class Harvester:
