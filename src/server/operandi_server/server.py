@@ -5,7 +5,12 @@ from os import environ
 
 from fastapi import FastAPI, status
 
-from operandi_utils import OPERANDI_VERSION, reconfigure_all_loggers
+from operandi_utils import (
+    OPERANDI_VERSION,
+    reconfigure_all_loggers,
+    verify_database_uri,
+    verify_and_parse_mq_uri
+)
 import operandi_utils.database.database as db
 from operandi_utils.rabbitmq import (
     # Requests coming from the
@@ -20,7 +25,7 @@ from operandi_utils.rabbitmq import (
 from operandi_server.authentication import (
     AuthenticationError,
     authenticate_user,
-    register_user,
+    register_user
 )
 from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
 from operandi_server.exceptions import ResponseException
@@ -30,7 +35,7 @@ from operandi_server.models import (
     WorkspaceRsrc
 )
 from operandi_server.routers import discovery, workflow, workspace
-from operandi_server.utils import bagit_from_url
+from operandi_server.utils import bagit_from_url, safe_init_logging
 
 
 class OperandiServer(FastAPI):
@@ -38,23 +43,32 @@ class OperandiServer(FastAPI):
             self,
             live_server_url,
             local_server_url,
-            db_url,
-            rmq_host,
-            rmq_port,
-            rmq_vhost='/',
-            rmq_username=environ.get("OPERANDI_RABBITMQ_USERNAME", "default-publisher"),
-            rmq_password=environ.get("OPERANDI_RABBITMQ_PASSWORD", "default-publisher")
+            db_url: str = environ.get(
+                "OCRD_WEBAPI_DB_URL",
+                "mongodb://localhost:27018"
+            ),
+            rabbitmq_url: str = environ.get(
+                "OPERANDI_URL_RABBITMQ_SERVER",
+                "amqp://default-publisher:default-publisher@localhost:5672/"
+            )
     ):
         self.log = logging.getLogger(__name__)
         self.live_server_url = live_server_url
         self.local_server_url = local_server_url
-        self.db_url = db_url
 
-        self.rmq_host = rmq_host
-        self.rmq_port = rmq_port
-        self.rmq_vhost = rmq_vhost
-        self.rmq_username = rmq_username
-        self.rmq_password = rmq_password
+        try:
+            self.db_url = verify_database_uri(db_url)
+            self.log.debug(f'Verified MongoDB URL: {db_url}')
+            rmq_data = verify_and_parse_mq_uri(rabbitmq_url)
+            self.rmq_username = rmq_data['username']
+            self.rmq_password = rmq_data['password']
+            self.rmq_host = rmq_data['host']
+            self.rmq_port = rmq_data['port']
+            self.rmq_vhost = rmq_data['vhost']
+            self.log.debug(f'Verified RabbitMQ Credentials: {self.rmq_username}:{self.rmq_password}')
+            self.log.debug(f'Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
+        except ValueError as e:
+            raise ValueError(e)
 
         # These are initialized on startup_event of the server
         self.rmq_publisher = None
@@ -111,6 +125,9 @@ class OperandiServer(FastAPI):
     async def startup_event(self):
         self.log.info(f"Operandi local server url: {self.local_server_url}")
         self.log.info(f"Operandi live server url: {self.live_server_url}")
+
+        # TODO: Recheck this again...
+        safe_init_logging()
 
         # Reconfigure all loggers to the same format
         reconfigure_all_loggers(
@@ -259,9 +276,6 @@ class OperandiServer(FastAPI):
             port=self.rmq_port,
             vhost=self.rmq_vhost,
         )
-        # TODO: Remove this information before the release
-        self.log.debug(f"RMQPublisher authenticates with username: "
-                       f"{username}, password: {password}")
         self.rmq_publisher.authenticate_and_connect(username=username, password=password)
         if enable_acks:
             self.rmq_publisher.enable_delivery_confirmations()

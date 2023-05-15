@@ -2,27 +2,40 @@ import logging
 from os import environ, fork, kill
 from signal import SIGINT
 
+from operandi_utils import (
+    verify_database_uri,
+    verify_and_parse_mq_uri
+)
 from .worker import Worker
 
 
 class ServiceBroker:
     def __init__(
             self,
-            db_url,
-            rmq_host,
-            rmq_port,
-            rmq_vhost='/',
-            rmq_username=environ.get("OPERANDI_RABBITMQ_USERNAME", "default-consumer"),
-            rmq_password=environ.get("OPERANDI_RABBITMQ_PASSWORD", "default-consumer")
+            db_url: str = environ.get(
+                "OCRD_WEBAPI_DB_URL",
+                "mongodb://localhost:27018"
+            ),
+            rabbitmq_url: str = environ.get(
+                "OPERANDI_URL_RABBITMQ_SERVER",
+                "amqp://default-consumer:default-consumer@localhost:5672/"
+            )
     ):
         self.log = logging.getLogger(__name__)
 
-        self.db_url = db_url
-        self.rmq_host = rmq_host
-        self.rmq_port = rmq_port
-        self.rmq_vhost = rmq_vhost
-        self.rmq_username = rmq_username
-        self.rmq_password = rmq_password
+        try:
+            self.db_url = verify_database_uri(db_url)
+            self.log.debug(f'Verified MongoDB URL: {db_url}')
+            rmq_data = verify_and_parse_mq_uri(rabbitmq_url)
+            self.rmq_username = rmq_data['username']
+            self.rmq_password = rmq_data['password']
+            self.rmq_host = rmq_data['host']
+            self.rmq_port = rmq_data['port']
+            self.rmq_vhost = rmq_data['vhost']
+            self.log.debug(f'Verified RabbitMQ Credentials: {self.rmq_username}:{self.rmq_password}')
+            self.log.debug(f'Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
+        except ValueError as e:
+            raise ValueError(e)
 
         # A dictionary to keep track of queues and worker pids
         # Keys: Each key is a unique queue name

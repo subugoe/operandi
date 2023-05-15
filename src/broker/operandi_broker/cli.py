@@ -1,15 +1,18 @@
 import click
-
-from time import sleep
 from os import environ
+from time import sleep
 
-import ocrd_webapi.database as db
+import operandi_utils.database.database as db
 from operandi_utils import reconfigure_all_loggers
 from operandi_utils.rabbitmq import (
     DEFAULT_QUEUE_FOR_HARVESTER,
     DEFAULT_QUEUE_FOR_USERS
 )
 
+from operandi_utils.validators import (
+    DatabaseParamType,
+    QueueServerParamType
+)
 from .broker import ServiceBroker
 from .constants import LOG_LEVEL_BROKER, LOG_FILE_PATH_BROKER
 
@@ -26,27 +29,24 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 
 
 @cli.command('start')
-def start_broker():
-    db_url = environ.get("OCRD_WEBAPI_DB_URL", None)
-    if not db_url:
-        raise ValueError("The MongoDB URL is not set! Set the environment variable OCRD_WEBAPI_DB_URL")
-
-    # TODO: Currently, this URL consists of only host, port, and vhost
-    #  Ideally, this should be extended to support the full URL
-    rabbitmq_url = environ.get("OPERANDI_URL_RABBITMQ_SERVER", None)
-    if not rabbitmq_url:
-        raise ValueError("The RabbitMQ Server URL is not set! Set the environment variable OPERANDI_URL_RABBITMQ_SERVER")
-
-    splits = rabbitmq_url.split(":")
-    if len(splits) != 2:
-        raise ValueError(f"Wrong RabbitMQ URL: {rabbitmq_url}")
-    rmq_host = splits[0]
-    rmq_port = splits[1]
-
+@click.option('-q', '--queue',
+              default=environ.get(
+                  "OPERANDI_URL_RABBITMQ_SERVER",
+                  "amqp://default-consumer:default-consumer@localhost:5672/"
+              ),
+              help='The URL of the RabbitMQ Server, format: amqp://username:password@host:port/vhost',
+              type=QueueServerParamType())
+@click.option('-d', '--database',
+              default=environ.get(
+                  "OCRD_WEBAPI_DB_URL",
+                  "mongodb://localhost:27018"
+              ),
+              help='The URL of the MongoDB, format: mongodb://host:port',
+              type=DatabaseParamType())
+def start_broker(queue: str, database: str):
     service_broker = ServiceBroker(
-        db_url=db_url,
-        rmq_host=rmq_host,
-        rmq_port=rmq_port
+        db_url=database,
+        rabbitmq_url=queue
     )
 
     # A list of queues for which a worker process should be created
@@ -68,7 +68,7 @@ def start_broker():
     )
 
     try:
-        db.sync_initiate_database(db_url)
+        db.sync_initiate_database(database)
 
         # Sleep the parent process till a signal is invoked
         # Better than sleeping in loop, not tested yet

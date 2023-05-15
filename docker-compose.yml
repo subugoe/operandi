@@ -49,12 +49,14 @@ services:
     ports:
       - "80:8000"
     environment:
+      - OCRD_WEBAPI_USERNAME=test
+      - OCRD_WEBAPI_PASSWORD=test
       - OCRD_WEBAPI_BASE_DIR=/operandi_data
       - OCRD_WEBAPI_DB_URL=mongodb://172.17.0.1:27018
       - OCRD_WEBAPI_SERVER_PATH=http://operandi.ocr-d.de
       - OPERANDI_LIVE_SERVER_URL=http://operandi.ocr-d.de
       - OPERANDI_LOGS_DIR=/operandi_logs
-      - OPERANDI_URL_RABBITMQ_SERVER=rabbit-mq-host:5672
+      - OPERANDI_URL_RABBITMQ_SERVER=amqp://default-publisher:default-publisher@rabbit-mq-host:5672
     volumes:
       - "/operandi_data/:/operandi_data/"
       - "/operandi_logs/:/operandi_logs/"
@@ -76,7 +78,7 @@ services:
     environment:
       - OCRD_WEBAPI_DB_URL=mongodb://172.17.0.1:27018
       - OPERANDI_LOGS_DIR=/operandi_logs
-      - OPERANDI_URL_RABBITMQ_SERVER=rabbit-mq-host:5672
+      - OPERANDI_URL_RABBITMQ_SERVER=amqp://default-consumer:default-consumer@rabbit-mq-host:5672
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/operandi_logs/:/operandi_logs/"

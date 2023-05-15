@@ -78,7 +78,7 @@ def verify_database_uri(mongodb_address: str) -> str:
         # perform validation check
         mongo_uri_parser.parse_uri(uri=mongodb_address, validate=True)
     except Exception as error:
-        raise ValueError(f"The database address '{mongodb_address}' is in wrong format, {error}")
+        raise ValueError(f"The MongoDB address '{mongodb_address}' is in wrong format, {error}")
     return mongodb_address
 
 
@@ -91,7 +91,7 @@ def verify_and_parse_mq_uri(rabbitmq_address: str):
     uri_pattern = r"^(?:([^:\/?#\s]+):\/{2})?(?:([^@\/?#\s]+)@)?([^\/?#\s]+)?(?:\/([^?#\s]*))?(?:[?]([^#\s]+))?\S*$"
     match = re_match(pattern=uri_pattern, string=rabbitmq_address)
     if not match:
-        raise ValueError(f"The message queue server address is in wrong format: '{rabbitmq_address}'")
+        raise ValueError(f"The RabbitMQ server address is in wrong format: '{rabbitmq_address}'")
     url_params = URLParameters(rabbitmq_address)
 
     parsed_data = {
