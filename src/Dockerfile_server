@@ -13,7 +13,6 @@ WORKDIR /usr/src/server/operandi_server
 
 # install dependencies    
 RUN apt-get update && apt-get -y install \
-    git \
     curl \
     git  \
     make \
