@@ -3,4 +3,4 @@ clint==0.5.1
 pydantic>=1.9.1
 python-dotenv>=1.0.0
 click>=7
-ocrd_webapi @ git+https://github.com/OCR-D/ocrd-webapi-implementation.git@v0.10.0#egg=ocrd_webapi
+ocrd_webapi @ git+https://github.com/OCR-D/ocrd-webapi-implementation.git@v0.11.0#egg=ocrd_webapi
