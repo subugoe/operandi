@@ -1,4 +1,4 @@
-from ocrd_webapi.models.base import Resource
+from .base import Resource
 
 
 class WorkspaceRsrc(Resource):

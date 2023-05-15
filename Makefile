@@ -76,8 +76,6 @@ install-dev: uninstall
 # Uninstall the tool
 uninstall:
 	for mod in $(UNINSTALL_ORDER);do $(PIP3) uninstall -y $$mod;done
-	# Uninstall ocr-d webapi to force pulling the newest version
-	$(PIP3) uninstall -y ocrd_webapi
 
 start-all-modules:
 	docker compose -f ./docker-compose_image_based.yml up -d

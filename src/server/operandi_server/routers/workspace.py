@@ -12,14 +12,14 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from ocrd_webapi.exceptions import (
+from operandi_server.exceptions import (
     ResponseException,
     WorkspaceException,
     WorkspaceGoneException,
     WorkspaceNotValidException,
 )
-from ocrd_webapi.managers.workspace_manager import WorkspaceManager
-from ocrd_webapi.models.workspace import WorkspaceRsrc
+from operandi_server.managers import WorkspaceManager
+from operandi_server.models import WorkspaceRsrc
 from .user import user_login
 
 

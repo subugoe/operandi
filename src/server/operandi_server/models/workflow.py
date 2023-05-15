@@ -1,7 +1,7 @@
 from typing import Optional
 
-from ocrd_webapi.models.base import Job, JobState, Resource
-from ocrd_webapi.models.workspace import WorkspaceRsrc
+from .base import Job, JobState, Resource
+from .workspace import WorkspaceRsrc
 
 
 class WorkflowRsrc(Resource):

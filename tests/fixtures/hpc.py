@@ -1,5 +1,5 @@
 from pytest import fixture
-from src.utils.operandi_utils import (
+from operandi_utils.hpc import (
     HPCExecutor,
     HPCIOTransfer
 )

@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 
-from ocrd_webapi.models.base import Job, JobState
-from ocrd_webapi.models.workspace import WorkspaceRsrc
+from .base import Job, JobState
+from .workspace import WorkspaceRsrc
 
 
 # TODO: ProcessorRsrc must inherit Resource, not BaseModel
