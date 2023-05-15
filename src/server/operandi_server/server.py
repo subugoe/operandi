@@ -13,17 +13,19 @@ from ocrd_webapi.authentication import (
 )
 from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.models import WorkspaceRsrc, WorkflowJobRsrc
-from ocrd_webapi.rabbitmq import RMQPublisher
 from ocrd_webapi.routers import discovery, workflow, workspace
 from ocrd_webapi.utils import bagit_from_url
 
 from operandi_utils import (
+    OPERANDI_VERSION,
+    reconfigure_all_loggers
+)
+from operandi_utils.rabbitmq import (
     # Requests coming from the Harvester are sent to this queue
     DEFAULT_QUEUE_FOR_HARVESTER,
     # Requests coming from other users are sent to this queue
     DEFAULT_QUEUE_FOR_USERS,
-    OPERANDI_VERSION,
-    reconfigure_all_loggers
+    RMQPublisher
 )
 
 from .constants import LOG_FILE_PATH, LOG_LEVEL

@@ -6,13 +6,13 @@ from sys import exit
 
 import ocrd_webapi.database as db
 from ocrd_webapi.managers import NextflowManager
-from ocrd_webapi.rabbitmq import RMQConsumer
 
 from operandi_utils import (
     HPCExecutor,
     HPCIOTransfer,
     reconfigure_all_loggers
 )
+from operandi_utils.rabbitmq import RMQConsumer
 
 from .constants import (
     LOG_LEVEL_WORKER,

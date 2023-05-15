@@ -4,10 +4,10 @@ from time import sleep
 from os import environ
 
 import ocrd_webapi.database as db
-from operandi_utils import (
-    DEFAULT_QUEUE_FOR_USERS,
+from operandi_utils import reconfigure_all_loggers
+from operandi_utils.rabbitmq import (
     DEFAULT_QUEUE_FOR_HARVESTER,
-    reconfigure_all_loggers
+    DEFAULT_QUEUE_FOR_USERS
 )
 
 from .broker import ServiceBroker

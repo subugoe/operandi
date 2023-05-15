@@ -27,7 +27,8 @@ __all__ = [
 
     "OPERANDI_TESTS_HPC_DIR",
     "OPERANDI_TESTS_HPC_DIR_BATCH_SCRIPTS",
-    "OPERANDI_TESTS_HPC_DIR_SLURM_WORKSPACES"
+    "OPERANDI_TESTS_HPC_DIR_SLURM_WORKSPACES",
+    "RABBITMQ_TEST_QUEUE_DEFAULT"
 ]
 
 load_dotenv()
@@ -36,7 +37,6 @@ OCRD_WEBAPI_DB_NAME = environ.get("OCRD_WEBAPI_DB_NAME", "test_operandi_db")
 OCRD_WEBAPI_DB_URL = environ.get("OCRD_WEBAPI_DB_URL", "mongodb://localhost:27018")
 OCRD_WEBAPI_USERNAME = environ.get("OCRD_WEBAPI_USERNAME", "test")
 OCRD_WEBAPI_PASSWORD = environ.get("OCRD_WEBAPI_PASSWORD", "test")
-OCRD_RABBITMQ_URL = environ.get("OPERANDI_URL_RABBITMQ_SERVER", "localhost:5672")
 
 # HPC related constants
 # The host must be either `gwdu101.gwdg.de` or `gwdu102.gwdg.de` (to have /scratch1 access)
@@ -70,3 +70,6 @@ OPERANDI_TESTS_LOCAL_DIR_WORKSPACES = join(OPERANDI_TESTS_LOCAL_DIR, "workspaces
 OPERANDI_TESTS_HPC_DIR = join(OPERANDI_HPC_HOME_PATH, "operandi_tests")
 OPERANDI_TESTS_HPC_DIR_BATCH_SCRIPTS = join(OPERANDI_TESTS_HPC_DIR, "batch_scripts")
 OPERANDI_TESTS_HPC_DIR_SLURM_WORKSPACES = join(OPERANDI_TESTS_HPC_DIR, "slurm_workspaces")
+
+OCRD_RABBITMQ_URL = environ.get("OPERANDI_URL_RABBITMQ_SERVER", "localhost:5672")
+RABBITMQ_TEST_QUEUE_DEFAULT = "operandi-test-queue"
