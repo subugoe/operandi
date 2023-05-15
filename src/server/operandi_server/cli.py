@@ -3,8 +3,8 @@ from os import environ
 import uvicorn
 
 from operandi_utils import reconfigure_all_loggers
-from .constants import LOG_FILE_PATH, LOG_LEVEL
-from .server import OperandiServer
+from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
+from operandi_server.server import OperandiServer
 
 __all__ = ['cli']
 

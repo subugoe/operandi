@@ -3,7 +3,7 @@ from random import random
 from typing import Tuple
 
 from operandi_utils.database.database import create_user, get_user
-from .exceptions import AuthenticationError, RegistrationError
+from operandi_server.exceptions import AuthenticationError, RegistrationError
 
 
 async def authenticate_user(email: str, password: str):

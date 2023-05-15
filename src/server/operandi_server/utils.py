@@ -12,8 +12,8 @@ from ocrd.workspace_bagger import WorkspaceBagger
 from ocrd_utils import initLogging
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 
-from .constants import SERVER_URL
-from .exceptions import WorkspaceNotValidException
+from operandi_server.constants import SERVER_URL
+from operandi_server.exceptions import WorkspaceNotValidException
 
 __all__ = [
     "bagit_from_url",
