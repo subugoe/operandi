@@ -1,13 +1,14 @@
 from pytest import fixture
 from operandi_broker import ServiceBroker
-from tests.constants import OCRD_RABBITMQ_URL, OCRD_WEBAPI_DB_URL
+from tests.constants import OPERANDI_DB_URL, OPERANDI_RABBITMQ_URL
 
 
 @fixture(scope="session", name="service_broker")
 def fixture_operandi_broker():
     service_broker = ServiceBroker(
-        db_url=OCRD_WEBAPI_DB_URL,
-        rabbitmq_url=OCRD_RABBITMQ_URL
+        db_url=OPERANDI_DB_URL,
+        rabbitmq_url=OPERANDI_RABBITMQ_URL,
+        test_sbatch=True
     )
     yield service_broker
     service_broker.kill_workers()

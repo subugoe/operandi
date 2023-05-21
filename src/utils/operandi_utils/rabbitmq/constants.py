@@ -1,4 +1,6 @@
+from dotenv import load_dotenv
 import logging
+from os import environ
 
 __all__ = [
     'DEFAULT_EXCHANGER_NAME',
@@ -17,10 +19,15 @@ __all__ = [
     'LOG_LEVEL'
 ]
 
-DEFAULT_EXCHANGER_NAME: str = 'ocrd-network-default'
-DEFAULT_EXCHANGER_TYPE: str = 'direct'
-DEFAULT_QUEUE: str = 'ocrd-network-default'
-DEFAULT_ROUTER: str = 'ocrd-network-default'
+load_dotenv()
+
+DEFAULT_EXCHANGER_TYPE: str = "direct"
+DEFAULT_EXCHANGER_NAME: str = environ.get("OPERANDI_RABBITMQ_EXCHANGE_NAME", "operandi_default")
+DEFAULT_ROUTER: str = environ.get("OPERANDI_RABBITMQ_EXCHANGE_ROUTER", "operandi_default")
+
+DEFAULT_QUEUE: str = environ.get("OPERANDI_RABBITMQ_QUEUE_DEFAULT", "operandi_default_queue")
+DEFAULT_QUEUE_FOR_HARVESTER: str = environ.get("OPERANDI_RABBITMQ_QUEUE_HARVESTER", "operandi_queue_harvester")
+DEFAULT_QUEUE_FOR_USERS: str = environ.get("OPERANDI_RABBITMQ_QUEUE_USERS", "operandi_queue_users")
 
 # 'rabbit-mq-host' when Dockerized
 RABBIT_MQ_HOST: str = 'localhost'
@@ -37,6 +44,3 @@ PREFETCH_COUNT: int = 1
 
 LOG_FORMAT: str = '%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
 LOG_LEVEL: int = logging.WARNING
-
-DEFAULT_QUEUE_FOR_HARVESTER: str = "operandi-for-harvester"
-DEFAULT_QUEUE_FOR_USERS: str = "operandi-for-users"

@@ -18,10 +18,11 @@ from .constants import (
 # Each worker class listens to a specific queue,
 # consume messages, and process messages.
 class Worker:
-    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, rmq_username, rmq_password, queue_name):
+    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, rmq_username, rmq_password, queue_name, test_sbatch=False):
         self.log = logging.getLogger(__name__)
         self.queue_name = queue_name
         self.log_file_path = f"{LOG_FILE_PATH_WORKER_PREFIX}_{queue_name}.log"
+        self.test_sbatch = test_sbatch
 
         self.db_url = db_url
         # Connection to RabbitMQ related parameters
@@ -303,8 +304,14 @@ class Worker:
             input_file_grp,
             nf_workflow_script=None
     ) -> int:
+
+        if self.test_sbatch:
+            batch_script_id = "test_submit_workflow_job.sh"
+        else:
+            batch_script_id = "submit_workflow_job.sh"
+
         hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(
-            batch_script_id="submit_workflow_job.sh"
+            batch_script_id=batch_script_id
         )
 
         hpc_slurm_workspace_path, nextflow_script_id = self.hpc_io_transfer.put_slurm_workspace(

@@ -3,7 +3,7 @@ from os.path import join
 from shutil import rmtree
 from tests.constants import (
     OPERANDI_TESTS_LOCAL_DIR_WORKFLOW_JOBS,
-    OPERANDI_TESTS_HPC_DIR,
+    OPERANDI_HPC_DIR_PROJECT,
     OPERANDI_TESTS_HPC_DIR_BATCH_SCRIPTS,
     OPERANDI_TESTS_HPC_DIR_SLURM_WORKSPACES
 )
@@ -20,7 +20,7 @@ ID_WORKFLOW_JOB_DIR = join(OPERANDI_TESTS_HPC_DIR_SLURM_WORKSPACES, ID_WORKFLOW_
 
 def test_hpc_connector_clean(hpc_command_executor):
     # Remove the tests folder from the HPC environment
-    hpc_command_executor.execute_blocking(f"bash -lc 'rm -rf {OPERANDI_TESTS_HPC_DIR}'")
+    hpc_command_executor.execute_blocking(f"bash -lc 'rm -rf {OPERANDI_HPC_DIR_PROJECT}'")
 
 
 def test_hpc_connector_put_directory(hpc_data_transfer):

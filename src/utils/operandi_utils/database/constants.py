@@ -1,12 +1,9 @@
-from dotenv import load_dotenv
-from os import getenv
+from os import environ
 
 __all__ = [
-    'DB_NAME',
-    'DB_URL'
+    "OPERANDI_DB_NAME",
+    "OPERANDI_DB_URL"
 ]
 
-load_dotenv()
-
-DB_URL: str = getenv("OCRD_WEBAPI_DB_URL", "mongodb://localhost:27018")
-DB_NAME: str = getenv("OCRD_WEBAPI_DB_NAME", "operandi_db")
+OPERANDI_DB_NAME: str = environ.get("OPERANDI_DB_NAME")
+OPERANDI_DB_URL: str = environ.get("OPERANDI_DB_URL")

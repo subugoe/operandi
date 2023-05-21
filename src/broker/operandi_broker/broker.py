@@ -1,5 +1,5 @@
 import logging
-from os import environ, fork, kill
+from os import fork, kill
 from signal import SIGINT
 
 from operandi_utils import (
@@ -10,18 +10,9 @@ from .worker import Worker
 
 
 class ServiceBroker:
-    def __init__(
-            self,
-            db_url: str = environ.get(
-                "OCRD_WEBAPI_DB_URL",
-                "mongodb://localhost:27018"
-            ),
-            rabbitmq_url: str = environ.get(
-                "OPERANDI_URL_RABBITMQ_SERVER",
-                "amqp://default-consumer:default-consumer@localhost:5672/"
-            )
-    ):
+    def __init__(self, db_url: str, rabbitmq_url: str, test_sbatch: bool = False):
         self.log = logging.getLogger(__name__)
+        self.test_sbatch = test_sbatch
 
         try:
             self.db_url = verify_database_uri(db_url)
@@ -76,7 +67,8 @@ class ServiceBroker:
                     rmq_vhost=self.rmq_vhost,
                     rmq_username=self.rmq_username,
                     rmq_password=self.rmq_password,
-                    queue_name=queue_name
+                    queue_name=queue_name,
+                    test_sbatch=self.test_sbatch
                 )
                 child_worker.run()
                 exit(0)

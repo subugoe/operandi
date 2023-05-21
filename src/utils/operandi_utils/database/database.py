@@ -4,7 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import logging
 
 from operandi_utils import call_sync
-from operandi_utils.database.constants import DB_NAME
+from operandi_utils.database.constants import OPERANDI_DB_NAME
 from operandi_utils.database.models import (
     WorkflowDB,
     WorkflowJobDB,
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 async def initiate_database(db_url: str, db_name: str = None, doc_models: List[Document] = None):
     if db_name is None:
-        db_name = DB_NAME
+        db_name = OPERANDI_DB_NAME
     if doc_models is None:
         doc_models = [
             WorkflowDB,
@@ -30,7 +30,7 @@ async def initiate_database(db_url: str, db_name: str = None, doc_models: List[D
         ]
 
     if db_url:
-        logger.info(f"MongoDB Name: {DB_NAME}")
+        logger.info(f"MongoDB Name: {OPERANDI_DB_NAME}")
         logger.info(f"MongoDB URL: {db_url}")
     else:
         logger.error(f"MongoDB URL is invalid!")

@@ -6,12 +6,17 @@ from operandi_utils.rabbitmq import (
     RMQConsumer,
     RMQPublisher
 )
-from tests.constants import OCRD_RABBITMQ_URL, RABBITMQ_TEST_QUEUE_DEFAULT
+from tests.constants import (
+    OPERANDI_RABBITMQ_URL,
+    OPERANDI_RABBITMQ_EXCHANGE_NAME,
+    OPERANDI_RABBITMQ_EXCHANGE_ROUTER,
+    OPERANDI_RABBITMQ_QUEUE_DEFAULT
+)
 
 
 @fixture(scope="session", name='rabbitmq_defaults')
 def fixture_configure_exchange_and_queue():
-    rmq_data = verify_and_parse_mq_uri(OCRD_RABBITMQ_URL)
+    rmq_data = verify_and_parse_mq_uri(OPERANDI_RABBITMQ_URL)
     rmq_username = rmq_data["username"]
     rmq_password = rmq_data["password"]
     rmq_host = rmq_data["host"]
@@ -28,31 +33,31 @@ def fixture_configure_exchange_and_queue():
     temp_channel = RMQConnector.open_blocking_channel(temp_connection)
     RMQConnector.exchange_declare(
         channel=temp_channel,
-        exchange_name=RABBITMQ_TEST_QUEUE_DEFAULT,
+        exchange_name=OPERANDI_RABBITMQ_EXCHANGE_NAME,
         exchange_type="direct",
         durable=False
     )
     RMQConnector.queue_declare(
         channel=temp_channel,
-        queue_name=RABBITMQ_TEST_QUEUE_DEFAULT,
+        queue_name=OPERANDI_RABBITMQ_QUEUE_DEFAULT,
         durable=False
     )
     RMQConnector.queue_bind(
         channel=temp_channel,
-        exchange_name=RABBITMQ_TEST_QUEUE_DEFAULT,
-        queue_name=RABBITMQ_TEST_QUEUE_DEFAULT,
-        routing_key=RABBITMQ_TEST_QUEUE_DEFAULT
+        exchange_name=OPERANDI_RABBITMQ_EXCHANGE_NAME,
+        queue_name=OPERANDI_RABBITMQ_QUEUE_DEFAULT,
+        routing_key=OPERANDI_RABBITMQ_EXCHANGE_ROUTER
     )
     # Clean all messages inside if any from previous tests
     RMQConnector.queue_purge(
         channel=temp_channel,
-        queue_name=RABBITMQ_TEST_QUEUE_DEFAULT
+        queue_name=OPERANDI_RABBITMQ_QUEUE_DEFAULT
     )
 
 
 @fixture(name='rabbitmq_publisher')
 def fixture_rabbitmq_publisher(rabbitmq_defaults):
-    rmq_data = verify_and_parse_mq_uri(OCRD_RABBITMQ_URL)
+    rmq_data = verify_and_parse_mq_uri(OPERANDI_RABBITMQ_URL)
     rmq_username = rmq_data["username"]
     rmq_password = rmq_data["password"]
     rmq_host = rmq_data["host"]
@@ -67,7 +72,7 @@ def fixture_rabbitmq_publisher(rabbitmq_defaults):
 
 @fixture(name='rabbitmq_consumer')
 def fixture_rabbitmq_consumer(rabbitmq_defaults):
-    rmq_data = verify_and_parse_mq_uri(OCRD_RABBITMQ_URL)
+    rmq_data = verify_and_parse_mq_uri(OPERANDI_RABBITMQ_URL)
     rmq_username = rmq_data["username"]
     rmq_password = rmq_data["password"]
     rmq_host = rmq_data["host"]

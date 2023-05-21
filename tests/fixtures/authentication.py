@@ -1,10 +1,10 @@
 from pytest import fixture
 from tests.constants import (
-    OCRD_WEBAPI_PASSWORD,
-    OCRD_WEBAPI_USERNAME
+    OPERANDI_SERVER_DEFAULT_PASSWORD,
+    OPERANDI_SERVER_DEFAULT_USERNAME
 )
 
 
 @fixture(scope="session", name="auth")
 def fixture_auth():
-    yield OCRD_WEBAPI_USERNAME, OCRD_WEBAPI_PASSWORD
+    yield OPERANDI_SERVER_DEFAULT_USERNAME, OPERANDI_SERVER_DEFAULT_PASSWORD

@@ -31,14 +31,14 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 @cli.command('start')
 @click.option('-q', '--queue',
               default=environ.get(
-                  "OPERANDI_URL_RABBITMQ_SERVER",
+                  "OPERANDI_RABBITMQ_URL",
                   "amqp://localhost:5672/"
               ),
               help='The URL of the RabbitMQ Server, format: amqp://username:password@host:port/vhost',
               type=QueueServerParamType())
 @click.option('-d', '--database',
               default=environ.get(
-                  "OCRD_WEBAPI_DB_URL",
+                  "OPERANDI_DB_URL",
                   "mongodb://localhost:27018"
               ),
               help='The URL of the MongoDB, format: mongodb://host:port',

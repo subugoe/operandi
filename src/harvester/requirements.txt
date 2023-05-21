@@ -1,5 +1,4 @@
 requests==2.27.0
 clint==0.5.1
 pydantic>=1.9.1
-python-dotenv>=1.0.0
 click>=7

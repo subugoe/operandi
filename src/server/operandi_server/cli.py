@@ -26,21 +26,21 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 @click.option('--port', default="8000", help='The port of the Operandi Server.')
 @click.option('-q', '--queue',
               default=environ.get(
-                  "OPERANDI_URL_RABBITMQ_SERVER",
+                  "OPERANDI_RABBITMQ_URL",
                   "amqp://localhost:5672/"
               ),
               help='The URL of the RabbitMQ Server, format: amqp://username:password@host:port/vhost',
               type=QueueServerParamType())
 @click.option('-d', '--database',
               default=environ.get(
-                  "OCRD_WEBAPI_DB_URL",
+                  "OPERANDI_DB_URL",
                   "mongodb://localhost:27018"
               ),
               help='The URL of the MongoDB, format: mongodb://host:port',
               type=DatabaseParamType())
 def start_server(host, port, queue: str, database: str):
-    local_server_url = environ.get("OPERANDI_LOCAL_SERVER_URL", f"http://{host}:{port}")
-    live_server_url = environ.get("OPERANDI_LIVE_SERVER_URL", local_server_url)
+    local_server_url = environ.get("OPERANDI_SERVER_URL_LOCAL", f"http://{host}:{port}")
+    live_server_url = environ.get("OPERANDI_SERVER_URL_LIVE", local_server_url)
     operandi_server = OperandiServer(
         local_server_url=local_server_url,
         live_server_url=live_server_url,

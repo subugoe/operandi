@@ -39,19 +39,7 @@ from operandi_server.utils import bagit_from_url, safe_init_logging
 
 
 class OperandiServer(FastAPI):
-    def __init__(
-            self,
-            live_server_url,
-            local_server_url,
-            db_url: str = environ.get(
-                "OCRD_WEBAPI_DB_URL",
-                "mongodb://localhost:27018"
-            ),
-            rabbitmq_url: str = environ.get(
-                "OPERANDI_URL_RABBITMQ_SERVER",
-                "amqp://default-publisher:default-publisher@localhost:5672/"
-            )
-    ):
+    def __init__(self, live_server_url: str, local_server_url: str, db_url: str, rabbitmq_url: str):
         self.log = logging.getLogger(__name__)
         self.live_server_url = live_server_url
         self.local_server_url = local_server_url
@@ -138,8 +126,10 @@ class OperandiServer(FastAPI):
         # Initiate database client
         await db.initiate_database(self.db_url)
 
-        default_admin_user = environ.get("OCRD_WEBAPI_USERNAME", "test")
-        default_admin_pass = environ.get("OCRD_WEBAPI_PASSWORD", "test")
+        default_admin_user = environ.get("OPERANDI_SERVER_DEFAULT_USERNAME")
+        default_admin_pass = environ.get("OPERANDI_SERVER_DEFAULT_PASSWORD")
+        default_harvester_user = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME")
+        default_harvester_password = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD")
 
         # If the default admin user account is not available in the DB, create it
         try:
@@ -150,6 +140,18 @@ class OperandiServer(FastAPI):
             await register_user(
                 default_admin_user,
                 default_admin_pass,
+                approved_user=True
+            )
+
+        # If the default admin user account is not available in the DB, create it
+        try:
+            await authenticate_user(default_harvester_user, default_harvester_password)
+        except AuthenticationError:
+            # TODO: Note that this account is never removed from
+            #  the DB automatically in the current implementation
+            await register_user(
+                default_harvester_user,
+                default_harvester_password,
                 approved_user=True
             )
 

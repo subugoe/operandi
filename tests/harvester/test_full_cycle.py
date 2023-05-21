@@ -2,8 +2,9 @@ from os.path import join
 from time import sleep
 
 from operandi_harvester import Harvester
-from tests.constants import OPERANDI_TESTS_LOCAL_DIR
+from tests.constants import OPERANDI_SERVER_BASE_DIR
 from tests.server.helpers_asserts import assert_response_status_code
+from ..constants import OPERANDI_RABBITMQ_QUEUE_HARVESTER
 
 
 def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_workspace1):
@@ -12,7 +13,7 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
 
     # Create a background service worker
     service_broker.create_worker_process(
-        queue_name="operandi-for-harvester"
+        queue_name=OPERANDI_RABBITMQ_QUEUE_HARVESTER
     )
 
     """
@@ -80,7 +81,7 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
         headers={'accept': 'application/vnd.zip'},
         auth=auth
     )
-    zip_local_path = join(OPERANDI_TESTS_LOCAL_DIR, f"{workflow_job_id}.ocrd.zip")
+    zip_local_path = join(OPERANDI_SERVER_BASE_DIR, f"{workflow_job_id}.ocrd.zip")
     with open(zip_local_path, 'wb') as filePtr:
         for chunk in response.iter_bytes(chunk_size=1024):
             if chunk:

@@ -26,7 +26,7 @@ from operandi_utils import is_url_responsive
 
 
 class Harvester:
-    def __init__(self, server_address: str, auth_username: str = 'test', auth_password: str = 'test'):
+    def __init__(self, server_address: str, auth_username: str, auth_password: str):
         self.logger = logging.getLogger(__name__)
         logging.getLogger(__name__).setLevel(LOG_LEVEL)
         logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)

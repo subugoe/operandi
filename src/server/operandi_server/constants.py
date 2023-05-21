@@ -17,4 +17,4 @@ LOG_FILE_PATH: str = f"{OPERANDI_LOGS_DIR}/server_{current_time}.log"
 LOG_LEVEL: str = "INFO"
 
 # The SERVER_URL, BASE_DIR and *_ROUTERS are used by the ResourceManagers
-SERVER_URL: str = getenv("OCRD_WEBAPI_SERVER_PATH", "http://localhost:8000")
+SERVER_URL: str = getenv("OPERANDI_SERVER_URL_LIVE")

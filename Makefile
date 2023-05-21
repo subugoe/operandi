@@ -1,5 +1,3 @@
-export
-
 SHELL = /bin/bash
 PYTHON = python
 PIP3 = pip3
@@ -7,6 +5,16 @@ PIP3_INSTALL = pip3 install
 
 BUILD_ORDER = src/utils src/server src/broker src/harvester
 UNINSTALL_ORDER = operandi_harvester operandi_broker operandi_server operandi_utils
+
+# Load env file if available
+ifneq (,$(wildcard ./.env))
+    include .env
+endif
+
+# Load the test env file if available
+ifneq (,$(wildcard ./tests/.env))
+    include ./tests/.env
+endif
 
 help:
 	@echo ""
@@ -31,6 +39,7 @@ help:
 	@echo " clean-all-modules       Clean all image based docker modules"
 	@echo ""
 	@echo " In order to run the tests, MongoDB must be running on port 27018"
+	@echo " In order to run the tests, RabbitMQ Server must be running on port 5672"
 	@echo ""
 	@echo " run-tests               Run all tests"
 	@echo " run-tests-broker        Run all broker tests"
@@ -85,60 +94,33 @@ start-server-docker:
 	docker compose -f ./docker-compose.yml up -d operandi-server
 
 start-broker-native:
-	OPERANDI_URL_RABBITMQ_SERVER="amqp://default-consumer:default-consumer@localhost:5672" \
-	OCRD_WEBAPI_DB_URL="mongodb://localhost:27018" \
-	OCRD_WEBAPI_DB_NAME='operandi_db' \
-	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_data' \
+	export $(shell sed 's/=.*//' .env)
 	operandi-broker start
 
 start-server-native:
-	OPERANDI_URL_RABBITMQ_SERVER="amqp://default-publisher:default-publisher@localhost:5672" \
-	OCRD_WEBAPI_DB_URL="mongodb://localhost:27018" \
-	OCRD_WEBAPI_DB_NAME='operandi_db' \
-	OCRD_WEBAPI_BASE_DIR='/tmp/operandi_data' \
-	OCRD_WEBAPI_USERNAME='test' \
-	OCRD_WEBAPI_PASSWORD='test' \
+	export $(shell sed 's/=.*//' .env)
 	operandi-server start
 
 start-harvester-native:
+	export $(shell sed 's/=.*//' .env)
 	operandi-harvester start-dummy --address http://localhost:8000
 
 run-tests: run-tests-server run-tests-broker run-tests-utils run-tests-harvester
 
-TEST_DB_NAME='test_operandi_db'
-TEST_DB_URL='mongodb://141.5.99.32:27018'
-TEST_RABBITMQ_URL='amqp://test-session:test-session@141.5.99.32:5672/test'
-TEST_BASE_DIR='/tmp/operandi_tests'
-
 run-tests-broker:
-	OPERANDI_URL_RABBITMQ_SERVER=$(TEST_RABBITMQ_URL) \
-	OPERANDI_TESTS_DIR=$(TEST_BASE_DIR) \
-	OCRD_WEBAPI_BASE_DIR=$(TEST_BASE_DIR) \
-	OCRD_WEBAPI_DB_NAME=$(TEST_DB_NAME) \
-	OCRD_WEBAPI_DB_URL=$(TEST_DB_URL) \
+	export $(shell sed 's/=.*//' ./tests/.env)
 	pytest tests/broker/test_*.py
 
 run-tests-harvester:
-	OCRD_WEBAPI_USERNAME='test' \
-	OCRD_WEBAPI_PASSWORD='test' \
+	export $(shell sed 's/=.*//' ./tests/.env)
 	pytest tests/harvester/test_*.py
 
 run-tests-server:
-	OPERANDI_URL_RABBITMQ_SERVER=$(TEST_RABBITMQ_URL) \
-	OPERANDI_TESTS_DIR=$(TEST_BASE_DIR) \
-	OCRD_WEBAPI_BASE_DIR=$(TEST_BASE_DIR) \
-	OCRD_WEBAPI_DB_NAME=$(TEST_DB_NAME) \
-	OCRD_WEBAPI_DB_URL=$(TEST_DB_URL) \
-	OCRD_WEBAPI_USERNAME='test' \
-	OCRD_WEBAPI_PASSWORD='test' \
+	export $(shell sed 's/=.*//' ./tests/.env)
 	pytest tests/server/test_*.py
 
 run-tests-utils:
-	OPERANDI_URL_RABBITMQ_SERVER=$(TEST_RABBITMQ_URL) \
-	OPERANDI_TESTS_DIR=$(TEST_BASE_DIR) \
-	OCRD_WEBAPI_BASE_DIR=$(TEST_BASE_DIR) \
-	OCRD_WEBAPI_DB_NAME=$(TEST_DB_NAME) \
-	OCRD_WEBAPI_DB_URL=$(TEST_DB_URL) \
+	export $(shell sed 's/=.*//' ./tests/.env)
 	pytest tests/utils/test_*.py
 
 pyclean:
