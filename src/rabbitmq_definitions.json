@@ -80,19 +80,25 @@
   "policies": [],
   "queues": [
     {
-    "name": "operandi-for-users",
+    "name": "operandi_queue_users",
     "vhost": "/",
     "durable": false,
     "auto_delete": false
     },
     {
-    "name": "operandi-for-harvester",
+    "name": "operandi_queue_harvester",
     "vhost": "/",
     "durable": false,
     "auto_delete": false
     },
     {
-    "name": "operandi-for-harvester",
+    "name": "operandi_queue_users",
+    "vhost": "test",
+    "durable": false,
+    "auto_delete": false
+    },
+    {
+    "name": "operandi_queue_harvester",
     "vhost": "test",
     "durable": false,
     "auto_delete": false
