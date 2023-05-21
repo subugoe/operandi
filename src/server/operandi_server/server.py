@@ -126,32 +126,22 @@ class OperandiServer(FastAPI):
         # Initiate database client
         await db.initiate_database(self.db_url)
 
-        default_admin_user = environ.get("OPERANDI_SERVER_DEFAULT_USERNAME")
-        default_admin_pass = environ.get("OPERANDI_SERVER_DEFAULT_PASSWORD")
-        default_harvester_user = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME")
-        default_harvester_password = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD")
+        default_admin_user = environ.get("OPERANDI_SERVER_DEFAULT_USERNAME", None)
+        default_admin_pass = environ.get("OPERANDI_SERVER_DEFAULT_PASSWORD", None)
+        default_harvester_user = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME", None)
+        default_harvester_pass = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD", None)
 
-        # If the default admin user account is not available in the DB, create it
-        try:
-            await authenticate_user(default_admin_user, default_admin_pass)
-        except AuthenticationError:
-            # TODO: Note that this account is never removed from
-            #  the DB automatically in the current implementation
-            await register_user(
-                default_admin_user,
-                default_admin_pass,
+        if default_admin_user and default_admin_pass:
+            await self.create_user_if_not_available(
+                username=default_admin_user,
+                password=default_admin_pass,
                 approved_user=True
             )
 
-        # If the default admin user account is not available in the DB, create it
-        try:
-            await authenticate_user(default_harvester_user, default_harvester_password)
-        except AuthenticationError:
-            # TODO: Note that this account is never removed from
-            #  the DB automatically in the current implementation
-            await register_user(
-                default_harvester_user,
-                default_harvester_password,
+        if default_harvester_user and default_harvester_pass:
+            await self.create_user_if_not_available(
+                username=default_harvester_user,
+                password=default_harvester_pass,
                 approved_user=True
             )
 
@@ -177,6 +167,20 @@ class OperandiServer(FastAPI):
     async def shutdown_event(self):
         # TODO: Gracefully shutdown and clean things here if needed
         self.log.info(f"The Operandi Server is shutting down.")
+
+    @staticmethod
+    async def create_user_if_not_available(username: str, password: str, approved_user: bool):
+        # If the account is not available in the DB, create it
+        try:
+            await authenticate_user(username, password)
+        except AuthenticationError:
+            # TODO: Note that this account is never removed from
+            #  the DB automatically in the current implementation
+            await register_user(
+                username,
+                password,
+                approved_user=approved_user
+            )
 
     async def home(self):
         message = f"The home page of the {self.title}"
