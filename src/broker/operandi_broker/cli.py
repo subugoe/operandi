@@ -32,7 +32,7 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 @click.option('-q', '--queue',
               default=environ.get(
                   "OPERANDI_URL_RABBITMQ_SERVER",
-                  "amqp://default-consumer:default-consumer@localhost:5672/"
+                  "amqp://localhost:5672/"
               ),
               help='The URL of the RabbitMQ Server, format: amqp://username:password@host:port/vhost',
               type=QueueServerParamType())
