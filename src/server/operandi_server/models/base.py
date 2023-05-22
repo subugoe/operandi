@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, constr
 from typing import Any, Dict, Optional
+from typing_extensions import Annotated
 
 
 class Resource(BaseModel):
@@ -21,7 +22,7 @@ class Resource(BaseModel):
 
 
 class JobState(BaseModel):
-    __root__: constr(regex=r'^(QUEUED|RUNNING|STOPPED|SUCCESS)')
+    __root__: Annotated[str, Field(pattern=r'^(QUEUED|RUNNING|STOPPED|SUCCESS)')]
 
 
 class Job(Resource):
