@@ -27,9 +27,9 @@ RUN apt-get update && apt-get -y install \
 
 RUN python3 -m pip install --upgrade pip setuptools
 RUN pip3 install -U pip wheel
-RUN python3 -m pip install -r /usr/src/utils/requirements.txt
+RUN python3 -m pip install -r /usr/src/utils/requirements.txt --ignore-installed
 RUN pip3 install /usr/src/utils
-RUN python3 -m pip install -r /usr/src/server/requirements.txt
+RUN python3 -m pip install -r /usr/src/server/requirements.txt --ignore-installed
 RUN pip3 install /usr/src/server
 
 RUN echo "Operandi server build success"
