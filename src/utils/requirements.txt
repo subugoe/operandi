@@ -4,6 +4,7 @@ click>=7
 clint==0.5.1
 loguru>=0.6.0
 httpx>=0.24.0
+ocrd>=2.50.0
 paramiko==3.1.0
 pika>=1.2.0
 pydantic>=1.9.1
