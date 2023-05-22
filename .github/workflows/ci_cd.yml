@@ -81,6 +81,7 @@ jobs:
           OPERANDI_SERVER_DEFAULT_PASSWORD: ${{ secrets.OPERANDI_TEST_SERVER_PASSWORD }}
         run: |
           make run-tests
+          rm ~/.ssh/key_hpc
 
 
   build-and-push-docker-images:
