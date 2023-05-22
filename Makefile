@@ -72,7 +72,7 @@ uninstall:
 	for mod in $(UNINSTALL_ORDER);do $(PIP3) uninstall -y $$mod;done
 
 start-all-modules:
-	docker compose -f ./docker-compose_image_based.yml up -d
+	docker compose -f ./docker-compose_image_based.yml --env-file .env up -d
 
 stop-all-modules:
 	docker compose -f ./docker-compose_image_based.yml down --remove-orphans
@@ -82,16 +82,16 @@ clean-all-modules:
 	docker rmi -f ghcr.io/subugoe/operandi-broker:main
 
 start-mongo-docker:
-	docker compose -f ./docker-compose.yml up -d operandi-mongodb
+	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-mongodb
 
 start-rabbitmq-docker:
-	docker compose -f ./docker-compose.yml up -d operandi-rabbitmq
+	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-rabbitmq
 
 start-broker-docker:
-	docker compose -f ./docker-compose.yml up -d operandi-broker
+	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-broker
 
 start-server-docker:
-	docker compose -f ./docker-compose.yml up -d operandi-server
+	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-server
 
 start-broker-native:
 	export $(shell sed 's/=.*//' .env)
@@ -103,7 +103,7 @@ start-server-native:
 
 start-harvester-native:
 	export $(shell sed 's/=.*//' .env)
-	operandi-harvester start-dummy --address http://localhost:8000
+	operandi-harvester start-dummy --address http://localhost
 
 run-tests: run-tests-server run-tests-broker run-tests-utils run-tests-harvester
 

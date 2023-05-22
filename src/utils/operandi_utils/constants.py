@@ -15,5 +15,5 @@ __all__ = [
 load_dotenv()
 
 OPERANDI_VERSION = get_distribution('operandi_utils').version
-OPERANDI_LOGS_DIR: str = environ.get("OPERANDI_LOGS_DIR", "/tmp/operandi_logs_tests")
+OPERANDI_LOGS_DIR: str = environ.get("OPERANDI_LOGS_DIR", "/tmp/operandi_logs")
 Path(OPERANDI_LOGS_DIR).mkdir(parents=True, exist_ok=True)
