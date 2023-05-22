@@ -23,7 +23,7 @@ load_dotenv()
 
 DEFAULT_EXCHANGER_TYPE: str = "direct"
 DEFAULT_EXCHANGER_NAME: str = environ.get("OPERANDI_RABBITMQ_EXCHANGE_NAME", "operandi_default")
-DEFAULT_ROUTER: str = environ.get("OPERANDI_RABBITMQ_EXCHANGE_ROUTER", "operandi_default")
+DEFAULT_ROUTER: str = environ.get("OPERANDI_RABBITMQ_EXCHANGE_ROUTER", "operandi_default_queue")
 
 DEFAULT_QUEUE: str = environ.get("OPERANDI_RABBITMQ_QUEUE_DEFAULT", "operandi_default_queue")
 DEFAULT_QUEUE_FOR_HARVESTER: str = environ.get("OPERANDI_RABBITMQ_QUEUE_HARVESTER", "operandi_queue_harvester")

@@ -11,7 +11,7 @@ __all__ = [
 
 load_dotenv()
 
-BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
+BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR", "/tmp/operandi_data")
 JOBS_ROUTER = join(BASE_DIR, "workflow_jobs")
 WORKFLOWS_ROUTER = join(BASE_DIR, "workflows")
 WORKSPACES_ROUTER = join(BASE_DIR, "workspaces")
