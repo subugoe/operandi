@@ -4,6 +4,7 @@ generateDS == 2.35.20
 pylint
 pymongo >= 4.3.3
 pytest >= 7.0.0
+pytest-docker>=1.0.0
 requests==2.27.0
 twine
 wheel
