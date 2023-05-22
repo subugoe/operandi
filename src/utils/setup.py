@@ -13,7 +13,12 @@ setup(
     author_email='mehmed.mustafa@gwdg.de',
     url='https://github.com/subugoe/operandi',
     license='Apache License 2.0',
-    packages=['operandi_utils'],
+    packages=[
+        'operandi_utils',
+        'operandi_utils.database',
+        'operandi_utils.hpc',
+        'operandi_utils.rabbitmq'
+    ],
     package_data={'': ['batch_scripts/*.sh', 'nextflow_workflows/*.nf']},
     install_requires=install_requires
 )
