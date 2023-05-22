@@ -15,7 +15,12 @@ setup(
     author_email='mehmed.mustafa@gwdg.de',
     url='https://github.com/subugoe/operandi',
     license='Apache License 2.0',
-    packages=['operandi_server'],
+    packages=[
+        'operandi_server',
+        'operandi_server.managers',
+        'operandi_server.models',
+        'operandi_server.routers'
+    ],
     package_data={},
     install_requires=install_requires,
     entry_points={
