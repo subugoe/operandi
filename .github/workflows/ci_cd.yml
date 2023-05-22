@@ -96,6 +96,7 @@ jobs:
       - name: run all tests
         env:
           OPERANDI_HPC_SSH_KEYPATH: ~/.ssh/key_hpc
+          OPERANDI_DB_NAME: "operandi_db_tests"
           OPERANDI_DB_URL: ${{ secrets.OPERANDI_TEST_DB_URL }}
           OPERANDI_RABBITMQ_URL: ${{ secrets.OPERANDI_TEST_RABBITMQ_URL }}
           OPERANDI_SERVER_DEFAULT_USERNAME: ${{ secrets.OPERANDI_TEST_SERVER_USERNAME }}
