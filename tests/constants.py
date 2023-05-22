@@ -48,11 +48,11 @@ OPERANDI_HPC_SSH_KEYPATH: str = environ.get("OPERANDI_HPC_SSH_KEYPATH")
 OPERANDI_HPC_USERNAME: str = environ.get("OPERANDI_HPC_USERNAME", "mmustaf")
 OPERANDI_HPC_DIR_HOME_USER: str = environ.get(
     "OPERANDI_HPC_DIR_HOME_USER",
-    f"/home/users/${OPERANDI_HPC_USERNAME}"
+    f"/home/users/{OPERANDI_HPC_USERNAME}"
 )
 OPERANDI_HPC_DIR_HOME_SCRATCH: str = environ.get(
     "OPERANDI_HPC_DIR_HOME_SCRATCH",
-    f"/scratch1/users/${OPERANDI_HPC_USERNAME}"
+    f"/scratch1/users/{OPERANDI_HPC_USERNAME}"
 )
 OPERANDI_HPC_DIR_PROJECT: str = environ.get(
     "OPERANDI_HPC_DIR_PROJECT",
