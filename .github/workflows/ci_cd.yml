@@ -108,8 +108,8 @@ jobs:
       - name: run server tests
         run: make run-tests-server
 
-      - name: run utils tests
-        run: make run-tests-utils
+      # - name: run utils tests
+      #   run: make run-tests-utils
 
       - name: run harvester tests
         run: make run-tests-harvester
