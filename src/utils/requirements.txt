@@ -8,5 +8,7 @@ ocrd>=2.50.0
 paramiko==3.1.0
 pika>=1.2.0
 pydantic>=1.9.1
+pymongo >= 4.3.3
 python-dotenv>=1.0.0
+python-multipart>=0.0.5
 robotframework-sshlibrary==3.8.0
