@@ -72,6 +72,13 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
         assert_response_status_code(response.status_code, expected_floor=2)
         job_status = response.json()['job_state']
         if job_status in ["STOPPED", "SUCCESS"]:
+            # TODO: Fix may be needed here
+            # When Stopped loop 3 more times.
+            # Sometimes the STOPPED changes to SUCCESS
+            if job_status == "STOPPED":
+                if tries > 3:
+                    tries = 3
+                continue
             break
         tries -= 1
     assert job_status == "SUCCESS"
