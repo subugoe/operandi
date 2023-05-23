@@ -196,6 +196,7 @@ class Harvester:
     def _poll_workflow_job_status(self, workflow_id: str, job_id: str) -> bool:
         tries = 30
         while tries > 0:
+            tries -= 1
             self.logger.info(f"Checking the job status after {WAIT_TIME_BETWEEN_POLLS} seconds")
             time.sleep(WAIT_TIME_BETWEEN_POLLS)
 
@@ -215,14 +216,11 @@ class Harvester:
                 self.logger.error(f"Checking workflow job status failed: {e}")
                 return False
 
-            # If the workflow job has finished either with success or fail
-            if workflow_job_status in ["STOPPED", "SUCCESS"]:
-                # TODO: Fix may be needed here
-                # When Stopped loop 3 more times.
-                # Sometimes the STOPPED changes to SUCCESS
-                if workflow_job_status == "STOPPED":
-                    if tries > 3:
-                        tries = 3
-                    continue
+            if workflow_job_status == "SUCCESS":
+                break
 
-            tries -= 1
+            # TODO: Fix may be needed here
+            # When Stopped loop 3 more times.
+            # Sometimes the STOPPED changes to SUCCESS
+            if workflow_job_status == "STOPPED" and tries > 3:
+                tries = 3

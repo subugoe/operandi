@@ -63,6 +63,7 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
     tries = 30
     job_status = None
     while tries > 0:
+        tries -= 1
         sleep(15)
         response = operandi.get(
             url=f"/workflow/{workflow_id}/{workflow_job_id}",
@@ -71,16 +72,15 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
         )
         assert_response_status_code(response.status_code, expected_floor=2)
         job_status = response.json()['job_state']
-        if job_status in ["STOPPED", "SUCCESS"]:
-            # TODO: Fix may be needed here
-            # When Stopped loop 3 more times.
-            # Sometimes the STOPPED changes to SUCCESS
-            if job_status == "STOPPED":
-                if tries > 3:
-                    tries = 3
-                continue
+        if job_status == "SUCCESS":
             break
-        tries -= 1
+
+        # TODO: Fix may be needed here
+        # When Stopped loop 3 more times.
+        # Sometimes the STOPPED changes to SUCCESS
+        if job_status == "STOPPED" and tries > 3:
+            tries = 3
+
     assert job_status == "SUCCESS"
 
     response = operandi.get(
