@@ -85,4 +85,4 @@ async def user_register(email: str, password: str, account_type: str = "user"):
         )
     action = f"Successfully registered new account: {email}. " \
              f"Please contact the OCR-D team to get your account validated."
-    return UserAction(email=email, action=action)
+    return UserAction(account_type=account_type, action=action, email=email)
