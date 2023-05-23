@@ -1,32 +1,8 @@
 {
   "users": [
     {
-      "name": "guest",
-      "password": "guest",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "administrator"
-    },
-    {
       "name": "admin",
       "password": "admin",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "administrator"
-    },
-    {
-      "name": "default-publisher",
-      "password": "default-publisher",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "administrator"
-    },
-    {
-      "name": "default-consumer",
-      "password": "default-consumer",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "administrator"
-    },
-    {
-      "name": "test-session",
-      "password": "test-session",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
       "tags": "administrator"
     }
@@ -41,13 +17,6 @@
   ],
   "permissions": [
     {
-      "user": "guest",
-      "vhost": "/",
-      "configure": ".*",
-      "write": ".*",
-      "read": ".*"
-    },
-    {
       "user": "admin",
       "vhost": "/",
       "configure": ".*",
@@ -55,21 +24,7 @@
       "read": ".*"
     },
     {
-      "user": "default-publisher",
-      "vhost": "/",
-      "configure": ".*",
-      "write": ".*",
-      "read": ".*"
-    },
-    {
-      "user": "default-consumer",
-      "vhost": "/",
-      "configure": ".*",
-      "write": ".*",
-      "read": ".*"
-    },
-    {
-      "user": "test-session",
+      "user": "admin",
       "vhost": "test",
       "configure": ".*",
       "write": ".*",
