@@ -80,14 +80,14 @@ services:
       - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
       - OPERANDI_DB_URL=${OPERANDI_DB_URL}
       - OPERANDI_HPC_PROJECT_NAME=${OPERANDI_HPC_PROJECT_NAME}
-      - OPERANDI_HPC_SSH_KEYPATH=${OPERANDI_HPC_SSH_KEYPATH}
+      - OPERANDI_HPC_SSH_KEYPATH=/home/root/.ssh/gwdg_hpc_key
       - OPERANDI_LOGS_DIR=${OPERANDI_LOGS_DIR}
       - OPERANDI_RABBITMQ_URL=${OPERANDI_RABBITMQ_URL}
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "${OPERANDI_LOGS_DIR}:${OPERANDI_LOGS_DIR}"
       - "${OPERANDI_SERVER_BASE_DIR}:${OPERANDI_SERVER_BASE_DIR}"
-      - "/home/mm/.ssh/gwdg-cluster:/home/root/.ssh/gwdg-cluster"
+      - "${OPERANDI_HPC_SSH_KEYPATH}:/home/root/.ssh/gwdg_hpc_key"
     networks:
       - operandi
     command: operandi-broker start
