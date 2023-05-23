@@ -37,10 +37,11 @@ security = HTTPBasic()
 @router.get("/workflow")
 async def list_workflows(auth: HTTPBasicCredentials = Depends(security)) -> List[WorkflowRsrc]:
     """
-    Get a list of existing workflow space urls.
+    Get a list of existing workflow spaces.
     Each workflow space has a Nextflow script inside.
 
-    curl http://localhost:8000/workflow/
+    Curl equivalent:
+    `curl SERVER_ADDR/workflow`
     """
     await user_login(auth)
     workflows = workflow_manager.get_workflows()
@@ -58,15 +59,13 @@ async def get_workflow_script(
         auth: HTTPBasicCredentials = Depends(security)
 ) -> Union[WorkflowRsrc, FileResponse]:
     """
-    Get the Nextflow script of an existing workflow space.
-    Specify your download path with --output
+    Get an existing workflow space script specified with `workflow_id`.
+    Depending on the provided header, either a JSON response or a Nextflow file is returned.
+    By default, returns a JSON response.
 
-    When tested with FastAPI's interactive API docs / Swagger (e.g. http://127.0.0.1:8000/docs) the
-    accept-header is always set to application/json (no matter what is specified in the gui) so it
-    can not be used to test getting the workflow as a file. See:
-    https://github.com/OCR-D/ocrd-webapi-implementation/issues/2
-
-    curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: text/vnd.ocrd.workflow" --output ./nextflow.nf
+    Curl equivalents:
+    `curl -X GET SERVER_ADDR/workflow/{workflow_id} -H "accept: application/json"`
+    `curl -X GET SERVER_ADDR/workflow/{workflow_id} -H "accept: text/vnd.ocrd.workflow" -o foo.nf`
     """
     await user_login(auth)
     try:
@@ -95,12 +94,16 @@ async def get_workflow_job(
         auth: HTTPBasicCredentials = Depends(security)
 ) -> Union[WorkflowJobRsrc, FileResponse]:
     """
-    Query a job from the database. Used to query if a job is finished or still running
+    Get the status of a workflow job specified with `workflow_id` and `job_id`.
+    Returns the `workflow_id`, `workspace_id`, `job_id`, and
+    one of the following job statuses:
+    1) QUEUED - The workflow job is queued for execution.
+    2) RUNNING - The workflow job is currently running.
+    3) STOPPED - The workflow job has failed.
+    4) SUCCESS - The workflow job has finished successfully.
 
-    workflow_id is not needed in this implementation, but it is used in the specification. In this
-    implementation each job-id is unique so workflow_id is not necessary. But it could be necessary
-    in other implementations for example if a job_id is only unique in conjunction with a
-    workflow_id.
+    Curl equivalent:
+    `curl -X GET SERVER_ADDR/workflow/{workflow_id}/{job_id}`
     """
     await user_login(auth)
     wf_job_db = await workflow_manager.get_workflow_job(workflow_id, job_id)
@@ -144,9 +147,11 @@ async def upload_workflow_script(
         auth: HTTPBasicCredentials = Depends(security)
 ) -> WorkflowRsrc:
     """
-    Create a new workflow space. Upload a Nextflow script inside.
+    Create a new workflow space and upload a Nextflow script inside.
+    Returns a `resource_id` with which the uploaded workflow is identified.
 
-    curl -X POST http://localhost:8000/workflow -F nextflow_script=@things/nextflow.nf  # noqa
+    Curl equivalent:
+    `curl -X POST SERVER_ADDR/workflow -F nextflow_script=example.nf`
     """
 
     await user_login(auth)
@@ -167,9 +172,10 @@ async def update_workflow_script(
         auth: HTTPBasicCredentials = Depends(security)
 ) -> WorkflowRsrc:
     """
-    Update or create a new workflow space. Upload a Nextflow script inside.
+    Update an existing workflow script specified with or `workflow_id` or upload a new workflow script.
 
-    curl -X PUT http://localhost:8000/workflow/{workflow_id} -F nextflow_script=@things/nextflow-simple.nf
+    Curl equivalent:
+    `curl -X PUT SERVER_ADDR/workflow/{workflow_id} -F nextflow_script=example.nf`
     """
 
     await user_login(auth)

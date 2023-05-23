@@ -17,6 +17,9 @@ security = HTTPBasic()
 
 @router.get("/user/login", responses={"200": {"model": UserAction}})
 async def user_login(auth: HTTPBasicCredentials = Depends(security)):
+    """
+    Used for user authentication.
+    """
     email = auth.username
     password = auth.password
     if not (email and password):
@@ -45,6 +48,19 @@ async def user_login(auth: HTTPBasicCredentials = Depends(security)):
 
 @router.post("/user/register", responses={"201": {"model": UserAction}})
 async def user_register(email: str, password: str, account_type: str = "user"):
+    """
+    Used for registration.
+    There are 3 account types:
+    1) Administrator
+    2) User
+    3) Harvester
+
+    Please contact the Operandi team to get your account verified.
+    Otherwise, the account will be non-functional.
+
+    Curl equivalent:
+    `curl -X POST SERVER_ADDR/user/register email=example@gmail.com password=example_pass account_type=user`
+    """
     account_types = ["user", "administrator", "harvester"]
     if account_type not in account_types:
         raise HTTPException(

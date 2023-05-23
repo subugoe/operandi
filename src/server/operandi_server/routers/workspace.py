@@ -36,9 +36,10 @@ security = HTTPBasic()
 @router.get("/workspace")
 async def list_workspaces(auth: HTTPBasicCredentials = Depends(security)) -> List[WorkspaceRsrc]:
     """
-    Get a list of existing workspace urls
+    Get a list of existing workspaces.
 
-    curl http://localhost:8000/workspace/
+    Curl equivalent:
+    `curl -X GET SERVER_ADDR/workspace`
     """
     await user_login(auth)
     workspaces = workspace_manager.get_workspaces()
@@ -57,16 +58,13 @@ async def get_workspace(
         auth: HTTPBasicCredentials = Depends(security)
 ) -> Union[WorkspaceRsrc, FileResponse]:
     """
-    Get an existing workspace
+    Get an existing workspace specified with `workspace_id`.
+    Depending on the provided header, either a JSON response or an ocrd-zip is returned.
+    By default, returns a JSON response.
 
-    When tested with FastAPI's interactive API docs / Swagger (e.g. http://127.0.0.1:8000/docs) the
-    accept-header is always set to application/json (no matter what is specified in the gui) so to
-    test getting the workspace as a zip it cannot be used.
-    See: https://github.com/OCR-D/ocrd-webapi-implementation/issues/2
-
-    can be tested with:
-    `curl http://localhost:8000/workspace/-the-id-of-ws -H "accept: application/json"` and
-    `curl http://localhost:8000/workspace/{ws-id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
+    Curl equivalents:
+    `curl -X GET SERVER_ADDR/workspace/{workspace_id} -H "accept: application/json"`
+    `curl -X GET SERVER_ADDR/workspace/{workspace_id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
     """
     await user_login(auth)
     try:
@@ -96,9 +94,11 @@ async def post_workspace(
         auth: HTTPBasicCredentials = Depends(security)
 ) -> WorkspaceRsrc:
     """
-    Create a new workspace
+    Upload a new ocrd-zip workspace.
+    Returns a `resource_id` with which the uploaded workspace is identified.
 
-    curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F workspace=@things/example_ws.ocrd.zip  # noqa
+    Curl equivalent:
+    `curl -X POST SERVER_ADDR/workspace -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
     """
     await user_login(auth)
     try:
@@ -120,7 +120,10 @@ async def put_workspace(
         auth: HTTPBasicCredentials = Depends(security)
 ) -> WorkspaceRsrc:
     """
-    Update or create a workspace
+    Update an existing workspace specified with `workspace_id` or create a new workspace.
+
+    Curl equivalent:
+    `curl -X PUT SERVER_ADDR/workspace/{workspace_id} -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
     """
     await user_login(auth)
     try:
@@ -141,8 +144,10 @@ async def delete_workspace(
         auth: HTTPBasicCredentials = Depends(security)
 ) -> WorkspaceRsrc:
     """
-    Delete a workspace
-    curl -v -X DELETE 'http://localhost:8000/workspace/{workspace_id}'
+    Delete an existing workspace specified with `workspace_id`
+
+    Curl equivalent:
+    `curl -X DELETE SERVER_ADDR/workspace/{workspace_id}`
     """
     await user_login(auth)
     try:

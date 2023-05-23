@@ -35,5 +35,12 @@ class Discovery:
 
 @router.get("/discovery", responses={"200": {"model": DiscoveryResponse}})
 async def discovery(auth: HTTPBasicCredentials = Depends(security)) -> DiscoveryResponse:
+    """
+    Lists information about the Operandi Server.
+    This is still not complete.
+
+    Curl equivalent:
+    `curl -X GET SERVER_ADDR/discovery`
+    """
     await user_login(auth)
     return Discovery.discovery()
