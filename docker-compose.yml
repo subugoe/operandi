@@ -49,18 +49,19 @@ services:
     ports:
       - "80:8000"
     environment:
-      - OPERANDI_SERVER_DEFAULT_USERNAME=test
-      - OPERANDI_SERVER_DEFAULT_PASSWORD=test
-      - OPERANDI_SERVER_BASE_DIR=/tmp/operandi_data
-      - OPERANDI_SERVER_URL_LIVE=http://operandi.ocr-d.de
-      - OPERANDI_LOGS_DIR=/tmp/operandi_logs
-      - OPERANDI_DB_URL=mongodb://172.17.0.1:27018
-      - OPERANDI_RABBITMQ_URL=amqp://default-publisher:default-publisher@rabbit-mq-host:5672
+      - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
+      - OPERANDI_DB_URL=${OPERANDI_DB_URL}
+      - OPERANDI_HARVESTER_DEFAULT_USERNAME=${OPERANDI_HARVESTER_DEFAULT_USERNAME}
+      - OPERANDI_HARVESTER_DEFAULT_PASSWORD=${OPERANDI_HARVESTER_DEFAULT_PASSWORD}
+      - OPERANDI_LOGS_DIR=${OPERANDI_LOGS_DIR}
+      - OPERANDI_RABBITMQ_URL=${OPERANDI_RABBITMQ_URL}
+      - OPERANDI_SERVER_BASE_DIR=${OPERANDI_SERVER_BASE_DIR}
+      - OPERANDI_SERVER_DEFAULT_USERNAME=${OPERANDI_SERVER_DEFAULT_USERNAME}
+      - OPERANDI_SERVER_DEFAULT_PASSWORD=${OPERANDI_SERVER_DEFAULT_PASSWORD}
+      - OPERANDI_SERVER_URL_LIVE=${OPERANDI_SERVER_URL_LIVE}
     volumes:
-      - "/tmp/operandi_logs/:/tmp/operandi_logs/"
-      - "/tmp/operandi_data/:/tmp/operandi_data/"
-      - "/tmp/operandi_data_tests/:/tmp/operandi_data_tests/"
-      - "/tmp/operandi_logs_tests/:/tmp/operandi_logs_tests/"
+      - "${OPERANDI_LOGS_DIR}:${OPERANDI_LOGS_DIR}"
+      - "${OPERANDI_SERVER_BASE_DIR}:${OPERANDI_SERVER_BASE_DIR}"
     networks:
       - operandi
     command: operandi-server start --host 0.0.0.0 --port 8000
@@ -76,16 +77,16 @@ services:
         condition: service_healthy
     restart: on-failure
     environment:
-      - OPERANDI_HPC_SSH_KEYPATH=/home/root/.ssh/gwdg-cluster
-      - OPERANDI_LOGS_DIR=/tmp/operandi_logs
-      - OPERANDI_DB_URL=mongodb://172.17.0.1:27018
-      - OPERANDI_RABBITMQ_URL=amqp://default-consumer:default-consumer@rabbit-mq-host:5672
+      - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
+      - OPERANDI_DB_URL=${OPERANDI_DB_URL}
+      - OPERANDI_HPC_PROJECT_NAME=${OPERANDI_HPC_PROJECT_NAME}
+      - OPERANDI_HPC_SSH_KEYPATH=${OPERANDI_HPC_SSH_KEYPATH}
+      - OPERANDI_LOGS_DIR=${OPERANDI_LOGS_DIR}
+      - OPERANDI_RABBITMQ_URL=${OPERANDI_RABBITMQ_URL}
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "/tmp/operandi_logs/:/tmp/operandi_logs/"
-      - "/tmp/operandi_data/:/tmp/operandi_data/"
-      - "/tmp/operandi_data_tests/:/tmp/operandi_data_tests/"
-      - "/tmp/operandi_logs_tests/:/tmp/operandi_logs_tests/"
+      - "${OPERANDI_LOGS_DIR}:${OPERANDI_LOGS_DIR}"
+      - "${OPERANDI_SERVER_BASE_DIR}:${OPERANDI_SERVER_BASE_DIR}"
       - "/home/mm/.ssh/gwdg-cluster:/home/root/.ssh/gwdg-cluster"
     networks:
       - operandi
