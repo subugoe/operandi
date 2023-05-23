@@ -3,13 +3,17 @@ module for implementing the discovery section of the api
 """
 from os import cpu_count
 from psutil import virtual_memory
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_server.models import DiscoveryResponse
+from .user import user_login
 
 router = APIRouter(
     tags=["Discovery"],
 )
+
+security = HTTPBasic()
 
 
 class Discovery:
@@ -30,5 +34,6 @@ class Discovery:
 
 
 @router.get("/discovery", responses={"200": {"model": DiscoveryResponse}})
-async def discovery() -> DiscoveryResponse:
+async def discovery(auth: HTTPBasicCredentials = Depends(security)) -> DiscoveryResponse:
+    await user_login(auth)
     return Discovery.discovery()

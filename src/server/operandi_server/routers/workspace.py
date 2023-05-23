@@ -34,12 +34,13 @@ security = HTTPBasic()
 
 # TODO: Refine all the exceptions...
 @router.get("/workspace")
-async def list_workspaces() -> List[WorkspaceRsrc]:
+async def list_workspaces(auth: HTTPBasicCredentials = Depends(security)) -> List[WorkspaceRsrc]:
     """
     Get a list of existing workspace urls
 
     curl http://localhost:8000/workspace/
     """
+    await user_login(auth)
     workspaces = workspace_manager.get_workspaces()
     response = []
     for workspace in workspaces:
@@ -52,7 +53,8 @@ async def list_workspaces() -> List[WorkspaceRsrc]:
 async def get_workspace(
         background_tasks: BackgroundTasks,
         workspace_id: str,
-        accept: str = Header(default="application/json")
+        accept: str = Header(default="application/json"),
+        auth: HTTPBasicCredentials = Depends(security)
 ) -> Union[WorkspaceRsrc, FileResponse]:
     """
     Get an existing workspace
@@ -66,7 +68,7 @@ async def get_workspace(
     `curl http://localhost:8000/workspace/-the-id-of-ws -H "accept: application/json"` and
     `curl http://localhost:8000/workspace/{ws-id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
     """
-
+    await user_login(auth)
     try:
         workspace_url = workspace_manager.get_resource(workspace_id, local=False)
     except Exception as e:
@@ -89,7 +91,10 @@ async def get_workspace(
 
 
 @router.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
-async def post_workspace(workspace: UploadFile, auth: HTTPBasicCredentials = Depends(security)) -> WorkspaceRsrc:
+async def post_workspace(
+        workspace: UploadFile,
+        auth: HTTPBasicCredentials = Depends(security)
+) -> WorkspaceRsrc:
     """
     Create a new workspace
 
@@ -109,8 +114,11 @@ async def post_workspace(workspace: UploadFile, auth: HTTPBasicCredentials = Dep
 
 
 @router.put("/workspace/{workspace_id}", responses={"201": {"model": WorkspaceRsrc}})
-async def put_workspace(workspace: UploadFile, workspace_id: str,
-                        auth: HTTPBasicCredentials = Depends(security)) -> WorkspaceRsrc:
+async def put_workspace(
+        workspace: UploadFile,
+        workspace_id: str,
+        auth: HTTPBasicCredentials = Depends(security)
+) -> WorkspaceRsrc:
     """
     Update or create a workspace
     """
@@ -128,7 +136,10 @@ async def put_workspace(workspace: UploadFile, workspace_id: str,
 
 
 @router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def delete_workspace(workspace_id: str, auth: HTTPBasicCredentials = Depends(security)) -> WorkspaceRsrc:
+async def delete_workspace(
+        workspace_id: str,
+        auth: HTTPBasicCredentials = Depends(security)
+) -> WorkspaceRsrc:
     """
     Delete a workspace
     curl -v -X DELETE 'http://localhost:8000/workspace/{workspace_id}'

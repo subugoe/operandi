@@ -36,13 +36,14 @@ security = HTTPBasic()
 
 # TODO: Refine all the exceptions...
 @router.get("/workflow")
-async def list_workflows() -> List[WorkflowRsrc]:
+async def list_workflows(auth: HTTPBasicCredentials = Depends(security)) -> List[WorkflowRsrc]:
     """
     Get a list of existing workflow space urls.
     Each workflow space has a Nextflow script inside.
 
     curl http://localhost:8000/workflow/
     """
+    await user_login(auth)
     workflows = workflow_manager.get_workflows()
     response = []
     for workflow in workflows:
@@ -52,7 +53,10 @@ async def list_workflows() -> List[WorkflowRsrc]:
 
 
 @router.get("/workflow/{workflow_id}", response_model=None)
-async def get_workflow_script(workflow_id: str, accept: str = Header(default="application/json")
+async def get_workflow_script(
+        workflow_id: str,
+        accept: str = Header(default="application/json"),
+        auth: HTTPBasicCredentials = Depends(security)
 ) -> Union[WorkflowRsrc, FileResponse]:
     """
     Get the Nextflow script of an existing workflow space.
@@ -65,7 +69,7 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(default="ap
 
     curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: text/vnd.ocrd.workflow" --output ./nextflow.nf
     """
-
+    await user_login(auth)
     try:
         workflow_script_url = workflow_manager.get_resource(workflow_id, local=False)
         workflow_script_path = workflow_manager.get_resource_file(workflow_id, file_ext=".nf")
@@ -85,7 +89,11 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(default="ap
 
 
 @router.get("/workflow/{workflow_id}/{job_id}", responses={"200": {"model": WorkflowJobRsrc}}, response_model=None)
-async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(default="application/json")
+async def get_workflow_job(
+        workflow_id: str,
+        job_id: str,
+        accept: str = Header(default="application/json"),
+        auth: HTTPBasicCredentials = Depends(security)
 ) -> Union[WorkflowJobRsrc, FileResponse]:
     """
     Query a job from the database. Used to query if a job is finished or still running
@@ -95,6 +103,7 @@ async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(d
     in other implementations for example if a job_id is only unique in conjunction with a
     workflow_id.
     """
+    await user_login(auth)
     wf_job_db = await workflow_manager.get_workflow_job(workflow_id, job_id)
     if not wf_job_db:
         raise ResponseException(404, {})
@@ -131,8 +140,11 @@ async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(d
 
 
 @router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
-async def run_workflow(workflow_id: str, workflow_args: WorkflowArguments,
-                       auth: HTTPBasicCredentials = Depends(security)) -> WorkflowJobRsrc:
+async def run_workflow(
+        workflow_id: str,
+        workflow_args: WorkflowArguments,
+        auth: HTTPBasicCredentials = Depends(security)
+) -> WorkflowJobRsrc:
     """
     Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
     workspace with id {workspace_id}. The OCR-D results are stored inside the {workspace_id}.
@@ -169,8 +181,10 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArguments,
 
 
 @router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
-async def upload_workflow_script(nextflow_script: UploadFile,
-                                 auth: HTTPBasicCredentials = Depends(security)) -> WorkflowRsrc:
+async def upload_workflow_script(
+        nextflow_script: UploadFile,
+        auth: HTTPBasicCredentials = Depends(security)
+) -> WorkflowRsrc:
     """
     Create a new workflow space. Upload a Nextflow script inside.
 
@@ -189,8 +203,11 @@ async def upload_workflow_script(nextflow_script: UploadFile,
 
 
 @router.put("/workflow/{workflow_id}", responses={"201": {"model": WorkflowRsrc}})
-async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
-                                 auth: HTTPBasicCredentials = Depends(security)) -> WorkflowRsrc:
+async def update_workflow_script(
+        nextflow_script: UploadFile,
+        workflow_id: str,
+        auth: HTTPBasicCredentials = Depends(security)
+) -> WorkflowRsrc:
     """
     Update or create a new workflow space. Upload a Nextflow script inside.
 
