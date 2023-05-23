@@ -7,7 +7,7 @@ from tests.server.helpers_asserts import assert_response_status_code
 from ..constants import OPERANDI_RABBITMQ_QUEUE_HARVESTER
 
 
-def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_workspace1):
+def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, bytes_workspace1):
     response = operandi.get('/')
     assert response.json()['message'] == "The home page of the OPERANDI Server"
 
@@ -29,7 +29,7 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
     response = operandi.post(
         url="/workflow",
         files={"nextflow_script": bytes_workflow1},
-        auth=auth
+        auth=auth_harvester
     )
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
@@ -38,7 +38,7 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
     response = operandi.post(
         url="/workspace",
         files={"workspace": bytes_workspace1},
-        auth=auth
+        auth=auth_harvester
     )
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
@@ -53,7 +53,7 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
         url=f"/workflow/{workflow_id}",
         headers={'accept': 'application/json'},
         json=req_data,
-        auth=auth
+        auth=auth_harvester
     )
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_job_id = response.json()['resource_id']
@@ -66,7 +66,7 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
         response = operandi.get(
             url=f"/workflow/{workflow_id}/{workflow_job_id}",
             headers={'accept': 'application/json'},
-            auth=auth
+            auth=auth_harvester
         )
         assert_response_status_code(response.status_code, expected_floor=2)
         job_status = response.json()['job_state']
@@ -84,7 +84,7 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
     response = operandi.get(
         url=f"/workflow/{workflow_id}/{workflow_job_id}",
         headers={'accept': 'application/vnd.zip'},
-        auth=auth
+        auth=auth_harvester
     )
     zip_local_path = join(OPERANDI_SERVER_BASE_DIR, f"{workflow_job_id}.ocrd.zip")
     with open(zip_local_path, 'wb') as filePtr:
