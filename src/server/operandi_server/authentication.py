@@ -6,7 +6,7 @@ from operandi_utils.database.database import create_user, get_user
 from operandi_server.exceptions import AuthenticationError, RegistrationError
 
 
-async def authenticate_user(email: str, password: str):
+async def authenticate_user(email: str, password: str) -> str:
     db_user = await get_user(email=email)
     if not db_user:
         raise AuthenticationError(f"User not found: {email}")
@@ -18,9 +18,10 @@ async def authenticate_user(email: str, password: str):
         raise AuthenticationError(f"Wrong credentials for: {email}")
     if not db_user.approved_user:
         raise AuthenticationError(f"The account was not approved by the admin yet.")
+    return db_user.account_type
 
 
-async def register_user(email: str, password: str, approved_user=False):
+async def register_user(email: str, password: str, account_type: str, approved_user=False):
     salt, encrypted_password = encrypt_password(password)
     db_user = await get_user(email)
     if db_user:
@@ -29,6 +30,7 @@ async def register_user(email: str, password: str, approved_user=False):
         email=email,
         encrypted_pass=encrypted_password,
         salt=salt,
+        account_type=account_type,
         approved_user=approved_user
     )
     if not created_user:

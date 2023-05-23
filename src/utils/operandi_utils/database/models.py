@@ -15,6 +15,7 @@ class UserAccountDB(Document):
         encrypted_pass: The encrypted password of the user
         salt:           Random salt value used when encrypting the password
         approved_user:  Whether the user is approved by the admin
+        account_type:   The type of the account: administrator, user, or harvester
 
     By default, the registered user's account is not validated.
     An admin must manually validate the account by assigning True value.
@@ -22,6 +23,7 @@ class UserAccountDB(Document):
     email: str
     encrypted_pass: str
     salt: str
+    account_type: str
     approved_user: bool = False
 
     class Settings:

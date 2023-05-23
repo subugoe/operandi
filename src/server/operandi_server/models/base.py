@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, Field
 from typing import Any, Dict, Optional
 from typing_extensions import Annotated
 
@@ -45,7 +45,6 @@ class ProcessorArgs(BaseModel):
 
 
 class WorkflowArguments(BaseModel):
-    workflow_id: str
     workspace_id: str
     input_file_grp: Optional[str] = "DEFAULT"
     mets_name: Optional[str] = "mets.xml"

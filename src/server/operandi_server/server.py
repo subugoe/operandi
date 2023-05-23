@@ -3,7 +3,8 @@ import logging
 import json
 from os import environ
 
-from fastapi import FastAPI, status
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils import (
     OPERANDI_VERSION,
@@ -36,6 +37,8 @@ from operandi_server.models import (
 )
 from operandi_server.routers import discovery, user, workflow, workspace
 from operandi_server.utils import bagit_from_url, safe_init_logging
+
+security = HTTPBasic()
 
 
 class OperandiServer(FastAPI):
@@ -100,13 +103,13 @@ class OperandiServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path="/workflow/run_workflow/{user_id}",
+            path="/workflow/{workflow_id}",
             endpoint=self.submit_to_rabbitmq_queue,
             methods=["POST"],
             tags=["Workflow"],
             status_code=status.HTTP_201_CREATED,
             summary="Run Nextflow workflow",
-            response_model=WorkspaceRsrc,
+            response_model=WorkflowJobRsrc,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
         )
@@ -136,6 +139,7 @@ class OperandiServer(FastAPI):
             await self.create_user_if_not_available(
                 username=default_admin_user,
                 password=default_admin_pass,
+                account_type="administrator",
                 approved_user=True
             )
 
@@ -143,6 +147,7 @@ class OperandiServer(FastAPI):
             await self.create_user_if_not_available(
                 username=default_harvester_user,
                 password=default_harvester_pass,
+                account_type="harvester",
                 approved_user=True
             )
 
@@ -170,7 +175,7 @@ class OperandiServer(FastAPI):
         self.log.info(f"The Operandi Server is shutting down.")
 
     @staticmethod
-    async def create_user_if_not_available(username: str, password: str, approved_user: bool):
+    async def create_user_if_not_available(username: str, password: str, account_type: str, approved_user: bool):
         # If the account is not available in the DB, create it
         try:
             await authenticate_user(username, password)
@@ -178,8 +183,9 @@ class OperandiServer(FastAPI):
             # TODO: Note that this account is never removed from
             #  the DB automatically in the current implementation
             await register_user(
-                username,
-                password,
+                email=username,
+                password=password,
+                account_type=account_type,
                 approved_user=approved_user
             )
 
@@ -201,12 +207,28 @@ class OperandiServer(FastAPI):
             description="Workspace from Mets URL"
         )
 
+    # TODO: Move this method inside routers/workflow
     # Submits a workflow execution request to the RabbitMQ
-    async def submit_to_rabbitmq_queue(self, user_id: str, workflow_args: WorkflowArguments):
+    async def submit_to_rabbitmq_queue(
+            self,
+            workflow_id: str,
+            workflow_args: WorkflowArguments,
+            auth: HTTPBasicCredentials = Depends(security)
+    ):
+        try:
+            user_action = await user.user_login(auth)
+            user_account_type = user_action.account_type
+        except Exception as error:
+            self.log.error(f"Authentication error: {error}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                headers={"WWW-Authenticate": "Basic"},
+                detail=f"Invalid login credentials or unapproved account."
+            )
+
         try:
             # Extract workflow arguments
             workspace_id = workflow_args.workspace_id
-            workflow_id = workflow_args.workflow_id
             input_file_grp = workflow_args.input_file_grp
 
             # Create job request parameters
@@ -237,7 +259,7 @@ class OperandiServer(FastAPI):
             encoded_workflow_message = json.dumps(workflow_processing_message)
 
             # Send the message to a queue based on the user_id
-            if user_id == "harvester":
+            if user_account_type == "harvester":
                 self.rmq_publisher.publish_to_queue(
                     queue_name=DEFAULT_QUEUE_FOR_HARVESTER,
                     message=encoded_workflow_message

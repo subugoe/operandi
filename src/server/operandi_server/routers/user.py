@@ -28,7 +28,7 @@ async def user_login(auth: HTTPBasicCredentials = Depends(security)):
 
     # Authenticate user e-mail and password
     try:
-        await authenticate_user(
+        account_type = await authenticate_user(
             email=email,
             password=password
         )
@@ -40,15 +40,24 @@ async def user_login(auth: HTTPBasicCredentials = Depends(security)):
             detail=f"Invalid login credentials or unapproved account."
         )
 
-    return UserAction(email=email, action="Successfully logged!")
+    return UserAction(account_type=account_type, action="Successfully logged!", email=email)
 
 
 @router.post("/user/register", responses={"201": {"model": UserAction}})
-async def user_register(email: str, password: str):
+async def user_register(email: str, password: str, account_type: str = "user"):
+    account_types = ["user", "administrator", "harvester"]
+    if account_type not in account_types:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            headers={"WWW-Authenticate": "Basic"},
+            detail=f"Wrong account type. Must be one of: {account_types}"
+        )
+
     try:
         await register_user(
             email=email,
             password=password,
+            account_type=account_type,
             approved_user=False
         )
     except RegistrationError as error:

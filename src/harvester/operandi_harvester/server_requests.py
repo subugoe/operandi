@@ -63,12 +63,10 @@ def post_workflow_job(
         auth: HTTPBasicAuth,
         workflow_id: str,
         workspace_id: str,
-        input_file_grp: str,
-        user_id: str
+        input_file_grp: str
 ):
-    req_url = f'{server_address}/workflow/run_workflow/{user_id}'
+    req_url = f'{server_address}/workflow/{workflow_id}'
     req_data = {
-        'workflow_id': f'{workflow_id}',
         'workspace_id': f'{workspace_id}',
         'input_file_grp': f'{input_file_grp}'
     }

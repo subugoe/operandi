@@ -18,7 +18,6 @@ from operandi_server.managers import (
     WorkspaceManager
 )
 from operandi_server.models import (
-    WorkflowArguments,
     WorkflowRsrc,
     WorkflowJobRsrc
 )
@@ -136,47 +135,6 @@ async def get_workflow_job(
         workspace_id=wf_job_db.workspace_id,
         workspace_url=workspace_url,
         job_state=job_state
-    )
-
-
-@router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
-async def run_workflow(
-        workflow_id: str,
-        workflow_args: WorkflowArguments,
-        auth: HTTPBasicCredentials = Depends(security)
-) -> WorkflowJobRsrc:
-    """
-    Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
-    workspace with id {workspace_id}. The OCR-D results are stored inside the {workspace_id}.
-
-    curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
-    """
-    await user_login(auth)
-    try:
-        parameters = await workflow_manager.start_nf_workflow(
-            workflow_id=workflow_id,
-            workspace_id=workflow_args.workspace_id
-        )
-    except Exception as e:
-        logger.exception(f"Unexpected error in run_workflow: {e}")
-        # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": f"internal server error: {e}"})
-
-    # Parse parameters for better readability of the code
-    job_id = parameters[0]
-    job_url = parameters[1]
-    job_status = parameters[2]
-    workflow_url = parameters[3]
-    workspace_url = parameters[4]
-
-    return WorkflowJobRsrc.create(
-        job_id=job_id,
-        job_url=job_url,
-        workflow_id=workflow_id,
-        workflow_url=workflow_url,
-        workspace_id=workflow_args.workspace_id,
-        workspace_url=workspace_url,
-        job_state=job_status
     )
 
 

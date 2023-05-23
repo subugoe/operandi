@@ -168,8 +168,7 @@ class Harvester:
                 auth=self.auth,
                 workflow_id=workflow_id,
                 workspace_id=workspace_id,
-                input_file_grp=input_file_grp,
-                user_id="harvester"
+                input_file_grp=input_file_grp
             )
             self.logger.info(f"Response workflow job id: {workflow_job_id}")
         except Exception as e:
