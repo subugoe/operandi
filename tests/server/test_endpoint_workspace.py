@@ -10,7 +10,7 @@ from .helpers_asserts import (
 
 
 # Disabled test - takes 13 secs to finish...
-def _test_post_workspace_url(operandi, workspace_collection, auth):
+def _test_post_workspace_url(operandi, auth, workspace_collection):
     mets_url = "https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
     response = operandi.post(
         url=f"/workspace/import_external?mets_url={mets_url}",
@@ -148,7 +148,8 @@ def test_get_workspace(operandi, auth, bytes_workspace2):
     workspace_id = response.json()['resource_id']
     response = operandi.get(
         f"/workspace/{workspace_id}",
-        headers={"accept": "application/vnd.ocrd+zip"}
+        headers={"accept": "application/vnd.ocrd+zip"},
+        auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
     print(response.headers)
