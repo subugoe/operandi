@@ -217,7 +217,7 @@ class Harvester:
                 return False
 
             if workflow_job_status == "SUCCESS":
-                break
+                return True
 
             # TODO: Fix may be needed here
             # When Stopped loop 3 more times.
