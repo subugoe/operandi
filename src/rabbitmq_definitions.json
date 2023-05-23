@@ -1,8 +1,8 @@
 {
   "users": [
     {
-      "name": "admin",
-      "password": "admin",
+      "name": "operandi_user",
+      "password": "operandi_password",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
       "tags": "administrator"
     }
@@ -17,14 +17,14 @@
   ],
   "permissions": [
     {
-      "user": "admin",
+      "user": "operandi_user",
       "vhost": "/",
       "configure": ".*",
       "write": ".*",
       "read": ".*"
     },
     {
-      "user": "admin",
+      "user": "operandi_user",
       "vhost": "test",
       "configure": ".*",
       "write": ".*",
