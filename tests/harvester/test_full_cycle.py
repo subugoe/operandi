@@ -44,15 +44,13 @@ def test_full_cycle(auth, operandi, service_broker, bytes_workflow1, bytes_works
     workspace_id = response.json()['resource_id']
 
     # Post workflow job
-    user_id = "harvester"
     input_file_grp = "OCR-D-IMG"
     req_data = {
-        'workflow_id': f'{workflow_id}',
         'workspace_id': f'{workspace_id}',
         'input_file_grp': f'{input_file_grp}'
     }
     response = operandi.post(
-        url=f"/workflow/run_workflow/{user_id}",
+        url=f"/workflow/{workflow_id}",
         headers={'accept': 'application/json'},
         json=req_data,
         auth=auth
