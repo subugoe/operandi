@@ -13,5 +13,5 @@ def fixture_auth():
 
 
 @fixture(scope="session", name="auth_harvester")
-def fixture_auth():
+def fixture_auth_harvester():
     yield OPERANDI_HARVESTER_DEFAULT_USERNAME, OPERANDI_HARVESTER_DEFAULT_PASSWORD
