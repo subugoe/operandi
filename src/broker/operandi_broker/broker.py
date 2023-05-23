@@ -18,6 +18,7 @@ class ServiceBroker:
             self.db_url = verify_database_uri(db_url)
             self.log.debug(f'Verified MongoDB URL: {db_url}')
             rmq_data = verify_and_parse_mq_uri(rabbitmq_url)
+            self.log.debug(f'Verified RabbitMQ URL: {rabbitmq_url}')
             self.rmq_username = rmq_data['username']
             self.rmq_password = rmq_data['password']
             self.rmq_host = rmq_data['host']
