@@ -34,7 +34,7 @@ from operandi_server.models import (
     WorkflowJobRsrc,
     WorkspaceRsrc
 )
-from operandi_server.routers import discovery, workflow, workspace
+from operandi_server.routers import discovery, user, workflow, workspace
 from operandi_server.utils import bagit_from_url, safe_init_logging
 
 
@@ -295,5 +295,6 @@ class OperandiServer(FastAPI):
         self.include_router(discovery.router)
         # Don't put this out of comments yet - still missing
         # self.app.include_router(processor.router)
+        self.include_router(user.router)
         self.include_router(workflow.router)
         self.include_router(workspace.router)
