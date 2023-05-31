@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --constraint scratch
 #SBATCH --partition medium
-#SBATCH --cpus-per-task 16
-#SBATCH --mem 32G
+#SBATCH --cpus-per-task 32
+#SBATCH --mem 64G
 #SBATCH --time 240
-#SBATCH --output ./jobs_output/create_sif_job-%J.txt
+#SBATCH --output ./create_sif_job-%J.txt
 
 module purge
 module load singularity

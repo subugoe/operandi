@@ -1,8 +1,9 @@
 #!/bin/bash
 #SBATCH --constraint scratch
 #SBATCH --partition medium
-#SBATCH --cpus-per-task 8
-#SBATCH --mem 32G
+#SBATCH --cpus-per-task 32
+#SBATCH --mem 64G
+#SBATCH --time 24:00:00
 #SBATCH --output ./operandi/slurm-job-%J.txt
 
 # Parameters are as follows:

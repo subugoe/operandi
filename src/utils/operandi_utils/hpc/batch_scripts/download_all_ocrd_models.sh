@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task 8
 #SBATCH --mem 16G
 #SBATCH --time 240
-#SBATCH --output ./jobs_output/download_all_ocrd_models_job-%J.txt
+#SBATCH --output ./download_all_ocrd_models_job-%J.txt
 
 module purge
 module load singularity
@@ -29,4 +29,4 @@ fi
 # Download all available ocrd models
 singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download '*'
 # Download models for ocrd-tesserocr-recognize which are not downloaded with the previous call
-singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" ocrd resmgr download ocrd-tesserocr-recognize '*'
+singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download ocrd-tesserocr-recognize '*'

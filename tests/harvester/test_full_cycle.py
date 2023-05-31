@@ -7,7 +7,7 @@ from tests.server.helpers_asserts import assert_response_status_code
 from ..constants import OPERANDI_RABBITMQ_QUEUE_HARVESTER
 
 
-def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, bytes_workspace1):
+def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow2, bytes_workspace1):
     response = operandi.get('/')
     assert response.json()['message'] == "The home page of the OPERANDI Server"
 
@@ -28,7 +28,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
     # Post a workflow script
     response = operandi.post(
         url="/workflow",
-        files={"nextflow_script": bytes_workflow1},
+        files={"nextflow_script": bytes_workflow2},
         auth=auth_harvester
     )
     assert_response_status_code(response.status_code, expected_floor=2)
