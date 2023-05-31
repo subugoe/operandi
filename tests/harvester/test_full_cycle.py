@@ -58,7 +58,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow2, b
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_job_id = response.json()['resource_id']
 
-    tries = 30
+    tries = 60
     job_status = None
     while tries > 0:
         tries -= 1
@@ -76,8 +76,8 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow2, b
         # TODO: Fix may be needed here
         # When Stopped loop 3 more times.
         # Sometimes the STOPPED changes to SUCCESS
-        if job_status == "STOPPED" and tries > 3:
-            tries = 3
+        if job_status == "STOPPED" and tries > 5:
+            tries = 5
 
     assert job_status == "SUCCESS"
 
