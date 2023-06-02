@@ -45,7 +45,7 @@ class WorkspaceDB(Document):
                                     key-value-pairs which are saved here
     """
     workspace_id: str
-    workspace_path: str
+    workspace_dir: str
     workspace_mets_path: str
     ocrd_identifier: str
     bagit_profile_identifier: str
@@ -55,7 +55,7 @@ class WorkspaceDB(Document):
     deleted: bool = False
 
     class Settings:
-        name = "workspace"
+        name = "workspaces"
 
 
 class WorkflowDB(Document):
@@ -63,12 +63,12 @@ class WorkflowDB(Document):
     Model to store a workflow in the mongo-database.
     """
     workflow_id: str
-    workflow_path: str
+    workflow_dir: str
     workflow_script_path: str
     deleted: bool = False
 
     class Settings:
-        name = "workflow"
+        name = "workflows"
 
 
 class WorkflowJobDB(Document):
@@ -76,17 +76,20 @@ class WorkflowJobDB(Document):
     Model to store a Workflow-Job in the mongo-database.
 
     Attributes:
-        workflow_job_id   the job's id
-        workspace_id      id of the workspace on which this job is running
-        workflow_id       id of the workflow the job is executing
-        job_path          the path of the workflow job
+        job_id            the workflow job's id
+        job_dir           the path of the workflow job dir
         job_state         current state of the workflow job
+        workflow_id       id of the workflow the job is executing
+        workspace_id      id of the workspace on which this job is running
     """
-    workflow_job_id: str
-    workspace_id: str
-    workflow_id: str
-    job_path: str
+    job_id: str
+    job_dir: str
     job_state: str
+    workflow_id: str
+    workspace_id: str
+    workflow_dir: str = None
+    workspace_dir: str = None
+    deleted: bool = False
 
     class Settings:
-        name = "workflow_job"
+        name = "workflow_jobs"

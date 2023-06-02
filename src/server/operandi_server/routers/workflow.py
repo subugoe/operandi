@@ -106,13 +106,13 @@ async def get_workflow_job(
     `curl -X GET SERVER_ADDR/workflow/{workflow_id}/{job_id}`
     """
     await user_login(auth)
-    wf_job_db = await workflow_manager.get_workflow_job(workflow_id, job_id)
+    wf_job_db = await workflow_manager.get_workflow_job(job_id=job_id)
     if not wf_job_db:
-        raise ResponseException(404, {})
+        raise ResponseException(404, {"error": f"workflow job not found: {job_id}"})
 
     try:
-        wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.workflow_job_id, local=False)
-        wf_job_local = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.workflow_job_id, local=True)
+        wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.job_id, local=False)
+        wf_job_local = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.job_id, local=True)
         workflow_url = workflow_manager.get_resource(wf_job_db.workflow_id, local=False)
         workspace_url = WorkspaceManager.static_get_resource(wf_job_db.workspace_id, local=False)
         job_state = wf_job_db.job_state

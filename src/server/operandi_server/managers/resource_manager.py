@@ -1,4 +1,4 @@
-from os import listdir, scandir
+from os import listdir, mkdir, scandir
 from os.path import exists, isdir, join
 from pathlib import Path
 from typing import List, Union, Tuple
@@ -6,10 +6,9 @@ import aiofiles
 import shutil
 import logging
 
-
 from ..constants import SERVER_URL
-from ..utils import generate_id
 from .constants import BASE_DIR
+from .utils import generate_id
 
 
 class ResourceManager:
@@ -19,8 +18,8 @@ class ResourceManager:
             self,
             logger_label: str,
             resource_router: str,
-            resources_base: str = BASE_DIR,
-            resources_url: str = SERVER_URL,
+            resource_base_dir: str = BASE_DIR,
+            server_url: str = SERVER_URL,
             log_level: str = "INFO"
     ):
 
@@ -29,14 +28,14 @@ class ResourceManager:
         self.log.setLevel(logging.getLevelName(log_level))
 
         # Server URL
-        self._resources_url = resources_url
+        self._server_url = server_url
         # Base directory for all resource managers
-        self._resources_base = resources_base
+        self._resource_base_dir = resource_base_dir
         # Routing key of this manager - passed from the child class
         self._resource_router = resource_router
 
         # Base directory of this manager - BASE_DIR/resource_router
-        self._resource_dir = join(self._resources_base, self._resource_router)
+        self._resource_dir = join(self._resource_base_dir, self._resource_router)
         # self._resource_dir = resource_dir
 
         log_msg = f"{self._resource_router}s base directory: {self._resource_dir}"
@@ -107,30 +106,29 @@ class ResourceManager:
         `resource_id` without any checks
         """
         if local:
-            return join(self._resource_dir, resource_id)
-        return f"{self._resources_url}/{self._resource_router}/{resource_id}"
+            return join(self._resource_base_dir, self._resource_router, resource_id)
+        return join(self._server_url, self._resource_router, resource_id)
 
     def _to_resource_job(self, resource_id: str, job_id: str, local: bool) -> Union[str, None]:
+        resource_base = self._to_resource(resource_id, local)
         if self._has_dir(resource_id):
-            resource_base = self._to_resource(resource_id, local)
-            if local:
-                return join(resource_base, job_id)
-            return resource_base + f'/{job_id}'
+            return join(resource_base, job_id)
         return None
 
-    def _create_resource_dir(self, resource_id: str) -> Tuple[str, str]:
+    def _create_resource_dir(self, resource_id: str = None) -> Tuple[str, str]:
         if resource_id is None:
             resource_id = generate_id()
         resource_dir = self._to_resource(resource_id, local=True)
         if exists(resource_dir):
             self.log.error("Cannot create: {resource_id}. Resource already exists!")
             # TODO: Raise an Exception here
+        mkdir(resource_dir)
         return resource_id, resource_dir
 
     def _delete_resource_dir(self, resource_id: str) -> Tuple[str, str]:
         resource_dir = self._to_resource(resource_id, local=True)
         if isdir(resource_dir):
-            shutil.rmtree(resource_dir)
+            shutil.rmtree(resource_dir, ignore_errors=True)
         return resource_id, resource_dir
 
     # TODO: Getting rid of the duplication seems

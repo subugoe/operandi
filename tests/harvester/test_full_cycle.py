@@ -86,7 +86,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow2, b
         headers={'accept': 'application/vnd.zip'},
         auth=auth_harvester
     )
-    zip_local_path = join(OPERANDI_SERVER_BASE_DIR, f"{workflow_job_id}.ocrd.zip")
+    zip_local_path = join(OPERANDI_SERVER_BASE_DIR, f"{workflow_job_id}.zip")
     with open(zip_local_path, 'wb') as filePtr:
         for chunk in response.iter_bytes(chunk_size=1024):
             if chunk:

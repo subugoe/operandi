@@ -22,7 +22,7 @@ class Resource(BaseModel):
 
 
 class JobState(BaseModel):
-    __root__: Annotated[str, Field(pattern=r'^(QUEUED|RUNNING|STOPPED|SUCCESS)')]
+    __root__: Annotated[str, Field(pattern=r'^(QUEUED|RUNNING|FAILED|SUCCESS)')]
 
 
 class Job(Resource):

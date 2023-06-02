@@ -7,6 +7,7 @@ from fastapi import (
     BackgroundTasks,
     Depends,
     Header,
+    status,
     UploadFile,
 )
 from fastapi.responses import FileResponse
@@ -88,7 +89,14 @@ async def get_workspace(
     return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=workspace_url)
 
 
-@router.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
+@router.post(
+    path="/workspace",
+    response_model=WorkspaceRsrc,
+    status_code=status.HTTP_201_CREATED,
+    summary="Import workspace as an ocrd zip",
+    response_model_exclude_unset=True,
+    response_model_exclude_none=True
+)
 async def post_workspace(
         workspace: UploadFile,
         auth: HTTPBasicCredentials = Depends(security)
@@ -110,7 +118,46 @@ async def post_workspace(
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
 
-    return WorkspaceRsrc.create(workspace_id=ws_id, workspace_url=ws_url)
+    return WorkspaceRsrc.create(
+        workspace_id=ws_id,
+        workspace_url=ws_url,
+        description="Workspace from ocrd zip"
+    )
+
+
+@router.post(
+    path="/workspace/import_external",
+    response_model=WorkspaceRsrc,
+    status_code=status.HTTP_201_CREATED,
+    summary="Import workspace from mets url",
+    response_model_exclude_unset=True,
+    response_model_exclude_none=True
+)
+async def post_workspace_from_url(
+        mets_url: str,
+        file_grp: str = "DEFAULT",
+        auth: HTTPBasicCredentials = Depends(security)
+) -> WorkspaceRsrc:
+
+    await user_login(auth)
+    try:
+        ws_url, ws_id = await workspace_manager.create_workspace_from_mets_url(
+            mets_url=mets_url,
+            file_grp=file_grp,
+            mets_basename="mets.xml"
+        )
+    except WorkspaceNotValidException as e:
+        raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
+    except Exception as e:
+        logger.exception(f"Unexpected error in create_workspace_from_zip: {e}")
+        # TODO: Don't provide the exception message to the outside world
+        raise ResponseException(500, {"error": f"internal server error: {e}"})
+
+    return WorkspaceRsrc.create(
+        workspace_id=ws_id,
+        workspace_url=ws_url,
+        description="Workspace from Mets URL"
+    )
 
 
 @router.put("/workspace/{workspace_id}", responses={"201": {"model": WorkspaceRsrc}})

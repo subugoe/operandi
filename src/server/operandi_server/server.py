@@ -36,7 +36,7 @@ from operandi_server.models import (
     WorkspaceRsrc
 )
 from operandi_server.routers import discovery, user, workflow, workspace
-from operandi_server.utils import bagit_from_url, safe_init_logging
+from operandi_server.utils import safe_init_logging
 
 security = HTTPBasic()
 
@@ -91,24 +91,12 @@ class OperandiServer(FastAPI):
         )
 
         self.router.add_api_route(
-            path="/workspace/import_external",
-            endpoint=self.operandi_import_from_mets_url,
-            methods=["POST"],
-            tags=["Workspace"],
-            status_code=status.HTTP_201_CREATED,
-            summary="Import workspace from mets url",
-            response_model=WorkspaceRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
-        )
-
-        self.router.add_api_route(
             path="/workflow/{workflow_id}",
             endpoint=self.submit_to_rabbitmq_queue,
             methods=["POST"],
             tags=["Workflow"],
             status_code=status.HTTP_201_CREATED,
-            summary="Run Nextflow workflow",
+            summary="Submit workflow job",
             response_model=WorkflowJobRsrc,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
@@ -198,15 +186,6 @@ class OperandiServer(FastAPI):
         }
         return json_message
 
-    async def operandi_import_from_mets_url(self, mets_url: str):
-        bag_path = bagit_from_url(mets_url=mets_url, file_grp="DEFAULT")
-        ws_url, ws_id = await self.workspace_manager.create_workspace_from_zip(bag_path, file_stream=False)
-        return WorkspaceRsrc.create(
-            workspace_id=ws_id,
-            workspace_url=ws_url,
-            description="Workspace from Mets URL"
-        )
-
     # TODO: Move this method inside routers/workflow
     # Submits a workflow execution request to the RabbitMQ
     async def submit_to_rabbitmq_queue(
@@ -232,7 +211,7 @@ class OperandiServer(FastAPI):
             input_file_grp = workflow_args.input_file_grp
 
             # Create job request parameters
-            job_id, job_dir_path = self.workflow_manager.create_workflow_execution_space(workflow_id)
+            job_id, job_dir_path = self.workflow_manager.create_workflow_job_space(workflow_id)
             job_state = "QUEUED"
 
             # Build urls to be sent as a response

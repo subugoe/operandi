@@ -19,7 +19,7 @@ class ProcessorRsrc(BaseModel):
 
     @staticmethod
     def create(processor_name: str):
-        # TODO: How to to get a link to the ocrd-tool.json ?
+        # TODO: How to get a link to the ocrd-tool.json ?
         # Running `ocrd-.* --dump-json`
         # returns the ocrd-tool.json of a processor
         return ProcessorRsrc(

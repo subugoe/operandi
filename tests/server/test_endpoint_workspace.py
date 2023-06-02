@@ -1,6 +1,11 @@
+from os.path import join
+
 from tests.helpers_asserts import (
     assert_exists_db_resource,
     assert_exists_db_resource_not
+)
+from tests.constants import (
+    OPERANDI_TESTS_LOCAL_DIR_WORKSPACES
 )
 from .helpers_asserts import (
     assert_local_dir_workspace,
@@ -10,10 +15,11 @@ from .helpers_asserts import (
 
 
 # Disabled test - takes 13 secs to finish...
-def _test_post_workspace_url(operandi, auth, workspace_collection):
+def test_post_workspace_url(operandi, auth, workspace_collection):
     mets_url = "https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
+    file_grp = "DEFAULT"
     response = operandi.post(
-        url=f"/workspace/import_external?mets_url={mets_url}",
+        url=f"/workspace/import_external?mets_url={mets_url}&file_grp={file_grp}",
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -155,6 +161,12 @@ def test_get_workspace(operandi, auth, bytes_workspace2):
     print(response.headers)
     assert response.headers.get('content-type').find("zip") > -1, \
         "content-type should be something with 'zip'"
+
+    zip_local_path = join(OPERANDI_TESTS_LOCAL_DIR_WORKSPACES, f"{workspace_id}.zip")
+    with open(zip_local_path, 'wb') as filePtr:
+        for chunk in response.iter_bytes(chunk_size=1024):
+            if chunk:
+                filePtr.write(chunk)
 
 
 # TODO for the WebAPI: Non-existing resource should not return an exception to the user!

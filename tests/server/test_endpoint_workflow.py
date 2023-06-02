@@ -41,9 +41,9 @@ def test_put_workflow_script(operandi, auth, workflow_collection, bytes_workflow
     )
     assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
 
-    workflow_dir_path1 = db_workflow["workflow_path"]
+    workflow_dir1 = db_workflow["workflow_dir"]
     workflow_path1 = db_workflow["workflow_script_path"]
-    assert workflow_dir_path1, "Failed to extract workflow dir path 1"
+    assert workflow_dir1, "Failed to extract workflow dir path 1"
     assert workflow_path1, "Failed to extract workflow path 1"
 
     # The second put request replaces the previously created workflow
@@ -60,13 +60,13 @@ def test_put_workflow_script(operandi, auth, workflow_collection, bytes_workflow
     )
     assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
 
-    workflow_dir_path2 = db_workflow["workflow_path"]
+    workflow_dir2 = db_workflow["workflow_dir"]
     workflow_path2 = db_workflow["workflow_script_path"]
-    assert workflow_dir_path2, "Failed to extract workflow dir path 2"
+    assert workflow_dir2, "Failed to extract workflow dir path 2"
     assert workflow_path2, "Failed to extract workflow path 2"
 
-    assert workflow_dir_path1 == workflow_dir_path2, \
-        f"Workflow dir paths should match, but does not: {workflow_dir_path1} != {workflow_dir_path2}"
+    assert workflow_dir1 == workflow_dir2, \
+        f"Workflow dir paths should match, but does not: {workflow_dir1} != {workflow_dir2}"
     assert workflow_path1 != workflow_path2, \
         f"Workflow paths should not, but match: {workflow_path1} == {workflow_path2}"
 
