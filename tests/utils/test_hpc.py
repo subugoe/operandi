@@ -18,6 +18,7 @@ ID_WORKSPACE = f"data"
 ID_WORKFLOW_JOB_DIR = join(OPERANDI_TESTS_HPC_DIR_SLURM_WORKSPACES, ID_WORKFLOW_JOB)
 
 
+# TODO: Adapt to the previous changes to use zips
 def test_hpc_connector_clean(hpc_command_executor):
     # Remove the tests folder from the HPC environment
     hpc_command_executor.execute_blocking(f"bash -lc 'rm -rf {OPERANDI_HPC_DIR_PROJECT}'")

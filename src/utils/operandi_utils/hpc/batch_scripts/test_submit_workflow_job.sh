@@ -56,9 +56,7 @@ if [ ! -f "${HOME_BASE}/${WORKFLOW_JOB_ID}.zip" ]; then
   exit 1
 else
   mv "${HOME_BASE}/${WORKFLOW_JOB_ID}.zip" "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}.zip"
-  ls -la "${SCRATCH_BASE}"
   unzip "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}.zip" -d "${SCRATCH_BASE}"
-  ls -la "${SCRATCH_BASE}"
   rm "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}.zip"
 fi
 
