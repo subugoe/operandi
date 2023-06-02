@@ -2,6 +2,7 @@ import json
 import logging
 import signal
 from os import getppid, setsid
+from os.path import join
 from sys import exit
 
 from operandi_utils import reconfigure_all_loggers
@@ -314,37 +315,45 @@ class Worker:
             batch_script_id=batch_script_id
         )
 
-        hpc_slurm_workspace_path, nextflow_script_id = self.hpc_io_transfer.put_slurm_workspace(
+        hpc_slurm_workspace_path, nextflow_script_id = self.hpc_io_transfer.pack_and_put_slurm_workspace(
             ocrd_workspace_id=workspace_id,
             ocrd_workspace_dir=workspace_dir,
             workflow_job_id=workflow_job_id,
-            nextflow_script_path=nf_workflow_script      
+            nextflow_script_path=nf_workflow_script
         )
 
-        # NOTE: The paths below must be a valid existing path inside the HPC
-        slurm_job_id = self.hpc_executor.trigger_slurm_job(
-            batch_script_path=hpc_batch_script_path,
-            workflow_job_id=workflow_job_id,
-            nextflow_script_id=nextflow_script_id,
-            input_file_grp=input_file_grp,
-            workspace_id=workspace_id
-        )
+        try:
+            # NOTE: The paths below must be a valid existing path inside the HPC
+            slurm_job_id = self.hpc_executor.trigger_slurm_job(
+                batch_script_path=hpc_batch_script_path,
+                workflow_job_id=workflow_job_id,
+                nextflow_script_id=nextflow_script_id,
+                input_file_grp=input_file_grp,
+                workspace_id=workspace_id
+            )
+        except Exception as error:
+            raise Exception(f"Triggering slurm job failed: {error}")
 
-        finished_successfully = self.hpc_executor.poll_till_end_slurm_job_state(
-            slurm_job_id=slurm_job_id,
-            interval=10,
-            timeout=1800  # seconds, i.e., 30 minutes
-        )
+        try:
+            finished_successfully = self.hpc_executor.poll_till_end_slurm_job_state(
+                slurm_job_id=slurm_job_id,
+                interval=10,
+                timeout=1800  # seconds, i.e., 30 minutes
+            )
+        except Exception as error:
+            raise Exception(f"Polling job status has failed: {error}")
 
         if finished_successfully:
-            self.hpc_io_transfer.get_slurm_workspace(
+            self.hpc_io_transfer.get_and_unpack_slurm_workspace(
                 ocrd_workspace_id=workspace_id,
                 ocrd_workspace_dir=workspace_dir,
                 hpc_slurm_workspace_path=hpc_slurm_workspace_path,
-                workflow_job_dir=workflow_job_dir,
+                workflow_job_id=workflow_job_id,
+                workflow_job_dir=workflow_job_dir
             )
             # Delete the result dir from the HPC home folder
             # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}'")
+            # self.hpc_executor.execute_blocking(f"bash -lc 'rm {hpc_slurm_workspace_path}.zip'")
         else:
             raise Exception(f"Slurm job has failed: {slurm_job_id}")
         return 0

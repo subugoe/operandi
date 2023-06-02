@@ -51,10 +51,23 @@ if [ ! -d "${SCRATCH_BASE}" ]; then
   exit 1
 fi
 
-mv "${HOME_BASE}/${WORKFLOW_JOB_ID}" "${SCRATCH_BASE}"
+if [ ! -f "${HOME_BASE}/${WORKFLOW_JOB_ID}.zip" ]; then
+  echo "Required slurm workspace zip is not available: ${HOME_BASE}/${WORKFLOW_JOB_ID}.zip"
+  exit 1
+else
+  mv "${HOME_BASE}/${WORKFLOW_JOB_ID}.zip" "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}.zip"
+  ls -la "${SCRATCH_BASE}"
+  unzip "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}.zip" -d "${SCRATCH_BASE}"
+  ls -la "${SCRATCH_BASE}"
+  rm "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}.zip"
+fi
 
-# shellcheck disable=SC2164
-cd "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
+if [ ! -d "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" ]; then
+  echo "Dir not available: ${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
+  exit 1
+else
+  cd "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" || exit 1
+fi
 
 # Execute the Nextflow script
 nextflow run "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}/${NEXTFLOW_SCRIPT_ID}" \
@@ -68,4 +81,9 @@ nextflow run "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}/${NEXTFLOW_SCRIPT_ID}" \
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete
+# Move the slurm workspace dir to home base
 mv "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" "${HOME_BASE}"
+# Create a zip of the ocrd workspace dir
+cd "${HOME_BASE}/${WORKFLOW_JOB_ID}/${WORKSPACE_ID}" && zip -r "${WORKSPACE_ID}.zip" "."
+# Create a zip of the Nextflow run results by excluding the ocrd workspace dir
+cd "${HOME_BASE}/${WORKFLOW_JOB_ID}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**"

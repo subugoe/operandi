@@ -28,7 +28,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
     # Post a workflow script
     response = operandi.post(
         url="/workflow",
-        files={"nextflow_script": bytes_workflow2},
+        files={"nextflow_script": bytes_workflow1},
         auth=auth_harvester
     )
     assert_response_status_code(response.status_code, expected_floor=2)

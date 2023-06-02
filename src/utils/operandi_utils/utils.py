@@ -1,12 +1,13 @@
 from clint.textui import progress
 from functools import wraps
-from os import makedirs
-from os.path import exists
+from os import makedirs, sep
+from os.path import basename, dirname, exists
+from pika import URLParameters
+from pymongo import uri_parser as mongo_uri_parser
 from re import match as re_match
 from requests import get, post
 from requests.exceptions import RequestException
-from pika import URLParameters
-from pymongo import uri_parser as mongo_uri_parser
+from shutil import make_archive, move, unpack_archive
 
 
 # Based on:
@@ -56,6 +57,20 @@ def is_url_responsive(url: str) -> bool:
             return True
     except Exception as e:
         return False
+
+
+def make_zip_archive(source, destination):
+    base = basename(destination)
+    name = base.split('.')[0]
+    zip_format = base.split('.')[1]
+    archive_from = dirname(source)
+    archive_to = basename(source.strip(sep))
+    make_archive(name, zip_format, archive_from, archive_to)
+    move(f'{name}.{zip_format}', destination)
+
+
+def unpack_zip_archive(source, destination):
+    unpack_archive(filename=source, extract_dir=destination)
 
 
 # TODO: Conceptual implementation, not tested in any way yet

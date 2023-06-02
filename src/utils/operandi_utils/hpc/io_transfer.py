@@ -1,10 +1,12 @@
-from os import symlink
+from os import mkdir, remove, symlink
 from os.path import dirname, exists, isfile, join
 from pathlib import Path
 import SSHLibrary
-from shutil import rmtree
+from shutil import rmtree, copytree
+from tempfile import mkdtemp
 from typing import Tuple
 
+from operandi_utils import make_zip_archive, unpack_zip_archive
 from .constants import (
     OPERANDI_HPC_DIR_BATCH_SCRIPTS,
     OPERANDI_HPC_DIR_SLURM_WORKSPACES,
@@ -58,19 +60,13 @@ class HPCIOTransfer:
         )
         return hpc_batch_script_path
 
-    # The slurm workspace in the HPC contains:
-    # 1) Nextflow Script
-    # 2) Ocrd workspace directory "data" that has:
-    #   2.1) a mets file
-    #   2.2) input file group folder
-    def put_slurm_workspace(
+    def pack_and_put_slurm_workspace(
             self,
             ocrd_workspace_id: str,
             ocrd_workspace_dir: str,
             workflow_job_id: str,
             nextflow_script_path: str = None
     ) -> Tuple[str, str]:
-
         # The provided scripts are always renamed to:
         nextflow_script_id = "user_workflow.nf"
 
@@ -79,54 +75,96 @@ class HPCIOTransfer:
             nextflow_script_id = "default_workflow.nf"
             nextflow_script_path = join(dirname(__file__), "nextflow_workflows", nextflow_script_id)
 
-        hpc_slurm_workspace_path = join(OPERANDI_HPC_DIR_SLURM_WORKSPACES, workflow_job_id)
-        # put the nextflow script
-        self._put_file(
-            source=nextflow_script_path,
-            destination=join(hpc_slurm_workspace_path, nextflow_script_id)
-        )
-        # put the ocrd workspace
-        self._put_directory(
-            source=ocrd_workspace_dir,
-            destination=join(hpc_slurm_workspace_path, ocrd_workspace_id),
-            recursive=True
-        )
-        return hpc_slurm_workspace_path, nextflow_script_id
+        tempdir = mkdtemp(prefix="slurm_workspace-")
+        temp_workflow_job_dir = join(join(tempdir, workflow_job_id))
+        mkdir(temp_workflow_job_dir)
 
-    def get_slurm_workspace(
+        symlink(
+            src=nextflow_script_path,
+            dst=join(temp_workflow_job_dir, nextflow_script_id),
+        )
+        copytree(
+            src=ocrd_workspace_dir,
+            dst=join(temp_workflow_job_dir, ocrd_workspace_id)
+        )
+        make_zip_archive(temp_workflow_job_dir, f"{temp_workflow_job_dir}.zip")
+        self._put_file(
+            source=f"{temp_workflow_job_dir}.zip",
+            destination=join(OPERANDI_HPC_DIR_SLURM_WORKSPACES, f"{workflow_job_id}.zip")
+        )
+
+        # Zip path inside the HPC environment
+        return OPERANDI_HPC_DIR_SLURM_WORKSPACES, nextflow_script_id
+
+    def get_and_unpack_slurm_workspace(
             self,
             ocrd_workspace_id: str,
             ocrd_workspace_dir: str,
             hpc_slurm_workspace_path: str,
+            workflow_job_id: str,
             workflow_job_dir: str
     ):
-        self._get_directory(
-            source=hpc_slurm_workspace_path,
-            destination=Path(workflow_job_dir).parent.absolute(),
-            recursive=True
-        )
+        get_src = join(hpc_slurm_workspace_path, workflow_job_id, f"{workflow_job_id}.zip")
+        get_dst = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
+        try:
+            self._get_file(source=get_src, destination=get_dst)
+        except Exception as error:
+            raise Exception(
+                f"error when getting file: {error}, get_src: {get_src}, get_dst: {get_dst}"
+            )
+
+        unpack_src = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
+        unpack_dst = workflow_job_dir
+        try:
+            unpack_zip_archive(source=unpack_src, destination=unpack_dst)
+        except Exception as error:
+            raise Exception(
+                f"error when unpacking zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}"
+            )
+
+        # Remove the temporary zip
+        remove(unpack_src)
 
         # Remove the workspace dir from the local storage,
         # before transferring the results to avoid potential
         # overwrite errors or duplications
         rmtree(ocrd_workspace_dir, ignore_errors=True)
 
-        self._get_directory(
-            source=join(hpc_slurm_workspace_path, ocrd_workspace_id),
-            destination=Path(ocrd_workspace_dir).parent.absolute(),
-            recursive=True
-        )
+        get_src = join(hpc_slurm_workspace_path, workflow_job_id, ocrd_workspace_id, f"{ocrd_workspace_id}.zip")
+        get_dst = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
+        try:
+            self._get_file(source=get_src, destination=get_dst)
+        except Exception as error:
+            raise Exception(
+                f"error when getting file2: {error}, get_src: {get_src}, get_dst: {get_dst}"
+            )
+
+        unpack_src = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
+        unpack_dst = ocrd_workspace_dir
+        try:
+            unpack_zip_archive(source=unpack_src, destination=unpack_dst)
+        except Exception as error:
+            raise Exception(
+                f"error when unpacking zip2: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}"
+            )
+
+        # Remove the temporary zip
+        remove(unpack_src)
 
         # Remove the workspace dir from the local workflow job dir,
         # and. Then create a symlink of the workspace dir inside the
         # workflow job dir
         workspace_dir_in_workflow_job = join(workflow_job_dir, ocrd_workspace_id)
-        rmtree(workspace_dir_in_workflow_job)
-        symlink(
-            src=ocrd_workspace_dir,
-            dst=workspace_dir_in_workflow_job,
-            target_is_directory=True
-        )
+        try:
+            symlink(
+                src=ocrd_workspace_dir,
+                dst=workspace_dir_in_workflow_job,
+                target_is_directory=True
+            )
+        except Exception as error:
+            raise Exception(
+                f"error when symlinking: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}"
+            )
 
     @staticmethod
     def __check_keyfile_existence(hpc_key_path):
