@@ -7,7 +7,7 @@ from tests.server.helpers_asserts import assert_response_status_code
 from ..constants import OPERANDI_RABBITMQ_QUEUE_HARVESTER
 
 
-def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow2, bytes_workspace1):
+def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, bytes_workspace1):
     response = operandi.get('/')
     assert response.json()['message'] == "The home page of the OPERANDI Server"
 
@@ -74,9 +74,9 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow2, b
             break
 
         # TODO: Fix may be needed here
-        # When Stopped loop 3 more times.
-        # Sometimes the STOPPED changes to SUCCESS
-        if job_status == "STOPPED" and tries > 5:
+        # When failed loop 5 more times.
+        # Sometimes the FAILED changes to SUCCESS
+        if job_status == "FAILED" and tries > 5:
             tries = 5
 
     assert job_status == "SUCCESS"

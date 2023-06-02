@@ -224,10 +224,10 @@ async def sync_save_workspace(workspace_id: str, workspace_dir: str, bag_info: d
 
 async def save_workflow_job(
         job_id: str,
+        job_dir: str,
+        job_state: str,
         workflow_id: str,
-        workspace_id: str,
-        job_path: str,
-        job_state: str
+        workspace_id: str
 ) -> Union[WorkflowJobDB, None]:
     """
     save a workflow_job to the database. Can also be used to update a workflow_job
@@ -236,24 +236,24 @@ async def save_workflow_job(
         job_id: id of the workflow job
         workflow_id: id of the workflow the job is/was executing
         workspace_id: id of the workspace the job runs on
-        job_path: the path of the workflow job
+        job_dir: the path of the workflow job dir
         job_state: current state of the job
     """
     workflow_job_db = await get_workflow_job(job_id)
     if not workflow_job_db:
         workflow_job_db = WorkflowJobDB(
             job_id=job_id,
+            job_dir=job_dir,
+            job_state=job_state,
             workflow_id=workflow_id,
-            workspace_id=workspace_id,
-            job_path=job_path,
-            job_state=job_state
+            workspace_id=workspace_id
         )
     else:
-        workflow_job_db.workflow_job_id = job_id
+        workflow_job_db.job_id = job_id
+        workflow_job_db.job_dir = job_dir
+        workflow_job_db.job_state = job_state
         workflow_job_db.workflow_id = workflow_id
         workflow_job_db.workspace_id = workspace_id
-        workflow_job_db.job_path = job_path
-        workflow_job_db.job_state = job_state
     await workflow_job_db.save()
     return workflow_job_db
 

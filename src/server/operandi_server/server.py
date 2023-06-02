@@ -211,7 +211,7 @@ class OperandiServer(FastAPI):
             input_file_grp = workflow_args.input_file_grp
 
             # Create job request parameters
-            job_id, job_dir_path = self.workflow_manager.create_workflow_job_space(workflow_id)
+            job_id, job_dir = self.workflow_manager.create_workflow_job_space(workflow_id)
             job_state = "QUEUED"
 
             # Build urls to be sent as a response
@@ -221,11 +221,11 @@ class OperandiServer(FastAPI):
 
             # Save to the workflow job to the database
             await db.save_workflow_job(
-                workspace_id=workspace_id,
-                workflow_id=workflow_id,
                 job_id=job_id,
-                job_path=job_dir_path,
-                job_state=job_state
+                job_dir=job_dir,
+                job_state=job_state,
+                workspace_id=workspace_id,
+                workflow_id=workflow_id
             )
 
             # Create the message to be sent to the RabbitMQ queue

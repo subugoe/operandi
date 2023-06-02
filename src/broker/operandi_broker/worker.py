@@ -208,8 +208,8 @@ class Worker:
             # TODO: This should be optimized, i.e., single read to the DB instead of three
             workflow_script_path = db.sync_get_workflow_script_path(self.current_message_wf_id)
             workspace_mets_path = db.sync_get_workspace_mets_path(self.current_message_ws_id)
-            workspace_path = db.sync_get_workspace(self.current_message_ws_id).workspace_path
-            job_dir = db.sync_get_workflow_job(self.current_message_job_id).job_path
+            workspace_dir = db.sync_get_workspace(self.current_message_ws_id).workspace_dir
+            job_dir = db.sync_get_workflow_job(self.current_message_job_id).job_dir
             job_state = "RUNNING"
             self.log.info(f"Setting new job state[{job_state}] of job_id: {self.current_message_job_id}")
             db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
@@ -224,7 +224,7 @@ class Worker:
             #  instead of using the nextflow_workflows/template_workflow.nf
             slurm_job_return_code = self.prepare_and_trigger_slurm_job(
                 workspace_id=self.current_message_ws_id,
-                workspace_dir=workspace_path,
+                workspace_dir=workspace_dir,
                 workflow_job_id=self.current_message_job_id,
                 workflow_job_dir=job_dir,
                 input_file_grp=input_file_grp,
@@ -252,7 +252,7 @@ class Worker:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def __handle_message_failure(self, interruption: bool = False):
-        job_state = "STOPPED"
+        job_state = "FAILED"
         self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
         db.sync_set_workflow_job_state(
             job_id=self.current_message_job_id,
@@ -344,7 +344,7 @@ class Worker:
                 workflow_job_dir=workflow_job_dir,
             )
             # Delete the result dir from the HPC home folder
-            self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}'")
+            # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}'")
         else:
             raise Exception(f"Slurm job has failed: {slurm_job_id}")
         return 0
