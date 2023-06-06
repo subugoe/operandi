@@ -32,8 +32,7 @@ from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
 from operandi_server.exceptions import ResponseException
 from operandi_server.models import (
     WorkflowArguments,
-    WorkflowJobRsrc,
-    WorkspaceRsrc
+    WorkflowJobRsrc
 )
 from operandi_server.routers import discovery, user, workflow, workspace
 from operandi_server.utils import safe_init_logging
@@ -211,13 +210,13 @@ class OperandiServer(FastAPI):
             input_file_grp = workflow_args.input_file_grp
 
             # Create job request parameters
-            job_id, job_dir = self.workflow_manager.create_workflow_job_space(workflow_id)
+            job_id, job_dir = self.workflow_manager.create_workflow_job_space()
             job_state = "QUEUED"
 
             # Build urls to be sent as a response
-            workspace_url = self.workspace_manager.get_resource(workspace_id, local=False)
-            workflow_url = self.workflow_manager.get_resource(workflow_id, local=False)
-            job_url = self.workflow_manager.get_resource_job(workflow_id, job_id, local=False)
+            workspace_url = self.workspace_manager.get_workspace_url(workspace_id=workspace_id)
+            workflow_url = self.workflow_manager.get_workflow_url(workflow_id=workflow_id)
+            job_url = self.workflow_manager.get_workflow_job_url(job_id=job_id, workflow_id=workflow_id)
 
             # Save to the workflow job to the database
             await db.save_workflow_job(

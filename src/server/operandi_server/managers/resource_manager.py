@@ -7,132 +7,80 @@ import shutil
 import logging
 
 from ..constants import SERVER_URL
-from .constants import BASE_DIR
+from .constants import BASE_DIR, LOG_LEVEL
 from .utils import generate_id
 
 
 class ResourceManager:
-    # Warning: Don't change the defaults
-    # till everything is configured properly
     def __init__(
             self,
-            logger_label: str,
-            resource_router: str,
-            resource_base_dir: str = BASE_DIR,
+            logger_label: str = __name__,
+            log_level: str = LOG_LEVEL,
+            resources_base_dir: str = BASE_DIR,
             server_url: str = SERVER_URL,
-            log_level: str = "INFO"
     ):
-
         # Logger label of this manager - passed from the child class
         self.log = logging.getLogger(logger_label)
         self.log.setLevel(logging.getLevelName(log_level))
-
-        # Server URL
+        # Base of the server url
         self._server_url = server_url
         # Base directory for all resource managers
-        self._resource_base_dir = resource_base_dir
-        # Routing key of this manager - passed from the child class
-        self._resource_router = resource_router
+        self._resources_base_dir = resources_base_dir
 
-        # Base directory of this manager - BASE_DIR/resource_router
-        self._resource_dir = join(self._resource_base_dir, self._resource_router)
-        # self._resource_dir = resource_dir
-
-        log_msg = f"{self._resource_router}s base directory: {self._resource_dir}"
-        if not exists(self._resource_dir):
-            Path(self._resource_dir).mkdir(parents=True, exist_ok=True)
-            self.log.info(f"Created non-existing {log_msg}")
-        else:
+    def _create_resource_base_dir(self, resource_router: str):
+        resource_abs_path = join(self._resources_base_dir, resource_router)
+        log_msg = f"base directory of resource '{resource_router}': {resource_abs_path}"
+        if exists(resource_abs_path):
             self.log.info(f"Using the existing {log_msg}")
+        else:
+            Path(resource_abs_path).mkdir(parents=True, exist_ok=True)
+            self.log.info(f"Create non-existing {log_msg}")
 
-    def get_all_resources(self, local: bool) -> List[Tuple[str, str]]:
+    def get_all_resources(self, resource_router: str, local: bool) -> List[Tuple[str, str]]:
         resources = []
-        for res in scandir(self._resource_dir):
+        for res in scandir(join(self._resources_base_dir, resource_router)):
             if res.is_dir():
+                resource_id = str(res.name)
                 if local:
-                    resources.append((str(res.name), res))
+                    resources.append((resource_id, res))
                 else:
-                    url = self._to_resource(res.name, local=False)
-                    resources.append((str(res.name), url))
+                    url = join(self._server_url, resource_router, resource_id)
+                    resources.append((resource_id, url))
         return resources
 
-    def get_resource(self, resource_id: str, local: bool) -> Union[str, None]:
-        """
-        Returns the local path of the dir or
-        the URL of the `resource_id`
-        """
-        res_path = self._has_dir(resource_id)
-        if res_path:
+    def get_resource(self, resource_router: str, resource_id: str, local: bool) -> str:
+        resource_dir = join(self._resources_base_dir, resource_router, resource_id)
+        if isdir(resource_dir):
             if local:
-                return res_path
-            url = self._to_resource(resource_id, local=False)
-            return url
-        return None
+                return resource_dir
+            return join(self._server_url, resource_router, resource_id)
+        raise Exception(f"Resource dir not found: {resource_dir}")
 
-    def get_resource_job(self, resource_id: str, job_id: str, local: bool) -> Union[str, None]:
+    def get_resource_file(self, resource_router: str, resource_id: str, file_ext=None) -> str:
         # Wrapper, in case the underlying
         # implementation has to change
-        return self._to_resource_job(resource_id, job_id, local)
-
-    def get_resource_file(self, resource_id: str, file_ext=None) -> Union[str, None]:
-        # Wrapper, in case the underlying
-        # implementation has to change
-        return self._has_file(resource_id, file_ext=file_ext)
-
-    def _has_dir(self, resource_id: str) -> Union[str, None]:
-        """
-        Returns the local path of the dir
-        identified with `resource_id` or None
-        """
-        resource_dir = self._to_resource(resource_id, local=True)
-        if exists(resource_dir) and isdir(resource_dir):
-            return resource_dir
-        return None
-
-    def _has_file(self, resource_id: str, file_ext=None) -> Union[str, None]:
-        """
-        Returns the local path of the file identified
-        with `resource_id` or None
-        """
-        resource_dir = self._to_resource(resource_id, local=True)
+        resource_dir = join(self._resources_base_dir, resource_router, resource_id)
         for file in listdir(resource_dir):
             if file_ext and file.endswith(file_ext):
                 return join(resource_dir, file)
-        return None
+        raise Exception(f"Resource file not found in: {resource_dir}")
 
-    def _to_resource(self, resource_id: str, local: bool) -> str:
-        """
-        Returns the built local path or URL of the
-        `resource_id` without any checks
-        """
-        if local:
-            return join(self._resource_base_dir, self._resource_router, resource_id)
-        return join(self._server_url, self._resource_router, resource_id)
-
-    def _to_resource_job(self, resource_id: str, job_id: str, local: bool) -> Union[str, None]:
-        resource_base = self._to_resource(resource_id, local)
-        if self._has_dir(resource_id):
-            return join(resource_base, job_id)
-        return None
-
-    def _create_resource_dir(self, resource_id: str = None) -> Tuple[str, str]:
+    def _create_resource_dir(self, resource_router: str, resource_id: str = None) -> Tuple[str, str]:
         if resource_id is None:
             resource_id = generate_id()
-        resource_dir = self._to_resource(resource_id, local=True)
+        resource_dir = join(self._resources_base_dir, resource_router, resource_id)
         if exists(resource_dir):
-            self.log.error("Cannot create: {resource_id}. Resource already exists!")
+            self.log.error(f"Cannot create: {resource_id}. Resource already exists!")
             # TODO: Raise an Exception here
         mkdir(resource_dir)
         return resource_id, resource_dir
 
-    def _delete_resource_dir(self, resource_id: str) -> Tuple[str, str]:
-        resource_dir = self._to_resource(resource_id, local=True)
+    def _delete_resource_dir(self, resource_router: str, resource_id: str) -> Tuple[str, str]:
+        resource_dir = join(self._resources_base_dir, resource_router, resource_id)
         if isdir(resource_dir):
             shutil.rmtree(resource_dir, ignore_errors=True)
         return resource_id, resource_dir
 
-    # TODO: Getting rid of the duplication seems
-    #  trickier than expected implementing a single method is harder
     @staticmethod
     async def _receive_resource(file, resource_dest):
         async with aiofiles.open(resource_dest, "wb") as fpt:
@@ -140,12 +88,3 @@ class ResourceManager:
             while content:
                 await fpt.write(content)
                 content = await file.read(1024)
-
-    @staticmethod
-    async def _receive_resource2(file_path, resource_dest):
-        with open(file_path, "rb") as fin:
-            with open(resource_dest, "wb") as fout:
-                content = fin.read(1024)
-                while content:
-                    fout.write(content)
-                    content = fin.read(1024)

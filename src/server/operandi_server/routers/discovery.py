@@ -9,9 +9,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from operandi_server.models import DiscoveryResponse
 from .user import user_login
 
-router = APIRouter(
-    tags=["Discovery"],
-)
+router = APIRouter(tags=["Discovery"])
 
 security = HTTPBasic()
 

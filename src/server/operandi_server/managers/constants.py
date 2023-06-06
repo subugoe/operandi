@@ -1,17 +1,23 @@
 from dotenv import load_dotenv
 from os import environ
-from os.path import join
 
 __all__ = [
     'BASE_DIR',
-    'JOBS_ROUTER',
+    'DEFAULT_FILE_GRP',
+    'DEFAULT_METS_BASENAME',
+    'LOG_LEVEL',
+    'WORKFLOW_JOBS_ROUTER',
     'WORKFLOWS_ROUTER',
     'WORKSPACES_ROUTER',
 ]
 
 load_dotenv()
 
+DEFAULT_FILE_GRP: str = "DEFAULT"
+DEFAULT_METS_BASENAME: str = "mets.xml"
+LOG_LEVEL: str = "INFO"
+
 BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR", "/tmp/operandi_data")
-JOBS_ROUTER = join(BASE_DIR, "workflow_jobs")
-WORKFLOWS_ROUTER = join(BASE_DIR, "workflows")
-WORKSPACES_ROUTER = join(BASE_DIR, "workspaces")
+WORKFLOW_JOBS_ROUTER: str = "workflow_jobs"
+WORKFLOWS_ROUTER: str = "workflows"
+WORKSPACES_ROUTER: str = "workspaces"

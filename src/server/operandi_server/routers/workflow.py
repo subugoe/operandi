@@ -24,12 +24,11 @@ from operandi_server.models import (
 from .user import user_login
 
 
-router = APIRouter(
-    tags=["Workflow"],
-)
+router = APIRouter(tags=["Workflow"])
 
 logger = logging.getLogger(__name__)
 workflow_manager = WorkflowManager()
+workspace_manager = WorkspaceManager()
 security = HTTPBasic()
 
 
@@ -69,8 +68,12 @@ async def get_workflow_script(
     """
     await user_login(auth)
     try:
-        workflow_script_url = workflow_manager.get_resource(workflow_id, local=False)
-        workflow_script_path = workflow_manager.get_resource_file(workflow_id, file_ext=".nf")
+        workflow_script_url = workflow_manager.get_workflow_url(workflow_id)
+        workflow_script_path = workflow_manager.get_resource_file(
+            workflow_manager.workflow_router,
+            workflow_id,
+            file_ext=".nf"
+        )
     except Exception as e:
         logger.exception(f"Unexpected error in get_workflow_script: {e}")
         # TODO: Don't provide the exception message to the outside world
@@ -111,10 +114,16 @@ async def get_workflow_job(
         raise ResponseException(404, {"error": f"workflow job not found: {job_id}"})
 
     try:
-        wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.job_id, local=False)
-        wf_job_local = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.job_id, local=True)
-        workflow_url = workflow_manager.get_resource(wf_job_db.workflow_id, local=False)
-        workspace_url = WorkspaceManager.static_get_resource(wf_job_db.workspace_id, local=False)
+        wf_job_url = workflow_manager.get_workflow_job_url(
+            job_id=wf_job_db.job_id,
+            workflow_id=wf_job_db.workflow_id
+        )
+        wf_job_local = workflow_manager.get_workflow_job_path(
+            job_id=wf_job_db.job_id,
+            workflow_id=wf_job_db.workflow_id
+        )
+        workflow_url = workflow_manager.get_workflow_url(wf_job_db.workflow_id)
+        workspace_url = workspace_manager.get_workspace_url(wf_job_db.workspace_id)
         job_state = wf_job_db.job_state
     except Exception as e:
         logger.exception(f"Unexpected error in get_workflow_job: {e}")

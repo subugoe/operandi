@@ -6,9 +6,7 @@ from operandi_server.authentication import authenticate_user, register_user
 from operandi_server.exceptions import AuthenticationError, RegistrationError
 from operandi_server.models import UserAction
 
-router = APIRouter(
-    tags=["User"],
-)
+router = APIRouter(tags=["User"])
 
 logger = logging.getLogger(__name__)
 # TODO: This may not be ideal, discussion needed

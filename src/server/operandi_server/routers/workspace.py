@@ -12,7 +12,6 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-
 from operandi_server.exceptions import (
     ResponseException,
     WorkspaceException,
@@ -24,9 +23,7 @@ from operandi_server.models import WorkspaceRsrc
 from .user import user_login
 
 
-router = APIRouter(
-    tags=["Workspace"],
-)
+router = APIRouter(tags=["Workspace"])
 
 logger = logging.getLogger(__name__)
 workspace_manager = WorkspaceManager()
@@ -69,7 +66,7 @@ async def get_workspace(
     """
     await user_login(auth)
     try:
-        workspace_url = workspace_manager.get_resource(workspace_id, local=False)
+        workspace_url = workspace_manager.get_workspace_url(workspace_id)
     except Exception as e:
         logger.exception(f"Unexpected error in get_workspace: {e}")
         # TODO: Don't provide the exception message to the outside world
