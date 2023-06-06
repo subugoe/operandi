@@ -181,15 +181,15 @@ async def save_workspace(workspace_id: str, workspace_dir: str, bag_info: dict) 
          bag_info: dict with key-value-pairs from bag-info.txt
     """
 
-    workspace_mets_path = join(workspace_dir, "mets.xml")
-
     bag_info = dict(bag_info)
-    ocrd_mets, ocrd_base_version_checksum = None, None
+    mets_basename = "mets.xml"
+    workspace_mets_path = join(workspace_dir, mets_basename)
+    ocrd_base_version_checksum = None
     ocrd_identifier = bag_info.pop("Ocrd-Identifier")
     bagit_profile_identifier = bag_info.pop("BagIt-Profile-Identifier")
     if "Ocrd-Mets" in bag_info:
-        ocrd_mets = bag_info.pop("Ocrd-Mets")
-        workspace_mets_path = join(workspace_dir, ocrd_mets)  # Replace it with the real path
+        mets_basename = bag_info.pop("Ocrd-Mets")
+        workspace_mets_path = join(workspace_dir, mets_basename)  # Replace it with the real path
     if "Ocrd-Base-Version-Checksum" in bag_info:
         ocrd_base_version_checksum = bag_info.pop("Ocrd-Base-Version-Checksum")
 
@@ -199,7 +199,7 @@ async def save_workspace(workspace_id: str, workspace_dir: str, bag_info: dict) 
             workspace_id=workspace_id,
             workspace_dir=workspace_dir,
             workspace_mets_path=workspace_mets_path,
-            ocrd_mets=ocrd_mets,
+            mets_basename=mets_basename,
             ocrd_identifier=ocrd_identifier,
             bagit_profile_identifier=bagit_profile_identifier,
             ocrd_base_version_checksum=ocrd_base_version_checksum,
@@ -208,7 +208,7 @@ async def save_workspace(workspace_id: str, workspace_dir: str, bag_info: dict) 
     else:
         workspace_db.workspace_dir = workspace_dir
         workspace_db.workspace_mets_path = workspace_mets_path
-        workspace_db.ocrd_mets = ocrd_mets
+        workspace_db.mets_basename = mets_basename
         workspace_db.ocrd_identifier = ocrd_identifier
         workspace_db.bagit_profile_identifier = bagit_profile_identifier
         workspace_db.ocrd_base_version_checksum = ocrd_base_version_checksum

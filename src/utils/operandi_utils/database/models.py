@@ -40,7 +40,7 @@ class WorkspaceDB(Document):
         ocrd_identifier             Ocrd-Identifier (mandatory)
         bagit_profile_identifier    BagIt-Profile-Identifier (mandatory)
         ocrd_base_version_checksum  Ocrd-Base-Version-Checksum (mandatory)
-        ocrd_mets                   Ocrd-Mets (optional)
+        mets_basename               Alternative name to the default "mets.xml"
         bag_info_adds               bag-info.txt can also (optionally) contain additional
                                     key-value-pairs which are saved here
     """
@@ -50,7 +50,7 @@ class WorkspaceDB(Document):
     ocrd_identifier: str
     bagit_profile_identifier: str
     ocrd_base_version_checksum: Optional[str]
-    ocrd_mets: Optional[str]
+    mets_basename: Optional[str]
     bag_info_adds: Optional[dict]
     deleted: bool = False
 

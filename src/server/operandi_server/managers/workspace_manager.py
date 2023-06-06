@@ -132,7 +132,7 @@ class WorkspaceManager(ResourceManager):
         if not workspace_db:
             return None
         bag_dest = f"{workspace_db.workspace_dir}.zip"
-        mets = workspace_db.ocrd_mets or "mets.xml"
+        mets = workspace_db.mets_basename or "mets.xml"
         resolver = Resolver()
         WorkspaceBagger(resolver).bag(
             Workspace(resolver, directory=workspace_db.workspace_dir, mets_basename=mets),

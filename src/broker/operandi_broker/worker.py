@@ -2,7 +2,6 @@ import json
 import logging
 import signal
 from os import getppid, setsid
-from os.path import join
 from sys import exit
 
 from operandi_utils import reconfigure_all_loggers
@@ -113,79 +112,9 @@ class Worker:
         self.log.info(f"Starting consuming from queue: {self.queue_name}")
         self.rmq_consumer.start_consuming()
 
-    # TODO: Remove, currently left for reference
-    """
-    # The callback method provided to the Consumer listener
-    # The arguments to this method are passed by the caller
-    def __on_message_consumed_callback(self, ch, method, properties, body):
-        # self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
-        # self.log.debug(f"Consumed message: {body}")
-
-        self.current_message_delivery_tag = method.delivery_tag
-        self.has_consumed_message = True
-
-        # Since the workflow_message is constructed by the Operandi Server,
-        # it should not fail here when parsing under normal circumstances.
-        try:
-            consumed_message = json.loads(body)
-            self.log.info(f"Consumed message: {consumed_message}")
-            self.current_message_ws_id = consumed_message["workspace_id"]
-            self.current_message_wf_id = consumed_message["workflow_id"]
-            self.current_message_job_id = consumed_message["job_id"]
-            input_file_grp = consumed_message["input_file_grp"]
-        except Exception as error:
-            self.log.error(f"Parsing the consumed message has failed: {error}")
-            self.__handle_message_failure(interruption=False)
-            return
-
-        # Handle database related reads and set the workflow job status to RUNNING
-        try:
-            # TODO: This should be optimized, i.e., single read to the DB instead of three
-            workflow_script_path = db.sync_get_workflow_script_path(self.current_message_wf_id)
-            workspace_mets_path = db.sync_get_workspace_mets_path(self.current_message_ws_id)
-            workspace_path = db.sync_get_workspace(self.current_message_ws_id).workspace_path
-            job_dir = db.sync_get_workflow_job(self.current_message_job_id).job_path
-            job_state = "RUNNING"
-            self.log.info(f"Setting new job state[{job_state}] of job_id: {self.current_message_job_id}")
-            db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
-        except Exception as error:
-            self.log.error(f"Database related error has occurred: {error}")
-            self.__handle_message_failure(interruption=False)
-            return
-
-        # Trigger a Nextflow process
-        try:
-            nf_process = NextflowManager.execute_workflow(
-                workspace_mets_path=workspace_mets_path,
-                workspace_path=workspace_path,
-                job_dir=job_dir,
-                in_background=False,
-                nf_script_path=workflow_script_path
-            )
-        except Exception as error:
-            self.log.error(f"Triggering a nextflow process has failed: {error}")
-            self.__handle_message_failure(interruption=False)
-            return
-
-        # The worker blocks here till the nextflow process finishes
-
-        if nf_process.returncode != 0:
-            self.log.error(f"The Nextflow process exited with return code: {nf_process.returncode}")
-            self.__handle_message_failure(interruption=False)
-            return
-
-        self.log.debug(f"The Nextflow process has finished successfully")
-        job_state = "SUCCESS"
-        self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
-        db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
-        self.has_consumed_message = False
-        self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-        """
-
     def __on_message_consumed_callback_hpc(self, ch, method, properties, body):
-        # self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
-        # self.log.debug(f"Consumed message: {body}")
+        self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
+        self.log.debug(f"Consumed message: {body}")
 
         self.current_message_delivery_tag = method.delivery_tag
         self.has_consumed_message = True
@@ -207,10 +136,17 @@ class Worker:
         # Handle database related reads and set the workflow job status to RUNNING
         try:
             # TODO: This should be optimized, i.e., single read to the DB instead of three
-            workflow_script_path = db.sync_get_workflow_script_path(self.current_message_wf_id)
-            workspace_mets_path = db.sync_get_workspace_mets_path(self.current_message_ws_id)
-            workspace_dir = db.sync_get_workspace(self.current_message_ws_id).workspace_dir
-            job_dir = db.sync_get_workflow_job(self.current_message_job_id).job_dir
+            workflow_db = db.sync_get_workflow(self.current_message_wf_id)
+            workflow_script_path = workflow_db.workflow_script_path
+
+            workspace_db = db.sync_get_workspace(self.current_message_ws_id)
+            workspace_mets_path = workspace_db.workspace_mets_path
+            workspace_dir = workspace_db.workspace_dir
+            mets_basename = workspace_db.mets_basename
+            if not mets_basename:
+                mets_basename = "mets.xml"
+            workflow_job_db = db.sync_get_workflow_job(self.current_message_job_id)
+            job_dir = workflow_job_db.job_dir
             job_state = "RUNNING"
             self.log.info(f"Setting new job state[{job_state}] of job_id: {self.current_message_job_id}")
             db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
@@ -226,6 +162,7 @@ class Worker:
             slurm_job_return_code = self.prepare_and_trigger_slurm_job(
                 workspace_id=self.current_message_ws_id,
                 workspace_dir=workspace_dir,
+                workspace_base_mets=mets_basename,
                 workflow_job_id=self.current_message_job_id,
                 workflow_job_dir=job_dir,
                 input_file_grp=input_file_grp,
@@ -300,6 +237,7 @@ class Worker:
             self,
             workspace_id,
             workspace_dir,
+            workspace_base_mets,
             workflow_job_id,
             workflow_job_dir,
             input_file_grp,
@@ -329,7 +267,8 @@ class Worker:
                 workflow_job_id=workflow_job_id,
                 nextflow_script_id=nextflow_script_id,
                 input_file_grp=input_file_grp,
-                workspace_id=workspace_id
+                workspace_id=workspace_id,
+                mets_basename=workspace_base_mets
             )
         except Exception as error:
             raise Exception(f"Triggering slurm job failed: {error}")
@@ -352,7 +291,7 @@ class Worker:
                 workflow_job_dir=workflow_job_dir
             )
             # Delete the result dir from the HPC home folder
-            self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}'")
+            self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
         else:
             raise Exception(f"Slurm job has failed: {slurm_job_id}")
         return 0

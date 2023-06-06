@@ -49,7 +49,7 @@ class HPCExecutor:
             username=OPERANDI_HPC_USERNAME,
             key_path=OPERANDI_HPC_SSH_KEYPATH
     ):
-        keyfile = self.__check_keyfile_existence(key_path)
+        keyfile = self.check_keyfile_existence(key_path)
         if not keyfile:
             print(f"Error: HPC key path does not exist or is not readable!")
             print(f"Checked path: \n{key_path}")
@@ -72,7 +72,7 @@ class HPCExecutor:
         )
 
     @staticmethod
-    def __check_keyfile_existence(hpc_key_path):
+    def check_keyfile_existence(hpc_key_path):
         if exists(hpc_key_path) and isfile(hpc_key_path):
             return hpc_key_path
         return None
@@ -104,7 +104,8 @@ class HPCExecutor:
             workflow_job_id: str,
             nextflow_script_id: str,
             input_file_grp: str,
-            workspace_id: str
+            workspace_id: str,
+            mets_basename: str
     ) -> str:
 
         command = "bash -lc"
@@ -113,7 +114,8 @@ class HPCExecutor:
         command += f" {workflow_job_id}"
         command += f" {nextflow_script_id}"
         command += f" {input_file_grp}"
-        command += f" {workspace_id}'"
+        command += f" {workspace_id}"
+        command += f" {mets_basename}'"
 
         output, err, return_code = self.execute_blocking(command)
         slurm_job_id = output[0].strip('\n').split(' ')[-1]

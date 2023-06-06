@@ -37,7 +37,7 @@ class HPCIOTransfer:
             username=OPERANDI_HPC_USERNAME,
             key_path=OPERANDI_HPC_SSH_KEYPATH
     ):
-        keyfile = self.__check_keyfile_existence(key_path)
+        keyfile = self.check_keyfile_existence(key_path)
         if not keyfile:
             print(f"Error: HPC key path does not exist or is not readable!")
             print(f"Checked path: \n{key_path}")
@@ -54,7 +54,7 @@ class HPCIOTransfer:
     def put_batch_script(self, batch_script_id: str) -> str:
         local_batch_script_path = join(dirname(__file__), "batch_scripts", batch_script_id)
         hpc_batch_script_path = join(OPERANDI_HPC_DIR_BATCH_SCRIPTS, batch_script_id)
-        self._put_file(
+        self.put_file(
             source=local_batch_script_path,
             destination=hpc_batch_script_path
         )
@@ -88,7 +88,7 @@ class HPCIOTransfer:
             dst=join(temp_workflow_job_dir, ocrd_workspace_id)
         )
         make_zip_archive(temp_workflow_job_dir, f"{temp_workflow_job_dir}.zip")
-        self._put_file(
+        self.put_file(
             source=f"{temp_workflow_job_dir}.zip",
             destination=join(OPERANDI_HPC_DIR_SLURM_WORKSPACES, f"{workflow_job_id}.zip")
         )
@@ -107,7 +107,7 @@ class HPCIOTransfer:
         get_src = join(hpc_slurm_workspace_path, workflow_job_id, f"{workflow_job_id}.zip")
         get_dst = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
         try:
-            self._get_file(source=get_src, destination=get_dst)
+            self.get_file(source=get_src, destination=get_dst)
         except Exception as error:
             raise Exception(
                 f"error when getting file: {error}, get_src: {get_src}, get_dst: {get_dst}"
@@ -133,7 +133,7 @@ class HPCIOTransfer:
         get_src = join(hpc_slurm_workspace_path, workflow_job_id, ocrd_workspace_id, f"{ocrd_workspace_id}.zip")
         get_dst = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
         try:
-            self._get_file(source=get_src, destination=get_dst)
+            self.get_file(source=get_src, destination=get_dst)
         except Exception as error:
             raise Exception(
                 f"error when getting file2: {error}, get_src: {get_src}, get_dst: {get_dst}"
@@ -163,16 +163,16 @@ class HPCIOTransfer:
             )
         except Exception as error:
             raise Exception(
-                f"error when symlinking: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}"
+                f"error when symlink: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}"
             )
 
     @staticmethod
-    def __check_keyfile_existence(hpc_key_path):
+    def check_keyfile_existence(hpc_key_path):
         if exists(hpc_key_path) and isfile(hpc_key_path):
             return hpc_key_path
         return None
 
-    def _put_file(self, source, destination):
+    def put_file(self, source, destination):
         self.__ssh_io_transfer.put_file(
             source=source,
             destination=destination,
@@ -181,7 +181,7 @@ class HPCIOTransfer:
             scp_preserve_times=self.scp_preserve_times
         )
 
-    def _put_directory(self, source, destination, recursive=True):
+    def put_directory(self, source, destination, recursive=True):
         self.__ssh_io_transfer.put_directory(
             source=source,
             destination=destination,
@@ -191,7 +191,7 @@ class HPCIOTransfer:
             scp_preserve_times=self.scp_preserve_times
         )
 
-    def _get_file(self, source, destination):
+    def get_file(self, source, destination):
         self.__ssh_io_transfer.get_file(
             source=source,
             destination=destination,
@@ -199,7 +199,7 @@ class HPCIOTransfer:
             scp_preserve_times=self.scp_preserve_times
         )
 
-    def _get_directory(self, source, destination, recursive=True):
+    def get_directory(self, source, destination, recursive=True):
         self.__ssh_io_transfer.get_directory(
             source=source,
             destination=destination,

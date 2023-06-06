@@ -25,7 +25,7 @@ def test_hpc_connector_clean(hpc_command_executor):
 
 
 def test_hpc_connector_put_directory(hpc_data_transfer):
-    hpc_data_transfer._put_directory(
+    hpc_data_transfer.put_directory(
         source=join(to_asset_path("workspaces", "dummy_ws"), ID_WORKSPACE),
         destination=join(ID_WORKFLOW_JOB_DIR, ID_WORKSPACE)
     )
@@ -33,7 +33,7 @@ def test_hpc_connector_put_directory(hpc_data_transfer):
 
 def test_hpc_connector_put_file_batch_script(hpc_data_transfer):
     # Transfer slurm batch script
-    hpc_data_transfer._put_file(
+    hpc_data_transfer.put_file(
         source=to_asset_path('batch_scripts', ID_BATCH_SCRIPT),
         destination=join(OPERANDI_TESTS_HPC_DIR_BATCH_SCRIPTS, ID_BATCH_SCRIPT)
     )
@@ -41,7 +41,7 @@ def test_hpc_connector_put_file_batch_script(hpc_data_transfer):
 
 def test_hpc_connector_put_file_nextflow_script(hpc_data_transfer):
     # Transfer nextflow workflow
-    hpc_data_transfer._put_file(
+    hpc_data_transfer.put_file(
         source=to_asset_path('workflows', ID_NEXTFLOW_SCRIPT),
         destination=join(ID_WORKFLOW_JOB_DIR, ID_NEXTFLOW_SCRIPT)
     )
@@ -73,7 +73,7 @@ def test_hpc_connector_get_directory(
 
     # Remove the dir left from previous tests (if any)
     rmtree(dir_dest, ignore_errors=True)
-    hpc_data_transfer._get_directory(
+    hpc_data_transfer.get_directory(
         source=dir_src,
         destination=dir_dest
     )
