@@ -35,12 +35,19 @@ services:
       - "/operandi-mongodb:/data/db"
     networks:
       - operandi
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 1s
+      timeout: 3s
+      retries: 30
 
   operandi-server:
     image: ghcr.io/subugoe/operandi-server:main
     container_name: operandi-server
     depends_on:
       operandi-rabbitmq:
+        condition: service_healthy
+      operandi-mongodb:
         condition: service_healthy
     restart: on-failure
     ports:
@@ -68,6 +75,8 @@ services:
     container_name: operandi-broker
     depends_on:
       operandi-rabbitmq:
+        condition: service_healthy
+      operandi-mongodb:
         condition: service_healthy
     restart: on-failure
     environment:

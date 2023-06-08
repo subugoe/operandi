@@ -2,7 +2,10 @@ from datetime import datetime
 from dotenv import load_dotenv
 from os import getenv
 from operandi_utils import OPERANDI_LOGS_DIR
-from tests.constants import OPERANDI_SERVER_URL_LIVE
+try:
+    from tests.constants import OPERANDI_SERVER_URL_LIVE
+except Exception as e:
+    OPERANDI_SERVER_URL_LIVE = "http://localhost:8000"
 
 __all__ = [
     'SERVER_URL',
