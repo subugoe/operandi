@@ -48,8 +48,14 @@ class HPCIOTransfer:
         self.__ssh_io_transfer.login_with_public_key(
             username=username,
             keyfile=keyfile,
-            allow_agent=True
+            allow_agent=False
         )
+
+    @staticmethod
+    def check_keyfile_existence(hpc_key_path):
+        if exists(hpc_key_path) and isfile(hpc_key_path):
+            return hpc_key_path
+        return None
 
     def put_batch_script(self, batch_script_id: str) -> str:
         local_batch_script_path = join(dirname(__file__), "batch_scripts", batch_script_id)
@@ -165,12 +171,6 @@ class HPCIOTransfer:
             raise Exception(
                 f"error when symlink: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}"
             )
-
-    @staticmethod
-    def check_keyfile_existence(hpc_key_path):
-        if exists(hpc_key_path) and isfile(hpc_key_path):
-            return hpc_key_path
-        return None
 
     def put_file(self, source, destination):
         self.__ssh_io_transfer.put_file(

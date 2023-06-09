@@ -24,7 +24,7 @@ def fixture_hpc_io_transfer_connector():
             OPERANDI_HPC_SSH_KEYPATH
         )
     except Exception as err:
-        raise Exception(f"SSH connection to the HPC has failed: {err}")
+        raise Exception(f"SSH connection to '{OPERANDI_HPC_HOST_TRANSFER}' has failed: {err}")
     yield hpc_transfer_connector
 
 
@@ -40,5 +40,6 @@ def fixture_hpc_execution_connector():
             OPERANDI_HPC_SSH_KEYPATH
         )
     except Exception as err:
-        raise Exception(f"SSH connection to the HPC has failed: {err}")
+        raise Exception(f"SSH connection to '{OPERANDI_HPC_HOST}' "
+                        f"through proxy `{OPERANDI_HPC_HOST_PROXY}` has failed: {err}")
     yield hpc_paramiko_connector

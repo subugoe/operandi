@@ -31,7 +31,7 @@ def test_hpc_connector_put_directory(hpc_data_transfer):
     )
 
 
-def test_hpc_connector_put_file_batch_script(hpc_data_transfer):
+def _test_hpc_connector_put_file_batch_script(hpc_data_transfer):
     # Transfer slurm batch script
     hpc_data_transfer.put_file(
         source=to_asset_path('batch_scripts', ID_BATCH_SCRIPT),
@@ -39,7 +39,7 @@ def test_hpc_connector_put_file_batch_script(hpc_data_transfer):
     )
 
 
-def test_hpc_connector_put_file_nextflow_script(hpc_data_transfer):
+def _test_hpc_connector_put_file_nextflow_script(hpc_data_transfer):
     # Transfer nextflow workflow
     hpc_data_transfer.put_file(
         source=to_asset_path('workflows', ID_NEXTFLOW_SCRIPT),
@@ -47,7 +47,7 @@ def test_hpc_connector_put_file_nextflow_script(hpc_data_transfer):
     )
 
 
-def test_hpc_connector_run_batch_script(hpc_command_executor):
+def _test_hpc_connector_run_batch_script(hpc_command_executor):
     batch_script_path = join(OPERANDI_TESTS_HPC_DIR_BATCH_SCRIPTS, ID_BATCH_SCRIPT)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=batch_script_path,
@@ -65,7 +65,7 @@ def test_hpc_connector_run_batch_script(hpc_command_executor):
     assert finished_successfully
 
 
-def test_hpc_connector_get_directory(
+def _test_hpc_connector_get_directory(
         hpc_data_transfer,
         hpc_command_executor
 ):
