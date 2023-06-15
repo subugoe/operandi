@@ -3,7 +3,7 @@
 #SBATCH --partition medium
 #SBATCH --cpus-per-task 2
 #SBATCH --mem 2G
-#SBATCH --output ./operandi_tests/test-slurm-job-%J.txt
+#SBATCH --output /scratch1/users/mmustaf/operandi_tests/test-slurm-job-%J.txt
 
 # Parameters are as follows:
 # S0 - This batch script
@@ -14,7 +14,6 @@
 # $5 - Mets basename - default "mets.xml"
 
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
-HOME_BASE="/home/users/${USER}/operandi_tests/slurm_workspaces"
 SCRATCH_BASE="/scratch1/users/${USER}/operandi_tests/slurm_workspaces"
 OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
@@ -25,7 +24,6 @@ IN_FILE_GRP=$3
 WORKSPACE_ID=$4
 METS_BASENAME=$5
 
-HOME_SLURM_DIR_PATH="${HOME_BASE}/${WORKFLOW_JOB_ID}"
 SCRATCH_SLURM_DIR_PATH="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 
 NF_SCRIPT_PATH="${SCRATCH_SLURM_DIR_PATH}/${NEXTFLOW_SCRIPT_ID}"
@@ -58,12 +56,10 @@ if [ ! -d "${SCRATCH_BASE}" ]; then
   fi
 fi
 
-if [ ! -f "${HOME_SLURM_DIR_PATH}.zip" ]; then
-  echo "Required home slurm workspace zip is not available: ${HOME_SLURM_DIR_PATH}.zip"
+if [ ! -f "${SCRATCH_SLURM_DIR_PATH}.zip" ]; then
+  echo "Required scratch slurm workspace zip is not available: ${SCRATCH_SLURM_DIR_PATH}.zip"
   exit 1
 else
-  echo "Moving slurm workspace zip from: ${HOME_SLURM_DIR_PATH}.zip, to: ${SCRATCH_SLURM_DIR_PATH}.zip"
-  mv "${HOME_SLURM_DIR_PATH}.zip" "${SCRATCH_SLURM_DIR_PATH}.zip"
   echo "Unzipping ${SCRATCH_SLURM_DIR_PATH}.zip to: ${SCRATCH_SLURM_DIR_PATH}"
   unzip "${SCRATCH_SLURM_DIR_PATH}.zip" -d "${SCRATCH_BASE}"
   echo "Removing zip: ${SCRATCH_SLURM_DIR_PATH}.zip"
@@ -77,6 +73,12 @@ else
   cd "${SCRATCH_SLURM_DIR_PATH}" || exit 1
 fi
 
+echo "Sif file path: ${SIF_PATH}"
+echo "About to start workflow with script: ${NF_SCRIPT_PATH}"
+echo "Mets path: ${METS_PATH}"
+echo "Input file: ${IN_FILE_GRP}"
+echo "Ocrd models mapping: ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}"
+
 # Execute the Nextflow script
 nextflow run "${NF_SCRIPT_PATH}" \
 -ansi-log false \
@@ -89,9 +91,7 @@ nextflow run "${NF_SCRIPT_PATH}" \
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete
-# Move the slurm workspace dir to home base
-mv "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" "${HOME_BASE}"
 # Create a zip of the ocrd workspace dir
-cd "${HOME_BASE}/${WORKFLOW_JOB_ID}/${WORKSPACE_ID}" && zip -r "${WORKSPACE_ID}.zip" "."
+cd "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}/${WORKSPACE_ID}" && zip -r "${WORKSPACE_ID}.zip" "."
 # Create a zip of the Nextflow run results by excluding the ocrd workspace dir
-cd "${HOME_BASE}/${WORKFLOW_JOB_ID}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**"
+cd "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**"

@@ -22,21 +22,17 @@ class HPCExecutor:
             username=OPERANDI_HPC_USERNAME,
             key_path=OPERANDI_HPC_SSH_KEYPATH
     ):
-        jump_box_public_addr = proxy_host
-        jump_box_private_addr = host
-        target_addr = host
-
         jump_box = paramiko.SSHClient()
         jump_box.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         jump_box.connect(
-            jump_box_public_addr,
+            proxy_host,
             username=username,
             key_filename=key_path
         )
         jump_box_channel = jump_box.get_transport().open_channel(
-            "direct-tcpip",
-            (jump_box_private_addr, 22),
-            (target_addr, 22)
+            kind="direct-tcpip",
+            dest_addr=(host, 22),
+            src_addr=(proxy_host, 22)
         )
         return jump_box_channel
 
@@ -107,7 +103,6 @@ class HPCExecutor:
             workspace_id: str,
             mets_basename: str
     ) -> str:
-
         command = "bash -lc"
         command += " 'sbatch"
         command += f" {batch_script_path}"
@@ -119,10 +114,6 @@ class HPCExecutor:
 
         output, err, return_code = self.execute_blocking(command)
         slurm_job_id = output[0].strip('\n').split(' ')[-1]
-        # print(f"output: \n{output}")
-        # print(f"err: \n{err}")
-        # print(f"return_code: [{return_code}]")
-        # print(f"slurm_job_id: [{slurm_job_id}]")
         assert int(slurm_job_id)
         return slurm_job_id
 

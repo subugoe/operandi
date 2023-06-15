@@ -1,7 +1,7 @@
 __all__ = [
     "HPCExecutor",
-    "HPCIOTransfer"
+    "HPCTransfer"
 ]
 
 from operandi_utils.hpc.executor import HPCExecutor
-from operandi_utils.hpc.io_transfer import HPCIOTransfer
+from operandi_utils.hpc.transfer import HPCTransfer

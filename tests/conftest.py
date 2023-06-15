@@ -20,7 +20,7 @@ pytest_plugins = [
 @fixture(scope="session", autouse=True)
 def do_before_all_tests():
     rmtree(OPERANDI_SERVER_BASE_DIR, ignore_errors=True)
-    mkdir(OPERANDI_SERVER_BASE_DIR)
-    mkdir(OPERANDI_TESTS_LOCAL_DIR_WORKFLOW_JOBS)
-    mkdir(OPERANDI_TESTS_LOCAL_DIR_WORKFLOWS)
-    mkdir(OPERANDI_TESTS_LOCAL_DIR_WORKSPACES)
+    mkdir(mode=0o777, path=OPERANDI_SERVER_BASE_DIR)
+    mkdir(mode=0o777, path=OPERANDI_TESTS_LOCAL_DIR_WORKFLOW_JOBS)
+    mkdir(mode=0o777, path=OPERANDI_TESTS_LOCAL_DIR_WORKFLOWS)
+    mkdir(mode=0o777, path=OPERANDI_TESTS_LOCAL_DIR_WORKSPACES)

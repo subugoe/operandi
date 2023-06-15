@@ -1,7 +1,7 @@
 from os import listdir, mkdir, scandir
 from os.path import exists, isdir, join
 from pathlib import Path
-from typing import List, Union, Tuple
+from typing import List, Tuple
 import aiofiles
 import shutil
 import logging
@@ -33,7 +33,7 @@ class ResourceManager:
         if exists(resource_abs_path):
             self.log.info(f"Using the existing {log_msg}")
         else:
-            Path(resource_abs_path).mkdir(parents=True, exist_ok=True)
+            Path(resource_abs_path).mkdir(mode=0o777, parents=True, exist_ok=True)
             self.log.info(f"Create non-existing {log_msg}")
 
     def get_all_resources(self, resource_router: str, local: bool) -> List[Tuple[str, str]]:
@@ -72,7 +72,7 @@ class ResourceManager:
         if exists(resource_dir):
             self.log.error(f"Cannot create: {resource_id}. Resource already exists!")
             # TODO: Raise an Exception here
-        mkdir(resource_dir)
+        mkdir(mode=0o777, path=resource_dir)
         return resource_id, resource_dir
 
     def _delete_resource_dir(self, resource_router: str, resource_id: str) -> Tuple[str, str]:

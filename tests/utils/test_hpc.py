@@ -1,8 +1,9 @@
 from datetime import datetime
 from os.path import join
-from shutil import rmtree
+from shutil import rmtree, copytree
 from tests.constants import (
     OPERANDI_TESTS_LOCAL_DIR_WORKFLOW_JOBS,
+    OPERANDI_TESTS_LOCAL_DIR_WORKSPACES,
     OPERANDI_HPC_DIR_PROJECT,
     OPERANDI_TESTS_HPC_DIR_BATCH_SCRIPTS,
     OPERANDI_TESTS_HPC_DIR_SLURM_WORKSPACES
@@ -15,39 +16,59 @@ ID_BATCH_SCRIPT = "test_submit_workflow_job.sh"
 ID_NEXTFLOW_SCRIPT = "test_default_workflow.nf"
 ID_WORKFLOW_JOB = f"test_workflow_job_{current_time}"
 ID_WORKSPACE = f"data"
+
 ID_WORKFLOW_JOB_DIR = join(OPERANDI_TESTS_HPC_DIR_SLURM_WORKSPACES, ID_WORKFLOW_JOB)
+HPC_WORKSPACE_PATH = join(ID_WORKFLOW_JOB_DIR, ID_WORKSPACE)
+HPC_BATCH_SCRIPT_PATH = join(OPERANDI_TESTS_HPC_DIR_BATCH_SCRIPTS, ID_BATCH_SCRIPT)
 
 
 # TODO: Adapt to the previous changes to use zips
-def test_hpc_connector_clean(hpc_command_executor):
+def _test_hpc_connector_clean(hpc_command_executor):
     # Remove the tests folder from the HPC environment
     hpc_command_executor.execute_blocking(f"bash -lc 'rm -rf {OPERANDI_HPC_DIR_PROJECT}'")
 
 
-def test_hpc_connector_put_directory(hpc_data_transfer):
-    hpc_data_transfer.put_directory(
-        source=join(to_asset_path("workspaces", "dummy_ws"), ID_WORKSPACE),
-        destination=join(ID_WORKFLOW_JOB_DIR, ID_WORKSPACE)
+def _test_hpc_connector_put_directory(hpc_data_transfer):
+    hpc_data_transfer.put_dir(
+        local_src=join(to_asset_path("workspaces", "dummy_ws"), ID_WORKSPACE),
+        remote_dst=HPC_WORKSPACE_PATH
     )
 
 
-def _test_hpc_connector_put_file_batch_script(hpc_data_transfer):
+def test_hpc_connector_put_file_batch_script(hpc_data_transfer):
     # Transfer slurm batch script
     hpc_data_transfer.put_file(
-        source=to_asset_path('batch_scripts', ID_BATCH_SCRIPT),
-        destination=join(OPERANDI_TESTS_HPC_DIR_BATCH_SCRIPTS, ID_BATCH_SCRIPT)
+        local_src=to_asset_path('batch_scripts', ID_BATCH_SCRIPT),
+        remote_dst=HPC_BATCH_SCRIPT_PATH
     )
 
 
-def _test_hpc_connector_put_file_nextflow_script(hpc_data_transfer):
+def _test_hpc_connector_put_file_nextflow_script(hpc_data_transfer, path_workflow1):
     # Transfer nextflow workflow
     hpc_data_transfer.put_file(
-        source=to_asset_path('workflows', ID_NEXTFLOW_SCRIPT),
-        destination=join(ID_WORKFLOW_JOB_DIR, ID_NEXTFLOW_SCRIPT)
+        local_src=path_workflow1,
+        remote_dst=join(ID_WORKFLOW_JOB_DIR, "test_default_workflow.nf")
     )
 
 
-def _test_hpc_connector_run_batch_script(hpc_command_executor):
+def test_pack_and_put_slurm_workspace(hpc_data_transfer, path_workflow1):
+    # Move the test asset to actual workspaces location
+    workspace_dir = copytree(
+        src=join(to_asset_path("workspaces", "dummy_ws"), ID_WORKSPACE),
+        dst=join(OPERANDI_TESTS_LOCAL_DIR_WORKSPACES, ID_WORKSPACE)
+    )
+
+    hpc_data_transfer.pack_and_put_slurm_workspace(
+        ocrd_workspace_id=ID_WORKSPACE,
+        ocrd_workspace_dir=workspace_dir,
+        workflow_job_id=ID_WORKFLOW_JOB,
+        nextflow_script_path=path_workflow1,
+        nextflow_filename=ID_NEXTFLOW_SCRIPT,
+        tempdir_prefix="test_slurm_workspace-"
+    )
+
+
+def test_hpc_connector_run_batch_script(hpc_command_executor):
     batch_script_path = join(OPERANDI_TESTS_HPC_DIR_BATCH_SCRIPTS, ID_BATCH_SCRIPT)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=batch_script_path,
@@ -65,6 +86,16 @@ def _test_hpc_connector_run_batch_script(hpc_command_executor):
     assert finished_successfully
 
 
+def test_get_and_unpack_slurm_workspace(hpc_data_transfer):
+    hpc_data_transfer.get_and_unpack_slurm_workspace(
+        ocrd_workspace_id=ID_WORKSPACE,
+        ocrd_workspace_dir=join(OPERANDI_TESTS_LOCAL_DIR_WORKSPACES, ID_WORKSPACE),
+        hpc_slurm_workspace_path=OPERANDI_TESTS_HPC_DIR_SLURM_WORKSPACES,
+        workflow_job_id=ID_WORKFLOW_JOB,
+        workflow_job_dir=join(OPERANDI_TESTS_LOCAL_DIR_WORKFLOW_JOBS, ID_WORKFLOW_JOB)
+    )
+
+
 def _test_hpc_connector_get_directory(
         hpc_data_transfer,
         hpc_command_executor
@@ -74,9 +105,9 @@ def _test_hpc_connector_get_directory(
 
     # Remove the dir left from previous tests (if any)
     rmtree(dir_dest, ignore_errors=True)
-    hpc_data_transfer.get_directory(
-        source=dir_src,
-        destination=dir_dest
+    hpc_data_transfer.get_dir(
+        remote_src=dir_src,
+        local_dst=dir_dest
     )
     assert_exists_dir(dir_dest)
 

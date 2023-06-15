@@ -6,7 +6,7 @@ from sys import exit
 
 from operandi_utils import reconfigure_all_loggers
 import operandi_utils.database.database as db
-from operandi_utils.hpc import HPCExecutor, HPCIOTransfer
+from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from operandi_utils.rabbitmq import RMQConsumer
 
 from .constants import (
@@ -67,7 +67,7 @@ class Worker:
                 self.log.error("HPC executor connection has failed.")
 
             # Connect the HPC IO Transfer
-            self.hpc_io_transfer = HPCIOTransfer()
+            self.hpc_io_transfer = HPCTransfer()
             if self.hpc_io_transfer:
                 self.hpc_io_transfer.connect()
                 self.log.info("HPC transfer connection successful.")

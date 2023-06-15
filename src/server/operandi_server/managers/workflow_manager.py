@@ -1,4 +1,3 @@
-from os import mkdir
 from os.path import join
 from typing import List, Union, Tuple
 import logging
@@ -12,7 +11,6 @@ from .constants import (
     WORKFLOWS_ROUTER
 )
 from .resource_manager import ResourceManager
-from .utils import generate_id
 
 
 class WorkflowManager(ResourceManager):
