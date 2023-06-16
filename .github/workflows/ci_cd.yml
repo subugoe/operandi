@@ -103,10 +103,10 @@ jobs:
           chmod 600 /home/runner/.ssh/key_hpc
 
       - name: start RabbitMQ Server
-        run: docker compose -f ./docker-compose.yml up -d operandi-rabbitmq
+        run: docker compose -f ./docker-compose.yml --env-file ${{ env.ENV_FILE }} up -d operandi-rabbitmq
 
       - name: start MongoDB
-        run: docker compose -f ./docker-compose.yml up -d operandi-mongodb
+        run: docker compose -f ./docker-compose.yml --env-file ${{ env.ENV_FILE }} up -d operandi-mongodb
 
       - name: run broker tests
         run: make run-tests-broker
