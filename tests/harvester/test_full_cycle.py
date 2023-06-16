@@ -58,7 +58,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_job_id = response.json()['resource_id']
 
-    tries = 60
+    tries = 40
     job_status = None
     while tries > 0:
         tries -= 1
