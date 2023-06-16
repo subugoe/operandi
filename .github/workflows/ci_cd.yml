@@ -109,16 +109,16 @@ jobs:
         run: docker compose -f ./docker-compose.yml --env-file ${{ env.ENV_FILE }} up -d operandi-mongodb
 
       - name: run broker tests
-        run: make run-tests-broker
+        run: pytest tests/broker/test_*.py
 
       - name: run server tests
-        run: make run-tests-server
+        run: pytest tests/server/test_*.py
 
       # - name: run utils tests
       #   run: make run-tests-utils
 
       - name: run harvester tests
-        run: make run-tests-harvester
+        run: pytest tests/harvester/test_*.py
 
 
   build-and-push-docker-images:
