@@ -29,8 +29,9 @@ services:
   operandi-mongodb:
     image: "mongo"
     container_name: operandi-mongodb
+    hostname: mongo-db-host
     ports:
-      - "27018:27017"
+      - "27017:27017"
     volumes:
       - "/operandi-mongodb:/data/db"
     networks:
@@ -54,7 +55,7 @@ services:
         condition: service_healthy
     restart: on-failure
     ports:
-      - "80:8000"
+      - "8000:8000"
     environment:
       - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
       - OPERANDI_DB_URL=${OPERANDI_DB_URL}
@@ -71,7 +72,7 @@ services:
       - "${OPERANDI_SERVER_BASE_DIR}:${OPERANDI_SERVER_BASE_DIR}"
     networks:
       - operandi
-    command: operandi-server start --host 0.0.0.0 --port 8000
+    command: operandi-server start
 
   operandi-broker:
     image: operandi-broker

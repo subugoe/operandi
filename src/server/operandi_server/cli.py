@@ -22,8 +22,8 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 
 
 @cli.command('start')
-@click.option('--host', default="localhost", help='The host of the Operandi Server.')
-@click.option('--port', default="8000", help='The port of the Operandi Server.')
+@click.option('--local_url', default="http://localhost:8000", help='The local url of the Operandi Server.')
+@click.option('--live_url', default="http://localhost:8000", help='The live url of the Operandi Server.')
 @click.option('-q', '--queue',
               default=environ.get("OPERANDI_RABBITMQ_URL"),
               help='The URL of the RabbitMQ Server, format: amqp://username:password@host:port/vhost',
@@ -32,9 +32,9 @@ def cli(**kwargs):  # pylint: disable=unused-argument
               default=environ.get("OPERANDI_DB_URL"),
               help='The URL of the MongoDB, format: mongodb://host:port',
               type=DatabaseParamType())
-def start_server(host, port, queue: str, database: str):
-    local_server_url = environ.get("OPERANDI_SERVER_URL_LOCAL", f"http://{host}:{port}")
-    live_server_url = environ.get("OPERANDI_SERVER_URL_LIVE", local_server_url)
+def start_server(local_url: str, live_url: str, queue: str, database: str):
+    local_server_url = environ.get("OPERANDI_SERVER_URL_LOCAL", local_url)
+    live_server_url = environ.get("OPERANDI_SERVER_URL_LIVE", live_url)
     operandi_server = OperandiServer(
         local_server_url=local_server_url,
         live_server_url=live_server_url,

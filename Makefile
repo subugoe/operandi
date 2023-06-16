@@ -81,6 +81,16 @@ clean-all-modules:
 	docker rmi -f ghcr.io/subugoe/operandi-server:main
 	docker rmi -f ghcr.io/subugoe/operandi-broker:main
 
+start-all-local-modules:
+	docker compose -f ./docker-compose.yml --env-file .env up -d
+
+stop-all-local-modules:
+	docker compose -f ./docker-compose.yml down --remove-orphans
+
+clean-all-local-modules:
+	docker rmi -f operandi-broker:latest
+	docker rmi -f operandi-server:latest
+
 start-mongo-docker:
 	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-mongodb
 

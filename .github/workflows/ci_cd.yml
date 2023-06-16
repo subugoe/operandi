@@ -58,7 +58,7 @@ jobs:
     needs: build-native
     env:
       OPERANDI_DB_NAME: operandi_db_tests
-      OPERANDI_DB_URL: mongodb://localhost:27018
+      OPERANDI_DB_URL: mongodb://localhost:27017
       OPERANDI_HPC_SSH_KEYPATH: /home/runner/.ssh/key_hpc
       OPERANDI_HPC_PROJECT_NAME: operandi_tests
       # The RabbitMQ credentials here are the ones defined in the rabbitmq_definitions.json in the repo

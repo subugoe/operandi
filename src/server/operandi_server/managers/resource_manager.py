@@ -34,6 +34,7 @@ class ResourceManager:
             self.log.info(f"Using the existing {log_msg}")
         else:
             Path(resource_abs_path).mkdir(mode=0o777, parents=True, exist_ok=True)
+            Path(resource_abs_path).chmod(mode=0o777)
             self.log.info(f"Create non-existing {log_msg}")
 
     def get_all_resources(self, resource_router: str, local: bool) -> List[Tuple[str, str]]:
