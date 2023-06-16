@@ -22,7 +22,7 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 
 
 @cli.command('start')
-@click.option('--local_url', default="http://localhost:8000", help='The local url of the Operandi Server.')
+@click.option('--local_url', default="http://0.0.0.0:8000", help='The local url of the Operandi Server.')
 @click.option('--live_url', default="http://localhost:8000", help='The live url of the Operandi Server.')
 @click.option('-q', '--queue',
               default=environ.get("OPERANDI_RABBITMQ_URL"),
@@ -41,6 +41,8 @@ def start_server(local_url: str, live_url: str, queue: str, database: str):
         db_url=database,
         rabbitmq_url=queue
     )
+
+    host, port = local_url.split("//")[1].split(":")
 
     # Reconfigure all loggers to the same format
     reconfigure_all_loggers(
