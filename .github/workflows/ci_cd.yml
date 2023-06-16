@@ -63,10 +63,13 @@ jobs:
       OPERANDI_HPC_PROJECT_NAME: operandi_tests
       # The RabbitMQ credentials here are the ones defined in the rabbitmq_definitions.json in the repo
       OPERANDI_RABBITMQ_URL: amqp://operandi_user:operandi_password@localhost:5672/test
-      OPERANDI_SERVER_DEFAULT_USERNAME: ${{ secrets.OPERANDI_TEST_SERVER_USERNAME }}
-      OPERANDI_SERVER_DEFAULT_PASSWORD: ${{ secrets.OPERANDI_TEST_SERVER_PASSWORD }}
-      OPERANDI_HARVESTER_DEFAULT_USERNAME: ${{ secrets.OPERANDI_TEST_HARVESTER_USERNAME }}
-      OPERANDI_HARVESTER_DEFAULT_PASSWORD: ${{ secrets.OPERANDI_TEST_HARVESTER_PASSWORD }}
+      # These credentials are used only in the CI/CD pipeline to run tests
+      OPERANDI_SERVER_DEFAULT_USERNAME: operandi_tests_server
+      OPERANDI_SERVER_DEFAULT_PASSWORD: operandi_tests_server
+      OPERANDI_HARVESTER_DEFAULT_USERNAME: operandi_tests_harvester
+      OPERANDI_HARVESTER_DEFAULT_PASSWORD: operandi_tests_harvester
+      OPERANDI_SERVER_URL_LIVE: http://localhost:48000
+      OPERANDI_SERVER_URL_LOCAL: http://localhost:48000
       OPERANDI_SERVER_BASE_DIR: /tmp/operandi_data_tests
       OPERANDI_LOGS_DIR: /tmp/operandi_logs_tests
     strategy:
@@ -107,10 +110,10 @@ jobs:
           chmod 600 /home/runner/.ssh/key_hpc
 
       - name: start RabbitMQ Server
-        run: make start-rabbitmq-docker
+        run: docker compose -f ./docker-compose.yml up -d operandi-rabbitmq
 
       - name: start MongoDB
-        run: make start-mongodb-docker
+        run: docker compose -f ./docker-compose.yml up -d operandi-mongodb
 
       - name: run broker tests
         run: make run-tests-broker
