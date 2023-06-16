@@ -122,7 +122,7 @@ jobs:
 
 
   build-and-push-docker-images:
-    name: Push ${{matrix.environment.service}} to image registry
+    name: Push ${{matrix.services.module}} to image registry
     environment:
       name: development
     needs: run-operandi-tests
