@@ -47,6 +47,12 @@
     "auto_delete": false
     },
     {
+    "name": "operandi_queue_job_statuses",
+    "vhost": "/",
+    "durable": false,
+    "auto_delete": false
+    },
+    {
     "name": "operandi_queue_users",
     "vhost": "test",
     "durable": false,
@@ -54,6 +60,12 @@
     },
     {
     "name": "operandi_queue_harvester",
+    "vhost": "test",
+    "durable": false,
+    "auto_delete": false
+    },
+    {
+    "name": "operandi_queue_job_statuses",
     "vhost": "test",
     "durable": false,
     "auto_delete": false

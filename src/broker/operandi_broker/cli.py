@@ -6,7 +6,8 @@ import operandi_utils.database.database as db
 from operandi_utils import reconfigure_all_loggers
 from operandi_utils.rabbitmq import (
     DEFAULT_QUEUE_FOR_HARVESTER,
-    DEFAULT_QUEUE_FOR_USERS
+    DEFAULT_QUEUE_FOR_USERS,
+    DEFAULT_QUEUE_FOR_JOB_STATUSES
 )
 
 from operandi_utils.validators import (
@@ -51,7 +52,10 @@ def start_broker(queue: str, database: str):
     try:
         for queue_name in queues:
             service_broker.log.info(f"Creating a worker processes to consume from queue: {queue_name}")
-            service_broker.create_worker_process(queue_name)
+            service_broker.create_worker_process(queue_name=queue_name, status_checker=False)
+        service_broker.log.info(
+            f"Creating a status checker worker processes to consume from queue: {DEFAULT_QUEUE_FOR_JOB_STATUSES}")
+        service_broker.create_worker_process(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES, status_checker=True)
     except Exception as error:
         service_broker.log.error(f"Error while creating worker processes: {error}")
 

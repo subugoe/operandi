@@ -126,7 +126,13 @@ class HPCExecutor:
 
         # Split the last line and get the second element,
         # i.e., the state element in the requested output format
-        slurm_job_state = output[-1].split()[1]
+        slurm_job_state = "None"
+        if output:
+            slurm_job_state = output[-1].split()[1]
+        else:
+            print(f"Output: {output}")
+            print(f"Error: {err}")
+            print(f"RC: {return_code}")
         return slurm_job_state
 
     def poll_till_end_slurm_job_state(self, slurm_job_id: str, interval: int = 5, timeout: int = 300) -> bool:

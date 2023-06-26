@@ -1,7 +1,5 @@
 import logging
-from shutil import make_archive
 from typing import List, Union
-import tempfile
 
 from fastapi import (
     APIRouter,
@@ -87,67 +85,6 @@ async def get_workflow_script(
     if not workflow_script_url:
         raise ResponseException(404, {})
     return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_script_url)
-
-
-@router.get("/workflow/{workflow_id}/{job_id}", responses={"200": {"model": WorkflowJobRsrc}}, response_model=None)
-async def get_workflow_job(
-        workflow_id: str,
-        job_id: str,
-        accept: str = Header(default="application/json"),
-        auth: HTTPBasicCredentials = Depends(security)
-) -> Union[WorkflowJobRsrc, FileResponse]:
-    """
-    Get the status of a workflow job specified with `workflow_id` and `job_id`.
-    Returns the `workflow_id`, `workspace_id`, `job_id`, and
-    one of the following job statuses:
-    1) QUEUED - The workflow job is queued for execution.
-    2) RUNNING - The workflow job is currently running.
-    3) STOPPED - The workflow job has failed.
-    4) SUCCESS - The workflow job has finished successfully.
-
-    Curl equivalent:
-    `curl -X GET SERVER_ADDR/workflow/{workflow_id}/{job_id}`
-    """
-    await user_login(auth)
-    wf_job_db = await workflow_manager.get_workflow_job(job_id=job_id)
-    if not wf_job_db:
-        raise ResponseException(404, {"error": f"workflow job not found: {job_id}"})
-
-    try:
-        wf_job_url = workflow_manager.get_workflow_job_url(
-            job_id=wf_job_db.job_id,
-            workflow_id=wf_job_db.workflow_id
-        )
-        wf_job_local = workflow_manager.get_workflow_job_path(
-            job_id=wf_job_db.job_id,
-            workflow_id=wf_job_db.workflow_id
-        )
-        workflow_url = workflow_manager.get_workflow_url(wf_job_db.workflow_id)
-        workspace_url = workspace_manager.get_workspace_url(wf_job_db.workspace_id)
-        job_state = wf_job_db.job_state
-    except Exception as e:
-        logger.exception(f"Unexpected error in get_workflow_job: {e}")
-        # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": f"internal server error: {e}"})
-
-    if accept == "application/vnd.zip":
-        tempdir = tempfile.mkdtemp(prefix="ocrd-wf-job-zip-")
-        job_archive_path = make_archive(
-            base_name=f'{tempdir}/{job_id}',
-            format='zip',
-            root_dir=wf_job_local,
-        )
-        return FileResponse(job_archive_path)
-
-    return WorkflowJobRsrc.create(
-        job_id=job_id,
-        job_url=wf_job_url,
-        workflow_id=workflow_id,
-        workflow_url=workflow_url,
-        workspace_id=wf_job_db.workspace_id,
-        workspace_url=workspace_url,
-        job_state=job_state
-    )
 
 
 @router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})

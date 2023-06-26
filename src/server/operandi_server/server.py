@@ -2,8 +2,11 @@ import datetime
 import logging
 import json
 from os import environ
+from shutil import make_archive
+import tempfile
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils import (
@@ -20,6 +23,9 @@ from operandi_utils.rabbitmq import (
     # Requests coming from
     # other users are sent to this queue
     DEFAULT_QUEUE_FOR_USERS,
+    # Requests for job status polling
+    # are sent to this queue
+    DEFAULT_QUEUE_FOR_JOB_STATUSES,
     RMQPublisher
 )
 
@@ -101,6 +107,18 @@ class OperandiServer(FastAPI):
             response_model_exclude_none=True
         )
 
+        self.router.add_api_route(
+            path="/workflow/{workflow_id}/{job_id}",
+            endpoint=self.get_workflow_job_status,
+            methods=["GET"],
+            tags=["Workflow"],
+            status_code=status.HTTP_200_OK,
+            summary="Check workflow job status",
+            response_model=WorkflowJobRsrc,
+            response_model_exclude_unset=True,
+            response_model_exclude_none=True
+        )
+
     async def startup_event(self):
         self.log.info(f"Operandi local server url: {self.local_server_url}")
         self.log.info(f"Operandi live server url: {self.live_server_url}")
@@ -148,6 +166,7 @@ class OperandiServer(FastAPI):
         # Create the message queues (nothing happens if they already exist)
         self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
         self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
+        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES)
 
         # Include the endpoints of the OCR-D WebAPI
         self.include_webapi_routers()
@@ -184,6 +203,74 @@ class OperandiServer(FastAPI):
             "time": _time
         }
         return json_message
+
+    async def get_workflow_job_status(
+            self,
+            workflow_id: str,
+            job_id: str,
+            accept: str = Header(default="application/json"),
+            auth: HTTPBasicCredentials = Depends(security)
+    ):
+        """
+        Get the status of a workflow job specified with `workflow_id` and `job_id`.
+        Returns the `workflow_id`, `workspace_id`, `job_id`, and
+        one of the following job statuses:
+        1) QUEUED - The workflow job is queued for execution.
+        2) RUNNING - The workflow job is currently running.
+        3) STOPPED - The workflow job has failed.
+        4) SUCCESS - The workflow job has finished successfully.
+
+        Curl equivalent:
+        `curl -X GET SERVER_ADDR/workflow/{workflow_id}/{job_id}`
+        """
+        await user.user_login(auth)
+        # Create the job status message to be sent to the RabbitMQ queue
+        job_status_message = {
+            "job_id": f"{job_id}",
+        }
+        encoded_workflow_message = json.dumps(job_status_message)
+        self.rmq_publisher.publish_to_queue(
+            queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES,
+            message=encoded_workflow_message
+        )
+        wf_job_db = await self.workflow_manager.get_workflow_job(job_id=job_id)
+        if not wf_job_db:
+            raise ResponseException(404, {"error": f"workflow job not found: {job_id}"})
+        try:
+            wf_job_url = self.workflow_manager.get_workflow_job_url(
+                job_id=wf_job_db.job_id,
+                workflow_id=wf_job_db.workflow_id
+            )
+            wf_job_local = self.workflow_manager.get_workflow_job_path(
+                job_id=wf_job_db.job_id,
+                workflow_id=wf_job_db.workflow_id
+            )
+            workflow_url = self.workflow_manager.get_workflow_url(wf_job_db.workflow_id)
+            workspace_url = self.workspace_manager.get_workspace_url(wf_job_db.workspace_id)
+            job_state = wf_job_db.job_state
+        except Exception as e:
+            self.log.exception(f"Unexpected error in get_workflow_job: {e}")
+            # TODO: Don't provide the exception message to the outside world
+            raise ResponseException(500, {"error": f"internal server error: {e}"})
+
+        if accept == "application/vnd.zip":
+            tempdir = tempfile.mkdtemp(prefix="ocrd-wf-job-zip-")
+            job_archive_path = make_archive(
+                base_name=f'{tempdir}/{job_id}',
+                format='zip',
+                root_dir=wf_job_local,
+            )
+            return FileResponse(job_archive_path)
+
+        return WorkflowJobRsrc.create(
+            job_id=job_id,
+            job_url=wf_job_url,
+            workflow_id=workflow_id,
+            workflow_url=workflow_url,
+            workspace_id=wf_job_db.workspace_id,
+            workspace_url=workspace_url,
+            job_state=job_state
+        )
 
     # TODO: Move this method inside routers/workflow
     # Submits a workflow execution request to the RabbitMQ

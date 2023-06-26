@@ -8,6 +8,7 @@ __all__ = [
     'DEFAULT_QUEUE',
     'DEFAULT_QUEUE_FOR_HARVESTER',
     'DEFAULT_QUEUE_FOR_USERS',
+    'DEFAULT_QUEUE_FOR_JOB_STATUSES',
     'DEFAULT_ROUTER',
     'RABBIT_MQ_HOST',
     'RABBIT_MQ_PORT',
@@ -28,6 +29,7 @@ DEFAULT_ROUTER: str = environ.get("OPERANDI_RABBITMQ_EXCHANGE_ROUTER", "operandi
 DEFAULT_QUEUE: str = environ.get("OPERANDI_RABBITMQ_QUEUE_DEFAULT", "operandi_default_queue")
 DEFAULT_QUEUE_FOR_HARVESTER: str = environ.get("OPERANDI_RABBITMQ_QUEUE_HARVESTER", "operandi_queue_harvester")
 DEFAULT_QUEUE_FOR_USERS: str = environ.get("OPERANDI_RABBITMQ_QUEUE_USERS", "operandi_queue_users")
+DEFAULT_QUEUE_FOR_JOB_STATUSES: str = environ.get("OPERANDI_RABBITMQ_QUEUE_JOB_STATUSES", "operandi_queue_job_statuses")
 
 # 'rabbit-mq-host' when Dockerized
 RABBIT_MQ_HOST: str = 'localhost'

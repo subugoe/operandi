@@ -115,6 +115,7 @@ class HPCSlurmJobDB(Document):
     Model to store an HPC slurm job in the MongoDB
 
     Attributes:
+        workflow_job_id             the id of the workflow job
         hpc_slurm_job_id            the id of the Slurm job that runs this workflow job
         hpc_slurm_job_state         the state of the slurm job inside the HPC
         hpc_batch_script_path       path of the batch script inside the HPC
@@ -122,6 +123,7 @@ class HPCSlurmJobDB(Document):
         deleted                     whether this record is deleted by the user
                                     (still available in the DB itself)
     """
+    workflow_job_id: str
     hpc_slurm_job_id: str
     hpc_slurm_job_state: str = None
     hpc_batch_script_path: str = None

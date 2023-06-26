@@ -4,16 +4,25 @@ from time import sleep
 from operandi_harvester import Harvester
 from tests.constants import OPERANDI_SERVER_BASE_DIR
 from tests.server.helpers_asserts import assert_response_status_code
-from ..constants import OPERANDI_RABBITMQ_QUEUE_HARVESTER
+from ..constants import (
+    OPERANDI_RABBITMQ_QUEUE_HARVESTER,
+    OPERANDI_RABBITMQ_QUEUE_JOB_STATUSES
+)
 
 
 def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, bytes_workspace1):
     response = operandi.get('/')
     assert response.json()['message'] == "The home page of the OPERANDI Server"
 
-    # Create a background service worker
+    # Create a background service worker for the harvester queue
     service_broker.create_worker_process(
-        queue_name=OPERANDI_RABBITMQ_QUEUE_HARVESTER
+        queue_name=OPERANDI_RABBITMQ_QUEUE_HARVESTER,
+        status_checker=False
+    )
+    # Create a background service status checker worker
+    service_broker.create_worker_process(
+        queue_name=OPERANDI_RABBITMQ_QUEUE_JOB_STATUSES,
+        status_checker=True
     )
 
     """
@@ -80,6 +89,9 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
             tries = 5
 
     assert job_status == "SUCCESS"
+
+    # Kill the 2 workers created above
+    service_broker.kill_workers()
 
     response = operandi.get(
         url=f"/workflow/{workflow_id}/{workflow_job_id}",

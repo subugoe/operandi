@@ -7,6 +7,7 @@ from operandi_utils import (
     verify_and_parse_mq_uri
 )
 from .worker import Worker
+from .job_status_worker import JobStatusWorker
 
 
 class ServiceBroker:
@@ -35,14 +36,14 @@ class ServiceBroker:
         self.queues_and_workers = {}
 
     # Creates a separate worker process and append its pid if successful
-    def create_worker_process(self, queue_name) -> None:
+    def create_worker_process(self, queue_name, status_checker=False) -> None:
         # If the entry for queue_name does not exist, create id
         if queue_name not in self.queues_and_workers:
             self.log.debug(f"Initializing workers list for queue: {queue_name}")
             # Initialize the worker pids list for the queue
             self.queues_and_workers[queue_name] = []
 
-        child_pid = self.__create_child_process(queue_name)
+        child_pid = self.__create_child_process(queue_name=queue_name, status_checker=status_checker)
         # If creation of the child process was successful
         if child_pid:
             self.log.debug(f"Assigning a new worker process with pid: {child_pid}, to queue: {queue_name}")
@@ -50,7 +51,7 @@ class ServiceBroker:
             (self.queues_and_workers[queue_name]).append(child_pid)
 
     # Forks a child process
-    def __create_child_process(self, queue_name) -> int:
+    def __create_child_process(self, queue_name, status_checker=False) -> int:
         self.log.debug(f"Trying to create a new worker process for queue: {queue_name}")
         try:
             created_pid = fork()
@@ -61,16 +62,28 @@ class ServiceBroker:
             try:
                 # Clean unnecessary data
                 # self.queues_and_workers = None
-                child_worker = Worker(
-                    db_url=self.db_url,
-                    rmq_host=self.rmq_host,
-                    rmq_port=self.rmq_port,
-                    rmq_vhost=self.rmq_vhost,
-                    rmq_username=self.rmq_username,
-                    rmq_password=self.rmq_password,
-                    queue_name=queue_name,
-                    test_sbatch=self.test_sbatch
-                )
+                if status_checker:
+                    child_worker = JobStatusWorker(
+                        db_url=self.db_url,
+                        rmq_host=self.rmq_host,
+                        rmq_port=self.rmq_port,
+                        rmq_vhost=self.rmq_vhost,
+                        rmq_username=self.rmq_username,
+                        rmq_password=self.rmq_password,
+                        queue_name=queue_name,
+                        test_sbatch=self.test_sbatch
+                    )
+                else:
+                    child_worker = Worker(
+                        db_url=self.db_url,
+                        rmq_host=self.rmq_host,
+                        rmq_port=self.rmq_port,
+                        rmq_vhost=self.rmq_vhost,
+                        rmq_username=self.rmq_username,
+                        rmq_password=self.rmq_password,
+                        queue_name=queue_name,
+                        test_sbatch=self.test_sbatch
+                    )
                 child_worker.run()
                 exit(0)
             except Exception as e:
