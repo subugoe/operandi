@@ -291,7 +291,7 @@ class Worker:
                 workflow_job_dir=workflow_job_dir
             )
             # Delete the result dir from the HPC home folder
-            self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
+            # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
         else:
             raise Exception(f"Slurm job has failed: {slurm_job_id}")
         return 0
