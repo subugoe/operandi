@@ -98,11 +98,13 @@ class HPCExecutor:
             self,
             batch_script_path: str,
             workflow_job_id: str,
-            nextflow_script_id: str,
+            nextflow_script_path: str,
             input_file_grp: str,
             workspace_id: str,
             mets_basename: str
     ) -> str:
+
+        nextflow_script_id = nextflow_script_path.split('/')[-1]
         command = "bash -lc"
         command += " 'sbatch"
         command += f" {batch_script_path}"

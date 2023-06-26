@@ -7,6 +7,7 @@ from os.path import join
 from operandi_utils import call_sync
 from operandi_utils.database.constants import OPERANDI_DB_NAME
 from operandi_utils.database.models import (
+    HPCSlurmJobDB,
     WorkflowDB,
     WorkflowJobDB,
     WorkspaceDB,
@@ -24,6 +25,7 @@ async def initiate_database(db_url: str, db_name: str = None, doc_models: List[D
         db_name = OPERANDI_DB_NAME
     if doc_models is None:
         doc_models = [
+            HPCSlurmJobDB,
             WorkflowDB,
             WorkspaceDB,
             WorkflowJobDB,
@@ -92,6 +94,15 @@ async def sync_get_workflow_job(job_id) -> Union[WorkflowJobDB, None]:
     return await get_workflow_job(job_id)
 
 
+async def get_hpc_slurm_job(hpc_slurm_job_id) -> Union[HPCSlurmJobDB, None]:
+    return await HPCSlurmJobDB.find_one(WorkflowJobDB.hpc_slurm_job_id == hpc_slurm_job_id)
+
+
+@call_sync
+async def sync_get_hpc_slurm_job(hpc_slurm_job_id) -> Union[HPCSlurmJobDB, None]:
+    return await get_hpc_slurm_job(hpc_slurm_job_id)
+
+
 async def get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
     return await WorkspaceDB.find_one(WorkspaceDB.workspace_id == workspace_id)
 
@@ -150,25 +161,38 @@ async def sync_mark_deleted_workspace(workspace_id) -> bool:
     return await mark_deleted_workspace(workspace_id)
 
 
-async def save_workflow(workflow_id: str, workflow_dir: str, workflow_script_path: str) -> Union[WorkflowDB, None]:
+async def save_workflow(
+        workflow_id: str,
+        workflow_dir: str,
+        workflow_script_base: str,
+        workflow_script_path: str
+) -> Union[WorkflowDB, None]:
+
     workflow_db = await get_workflow(workflow_id)
     if not workflow_db:
         workflow_db = WorkflowDB(
             workflow_id=workflow_id,
             workflow_dir=workflow_dir,
+            workflow_script_base=workflow_script_base,
             workflow_script_path=workflow_script_path
         )
     else:
         workflow_db.workflow_id = workflow_id
         workflow_db.workflow_dir = workflow_dir
+        workflow_db.workflow_script_base = workflow_script_base
         workflow_db.workflow_script_path = workflow_script_path
     await workflow_db.save()
     return workflow_db
 
 
 @call_sync
-async def sync_save_workflow(workflow_id: str, workflow_dir: str, workflow_script_path: str) -> Union[WorkflowDB, None]:
-    return await sync_save_workflow(workflow_id, workflow_dir, workflow_script_path)
+async def sync_save_workflow(
+        workflow_id: str,
+        workflow_dir: str,
+        workflow_script_base: str,
+        workflow_script_path: str
+) -> Union[WorkflowDB, None]:
+    return await sync_save_workflow(workflow_id, workflow_dir, workflow_script_base, workflow_script_path)
 
 
 async def save_workspace(workspace_id: str, workspace_dir: str, bag_info: dict) -> Union[WorkspaceDB, None]:
@@ -267,6 +291,35 @@ async def sync_save_workflow_job(
         job_state: str
 ) -> Union[WorkflowJobDB, None]:
     return await save_workflow_job(job_id, workflow_id, workspace_id, job_dir, job_state)
+
+
+async def save_hpc_slurm_job(
+        hpc_slurm_job_id: str,
+        hpc_batch_script_path: str,
+        hpc_slurm_workspace_path: str,
+) -> Union[HPCSlurmJobDB, None]:
+    hpc_slurm_job_db = await get_hpc_slurm_job(hpc_slurm_job_id)
+    if not hpc_slurm_job_db:
+        hpc_slurm_job_db = HPCSlurmJobDB(
+            hpc_slurm_job_id=hpc_slurm_job_id,
+            hpc_batch_script_path=hpc_batch_script_path,
+            hpc_slurm_workspace_path=hpc_slurm_workspace_path
+        )
+    else:
+        hpc_slurm_job_db.hpc_slurm_job_id = hpc_slurm_job_id
+        hpc_slurm_job_db.hpc_batch_script_path = hpc_batch_script_path
+        hpc_slurm_job_db.hpc_slurm_workspace_path = hpc_slurm_workspace_path
+    await hpc_slurm_job_db.save()
+    return hpc_slurm_job_db
+
+
+@call_sync
+async def sync_save_hpc_slurm_job(
+        hpc_slurm_job_id: str,
+        hpc_batch_script_path: str,
+        hpc_slurm_workspace_path: str,
+) -> Union[HPCSlurmJobDB, None]:
+    return await save_hpc_slurm_job(hpc_slurm_job_id, hpc_batch_script_path, hpc_slurm_workspace_path)
 
 
 async def set_workflow_job_state(job_id, job_state: str) -> bool:

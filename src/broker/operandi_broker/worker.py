@@ -2,6 +2,7 @@ import json
 import logging
 import signal
 from os import getppid, setsid
+from os.path import join
 from sys import exit
 
 from operandi_utils import reconfigure_all_loggers
@@ -137,19 +138,15 @@ class Worker:
         try:
             # TODO: This should be optimized, i.e., single read to the DB instead of three
             workflow_db = db.sync_get_workflow(self.current_message_wf_id)
-            workflow_script_path = workflow_db.workflow_script_path
-
             workspace_db = db.sync_get_workspace(self.current_message_ws_id)
-            workspace_mets_path = workspace_db.workspace_mets_path
+            workflow_job_db = db.sync_get_workflow_job(self.current_message_job_id)
+
+            workflow_script_path = workflow_db.workflow_script_path
             workspace_dir = workspace_db.workspace_dir
             mets_basename = workspace_db.mets_basename
             if not mets_basename:
                 mets_basename = "mets.xml"
-            workflow_job_db = db.sync_get_workflow_job(self.current_message_job_id)
-            job_dir = workflow_job_db.job_dir
-            job_state = "RUNNING"
-            self.log.info(f"Setting new job state[{job_state}] of job_id: {self.current_message_job_id}")
-            db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
+
         except Exception as error:
             self.log.error(f"Database related error has occurred: {error}")
             self.__handle_message_failure(interruption=False)
@@ -157,33 +154,22 @@ class Worker:
 
         # Trigger a slurm job in the HPC
         try:
-            # TODO: Use the actual nextflow workflow script here,
-            #  instead of using the nextflow_workflows/template_workflow.nf
-            slurm_job_return_code = self.prepare_and_trigger_slurm_job(
+            self.prepare_and_trigger_slurm_job(
+                workflow_job_id=self.current_message_job_id,
                 workspace_id=self.current_message_ws_id,
                 workspace_dir=workspace_dir,
                 workspace_base_mets=mets_basename,
-                workflow_job_id=self.current_message_job_id,
-                workflow_job_dir=job_dir,
-                input_file_grp=input_file_grp,
-                nf_workflow_script=workflow_script_path,
+                workflow_script_path=workflow_script_path,
+                input_file_grp=input_file_grp
             )
         except Exception as error:
             self.log.error(f"Triggering a slurm job in the HPC has failed: {error}")
             self.__handle_message_failure(interruption=False)
             return
 
-        # TODO: The worker blocks here till the slurm job finishes
-        # TODO: Continuously check slurm job status here
-
-        if slurm_job_return_code != 0:
-            self.log.error(f"The slurm job failed for job_id: {self.current_message_job_id}")
-            self.__handle_message_failure(interruption=False)
-            return
-
-        self.log.debug(f"The Nextflow process has finished successfully")
-        job_state = "SUCCESS"
-        self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
+        self.log.debug(f"The HPC slurm job was successfully submitted")
+        job_state = "RUNNING"
+        self.log.info(f"Setting new job state[{job_state}] of job_id: {self.current_message_job_id}")
         db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
         self.has_consumed_message = False
         self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
@@ -235,14 +221,13 @@ class Worker:
     # TODO: This should be further refined, currently it's just everything in one place
     def prepare_and_trigger_slurm_job(
             self,
+            workflow_job_id,
             workspace_id,
             workspace_dir,
             workspace_base_mets,
-            workflow_job_id,
-            workflow_job_dir,
-            input_file_grp,
-            nf_workflow_script=None
-    ) -> int:
+            workflow_script_path,
+            input_file_grp
+    ) -> str:
 
         if self.test_sbatch:
             batch_script_id = "test_submit_workflow_job.sh"
@@ -253,26 +238,46 @@ class Worker:
             batch_script_id=batch_script_id
         )
 
-        hpc_slurm_workspace_path, nextflow_script_id = self.hpc_io_transfer.pack_and_put_slurm_workspace(
-            ocrd_workspace_id=workspace_id,
-            ocrd_workspace_dir=workspace_dir,
-            workflow_job_id=workflow_job_id,
-            nextflow_script_path=nf_workflow_script
-        )
+        try:
+            hpc_slurm_workspace_path = self.hpc_io_transfer.pack_and_put_slurm_workspace(
+                ocrd_workspace_dir=workspace_dir,
+                workflow_job_id=workflow_job_id,
+                nextflow_script_path=workflow_script_path,
+                tempdir_prefix="slurm_workspace-"
+            )
+        except Exception as error:
+            raise Exception(f"Failed to pack and put slurm workspace: {error}")
 
         try:
             # NOTE: The paths below must be a valid existing path inside the HPC
             slurm_job_id = self.hpc_executor.trigger_slurm_job(
                 batch_script_path=hpc_batch_script_path,
                 workflow_job_id=workflow_job_id,
-                nextflow_script_id=nextflow_script_id,
-                input_file_grp=input_file_grp,
+                nextflow_script_path=workflow_script_path,
                 workspace_id=workspace_id,
-                mets_basename=workspace_base_mets
+                mets_basename=workspace_base_mets,
+                input_file_grp=input_file_grp
             )
         except Exception as error:
             raise Exception(f"Triggering slurm job failed: {error}")
 
+        try:
+            db.sync_save_hpc_slurm_job(
+                hpc_slurm_job_id=slurm_job_id,
+                hpc_batch_script_path=hpc_batch_script_path,
+                hpc_slurm_workspace_path=join(hpc_slurm_workspace_path, workflow_job_id)
+            )
+        except Exception as error:
+            raise Exception(f"Failed to save the hpc slurm job in DB: {error}")
+        return slurm_job_id
+
+    def check_slurm_job_and_get_results(
+            self,
+            slurm_job_id,
+            workspace_dir,
+            workflow_job_dir,
+            hpc_slurm_workspace_path
+    ):
         try:
             finished_successfully = self.hpc_executor.poll_till_end_slurm_job_state(
                 slurm_job_id=slurm_job_id,
@@ -284,14 +289,11 @@ class Worker:
 
         if finished_successfully:
             self.hpc_io_transfer.get_and_unpack_slurm_workspace(
-                ocrd_workspace_id=workspace_id,
                 ocrd_workspace_dir=workspace_dir,
-                hpc_slurm_workspace_path=hpc_slurm_workspace_path,
-                workflow_job_id=workflow_job_id,
-                workflow_job_dir=workflow_job_dir
+                workflow_job_dir=workflow_job_dir,
+                hpc_slurm_workspace_path=hpc_slurm_workspace_path
             )
             # Delete the result dir from the HPC home folder
             # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
         else:
             raise Exception(f"Slurm job has failed: {slurm_job_id}")
-        return 0

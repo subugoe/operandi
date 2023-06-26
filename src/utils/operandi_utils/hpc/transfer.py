@@ -109,20 +109,20 @@ class HPCTransfer:
 
     def pack_and_put_slurm_workspace(
             self,
-            ocrd_workspace_id: str,
             ocrd_workspace_dir: str,
             workflow_job_id: str,
-            nextflow_script_path: str = None,
-            nextflow_filename: str = "default_workflow.nf",
+            nextflow_script_path: str,
             tempdir_prefix: str = "slurm_workspace-"
     ) -> Tuple[str, str]:
-        # If no nextflow script is provided, then the default one is used
-        if not nextflow_script_path:
-            nextflow_script_path = join(dirname(__file__), "nextflow_workflows", nextflow_filename)
 
         tempdir = mkdtemp(prefix=tempdir_prefix)
-        temp_workflow_job_dir = join(join(tempdir, workflow_job_id))
+        temp_workflow_job_dir = join(tempdir, workflow_job_id)
         makedirs(temp_workflow_job_dir)
+
+        # Parse the nextflow file name from the script path
+        nextflow_filename = nextflow_script_path.split('/')[-1]
+        # Parse the ocrd workspace id from the dir path
+        ocrd_workspace_id = ocrd_workspace_dir.split('/')[-1]
 
         symlink(
             src=nextflow_script_path,
@@ -139,16 +139,19 @@ class HPCTransfer:
         )
 
         # Zip path inside the HPC environment
-        return OPERANDI_HPC_DIR_SLURM_WORKSPACES, nextflow_filename
+        return OPERANDI_HPC_DIR_SLURM_WORKSPACES
 
     def get_and_unpack_slurm_workspace(
             self,
-            ocrd_workspace_id: str,
             ocrd_workspace_dir: str,
-            hpc_slurm_workspace_path: str,
-            workflow_job_id: str,
-            workflow_job_dir: str
+            workflow_job_dir: str,
+            hpc_slurm_workspace_path: str
     ):
+
+        # Parse the ocrd workspace id from the dir path
+        ocrd_workspace_id = ocrd_workspace_dir.split('/')[-1]
+        workflow_job_id = workflow_job_dir.split('/')[-1]
+
         get_src = join(hpc_slurm_workspace_path, workflow_job_id, f"{workflow_job_id}.zip")
         get_dst = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
         try:

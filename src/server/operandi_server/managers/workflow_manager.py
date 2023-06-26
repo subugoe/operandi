@@ -85,7 +85,8 @@ class WorkflowManager(ResourceManager):
         await db.save_workflow(
             workflow_id=workflow_id,
             workflow_dir=workflow_dir,
-            workflow_script_path=nf_script_dest
+            workflow_script_path=nf_script_dest,
+            workflow_script_base=file.filename
         )
 
         workflow_url = self.get_resource(self.workflow_router, workflow_id, local=False)

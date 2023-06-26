@@ -13,7 +13,6 @@ from tests.helpers_utils import to_asset_path
 
 current_time = datetime.now().strftime("%Y%m%d_%H%M")
 ID_BATCH_SCRIPT = "test_submit_workflow_job.sh"
-ID_NEXTFLOW_SCRIPT = "test_default_workflow.nf"
 ID_WORKFLOW_JOB = f"test_workflow_job_{current_time}"
 ID_WORKSPACE = f"data"
 
@@ -59,21 +58,19 @@ def test_pack_and_put_slurm_workspace(hpc_data_transfer, path_workflow1):
     )
 
     hpc_data_transfer.pack_and_put_slurm_workspace(
-        ocrd_workspace_id=ID_WORKSPACE,
         ocrd_workspace_dir=workspace_dir,
         workflow_job_id=ID_WORKFLOW_JOB,
         nextflow_script_path=path_workflow1,
-        nextflow_filename=ID_NEXTFLOW_SCRIPT,
         tempdir_prefix="test_slurm_workspace-"
     )
 
 
-def test_hpc_connector_run_batch_script(hpc_command_executor):
+def test_hpc_connector_run_batch_script(hpc_command_executor, path_workflow1):
     batch_script_path = join(OPERANDI_TESTS_HPC_DIR_BATCH_SCRIPTS, ID_BATCH_SCRIPT)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=batch_script_path,
         workflow_job_id=ID_WORKFLOW_JOB,
-        nextflow_script_id=ID_NEXTFLOW_SCRIPT,
+        nextflow_script_path=path_workflow1,
         input_file_grp="OCR-D-IMG",
         workspace_id=ID_WORKSPACE,
         mets_basename="mets.xml"
