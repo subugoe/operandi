@@ -3,7 +3,7 @@
 #SBATCH --partition medium
 #SBATCH --cpus-per-task 32
 #SBATCH --mem 64G
-#SBATCH --time 24:00:00
+#SBATCH --time 48:00:00
 #SBATCH --output /scratch1/users/mmustaf/operandi/slurm-job-%J.txt
 
 # Parameters are as follows:
@@ -28,7 +28,8 @@ METS_BASENAME=$5
 SCRATCH_SLURM_DIR_PATH="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 
 NF_SCRIPT_PATH="${SCRATCH_SLURM_DIR_PATH}/${NEXTFLOW_SCRIPT_ID}"
-METS_PATH="${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}/${METS_BASENAME}"
+WORKSPACE_DIR_PATH="${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}"
+METS_PATH="${WORKSPACE_DIR_PATH}/${METS_BASENAME}"
 
 hostname
 slurm_resources
@@ -82,6 +83,7 @@ nextflow run "${NF_SCRIPT_PATH}" \
 --models_mapping "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" \
 --sif_path "${SIF_PATH}" \
 --input_file_group "${IN_FILE_GRP}" \
+--workspace_dir "${WORKSPACE_DIR_PATH}" \
 --mets "${METS_PATH}"
 
 # Delete symlinks created for the Nextflow workers
