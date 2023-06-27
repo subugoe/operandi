@@ -115,7 +115,7 @@ jobs:
         run: pytest tests/server/test_*.py
 
       - name: run utils tests
-        run: make run-tests-utils
+        run: pytest tests/utils/test_*.py
 
       - name: run harvester tests
         run: pytest tests/harvester/test_*.py
