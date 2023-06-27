@@ -166,7 +166,7 @@ class OperandiServer(FastAPI):
         # Create the message queues (nothing happens if they already exist)
         self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
         self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
-        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES)
+        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES, auto_delete=True)
 
         # Include the endpoints of the OCR-D WebAPI
         self.include_webapi_routers()

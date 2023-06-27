@@ -57,7 +57,10 @@ class RMQPublisher(RMQConnector):
             queue_name: str,
             exchange_name: Optional[str] = None,
             exchange_type: Optional[str] = None,
-            passive: bool = False
+            passive: bool = False,
+            durable: bool = False,
+            auto_delete: bool = False,
+            exclusive: bool = False
     ) -> None:
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
@@ -67,12 +70,19 @@ class RMQPublisher(RMQConnector):
         RMQConnector.exchange_declare(
             channel=self._channel,
             exchange_name=exchange_name,
-            exchange_type=exchange_type
+            exchange_type=exchange_type,
+            passive=False,
+            durable=False,
+            auto_delete=False,
+            internal=False
         )
         RMQConnector.queue_declare(
             channel=self._channel,
             queue_name=queue_name,
-            passive=passive
+            passive=passive,
+            durable=durable,
+            auto_delete=auto_delete,
+            exclusive=exclusive
         )
         RMQConnector.queue_bind(
             channel=self._channel,
