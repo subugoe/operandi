@@ -50,7 +50,7 @@
     "name": "operandi_queue_job_statuses",
     "vhost": "/",
     "durable": false,
-    "auto_delete": false
+    "auto_delete": true
     },
     {
     "name": "operandi_queue_users",
@@ -68,7 +68,7 @@
     "name": "operandi_queue_job_statuses",
     "vhost": "test",
     "durable": false,
-    "auto_delete": false
+    "auto_delete": true
     }
   ],
   "exchanges": [],
