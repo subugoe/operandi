@@ -90,9 +90,6 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
 
     assert job_status == "SUCCESS"
 
-    # Kill the 2 workers created above
-    service_broker.kill_workers()
-
     response = operandi.get(
         url=f"/workflow/{workflow_id}/{workflow_job_id}",
         headers={'accept': 'application/vnd.zip'},
