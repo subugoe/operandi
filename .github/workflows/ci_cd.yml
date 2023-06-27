@@ -118,10 +118,10 @@ jobs:
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
           pytest tests/server/test_*.py
 
-      # - name: run utils tests
-      #   run: |
-      #     export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-      #     make run-tests-utils
+      - name: run utils tests
+        run: |
+          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
+          make run-tests-utils
 
       - name: run harvester tests
         run: |
