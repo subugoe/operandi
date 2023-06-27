@@ -85,10 +85,8 @@ def test_hpc_connector_run_batch_script(hpc_command_executor, path_workflow1):
 
 def test_get_and_unpack_slurm_workspace(hpc_data_transfer):
     hpc_data_transfer.get_and_unpack_slurm_workspace(
-        ocrd_workspace_id=ID_WORKSPACE,
         ocrd_workspace_dir=join(OPERANDI_TESTS_LOCAL_DIR_WORKSPACES, ID_WORKSPACE),
         hpc_slurm_workspace_path=OPERANDI_TESTS_HPC_DIR_SLURM_WORKSPACES,
-        workflow_job_id=ID_WORKFLOW_JOB,
         workflow_job_dir=join(OPERANDI_TESTS_LOCAL_DIR_WORKFLOW_JOBS, ID_WORKFLOW_JOB)
     )
 
