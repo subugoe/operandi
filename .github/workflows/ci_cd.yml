@@ -109,25 +109,16 @@ jobs:
         run: docker compose -f ./docker-compose.yml --env-file ${{ env.ENV_FILE }} up -d operandi-mongodb
 
       - name: run broker tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/broker/test_*.py
+        run: pytest tests/broker/test_*.py
 
       - name: run server tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/server/test_*.py
+        run: pytest tests/server/test_*.py
 
       - name: run utils tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          make run-tests-utils
+        run: make run-tests-utils
 
       - name: run harvester tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/harvester/test_*.py
-
+        run: pytest tests/harvester/test_*.py
 
   build-and-push-docker-images:
     name: Push ${{matrix.services.module}} to image registry
