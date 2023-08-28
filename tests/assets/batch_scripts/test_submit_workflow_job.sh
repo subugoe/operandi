@@ -37,7 +37,8 @@ module purge
 module load singularity
 module load nextflow
 
-export NXF_EXECUTOR=slurm
+# To submit separate jobs for each process in the NF script
+# export NXF_EXECUTOR=slurm
 
 # The SIF file of the OCR-D All docker image must be previously created
 if [ ! -f "${SIF_PATH}" ]; then
@@ -78,6 +79,8 @@ fi
 
 echo "Sif file path: ${SIF_PATH}"
 echo "About to start workflow with script: ${NF_SCRIPT_PATH}"
+echo "Slurm dir path: ${SCRATCH_SLURM_DIR_PATH}"
+echo "Workspace dir path: ${WORKSPACE_DIR_PATH}"
 echo "Mets path: ${METS_PATH}"
 echo "Input file: ${IN_FILE_GRP}"
 echo "Ocrd models mapping: ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}"
@@ -86,12 +89,9 @@ echo "Ocrd models mapping: ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}"
 nextflow run "${NF_SCRIPT_PATH}" \
 -ansi-log false \
 -with-report \
---volume_map_dir "${SCRATCH_SLURM_DIR_PATH}" \
---models_mapping "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" \
---sif_path "${SIF_PATH}" \
 --input_file_group "${IN_FILE_GRP}" \
---workspace_dir "${WORKSPACE_DIR_PATH}" \
 --mets "${METS_PATH}" \
+--singularity_wrapper "singularity exec --bind ${SCRATCH_SLURM_DIR_PATH} --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
 --cpus 2
 
 # Delete symlinks created for the Nextflow workers

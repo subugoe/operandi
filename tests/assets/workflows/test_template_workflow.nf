@@ -3,24 +3,17 @@ nextflow.enable.dsl=2
 // The values are assigned inside the batch script
 // Based on internal values and options provided in the request
 params.input_file_group = "null"
-params.workspace_dir = "null"
 params.mets = "null"
-params.volume_map_dir = "null"
-params.models_mapping = "null"
-params.sif_path = "null"
-params.singularity_wrapper = "singularity exec --bind ${params.volume_map_dir} --bind ${params.models_mapping} --env OCRD_METS_CACHING=true ${params.sif_path}"
+params.singularity_wrapper = "null"
 params.cpus = "null"
 
 log.info """\
          O P E R A N D I - H P C - TEMPLATE  P I P E L I N E
          ===========================================
          input_file_group    : ${params.input_file_group}
-         workspace_dir       : ${params.workspace_dir}
          mets                : ${params.mets}
-         volume_map_dir      : ${params.volume_map_dir}
-         models_mapping      : ${params.models_mapping}
-         sif_path            : ${params.sif_path}
          singularity_wrapper : ${params.singularity_wrapper}
+         cpus                : ${params.cpus}
          """
          .stripIndent()
 
