@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --constraint scratch
 #SBATCH --partition medium
-#SBATCH --cpus-per-task 32
+#SBATCH --cpus-per-task 1
 #SBATCH --mem 64G
 #SBATCH --time 48:00:00
 #SBATCH --output /scratch1/users/mmustaf/operandi/slurm-job-%J.txt
@@ -39,7 +39,7 @@ module load singularity
 module load nextflow
 
 # To submit separate jobs for each process in the NF script
-# export NXF_EXECUTOR=slurm
+export NXF_EXECUTOR=slurm
 
 # The SIF file of the OCR-D All docker image must be previously created
 if [ ! -f "${SIF_PATH}" ]; then
@@ -85,7 +85,7 @@ nextflow run "${NF_SCRIPT_PATH}" \
 --input_file_group "${IN_FILE_GRP}" \
 --mets "${METS_PATH}" \
 --singularity_wrapper "singularity exec --bind ${SCRATCH_SLURM_DIR_PATH} --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
---cpus 32
+--cpus 1
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete

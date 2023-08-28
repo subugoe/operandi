@@ -38,7 +38,7 @@ module load singularity
 module load nextflow
 
 # To submit separate jobs for each process in the NF script
-# export NXF_EXECUTOR=slurm
+export NXF_EXECUTOR=slurm
 
 # The SIF file of the OCR-D All docker image must be previously created
 if [ ! -f "${SIF_PATH}" ]; then
