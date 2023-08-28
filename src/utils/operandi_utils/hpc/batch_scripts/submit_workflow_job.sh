@@ -38,6 +38,8 @@ module purge
 module load singularity
 module load nextflow
 
+export NXF_EXECUTOR=slurm
+
 # The SIF file of the OCR-D All docker image must be previously created
 if [ ! -f "${SIF_PATH}" ]; then
   echo "Required ocrd_all_image sif file not found at: ${SIF_PATH}"
@@ -84,7 +86,8 @@ nextflow run "${NF_SCRIPT_PATH}" \
 --sif_path "${SIF_PATH}" \
 --input_file_group "${IN_FILE_GRP}" \
 --workspace_dir "${WORKSPACE_DIR_PATH}" \
---mets "${METS_PATH}"
+--mets "${METS_PATH}" \
+--cpus 32
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete

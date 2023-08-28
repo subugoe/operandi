@@ -2,7 +2,7 @@
 #SBATCH --constraint scratch
 #SBATCH --partition medium
 #SBATCH --cpus-per-task 2
-#SBATCH --mem 2G
+#SBATCH --mem 8G
 #SBATCH --output /scratch1/users/mmustaf/operandi_tests/test-slurm-job-%J.txt
 
 # Parameters are as follows:
@@ -36,6 +36,8 @@ slurm_resources
 module purge
 module load singularity
 module load nextflow
+
+export NXF_EXECUTOR=slurm
 
 # The SIF file of the OCR-D All docker image must be previously created
 if [ ! -f "${SIF_PATH}" ]; then
@@ -89,7 +91,8 @@ nextflow run "${NF_SCRIPT_PATH}" \
 --sif_path "${SIF_PATH}" \
 --input_file_group "${IN_FILE_GRP}" \
 --workspace_dir "${WORKSPACE_DIR_PATH}" \
---mets "${METS_PATH}"
+--mets "${METS_PATH}" \
+--cpus 2
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete
