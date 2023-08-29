@@ -3,6 +3,7 @@
 #SBATCH --partition medium
 #SBATCH --cpus-per-task 2
 #SBATCH --mem 8G
+#SBATCH --time 2:00:00
 #SBATCH --output /scratch1/users/mmustaf/operandi_tests/test-slurm-job-%J.txt
 
 # Parameters are as follows:
