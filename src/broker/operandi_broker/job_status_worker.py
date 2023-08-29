@@ -121,42 +121,52 @@ class JobStatusWorker:
             workflow_job_db = db.sync_get_workflow_job(self.current_message_job_id)
             if not workflow_job_db:
                 self.log.warning(f"Workflow job not existing in DB for: {self.current_message_job_id}")
+                self.__handle_message_failure(interruption=False)
+                return
 
             hpc_slurm_job_db = db.sync_get_hpc_slurm_job(self.current_message_job_id)
             if not hpc_slurm_job_db:
                 self.log.warning(f"HPC slurm job not existing in DB for: {self.current_message_job_id}")
+                self.__handle_message_failure(interruption=False)
+                return
         except Exception as error:
             self.log.error(f"Database related error has occurred: {error}")
             self.__handle_message_failure(interruption=False)
             return
 
-        slurm_job_id = hpc_slurm_job_db.hpc_slurm_job_id
-        if not slurm_job_id:
-            self.log.warning(f"slurm_job_id is: {slurm_job_id}")
-        slurm_job_state = self.hpc_executor.check_slurm_job_state(slurm_job_id=slurm_job_id)
-        if not slurm_job_state:
-            self.log.warning(f"slurm_job_id: {slurm_job_id}, slurm job state is: {slurm_job_state}")
-        else:
-            self.log.info(f"Slurm job state is: {slurm_job_state}")
-
-        # TODO: This duplication is the same as in executor.py
-        #  Refactor it when things are working
-        slurm_fail_states = ["BOOT_FAIL", "CANCELLED", "DEADLINE", "FAILED", "NODE_FAIL",
-                             "OUT_OF_MEMORY", "PREEMPTED", "REVOKED", "TIMEOUT"]
-        slurm_success_states = ["COMPLETED"]
-        slurm_waiting_states = ["RUNNING", "PENDING", "COMPLETING", "REQUEUED", "RESIZING", "SUSPENDED"]
+        # Take the latest slurm job state
+        old_slurm_job_state = hpc_slurm_job_db.hpc_slurm_job_state
+        # Check the slurm job state through the hpc executor
+        new_slurm_job_state = self.hpc_executor.check_slurm_job_state(
+            slurm_job_id=hpc_slurm_job_db.hpc_slurm_job_id
+        )
+        # If there has been a change of slurm job state, update it
+        if old_slurm_job_state != new_slurm_job_state:
+            self.log.debug(f"Slurm job: {hpc_slurm_job_db.hpc_slurm_job_id}, "
+                           f"old state: {old_slurm_job_state}, "
+                           f"new state: {new_slurm_job_state}")
+            # Update the hpc slurm job state in the DB
+            db.sync_set_slurm_job_state(
+                workflow_job_id=workflow_job_db.job_id,
+                hpc_slurm_job_state=new_slurm_job_state
+            )
 
         # Take the latest workflow job state
-        workflow_job_status = workflow_job_db.job_state
-        if slurm_job_state in slurm_success_states:
-            workflow_job_status = "SUCCESS"
-        if slurm_job_state in slurm_waiting_states:
-            workflow_job_status = "RUNNING"
-        if slurm_job_state in slurm_fail_states:
-            workflow_job_status = "STOPPED"
+        old_workflow_job_status = workflow_job_db.job_state
+        # Convert the slurm job state to operandi workflow job state
+        new_workflow_job_status = self.convert_slurm_to_operandi_state(
+            slurm_job_state=new_slurm_job_state
+        )
 
-        self.log.info(f"Setting workflow job state to: {workflow_job_status}")
-        db.sync_set_workflow_job_state(self.current_message_job_id, job_state=workflow_job_status)
+        # If there has been a change of operandi workflow state, update it
+        if old_workflow_job_status != new_workflow_job_status:
+            self.log.debug(f"Workflow job id: {self.current_message_job_id}, "
+                           f"old state: {old_workflow_job_status}, "
+                           f"new state: {new_workflow_job_status}")
+            db.sync_set_workflow_job_state(self.current_message_job_id, job_state=new_workflow_job_status)
+
+        self.log.info(f"Latest slurm job state: {new_slurm_job_state}")
+        self.log.info(f"Latest workflow job state: {new_workflow_job_status}")
 
         self.has_consumed_message = False
         self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
@@ -196,3 +206,23 @@ class JobStatusWorker:
         self.rmq_consumer = None
         self.log.info("Exiting gracefully.")
         exit(0)
+
+    @staticmethod
+    def convert_slurm_to_operandi_state(slurm_job_state: str) -> str:
+        # TODO: This duplication is the same as in executor.py
+        #  Refactor it when things are working
+        slurm_fail_states = ["BOOT_FAIL", "CANCELLED", "DEADLINE", "FAILED", "NODE_FAIL",
+                             "OUT_OF_MEMORY", "PREEMPTED", "REVOKED", "TIMEOUT"]
+        slurm_success_states = ["COMPLETED"]
+        slurm_waiting_states = ["RUNNING", "PENDING", "COMPLETING", "REQUEUED", "RESIZING", "SUSPENDED"]
+
+        # Take the latest workflow job state
+        workflow_job_status = None
+        if slurm_job_state in slurm_success_states:
+            workflow_job_status = "SUCCESS"
+        if slurm_job_state in slurm_waiting_states:
+            workflow_job_status = "RUNNING"
+        if slurm_job_state in slurm_fail_states:
+            workflow_job_status = "STOPPED"
+
+        return workflow_job_status

@@ -167,9 +167,9 @@ class Worker:
             self.__handle_message_failure(interruption=False)
             return
 
-        self.log.debug(f"The HPC slurm job was successfully submitted")
+        self.log.info(f"The HPC slurm job was successfully submitted")
         job_state = "RUNNING"
-        self.log.info(f"Setting new job state[{job_state}] of job_id: {self.current_message_job_id}")
+        self.log.info(f"Setting new job state `{job_state}` of job_id: {self.current_message_job_id}")
         db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
         self.has_consumed_message = False
         self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")

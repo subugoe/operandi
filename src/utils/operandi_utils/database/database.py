@@ -298,6 +298,7 @@ async def save_hpc_slurm_job(
         hpc_slurm_job_id: str,
         hpc_batch_script_path: str,
         hpc_slurm_workspace_path: str,
+        hpc_slurm_job_state: str = None
 ) -> Union[HPCSlurmJobDB, None]:
     hpc_slurm_job_db = await get_hpc_slurm_job(hpc_slurm_job_id)
     if not hpc_slurm_job_db:
@@ -305,13 +306,18 @@ async def save_hpc_slurm_job(
             workflow_job_id=workflow_job_id,
             hpc_slurm_job_id=hpc_slurm_job_id,
             hpc_batch_script_path=hpc_batch_script_path,
-            hpc_slurm_workspace_path=hpc_slurm_workspace_path
+            hpc_slurm_workspace_path=hpc_slurm_workspace_path,
+            hpc_slurm_job_state=hpc_slurm_job_state
         )
     else:
+        # If not set, just write the old state
+        if not hpc_slurm_job_state:
+            hpc_slurm_job_state = hpc_slurm_job_db.hpc_slurm_job_state
         hpc_slurm_job_db.workflow_job_id = workflow_job_id
         hpc_slurm_job_db.hpc_slurm_job_id = hpc_slurm_job_id
         hpc_slurm_job_db.hpc_batch_script_path = hpc_batch_script_path
         hpc_slurm_job_db.hpc_slurm_workspace_path = hpc_slurm_workspace_path
+        hpc_slurm_job_db.hpc_slurm_job_state = hpc_slurm_job_state
     await hpc_slurm_job_db.save()
     return hpc_slurm_job_db
 
@@ -322,13 +328,38 @@ async def sync_save_hpc_slurm_job(
         hpc_slurm_job_id: str,
         hpc_batch_script_path: str,
         hpc_slurm_workspace_path: str,
+        hpc_slurm_job_state: str = None
 ) -> Union[HPCSlurmJobDB, None]:
-    return await save_hpc_slurm_job(workflow_job_id, hpc_slurm_job_id, hpc_batch_script_path, hpc_slurm_workspace_path)
+    return await save_hpc_slurm_job(
+        workflow_job_id,
+        hpc_slurm_job_id,
+        hpc_batch_script_path,
+        hpc_slurm_workspace_path,
+        hpc_slurm_job_state
+    )
+
+
+async def set_slurm_job_state(workflow_job_id: str, hpc_slurm_job_state: str) -> bool:
+    """
+    set state of slurm job to 'state'
+    """
+    slurm_job = await get_hpc_slurm_job(workflow_job_id=workflow_job_id)
+    if slurm_job:
+        slurm_job.hpc_slurm_job_state = hpc_slurm_job_state
+        await slurm_job.save()
+        return True
+    logger.warning(f"Trying to set a state to a non-existing slurm job for workflow id: {workflow_job_id}")
+    return False
+
+
+@call_sync
+async def sync_set_slurm_job_state(workflow_job_id: str, hpc_slurm_job_state: str) -> bool:
+    return await set_slurm_job_state(workflow_job_id=workflow_job_id, hpc_slurm_job_state=hpc_slurm_job_state)
 
 
 async def set_workflow_job_state(job_id, job_state: str) -> bool:
     """
-    set state of job to 'state'
+    set state of workflow job to 'state'
     """
     job = await get_workflow_job(job_id)
     if job:
