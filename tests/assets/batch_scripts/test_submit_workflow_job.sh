@@ -13,6 +13,7 @@
 # $4 - Workspace id
 # $5 - Mets basename - default "mets.xml"
 
+CPUS=2
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
 SCRATCH_BASE="/scratch1/users/${USER}/operandi_tests/slurm_workspaces"
 OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
@@ -92,7 +93,7 @@ nextflow run "${NF_SCRIPT_PATH}" \
 --input_file_group "${IN_FILE_GRP}" \
 --mets "${METS_PATH}" \
 --singularity_wrapper "singularity exec --bind ${SCRATCH_SLURM_DIR_PATH} --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
---cpus 2
+--cpus "${CPUS}"
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete
