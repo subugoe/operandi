@@ -122,7 +122,7 @@ class HPCExecutor:
         command += f" {workspace_id}"
         command += f" {mets_basename}"
         command += f" {cpus}"
-        command += f" {ram} GB"
+        command += f" {ram}GB"
         command += "'"
 
         output, err, return_code = self.execute_blocking(command)
