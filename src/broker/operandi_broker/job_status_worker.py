@@ -220,9 +220,9 @@ class JobStatusWorker:
         workflow_job_status = None
         if slurm_job_state in slurm_success_states:
             workflow_job_status = "SUCCESS"
-        if slurm_job_state in slurm_waiting_states:
+        elif slurm_job_state in slurm_waiting_states:
             workflow_job_status = "RUNNING"
-        if slurm_job_state in slurm_fail_states:
+        elif slurm_job_state in slurm_fail_states:
             workflow_job_status = "STOPPED"
 
         return workflow_job_status

@@ -55,8 +55,16 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
     # Post workflow job
     input_file_grp = "OCR-D-IMG"
     req_data = {
-        'workspace_id': f'{workspace_id}',
-        'input_file_grp': f'{input_file_grp}'
+        'workflow_id': f'{workflow_id}',
+        'workflow_args': {
+          'workspace_id': f'{workspace_id}',
+          'input_file_grp': f'{input_file_grp}',
+          'mets_name': "mets.xml"
+        },
+        'sbatch_args': {
+          'cpus': 8,
+          'ram': 32
+        }
     }
     response = operandi.post(
         url=f"/workflow/{workflow_id}",

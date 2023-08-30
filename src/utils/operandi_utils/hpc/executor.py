@@ -101,18 +101,29 @@ class HPCExecutor:
             nextflow_script_path: str,
             input_file_grp: str,
             workspace_id: str,
-            mets_basename: str
+            mets_basename: str,
+            cpus: int,
+            ram: int
     ) -> str:
 
         nextflow_script_id = nextflow_script_path.split('/')[-1]
         command = "bash -lc"
         command += " 'sbatch"
+
+        # SBATCH arguments passed to the batch script
+        command += f" --cpus-per-task={cpus}"
+        command += f" --mem={ram}G"
+
+        # Regular arguments passed to the batch script
         command += f" {batch_script_path}"
         command += f" {workflow_job_id}"
         command += f" {nextflow_script_id}"
         command += f" {input_file_grp}"
         command += f" {workspace_id}"
-        command += f" {mets_basename}'"
+        command += f" {mets_basename}"
+        command += f" {cpus}"
+        command += f" {ram} GB"
+        command += "'"
 
         output, err, return_code = self.execute_blocking(command)
         slurm_job_id = output[0].strip('\n').split(' ')[-1]

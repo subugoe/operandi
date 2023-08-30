@@ -129,6 +129,8 @@ class Worker:
             self.current_message_wf_id = consumed_message["workflow_id"]
             self.current_message_job_id = consumed_message["job_id"]
             input_file_grp = consumed_message["input_file_grp"]
+            slurm_job_cpus = int(consumed_message["cpus"])
+            slurm_job_ram = int(consumed_message["ram"])
         except Exception as error:
             self.log.error(f"Parsing the consumed message has failed: {error}")
             self.__handle_message_failure(interruption=False)
@@ -160,7 +162,9 @@ class Worker:
                 workspace_dir=workspace_dir,
                 workspace_base_mets=mets_basename,
                 workflow_script_path=workflow_script_path,
-                input_file_grp=input_file_grp
+                input_file_grp=input_file_grp,
+                cpus=slurm_job_cpus,
+                ram=slurm_job_ram
             )
         except Exception as error:
             self.log.error(f"Triggering a slurm job in the HPC has failed: {error}")
@@ -221,12 +225,14 @@ class Worker:
     # TODO: This should be further refined, currently it's just everything in one place
     def prepare_and_trigger_slurm_job(
             self,
-            workflow_job_id,
-            workspace_id,
-            workspace_dir,
-            workspace_base_mets,
-            workflow_script_path,
-            input_file_grp
+            workflow_job_id: str,
+            workspace_id: str,
+            workspace_dir: str,
+            workspace_base_mets: str,
+            workflow_script_path: str,
+            input_file_grp: str,
+            cpus: int,
+            ram: int,
     ) -> str:
 
         if self.test_sbatch:
@@ -256,7 +262,9 @@ class Worker:
                 nextflow_script_path=workflow_script_path,
                 workspace_id=workspace_id,
                 mets_basename=workspace_base_mets,
-                input_file_grp=input_file_grp
+                input_file_grp=input_file_grp,
+                cpus=cpus,
+                ram=ram
             )
         except Exception as error:
             raise Exception(f"Triggering slurm job failed: {error}")
@@ -274,10 +282,10 @@ class Worker:
 
     def check_slurm_job_and_get_results(
             self,
-            slurm_job_id,
-            workspace_dir,
-            workflow_job_dir,
-            hpc_slurm_workspace_path
+            slurm_job_id: str,
+            workspace_dir: str,
+            workflow_job_dir: str,
+            hpc_slurm_workspace_path: str
     ):
         try:
             finished_successfully = self.hpc_executor.poll_till_end_slurm_job_state(

@@ -6,6 +6,7 @@ params.input_file_group = "null"
 params.mets = "null"
 params.singularity_wrapper = "null"
 params.cpus = "null"
+params.ram = "null"
 
 log.info """\
          O P E R A N D I - H P C - D E F A U L T  P I P E L I N E
@@ -14,12 +15,14 @@ log.info """\
          mets                : ${params.mets}
          singularity_wrapper : ${params.singularity_wrapper}
          cpus                : ${params.cpus}
+         ram                 : ${params.ram}
          """
          .stripIndent()
 
 process ocrd_cis_ocropy_binarize {
   maxForks 1
   cpus params.cpus
+  memory params.ram
   echo true
 
   input:
@@ -39,6 +42,7 @@ process ocrd_cis_ocropy_binarize {
 process ocrd_anybaseocr_crop {
   maxForks 1
   cpus params.cpus
+  memory params.ram
   echo true
 
   input:
@@ -58,6 +62,7 @@ process ocrd_anybaseocr_crop {
 process ocrd_skimage_binarize {
   maxForks 1
   cpus params.cpus
+  memory params.ram
   echo true
 
   input:
@@ -77,6 +82,7 @@ process ocrd_skimage_binarize {
 process ocrd_skimage_denoise {
   maxForks 1
   cpus params.cpus
+  memory params.ram
   echo true
 
   input:
@@ -96,6 +102,7 @@ process ocrd_skimage_denoise {
 process ocrd_tesserocr_deskew {
   maxForks 1
   cpus params.cpus
+  memory params.ram
   echo true
 
   input:
@@ -115,6 +122,7 @@ process ocrd_tesserocr_deskew {
 process ocrd_cis_ocropy_segment {
   maxForks 1
   cpus params.cpus
+  memory params.ram
   echo true
 
   input:
@@ -134,6 +142,7 @@ process ocrd_cis_ocropy_segment {
 process ocrd_cis_ocropy_dewarp {
   maxForks 1
   cpus params.cpus
+  memory params.ram
   echo true
 
   input:
@@ -153,6 +162,7 @@ process ocrd_cis_ocropy_dewarp {
 process ocrd_calamari_recognize {
   maxForks 1
   cpus params.cpus
+  memory params.ram
   echo true
 
   input:

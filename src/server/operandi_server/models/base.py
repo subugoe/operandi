@@ -48,3 +48,8 @@ class WorkflowArguments(BaseModel):
     workspace_id: str
     input_file_grp: Optional[str] = "DEFAULT"
     mets_name: Optional[str] = "mets.xml"
+
+
+class SbatchArguments(BaseModel):
+    cpus: int = 4  # cpus per job allocated by default
+    ram: int = 32  # RAM (in GB) per job allocated by default

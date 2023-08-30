@@ -73,7 +73,9 @@ def test_hpc_connector_run_batch_script(hpc_command_executor, path_workflow1):
         nextflow_script_path=path_workflow1,
         input_file_grp="OCR-D-IMG",
         workspace_id=ID_WORKSPACE,
-        mets_basename="mets.xml"
+        mets_basename="mets.xml",
+        cpus=2,
+        memory=8
     )
     finished_successfully = hpc_command_executor.poll_till_end_slurm_job_state(
         slurm_job_id=slurm_job_id,

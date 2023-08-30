@@ -37,6 +37,7 @@ from operandi_server.authentication import (
 from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
 from operandi_server.exceptions import ResponseException
 from operandi_server.models import (
+    SbatchArguments,
     WorkflowArguments,
     WorkflowJobRsrc
 )
@@ -225,10 +226,13 @@ class OperandiServer(FastAPI):
         """
         await user.user_login(auth)
         # Create the job status message to be sent to the RabbitMQ queue
+        self.log.info("Creating a job status RabbitMQ message")
         job_status_message = {
             "job_id": f"{job_id}",
         }
+        self.log.info(f"Encoding the job status RabbitMQ message: {job_status_message}")
         encoded_workflow_message = json.dumps(job_status_message)
+        self.log.info(f"Pushing to the RabbitMQ queue for job statuses: {DEFAULT_QUEUE_FOR_JOB_STATUSES}")
         self.rmq_publisher.publish_to_queue(
             queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES,
             message=encoded_workflow_message
@@ -278,6 +282,7 @@ class OperandiServer(FastAPI):
             self,
             workflow_id: str,
             workflow_args: WorkflowArguments,
+            sbatch_args: SbatchArguments,
             auth: HTTPBasicCredentials = Depends(security)
     ):
         try:
@@ -292,20 +297,29 @@ class OperandiServer(FastAPI):
             )
 
         try:
+            # Extract sbatch arguments
+            self.log.info("Extracting sbatch request arguments")
+            cpus = sbatch_args.cpus
+            ram = sbatch_args.ram
+
             # Extract workflow arguments
+            self.log.info("Extracting workflow request arguments")
             workspace_id = workflow_args.workspace_id
             input_file_grp = workflow_args.input_file_grp
 
             # Create job request parameters
+            self.log.info("Creating workflow job space")
             job_id, job_dir = self.workflow_manager.create_workflow_job_space()
             job_state = "QUEUED"
 
             # Build urls to be sent as a response
+            self.log.info("Building urls to be sent as a response")
             workspace_url = self.workspace_manager.get_workspace_url(workspace_id=workspace_id)
             workflow_url = self.workflow_manager.get_workflow_url(workflow_id=workflow_id)
             job_url = self.workflow_manager.get_workflow_job_url(job_id=job_id, workflow_id=workflow_id)
 
             # Save to the workflow job to the database
+            self.log.info("Saving the workflow job to the database")
             await db.save_workflow_job(
                 job_id=job_id,
                 job_dir=job_dir,
@@ -315,21 +329,27 @@ class OperandiServer(FastAPI):
             )
 
             # Create the message to be sent to the RabbitMQ queue
+            self.log.info("Creating a workflow job RabbitMQ message")
             workflow_processing_message = {
                 "workflow_id": f"{workflow_id}",
                 "workspace_id": f"{workspace_id}",
                 "job_id": f"{job_id}",
-                "input_file_grp": f"{input_file_grp}"
+                "input_file_grp": f"{input_file_grp}",
+                "cpus": f"{cpus}",
+                "ram": f"{ram}"
             }
+            self.log.info(f"Encoding the workflow job RabbitMQ message: {workflow_processing_message}")
             encoded_workflow_message = json.dumps(workflow_processing_message)
 
             # Send the message to a queue based on the user_id
             if user_account_type == "harvester":
+                self.log.info(f"Pushing to the RabbitMQ queue for the harvester: {DEFAULT_QUEUE_FOR_HARVESTER}")
                 self.rmq_publisher.publish_to_queue(
                     queue_name=DEFAULT_QUEUE_FOR_HARVESTER,
                     message=encoded_workflow_message
                 )
             else:
+                self.log.info(f"Pushing to the RabbitMQ queue for the users: {DEFAULT_QUEUE_FOR_USERS}")
                 self.rmq_publisher.publish_to_queue(
                     queue_name=DEFAULT_QUEUE_FOR_USERS,
                     message=encoded_workflow_message

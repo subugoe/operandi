@@ -6,6 +6,7 @@ __all__ = [
     'ProcessorRsrc',
     'ProcessorJobRsrc',
     'Resource',
+    'SbatchArguments',
     'UserAction',
     'WorkflowArguments',
     'WorkflowRsrc',
@@ -13,7 +14,7 @@ __all__ = [
     'WorkspaceRsrc'
 ]
 
-from .base import Resource, Job, JobState, ProcessorArgs, WorkflowArguments
+from .base import Resource, Job, JobState, ProcessorArgs, SbatchArguments, WorkflowArguments
 from .discovery import DiscoveryResponse
 from .processor import ProcessorRsrc, ProcessorJobRsrc
 from .user import UserAction
