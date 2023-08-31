@@ -30,7 +30,6 @@ RAM=$7
 SCRATCH_SLURM_DIR_PATH="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 
 NF_SCRIPT_PATH="${SCRATCH_SLURM_DIR_PATH}/${NEXTFLOW_SCRIPT_ID}"
-WORKSPACE_DIR_PATH="${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}"
 METS_PATH="${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}/${METS_BASENAME}"
 
 hostname
@@ -79,14 +78,6 @@ if [ ! -d "${SCRATCH_SLURM_DIR_PATH}" ]; then
 else
   cd "${SCRATCH_SLURM_DIR_PATH}" || exit 1
 fi
-
-echo "Sif file path: ${SIF_PATH}"
-echo "About to start workflow with script: ${NF_SCRIPT_PATH}"
-echo "Slurm dir path: ${SCRATCH_SLURM_DIR_PATH}"
-echo "Workspace dir path: ${WORKSPACE_DIR_PATH}"
-echo "Mets path: ${METS_PATH}"
-echo "Input file: ${IN_FILE_GRP}"
-echo "Ocrd models mapping: ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}"
 
 # Execute the Nextflow script
 nextflow run "${NF_SCRIPT_PATH}" \
