@@ -8,7 +8,7 @@ test_dir_name = join(OPERANDI_HPC_DIR_PROJECT, f"test_dir_{current_time}")
 
 def test_hpc_connector_executor_mk_dir(hpc_command_executor):
     output, err, return_code = hpc_command_executor.execute_blocking(
-        command=f"bash -lc 'mkdir {test_dir_name}'"
+        command=f"bash -lc 'mkdir -p {test_dir_name}'"
     )
     assert return_code == 0, err
     assert err == []
