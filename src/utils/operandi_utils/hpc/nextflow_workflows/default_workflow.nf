@@ -14,7 +14,7 @@ log.info """\
          input_file_group    : ${params.input_file_group}
          mets                : ${params.mets}
          singularity_wrapper : ${params.singularity_wrapper}
-         cpus                : ${params.cpu}
+         cpus                : ${params.cpus}
          ram                 : ${params.ram}
          """
          .stripIndent()

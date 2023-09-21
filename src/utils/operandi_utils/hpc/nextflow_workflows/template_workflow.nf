@@ -9,12 +9,12 @@ params.cpus = "null"
 params.ram = "null"
 
 log.info """\
-         O P E R A N D I - H P C - T E S T  P I P E L I N E
+         O P E R A N D I - H P C - T E M P L A T E   P I P E L I N E
          ===========================================
          input_file_group    : ${params.input_file_group}
          mets                : ${params.mets}
          singularity_wrapper : ${params.singularity_wrapper}
-         cpus                : ${params.cpu}
+         cpus                : ${params.cpus}
          ram                 : ${params.ram}
          """
          .stripIndent()
