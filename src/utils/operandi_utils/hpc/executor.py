@@ -1,6 +1,7 @@
 from os.path import exists, isfile
 import paramiko
 from time import sleep
+import logging
 
 from .constants import (
     OPERANDI_HPC_HOST,
@@ -14,6 +15,7 @@ class HPCExecutor:
     def __init__(self):
         # TODO: Handle the exceptions properly
         self.__ssh_paramiko = None
+        self.log = logging.getLogger(__name__)
 
     @staticmethod
     def create_proxy_jump(
@@ -45,12 +47,7 @@ class HPCExecutor:
             username=OPERANDI_HPC_USERNAME,
             key_path=OPERANDI_HPC_SSH_KEYPATH
     ):
-        keyfile = self.check_keyfile_existence(key_path)
-        if not keyfile:
-            print(f"Error: HPC key path does not exist or is not readable!")
-            print(f"Checked path: \n{key_path}")
-            exit(1)
-
+        self.check_keyfile_existence(key_path)
         proxy_channel = self.create_proxy_jump(
             host=host,
             proxy_host=proxy_host,
@@ -69,9 +66,10 @@ class HPCExecutor:
 
     @staticmethod
     def check_keyfile_existence(hpc_key_path):
-        if exists(hpc_key_path) and isfile(hpc_key_path):
-            return hpc_key_path
-        return None
+        if not exists(hpc_key_path):
+            raise FileNotFoundError(f"HPC key path does not exists: {hpc_key_path}")
+        if not isfile(hpc_key_path):
+            raise FileNotFoundError(f"HPC key path is not a file: {hpc_key_path}")
 
     # TODO: Handle the output and return_code instead of just returning them
     # Execute blocking commands
@@ -125,28 +123,36 @@ class HPCExecutor:
         command += f" {ram}GB"
         command += "'"
 
+        self.log.info(f"About to execute a blocking command: {command}")
         output, err, return_code = self.execute_blocking(command)
+        self.log.info(f"Command output: {output}")
+        self.log.info(f"Command err: {err}")
+        self.log.info(f"Command return code: {return_code}")
         slurm_job_id = output[0].strip('\n').split(' ')[-1]
+        self.log.info(f"Slurm job id: {slurm_job_id}")
         assert int(slurm_job_id)
         return slurm_job_id
 
     def check_slurm_job_state(self, slurm_job_id: str) -> str:
         command = "bash -lc"
         command += f" 'sacct -j {slurm_job_id} --format=jobid,state,exitcode'"
+
+        self.log.info(f"About to execute a blocking command: {command}")
         output, err, return_code = self.execute_blocking(command)
+        self.log.info(f"Command output: {output}")
+        self.log.info(f"Command err: {err}")
+        self.log.info(f"Command return code: {return_code}")
 
         # Split the last line and get the second element,
         # i.e., the state element in the requested output format
-        slurm_job_state = "None"
+        slurm_job_state = None
         if output:
             slurm_job_state = output[-1].split()[1]
-        else:
-            print(f"Output: {output}")
-            print(f"Error: {err}")
-            print(f"RC: {return_code}")
+        self.log.info(f"Slurm job state: {slurm_job_state}")
         return slurm_job_state
 
     def poll_till_end_slurm_job_state(self, slurm_job_id: str, interval: int = 5, timeout: int = 300) -> bool:
+        self.log.info(f"Polling slurm job status till end")
         # TODO: Create a separate SlurmJob class
         slurm_fail_states = ["BOOT_FAIL", "CANCELLED", "DEADLINE", "FAILED", "NODE_FAIL",
                              "OUT_OF_MEMORY", "PREEMPTED", "REVOKED", "TIMEOUT"]
@@ -154,17 +160,30 @@ class HPCExecutor:
         slurm_waiting_states = ["RUNNING", "PENDING", "COMPLETING", "REQUEUED", "RESIZING", "SUSPENDED"]
 
         tries_left = timeout/interval
+        self.log.info(f"Tries to be performed: {tries_left}")
         while tries_left:
+            self.log.info(f"Sleeping for {interval} secs")
             sleep(interval)
             tries_left -= 1
+            self.log.info(f"Tries left: {tries_left}")
             slurm_job_state = self.check_slurm_job_state(slurm_job_id)
+            if not slurm_job_state:
+                self.log.info(f"Slurm job state is not available yet")
+                continue
             if slurm_job_state in slurm_success_states:
+                self.log.info(f"Slurm job state is in: {slurm_success_states}")
+                self.log.info(f"Returning True")
                 return True
             if slurm_job_state in slurm_waiting_states:
+                self.log.info(f"Slurm job state is in: {slurm_waiting_states}")
                 continue
             if slurm_job_state in slurm_fail_states:
+                self.log.info(f"Slurm job state is in: {slurm_fail_states}")
+                self.log.info(f"Returning False")
                 return False
             raise ValueError(f"Invalid SLURM job state: {slurm_job_state}")
 
         # Timeout reached
+        self.log.info("Polling slurm job status timeout reached")
+        self.log.info(f"Returning False")
         return False
