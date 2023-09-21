@@ -98,6 +98,9 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
 
     assert job_status == "SUCCESS"
 
+    # TODO: Fix this, wait for 10 secs till
+    #  the data is transferred from HPC to Operandi Server
+    sleep(10)
     response = operandi.get(
         url=f"/workflow/{workflow_id}/{workflow_job_id}",
         headers={'accept': 'application/vnd.zip'},
