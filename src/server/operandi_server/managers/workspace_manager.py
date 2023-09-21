@@ -1,13 +1,17 @@
+import logging
 from os import remove, symlink
 from shutil import rmtree
 from typing import List, Union, Tuple
-import logging
 
 from ocrd import Resolver
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger
 
-import operandi_utils.database.database as db
+from operandi_utils.database import (
+    db_create_workspace,
+    db_get_workspace,
+    db_update_workspace
+)
 
 from ..exceptions import (
     WorkspaceException,
@@ -64,15 +68,6 @@ class WorkspaceManager(ResourceManager):
         return workspace_url, workspace_id
 
     async def create_workspace_from_zip(self, file, uid: str = None) -> Tuple[Union[str, None], str]:
-        """
-        Create a workspace from an ocrd-zip file
-
-        Args:
-            file: ocrd-zip of workspace
-            uid (str): the uid is used as workspace-directory.
-            If `None`, an uuid is created for this.
-            If corresponding dir already existing, None is returned
-        """
         workspace_id, workspace_dir = self._create_resource_dir(self.workspace_router, uid)
         bag_dest = f"{workspace_dir}.zip"
 
@@ -82,7 +77,11 @@ class WorkspaceManager(ResourceManager):
         bag_info = extract_bag_info(bag_dest, workspace_dir)
         remove(bag_dest)
 
-        await db.save_workspace(workspace_id, workspace_dir, bag_info)
+        await db_create_workspace(
+            workspace_id=workspace_id,
+            workspace_dir=workspace_dir,
+            bag_info=bag_info
+        )
         workspace_url = self.get_resource(self.workspace_router, workspace_id, local=False)
         return workspace_url, workspace_id
 
@@ -126,7 +125,7 @@ class WorkspaceManager(ResourceManager):
         # Remove the created zip bag
         remove(bag_dest)
 
-        await db.save_workspace(workspace_id, workspace_dir, bag_info)
+        await db_create_workspace(workspace_id, workspace_dir, bag_info)
         workspace_url = self.get_resource(self.workspace_router, workspace_id, local=False)
         return workspace_url, workspace_id
 
@@ -155,7 +154,7 @@ class WorkspaceManager(ResourceManager):
         Returns:
             path to created bag
         """
-        workspace_db = await db.get_workspace(workspace_id)
+        workspace_db = await db_get_workspace(workspace_id)
         if not workspace_db:
             return None
         bag_dest = f"{workspace_db.workspace_dir}.zip"
@@ -184,13 +183,13 @@ class WorkspaceManager(ResourceManager):
         # TODO: Separate the local storage from DB cases
         workspace_dir = self.get_resource(self.workspace_router, workspace_id, local=True)
         if not workspace_dir:
-            ws = await db.get_workspace(workspace_id)
+            ws = await db_get_workspace(workspace_id)
             if ws and ws.deleted:
                 raise WorkspaceGoneException(f"Workspace is already deleted: {workspace_id}")
             raise WorkspaceException(f"Workspace is not existing: {workspace_id}")
 
         deleted_workspace_url = self.get_resource(self.workspace_router, workspace_id, local=False)
         self._delete_resource_dir(self.workspace_router, workspace_id)
-        await db.mark_deleted_workspace(workspace_id)
+        await db_update_workspace(find_workspace_id=workspace_id, deleted=True)
 
         return deleted_workspace_url

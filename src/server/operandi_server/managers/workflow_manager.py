@@ -1,9 +1,13 @@
+import logging
 from os.path import join
 from typing import List, Union, Tuple
-import logging
 
-import operandi_utils.database.database as db
-from operandi_utils.database.models import DBWorkflowJob
+from operandi_utils.database import (
+    DBWorkflowJob,
+    db_create_workflow,
+    db_get_workflow_job,
+    db_update_workflow
+)
 
 from .constants import (
     LOG_LEVEL,
@@ -70,19 +74,11 @@ class WorkflowManager(ResourceManager):
         )
 
     async def create_workflow_space(self, file, uid: str = None) -> Tuple[str, str]:
-        """
-        Create a new workflow space. Upload a Nextflow script inside.
-
-        Args:
-            file: A Nextflow script
-            uid (str): The uid is used as workflow_space-directory. If `None`, an uuid is created.
-            If the corresponding dir is already existing, `None` is returned,
-
-        """
         workflow_id, workflow_dir = self._create_resource_dir(self.workflow_router, uid)
         nf_script_dest = join(workflow_dir, file.filename)
         await self._receive_resource(file, nf_script_dest)
-        await db.save_workflow(
+
+        await db_create_workflow(
             workflow_id=workflow_id,
             workflow_dir=workflow_dir,
             workflow_script_path=nf_script_dest,
@@ -108,5 +104,9 @@ class WorkflowManager(ResourceManager):
 
     @staticmethod
     async def get_workflow_job(job_id: str) -> Union[DBWorkflowJob, None]:
-        wf_job_db = await db.get_workflow_job(job_id)
+        try:
+            wf_job_db = await db_get_workflow_job(job_id)
+        except RuntimeError as error:
+            # Workflow job does not exist in the DB
+            return None
         return wf_job_db

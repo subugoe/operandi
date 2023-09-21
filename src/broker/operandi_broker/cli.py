@@ -2,8 +2,8 @@ import click
 from os import environ
 from time import sleep
 
-import operandi_utils.database.database as db
 from operandi_utils import reconfigure_all_loggers
+from operandi_utils.database import sync_db_initiate_database
 from operandi_utils.rabbitmq import (
     DEFAULT_QUEUE_FOR_HARVESTER,
     DEFAULT_QUEUE_FOR_USERS,
@@ -66,7 +66,7 @@ def start_broker(queue: str, database: str):
     )
 
     try:
-        db.sync_initiate_database(database)
+        sync_db_initiate_database(database)
 
         # Sleep the parent process till a signal is invoked
         # Better than sleeping in loop, not tested yet

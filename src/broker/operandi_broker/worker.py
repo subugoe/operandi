@@ -6,7 +6,14 @@ from os.path import join
 from sys import exit
 
 from operandi_utils import reconfigure_all_loggers
-import operandi_utils.database.database as db
+from operandi_utils.database import (
+    sync_db_initiate_database,
+    sync_db_get_workflow,
+    sync_db_get_workflow_job,
+    sync_db_get_workspace,
+    sync_db_update_hpc_slurm_job,
+    sync_db_update_workflow_job
+)
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from operandi_utils.rabbitmq import RMQConsumer
 
@@ -58,7 +65,7 @@ class Worker:
             self.log.info(f"Activating signal handler for SIGINT, SIGTERM")
             signal.signal(signal.SIGINT, self.signal_handler)
             signal.signal(signal.SIGTERM, self.signal_handler)
-            db.sync_initiate_database(self.db_url)
+            sync_db_initiate_database(self.db_url)
 
             # Connect the HPC Executor
             self.hpc_executor = HPCExecutor()
@@ -139,10 +146,9 @@ class Worker:
 
         # Handle database related reads and set the workflow job status to RUNNING
         try:
-            # TODO: This should be optimized, i.e., single read to the DB instead of three
-            workflow_db = db.sync_get_workflow(self.current_message_wf_id)
-            workspace_db = db.sync_get_workspace(self.current_message_ws_id)
-            workflow_job_db = db.sync_get_workflow_job(self.current_message_job_id)
+            workflow_db = sync_db_get_workflow(self.current_message_wf_id)
+            workspace_db = sync_db_get_workspace(self.current_message_ws_id)
+            workflow_job_db = sync_db_get_workflow_job(self.current_message_job_id)
 
             workflow_script_path = workflow_db.workflow_script_path
             workspace_dir = workspace_db.workspace_dir
@@ -176,7 +182,10 @@ class Worker:
         self.log.info(f"The HPC slurm job was successfully submitted")
         job_state = "RUNNING"
         self.log.info(f"Setting new job state `{job_state}` of job_id: {self.current_message_job_id}")
-        db.sync_set_workflow_job_state(self.current_message_job_id, job_state=job_state)
+        sync_db_update_workflow_job(
+            job_id=self.current_message_job_id,
+            job_state=job_state
+        )
         self.has_consumed_message = False
         self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -184,7 +193,7 @@ class Worker:
     def __handle_message_failure(self, interruption: bool = False):
         job_state = "FAILED"
         self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
-        db.sync_set_workflow_job_state(
+        sync_db_update_workflow_job(
             job_id=self.current_message_job_id,
             job_state=job_state
         )
@@ -270,7 +279,7 @@ class Worker:
             raise Exception(f"Triggering slurm job failed: {error}")
 
         try:
-            db.sync_save_hpc_slurm_job(
+            sync_db_update_hpc_slurm_job(
                 workflow_job_id=workflow_job_id,
                 hpc_slurm_job_id=slurm_job_id,
                 hpc_batch_script_path=hpc_batch_script_path,

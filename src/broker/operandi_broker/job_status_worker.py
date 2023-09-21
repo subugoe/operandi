@@ -5,7 +5,14 @@ from os import getppid, setsid
 from sys import exit
 
 from operandi_utils import reconfigure_all_loggers
-import operandi_utils.database.database as db
+from operandi_utils.database import (
+    sync_db_initiate_database,
+    sync_db_get_hpc_slurm_job,
+    sync_db_get_workflow_job,
+    sync_db_get_workspace,
+    sync_db_update_hpc_slurm_job,
+    sync_db_update_workflow_job
+)
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from operandi_utils.rabbitmq import RMQConsumer
 
@@ -52,7 +59,7 @@ class JobStatusWorker:
             self.log.info(f"Activating signal handler for SIGINT, SIGTERM")
             signal.signal(signal.SIGINT, self.signal_handler)
             signal.signal(signal.SIGTERM, self.signal_handler)
-            db.sync_initiate_database(self.db_url)
+            sync_db_initiate_database(self.db_url)
 
             # Connect the HPC Executor
             self.hpc_executor = HPCExecutor()
@@ -128,19 +135,19 @@ class JobStatusWorker:
 
         # Handle database related reads and set the workflow job status to RUNNING
         try:
-            workflow_job_db = db.sync_get_workflow_job(self.current_message_job_id)
+            workflow_job_db = sync_db_get_workflow_job(self.current_message_job_id)
             if not workflow_job_db:
                 self.log.warning(f"Workflow job not existing in DB for: {self.current_message_job_id}")
                 self.__handle_message_failure(interruption=False)
                 return
 
-            workspace_job_db = db.sync_get_workspace(workspace_id=workflow_job_db.workspace_id)
+            workspace_job_db = sync_db_get_workspace(workspace_id=workflow_job_db.workspace_id)
             if not workspace_job_db:
                 self.log.warning(f"Workspace not existing in DB for: {workflow_job_db.workspace_id}")
                 self.__handle_message_failure(interruption=False)
                 return
 
-            hpc_slurm_job_db = db.sync_get_hpc_slurm_job(self.current_message_job_id)
+            hpc_slurm_job_db = sync_db_get_hpc_slurm_job(self.current_message_job_id)
             if not hpc_slurm_job_db:
                 self.log.warning(f"HPC slurm job not existing in DB for: {self.current_message_job_id}")
                 self.__handle_message_failure(interruption=False)
@@ -162,7 +169,7 @@ class JobStatusWorker:
                            f"old state: {old_slurm_job_state}, "
                            f"new state: {new_slurm_job_state}")
             # Update the hpc slurm job state in the DB
-            db.sync_set_slurm_job_state(
+            sync_db_update_hpc_slurm_job(
                 workflow_job_id=workflow_job_db.job_id,
                 hpc_slurm_job_state=new_slurm_job_state
             )
@@ -179,7 +186,10 @@ class JobStatusWorker:
             self.log.debug(f"Workflow job id: {self.current_message_job_id}, "
                            f"old state: {old_workflow_job_status}, "
                            f"new state: {new_workflow_job_status}")
-            db.sync_set_workflow_job_state(self.current_message_job_id, job_state=new_workflow_job_status)
+            sync_db_update_workflow_job(
+                job_id=self.current_message_job_id,
+                job_state=new_workflow_job_status
+            )
             if new_workflow_job_status == 'SUCCESS':
                 self.hpc_io_transfer.get_and_unpack_slurm_workspace(
                     ocrd_workspace_dir=workspace_job_db.workspace_dir,

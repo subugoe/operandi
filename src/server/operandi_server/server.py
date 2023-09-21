@@ -15,7 +15,10 @@ from operandi_utils import (
     verify_database_uri,
     verify_and_parse_mq_uri
 )
-import operandi_utils.database.database as db
+from operandi_utils.database import (
+    db_initiate_database,
+    db_update_workflow_job
+)
 from operandi_utils.rabbitmq import (
     # Requests coming from the
     # Harvester are sent to this queue
@@ -134,13 +137,14 @@ class OperandiServer(FastAPI):
         )
 
         # Initiate database client
-        await db.initiate_database(self.db_url)
+        await db_initiate_database(self.db_url)
 
         default_admin_user = environ.get("OPERANDI_SERVER_DEFAULT_USERNAME", None)
         default_admin_pass = environ.get("OPERANDI_SERVER_DEFAULT_PASSWORD", None)
         default_harvester_user = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME", None)
         default_harvester_pass = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD", None)
 
+        self.log.info(f"Configuring default server auth")
         if default_admin_user and default_admin_pass:
             await self.create_user_if_not_available(
                 username=default_admin_user,
@@ -148,7 +152,9 @@ class OperandiServer(FastAPI):
                 account_type="administrator",
                 approved_user=True
             )
+            self.log.info(f"Configured default server auth")
 
+        self.log.info(f"Configuring default harvester auth")
         if default_harvester_user and default_harvester_pass:
             await self.create_user_if_not_available(
                 username=default_harvester_user,
@@ -156,6 +162,7 @@ class OperandiServer(FastAPI):
                 account_type="harvester",
                 approved_user=True
             )
+            self.log.info(f"Configured default harvester auth")
 
         # Connect the publisher to the RabbitMQ Server
         self.connect_publisher(
@@ -320,7 +327,7 @@ class OperandiServer(FastAPI):
 
             # Save to the workflow job to the database
             self.log.info("Saving the workflow job to the database")
-            await db.save_workflow_job(
+            await db_update_workflow_job(
                 job_id=job_id,
                 job_dir=job_dir,
                 job_state=job_state,

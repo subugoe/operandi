@@ -19,10 +19,8 @@ def test_post_workflow_script(operandi, auth, db_workflows, bytes_workflow1):
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
-    db_workflow = db_workflows.find_one(
-        {"workflow_id": workflow_id}
-    )
-    assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
+    db_workflow = db_workflows.find_one({"workflow_id": workflow_id})
+    assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
 
 
 def test_put_workflow_script(operandi, auth, db_workflows, bytes_workflow1, bytes_workflow2):
