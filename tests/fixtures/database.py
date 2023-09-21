@@ -1,10 +1,7 @@
 from pymongo import MongoClient
 from pytest import fixture
 
-from tests.constants import (
-    OPERANDI_DB_NAME,
-    OPERANDI_DB_URL
-)
+from tests.constants import OPERANDI_DB_NAME, OPERANDI_DB_URL
 from tests.helpers_asserts import assert_availability_db
 
 

@@ -3,7 +3,7 @@ from typing import List, Union, Tuple
 import logging
 
 import operandi_utils.database.database as db
-from operandi_utils.database.models import WorkflowJobDB
+from operandi_utils.database.models import DBWorkflowJob
 
 from .constants import (
     LOG_LEVEL,
@@ -107,6 +107,6 @@ class WorkflowManager(ResourceManager):
         return await self.create_workflow_space(file, workflow_id)
 
     @staticmethod
-    async def get_workflow_job(job_id: str) -> Union[WorkflowJobDB, None]:
+    async def get_workflow_job(job_id: str) -> Union[DBWorkflowJob, None]:
         wf_job_db = await db.get_workflow_job(job_id)
         return wf_job_db

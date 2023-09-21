@@ -6,7 +6,7 @@ from typing import Optional
 # Database models are supposed to be low level models
 
 
-class UserAccountDB(Document):
+class DBUserAccount(Document):
     """
     Model to store a user account in the database
 
@@ -30,7 +30,7 @@ class UserAccountDB(Document):
         name = "user_accounts"
 
 
-class WorkspaceDB(Document):
+class DBWorkspace(Document):
     """
     Model to store a workspace in the mongo-database.
 
@@ -58,7 +58,7 @@ class WorkspaceDB(Document):
         name = "workspaces"
 
 
-class WorkflowDB(Document):
+class DBWorkflow(Document):
     """
     Model to store a workflow in the mongo-database.
 
@@ -80,7 +80,7 @@ class WorkflowDB(Document):
         name = "workflows"
 
 
-class WorkflowJobDB(Document):
+class DBWorkflowJob(Document):
     """
     Model to store a Workflow-Job in the MongoDB.
 
@@ -110,7 +110,7 @@ class WorkflowJobDB(Document):
         name = "workflow_jobs"
 
 
-class HPCSlurmJobDB(Document):
+class DBHPCSlurmJob(Document):
     """
     Model to store an HPC slurm job in the MongoDB
 

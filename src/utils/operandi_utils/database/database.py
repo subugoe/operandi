@@ -7,11 +7,11 @@ from os.path import join
 from operandi_utils import call_sync
 from operandi_utils.database.constants import OPERANDI_DB_NAME
 from operandi_utils.database.models import (
-    HPCSlurmJobDB,
-    WorkflowDB,
-    WorkflowJobDB,
-    WorkspaceDB,
-    UserAccountDB
+    DBHPCSlurmJob,
+    DBWorkflow,
+    DBWorkflowJob,
+    DBWorkspace,
+    DBUserAccount
 )
 
 
@@ -25,11 +25,11 @@ async def initiate_database(db_url: str, db_name: str = None, doc_models: List[D
         db_name = OPERANDI_DB_NAME
     if doc_models is None:
         doc_models = [
-            HPCSlurmJobDB,
-            WorkflowDB,
-            WorkspaceDB,
-            WorkflowJobDB,
-            UserAccountDB
+            DBHPCSlurmJob,
+            DBWorkflow,
+            DBWorkflowJob,
+            DBWorkspace,
+            DBUserAccount
         ]
 
     if db_url:
@@ -50,12 +50,12 @@ async def sync_initiate_database(db_url: str, db_name: str = None, doc_models: L
     await initiate_database(db_url, db_name, doc_models)
 
 
-async def get_workflow(workflow_id) -> Union[WorkflowDB, None]:
-    return await WorkflowDB.find_one(WorkflowDB.workflow_id == workflow_id)
+async def get_workflow(workflow_id) -> Union[DBWorkflow, None]:
+    return await DBWorkflow.find_one(DBWorkflow.workflow_id == workflow_id)
 
 
 @call_sync
-async def sync_get_workflow(workflow_id) -> Union[WorkflowDB, None]:
+async def sync_get_workflow(workflow_id) -> Union[DBWorkflow, None]:
     return await get_workflow(workflow_id)
 
 
@@ -85,30 +85,30 @@ async def sync_get_workflow_script_path(workflow_id) -> Union[str, None]:
     return await get_workflow_script_path(workflow_id)
 
 
-async def get_workflow_job(job_id) -> Union[WorkflowJobDB, None]:
-    return await WorkflowJobDB.find_one(WorkflowJobDB.job_id == job_id)
+async def get_workflow_job(job_id) -> Union[DBWorkflowJob, None]:
+    return await DBWorkflowJob.find_one(DBWorkflowJob.job_id == job_id)
 
 
 @call_sync
-async def sync_get_workflow_job(job_id) -> Union[WorkflowJobDB, None]:
+async def sync_get_workflow_job(job_id) -> Union[DBWorkflowJob, None]:
     return await get_workflow_job(job_id)
 
 
-async def get_hpc_slurm_job(workflow_job_id) -> Union[HPCSlurmJobDB, None]:
-    return await HPCSlurmJobDB.find_one(HPCSlurmJobDB.workflow_job_id == workflow_job_id)
+async def get_hpc_slurm_job(workflow_job_id) -> Union[DBHPCSlurmJob, None]:
+    return await DBHPCSlurmJob.find_one(DBHPCSlurmJob.workflow_job_id == workflow_job_id)
 
 
 @call_sync
-async def sync_get_hpc_slurm_job(workflow_job_id) -> Union[HPCSlurmJobDB, None]:
+async def sync_get_hpc_slurm_job(workflow_job_id) -> Union[DBHPCSlurmJob, None]:
     return await get_hpc_slurm_job(workflow_job_id)
 
 
-async def get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
-    return await WorkspaceDB.find_one(WorkspaceDB.workspace_id == workspace_id)
+async def get_workspace(workspace_id) -> Union[DBWorkspace, None]:
+    return await DBWorkspace.find_one(DBWorkspace.workspace_id == workspace_id)
 
 
 @call_sync
-async def sync_get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
+async def sync_get_workspace(workspace_id) -> Union[DBWorkspace, None]:
     return await get_workspace(workspace_id)
 
 
@@ -142,7 +142,7 @@ async def sync_mark_deleted_workflow(workflow_id) -> bool:
 
 async def mark_deleted_workspace(workspace_id) -> bool:
     """
-    set 'WorkspaceDb.deleted' to True
+    set 'DBWorkspace.deleted' to True
 
     The api should keep track of deleted workspaces according to the specs.
     This is done with this function and the deleted-property
@@ -166,11 +166,11 @@ async def save_workflow(
         workflow_dir: str,
         workflow_script_base: str,
         workflow_script_path: str
-) -> Union[WorkflowDB, None]:
+) -> Union[DBWorkflow, None]:
 
     workflow_db = await get_workflow(workflow_id)
     if not workflow_db:
-        workflow_db = WorkflowDB(
+        workflow_db = DBWorkflow(
             workflow_id=workflow_id,
             workflow_dir=workflow_dir,
             workflow_script_base=workflow_script_base,
@@ -191,11 +191,11 @@ async def sync_save_workflow(
         workflow_dir: str,
         workflow_script_base: str,
         workflow_script_path: str
-) -> Union[WorkflowDB, None]:
+) -> Union[DBWorkflow, None]:
     return await sync_save_workflow(workflow_id, workflow_dir, workflow_script_base, workflow_script_path)
 
 
-async def save_workspace(workspace_id: str, workspace_dir: str, bag_info: dict) -> Union[WorkspaceDB, None]:
+async def save_workspace(workspace_id: str, workspace_dir: str, bag_info: dict) -> Union[DBWorkspace, None]:
     """
     save a workspace to the database. Can also be used to update a workspace
 
@@ -219,7 +219,7 @@ async def save_workspace(workspace_id: str, workspace_dir: str, bag_info: dict) 
 
     workspace_db = await get_workspace(workspace_id)
     if not workspace_db:
-        workspace_db = WorkspaceDB(
+        workspace_db = DBWorkspace(
             workspace_id=workspace_id,
             workspace_dir=workspace_dir,
             workspace_mets_path=workspace_mets_path,
@@ -242,7 +242,7 @@ async def save_workspace(workspace_id: str, workspace_dir: str, bag_info: dict) 
 
 
 @call_sync
-async def sync_save_workspace(workspace_id: str, workspace_dir: str, bag_info: dict) -> Union[WorkspaceDB, None]:
+async def sync_save_workspace(workspace_id: str, workspace_dir: str, bag_info: dict) -> Union[DBWorkspace, None]:
     return await save_workspace(workspace_id, workspace_dir, bag_info)
 
 
@@ -252,7 +252,7 @@ async def save_workflow_job(
         job_state: str,
         workflow_id: str,
         workspace_id: str
-) -> Union[WorkflowJobDB, None]:
+) -> Union[DBWorkflowJob, None]:
     """
     save a workflow_job to the database. Can also be used to update a workflow_job
 
@@ -265,7 +265,7 @@ async def save_workflow_job(
     """
     workflow_job_db = await get_workflow_job(job_id)
     if not workflow_job_db:
-        workflow_job_db = WorkflowJobDB(
+        workflow_job_db = DBWorkflowJob(
             job_id=job_id,
             job_dir=job_dir,
             job_state=job_state,
@@ -289,7 +289,7 @@ async def sync_save_workflow_job(
         workspace_id: str,
         job_dir: str,
         job_state: str
-) -> Union[WorkflowJobDB, None]:
+) -> Union[DBWorkflowJob, None]:
     return await save_workflow_job(job_id, workflow_id, workspace_id, job_dir, job_state)
 
 
@@ -299,10 +299,10 @@ async def save_hpc_slurm_job(
         hpc_batch_script_path: str,
         hpc_slurm_workspace_path: str,
         hpc_slurm_job_state: str = None
-) -> Union[HPCSlurmJobDB, None]:
+) -> Union[DBHPCSlurmJob, None]:
     hpc_slurm_job_db = await get_hpc_slurm_job(hpc_slurm_job_id)
     if not hpc_slurm_job_db:
-        hpc_slurm_job_db = HPCSlurmJobDB(
+        hpc_slurm_job_db = DBHPCSlurmJob(
             workflow_job_id=workflow_job_id,
             hpc_slurm_job_id=hpc_slurm_job_id,
             hpc_batch_script_path=hpc_batch_script_path,
@@ -329,7 +329,7 @@ async def sync_save_hpc_slurm_job(
         hpc_batch_script_path: str,
         hpc_slurm_workspace_path: str,
         hpc_slurm_job_state: str = None
-) -> Union[HPCSlurmJobDB, None]:
+) -> Union[DBHPCSlurmJob, None]:
     return await save_hpc_slurm_job(
         workflow_job_id,
         hpc_slurm_job_id,
@@ -391,12 +391,12 @@ async def sync_get_workflow_job_state(job_id) -> Union[str, None]:
     return await get_workflow_job_state(job_id)
 
 
-async def get_user(email: str) -> Union[UserAccountDB, None]:
-    return await UserAccountDB.find_one(UserAccountDB.email == email)
+async def get_user(email: str) -> Union[DBUserAccount, None]:
+    return await DBUserAccount.find_one(DBUserAccount.email == email)
 
 
 @call_sync
-async def sync_get_user(email: str) -> Union[UserAccountDB, None]:
+async def sync_get_user(email: str) -> Union[DBUserAccount, None]:
     return await get_user(email)
 
 
@@ -406,8 +406,8 @@ async def create_user(
         salt: str,
         account_type: str,
         approved_user: bool = False
-) -> Union[UserAccountDB, None]:
-    user_account = UserAccountDB(
+) -> Union[DBUserAccount, None]:
+    user_account = DBUserAccount(
         email=email,
         encrypted_pass=encrypted_pass,
         salt=salt,
@@ -425,5 +425,5 @@ async def sync_create_user(
         salt: str,
         account_type: str,
         approved_user: bool = False
-) -> Union[UserAccountDB, None]:
+) -> Union[DBUserAccount, None]:
     return await create_user(email, encrypted_pass, salt, account_type, approved_user)
