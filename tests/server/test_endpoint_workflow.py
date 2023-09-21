@@ -36,10 +36,8 @@ def test_put_workflow_script(operandi, auth, db_workflows, bytes_workflow1, byte
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
-    db_workflow = db_workflows.find_one(
-        {"workflow_id": workflow_id}
-    )
-    assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
+    db_workflow = db_workflows.find_one({"workflow_id": workflow_id})
+    assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
 
     workflow_dir1 = db_workflow["workflow_dir"]
     workflow_path1 = db_workflow["workflow_script_path"]
@@ -55,10 +53,8 @@ def test_put_workflow_script(operandi, auth, db_workflows, bytes_workflow1, byte
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
-    db_workflow = db_workflows.find_one(
-        {"workflow_id": workflow_id}
-    )
-    assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
+    db_workflow = db_workflows.find_one({"workflow_id": workflow_id})
+    assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
 
     workflow_dir2 = db_workflow["workflow_dir"]
     workflow_path2 = db_workflow["workflow_script_path"]

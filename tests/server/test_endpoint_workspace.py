@@ -25,10 +25,8 @@ def _test_post_workspace_url(operandi, auth, db_workspaces):
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
     assert_local_dir_workspace(workspace_id)
-    db_workspace = db_workspaces.find_one(
-        {"workspace_id": workspace_id}
-    )
-    assert_exists_db_resource(db_workspace, "workspace_id", workspace_id)
+    db_workspace = db_workspaces.find_one({"workspace_id": workspace_id})
+    assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
 
 
 def test_post_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1):
@@ -40,10 +38,8 @@ def test_post_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1):
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
     assert_local_dir_workspace(workspace_id)
-    db_workspace = db_workspaces.find_one(
-        {"workspace_id": workspace_id}
-    )
-    assert_exists_db_resource(db_workspace, "workspace_id", workspace_id)
+    db_workspace = db_workspaces.find_one({"workspace_id": workspace_id})
+    assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
 
 
 def test_post_workspace_zip_different_mets(operandi, auth, db_workspaces, bytes_workspace2):
@@ -55,10 +51,8 @@ def test_post_workspace_zip_different_mets(operandi, auth, db_workspaces, bytes_
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
     assert_local_dir_workspace(workspace_id)
-    db_workspace = db_workspaces.find_one(
-        {"workspace_id": workspace_id}
-    )
-    assert_exists_db_resource(db_workspace, "workspace_id", workspace_id)
+    db_workspace = db_workspaces.find_one({"workspace_id": workspace_id})
+    assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
 
 
 def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1, bytes_workspace2):
@@ -72,10 +66,8 @@ def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1, byte
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
     assert_local_dir_workspace(workspace_id)
-    db_workspace = db_workspaces.find_one(
-        {"workspace_id": workspace_id}
-    )
-    assert_exists_db_resource(db_workspace, "workspace_id", workspace_id)
+    db_workspace = db_workspaces.find_one({"workspace_id": workspace_id})
+    assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
 
     ocrd_identifier1 = db_workspace["ocrd_identifier"]
     assert ocrd_identifier1, "Failed to extract ocrd identifier 1"
@@ -89,14 +81,11 @@ def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1, byte
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
     assert_local_dir_workspace(workspace_id)
-    db_workspace = db_workspaces.find_one(
-        {"workspace_id": workspace_id}
-    )
-    assert_exists_db_resource(db_workspace, "workspace_id", workspace_id)
+    db_workspace = db_workspaces.find_one({"workspace_id": workspace_id})
+    assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
 
     ocrd_identifier2 = db_workspace["ocrd_identifier"]
     assert ocrd_identifier2, "Failed to extract ocrd identifier 2"
-
     assert ocrd_identifier1 != ocrd_identifier2, \
         f"Ocrd identifiers should not, but match: {ocrd_identifier1} == {ocrd_identifier2}"
 
@@ -104,16 +93,14 @@ def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1, byte
 def test_delete_workspace(operandi, auth, db_workspaces, bytes_workspace2):
     # Post a workspace
     response = operandi.post(
-        "/workspace",
+        url="/workspace",
         files={"workspace": bytes_workspace2},
         auth=auth
     )
     posted_workspace_id = response.json()['resource_id']
     assert_response_status_code(response.status_code, expected_floor=2)
     assert_local_dir_workspace(posted_workspace_id)
-    db_workspace = db_workspaces.find_one(
-        {"workspace_id": posted_workspace_id}
-    )
+    db_workspace = db_workspaces.find_one({"workspace_id": posted_workspace_id})
     assert_exists_db_resource(db_workspace, "workspace_id", posted_workspace_id)
 
     # Delete the previously posted workspace
@@ -124,9 +111,7 @@ def test_delete_workspace(operandi, auth, db_workspaces, bytes_workspace2):
     )
     assert_response_status_code(response.status_code, expected_floor=2)
     assert_local_dir_workspace_not(delete_workspace_id)
-    db_deleted_workspace = db_workspaces.find_one(
-        {"workspace_id": delete_workspace_id}
-    )
+    db_deleted_workspace = db_workspaces.find_one({"workspace_id": delete_workspace_id})
     assert_exists_db_resource_not(db_deleted_workspace, delete_workspace_id)
 
 
