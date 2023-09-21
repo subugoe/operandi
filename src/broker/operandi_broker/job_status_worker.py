@@ -6,7 +6,7 @@ from sys import exit
 
 from operandi_utils import reconfigure_all_loggers
 import operandi_utils.database.database as db
-from operandi_utils.hpc import HPCExecutor
+from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from operandi_utils.rabbitmq import RMQConsumer
 
 from .constants import (
@@ -32,6 +32,7 @@ class JobStatusWorker:
         self.rmq_consumer = None
 
         self.hpc_executor = None
+        self.hpc_io_transfer = None
 
         # Currently consumed message related parameters
         self.current_message_delivery_tag = None
@@ -60,6 +61,15 @@ class JobStatusWorker:
                 self.log.info("HPC executor connection successful.")
             else:
                 self.log.error("HPC executor connection has failed.")
+
+            # Connect the HPC IO Transfer
+            self.hpc_io_transfer = HPCTransfer()
+            if self.hpc_io_transfer:
+                self.hpc_io_transfer.connect()
+                self.log.info("HPC transfer connection successful.")
+            else:
+                self.log.error("HPC transfer connection has failed.")
+            self.log.info("Worker runs jobs in HPC.")
 
             self.connect_consumer()
             self.configure_consuming(self.queue_name, self.__on_message_consumed_callback_hpc)
@@ -124,6 +134,12 @@ class JobStatusWorker:
                 self.__handle_message_failure(interruption=False)
                 return
 
+            workspace_job_db = db.sync_get_workspace(workspace_id=workflow_job_db.workspace_id)
+            if not workspace_job_db:
+                self.log.warning(f"Workspace not existing in DB for: {workflow_job_db.workspace_id}")
+                self.__handle_message_failure(interruption=False)
+                return
+
             hpc_slurm_job_db = db.sync_get_hpc_slurm_job(self.current_message_job_id)
             if not hpc_slurm_job_db:
                 self.log.warning(f"HPC slurm job not existing in DB for: {self.current_message_job_id}")
@@ -164,6 +180,15 @@ class JobStatusWorker:
                            f"old state: {old_workflow_job_status}, "
                            f"new state: {new_workflow_job_status}")
             db.sync_set_workflow_job_state(self.current_message_job_id, job_state=new_workflow_job_status)
+            if new_workflow_job_status == 'SUCCESS':
+                self.hpc_io_transfer.get_and_unpack_slurm_workspace(
+                    ocrd_workspace_dir=workspace_job_db.workspace_dir,
+                    workflow_job_dir=workflow_job_db.job_dir,
+                    hpc_slurm_workspace_path=hpc_slurm_job_db.hpc_slurm_workspace_path
+                )
+                self.log.info(f"Transferred slurm workspace from hpc path: {hpc_slurm_job_db.hpc_slurm_workspace_path}")
+                # Delete the result dir from the HPC home folder
+                # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
 
         self.log.info(f"Latest slurm job state: {new_slurm_job_state}")
         self.log.info(f"Latest workflow job state: {new_workflow_job_status}")
