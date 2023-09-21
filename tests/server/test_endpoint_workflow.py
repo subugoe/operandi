@@ -9,7 +9,7 @@ from .helpers_asserts import (
 )
 
 
-def test_post_workflow_script(operandi, auth, workflow_collection, bytes_workflow1):
+def test_post_workflow_script(operandi, auth, db_workflows, bytes_workflow1):
     # Post a new workflow script
     response = operandi.post(
         "/workflow",
@@ -19,13 +19,13 @@ def test_post_workflow_script(operandi, auth, workflow_collection, bytes_workflo
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
-    db_workflow = workflow_collection.find_one(
+    db_workflow = db_workflows.find_one(
         {"workflow_id": workflow_id}
     )
     assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
 
 
-def test_put_workflow_script(operandi, auth, workflow_collection, bytes_workflow1, bytes_workflow2):
+def test_put_workflow_script(operandi, auth, db_workflows, bytes_workflow1, bytes_workflow2):
     put_workflow_id = "put_workflow_id"
     # The first put request creates a new workflow
     response = operandi.put(
@@ -36,7 +36,7 @@ def test_put_workflow_script(operandi, auth, workflow_collection, bytes_workflow
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
-    db_workflow = workflow_collection.find_one(
+    db_workflow = db_workflows.find_one(
         {"workflow_id": workflow_id}
     )
     assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
@@ -55,7 +55,7 @@ def test_put_workflow_script(operandi, auth, workflow_collection, bytes_workflow
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
-    db_workflow = workflow_collection.find_one(
+    db_workflow = db_workflows.find_one(
         {"workflow_id": workflow_id}
     )
     assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
