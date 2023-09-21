@@ -10,6 +10,7 @@ import operandi_utils.database.database as db
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from operandi_utils.rabbitmq import RMQConsumer
 
+from operandi_utils.hpc.constants import OPERANDI_HPC_DIR_SLURM_WORKSPACES
 from .constants import (
     LOG_LEVEL_WORKER,
     LOG_FILE_PATH_WORKER_PREFIX
@@ -158,6 +159,7 @@ class Worker:
         try:
             self.prepare_and_trigger_slurm_job(
                 workflow_job_id=self.current_message_job_id,
+                workflow_job_dir=workflow_job_db.workflow_job_dir,
                 workspace_id=self.current_message_ws_id,
                 workspace_dir=workspace_dir,
                 workspace_base_mets=mets_basename,
@@ -226,6 +228,7 @@ class Worker:
     def prepare_and_trigger_slurm_job(
             self,
             workflow_job_id: str,
+            workflow_job_dir: str,
             workspace_id: str,
             workspace_dir: str,
             workspace_base_mets: str,
@@ -240,16 +243,13 @@ class Worker:
         else:
             batch_script_id = "submit_workflow_job.sh"
 
-        hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(
-            batch_script_id=batch_script_id
-        )
+        hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(batch_script_id=batch_script_id)
 
         try:
-            hpc_slurm_workspace_path = self.hpc_io_transfer.pack_and_put_slurm_workspace(
+            self.hpc_io_transfer.pack_and_put_slurm_workspace(
                 ocrd_workspace_dir=workspace_dir,
-                workflow_job_id=workflow_job_id,
-                nextflow_script_path=workflow_script_path,
-                tempdir_prefix="slurm_workspace-"
+                workflow_job_dir=workflow_job_dir,
+                nextflow_script_path=workflow_script_path
             )
         except Exception as error:
             raise Exception(f"Failed to pack and put slurm workspace: {error}")
@@ -274,35 +274,8 @@ class Worker:
                 workflow_job_id=workflow_job_id,
                 hpc_slurm_job_id=slurm_job_id,
                 hpc_batch_script_path=hpc_batch_script_path,
-                hpc_slurm_workspace_path=join(hpc_slurm_workspace_path, workflow_job_id)
+                hpc_slurm_workspace_path=join(OPERANDI_HPC_DIR_SLURM_WORKSPACES, workflow_job_id)
             )
         except Exception as error:
             raise Exception(f"Failed to save the hpc slurm job in DB: {error}")
         return slurm_job_id
-
-    def check_slurm_job_and_get_results(
-            self,
-            slurm_job_id: str,
-            workspace_dir: str,
-            workflow_job_dir: str,
-            hpc_slurm_workspace_path: str
-    ):
-        try:
-            finished_successfully = self.hpc_executor.poll_till_end_slurm_job_state(
-                slurm_job_id=slurm_job_id,
-                interval=10,
-                timeout=60  # seconds, i.e., 60 seconds
-            )
-        except Exception as error:
-            raise Exception(f"Polling job status has failed: {error}")
-
-        if finished_successfully:
-            self.hpc_io_transfer.get_and_unpack_slurm_workspace(
-                ocrd_workspace_dir=workspace_dir,
-                workflow_job_dir=workflow_job_dir,
-                hpc_slurm_workspace_path=hpc_slurm_workspace_path
-            )
-            # Delete the result dir from the HPC home folder
-            # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
-        else:
-            raise Exception(f"Slurm job has failed: {slurm_job_id}")
