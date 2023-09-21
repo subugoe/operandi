@@ -9,7 +9,7 @@ params.cpus = "null"
 params.ram = "null"
 
 log.info """\
-         O P E R A N D I - H P C - TEMPLATE  P I P E L I N E
+         O P E R A N D I - H P C - T E M P L A T E   P I P E L I N E
          ===========================================
          input_file_group    : ${params.input_file_group}
          mets                : ${params.mets}
