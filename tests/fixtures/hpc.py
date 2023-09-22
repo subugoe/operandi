@@ -14,7 +14,7 @@ from tests.constants import (
 )
 
 
-@fixture(scope="session", name="hpc_data_transfer")
+@fixture(scope="module", name="hpc_data_transfer")
 def fixture_hpc_transfer_connector():
     assert_exists_file(OPERANDI_HPC_SSH_KEYPATH)
     try:
