@@ -218,6 +218,9 @@ class Harvester:
             if workflow_job_status == "SUCCESS":
                 return True
 
+            if workflow_job_status == "FAILED":
+                return False
+
             # TODO: Fix may be needed here
             # When Stopped loop 3 more times.
             # Sometimes the STOPPED changes to SUCCESS

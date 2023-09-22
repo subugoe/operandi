@@ -50,9 +50,7 @@ async def sync_db_get_hpc_slurm_job(workflow_job_id: str) -> DBHPCSlurmJob:
 
 
 async def db_update_hpc_slurm_job(find_workflow_job_id: str, **kwargs) -> DBHPCSlurmJob:
-    db_hpc_slurm_job = await DBHPCSlurmJob.find_one(DBHPCSlurmJob.workflow_job_id == find_workflow_job_id)
-    if not db_hpc_slurm_job:
-        raise RuntimeError(f"No DB hpc slurm job entry found for id: {find_workflow_job_id}")
+    db_hpc_slurm_job = await db_get_hpc_slurm_job(workflow_job_id=find_workflow_job_id)
     model_keys = list(db_hpc_slurm_job.__dict__.keys())
     for key, value in kwargs.items():
         if key not in model_keys:

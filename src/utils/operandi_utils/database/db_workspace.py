@@ -68,9 +68,7 @@ async def sync_db_get_workspace(workspace_id: str) -> DBWorkspace:
 
 
 async def db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorkspace:
-    db_workspace = await DBWorkspace.find_one(DBWorkspace.workspace_id == find_workspace_id)
-    if not db_workspace:
-        raise RuntimeError(f"No DB workspace entry found for id: {find_workspace_id}")
+    db_workspace = await db_get_workspace(workspace_id=find_workspace_id)
     model_keys = list(db_workspace.__dict__.keys())
     for key, value in kwargs.items():
         if key not in model_keys:

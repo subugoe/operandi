@@ -170,7 +170,7 @@ class JobStatusWorker:
                            f"new state: {new_slurm_job_state}")
             # Update the hpc slurm job state in the DB
             sync_db_update_hpc_slurm_job(
-                workflow_job_id=workflow_job_db.job_id,
+                find_workflow_job_id=workflow_job_db.job_id,
                 hpc_slurm_job_state=new_slurm_job_state
             )
 
@@ -187,7 +187,7 @@ class JobStatusWorker:
                            f"old state: {old_workflow_job_status}, "
                            f"new state: {new_workflow_job_status}")
             sync_db_update_workflow_job(
-                job_id=self.current_message_job_id,
+                find_job_id=self.current_message_job_id,
                 job_state=new_workflow_job_status
             )
             if new_workflow_job_status == 'SUCCESS':

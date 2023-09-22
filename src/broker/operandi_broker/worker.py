@@ -280,7 +280,7 @@ class Worker:
 
         try:
             sync_db_create_hpc_slurm_job(
-                find_workflow_job_id=workflow_job_id,
+                workflow_job_id=workflow_job_id,
                 hpc_slurm_job_id=slurm_job_id,
                 hpc_batch_script_path=hpc_batch_script_path,
                 hpc_slurm_workspace_path=join(OPERANDI_HPC_DIR_SLURM_WORKSPACES, workflow_job_id)

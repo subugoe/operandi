@@ -44,9 +44,7 @@ async def sync_db_get_user_account(email: str) -> DBUserAccount:
 
 
 async def db_update_user_account(find_email: str, **kwargs) -> DBUserAccount:
-    db_user_account = await DBUserAccount.find_one(DBUserAccount.email == find_email)
-    if not db_user_account:
-        raise RuntimeError(f"No DB user account entry found for email: {find_email}")
+    db_user_account = await db_get_user_account(email=find_email)
     model_keys = list(db_user_account.__dict__.keys())
     for key, value in kwargs.items():
         if key not in model_keys:
