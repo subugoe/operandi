@@ -43,10 +43,10 @@ async def sync_db_get_workflow_job(job_id: str) -> DBWorkflowJob:
     return await db_get_workflow_job(job_id)
 
 
-async def db_update_workflow_job(find_workflow_id: str, **kwargs) -> DBWorkflowJob:
-    db_workflow_job = await DBWorkflowJob.find_one(DBWorkflowJob.workflow_id == find_workflow_id)
+async def db_update_workflow_job(find_workflow_job_id: str, **kwargs) -> DBWorkflowJob:
+    db_workflow_job = await DBWorkflowJob.find_one(DBWorkflowJob.workflow_id == find_workflow_job_id)
     if not db_workflow_job:
-        raise RuntimeError(f"No DB workflow job entry found for id: {find_workflow_id}")
+        raise RuntimeError(f"No DB workflow job entry found for id: {find_workflow_job_id}")
     model_keys = list(db_workflow_job.__dict__.keys())
     for key, value in kwargs.items():
         if key not in model_keys:

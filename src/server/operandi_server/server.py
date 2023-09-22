@@ -328,6 +328,7 @@ class OperandiServer(FastAPI):
             # Save to the workflow job to the database
             self.log.info("Saving the workflow job to the database")
             await db_update_workflow_job(
+                find_workflow_job_id=job_id,
                 job_id=job_id,
                 job_dir=job_dir,
                 job_state=job_state,
