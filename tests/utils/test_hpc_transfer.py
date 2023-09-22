@@ -1,5 +1,6 @@
 from datetime import datetime
 from os.path import join
+from time import sleep
 from tests.constants import (
     OPERANDI_SERVER_BASE_DIR,
     OPERANDI_TESTS_LOCAL_DIR_WORKSPACES,
@@ -23,6 +24,8 @@ def test_hpc_connector_transfer_file(hpc_data_transfer):
         remote_dst=test_hpc_file_path
     )
 
+    sleep(1)
+
     test_local_received_file_path = join(OPERANDI_SERVER_BASE_DIR, batch_script_id)
     hpc_data_transfer.get_file(
         remote_src=test_hpc_file_path,
@@ -45,6 +48,8 @@ def test_hpc_connector_transfer_dir(hpc_data_transfer):
         local_src=test_local_dir_path,
         remote_dst=test_hpc_dir_path
     )
+
+    sleep(3)
 
     test_local_received_dir_path = join(OPERANDI_TESTS_LOCAL_DIR_WORKSPACES, workspace_id)
     hpc_data_transfer.get_dir(
