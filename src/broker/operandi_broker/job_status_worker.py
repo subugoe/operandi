@@ -136,22 +136,12 @@ class JobStatusWorker:
         # Handle database related reads and set the workflow job status to RUNNING
         try:
             workflow_job_db = sync_db_get_workflow_job(self.current_message_job_id)
-            if not workflow_job_db:
-                self.log.warning(f"Workflow job not existing in DB for: {self.current_message_job_id}")
-                self.__handle_message_failure(interruption=False)
-                return
-
-            workspace_job_db = sync_db_get_workspace(workspace_id=workflow_job_db.workspace_id)
-            if not workspace_job_db:
-                self.log.warning(f"Workspace not existing in DB for: {workflow_job_db.workspace_id}")
-                self.__handle_message_failure(interruption=False)
-                return
-
+            workspace_job_db = sync_db_get_workspace(workflow_job_db.workspace_id)
             hpc_slurm_job_db = sync_db_get_hpc_slurm_job(self.current_message_job_id)
-            if not hpc_slurm_job_db:
-                self.log.warning(f"HPC slurm job not existing in DB for: {self.current_message_job_id}")
-                self.__handle_message_failure(interruption=False)
-                return
+        except RuntimeError as error:
+            self.log.error(f"Database run-time error has occurred: {error}")
+            self.__handle_message_failure(interruption=False)
+            return
         except Exception as error:
             self.log.error(f"Database related error has occurred: {error}")
             self.__handle_message_failure(interruption=False)

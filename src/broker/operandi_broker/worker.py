@@ -155,7 +155,10 @@ class Worker:
             mets_basename = workspace_db.mets_basename
             if not mets_basename:
                 mets_basename = "mets.xml"
-
+        except RuntimeError as error:
+            self.log.error(f"Database run-time error has occurred: {error}")
+            self.__handle_message_failure(interruption=False)
+            return
         except Exception as error:
             self.log.error(f"Database related error has occurred: {error}")
             self.__handle_message_failure(interruption=False)
