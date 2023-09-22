@@ -67,9 +67,18 @@ def post_workflow_job(
 ):
     req_url = f'{server_address}/workflow/{workflow_id}'
     req_data = {
-        'workspace_id': f'{workspace_id}',
-        'input_file_grp': f'{input_file_grp}'
+        'workflow_id': f'{workflow_id}',
+        'workflow_args': {
+          'workspace_id': f'{workspace_id}',
+          'input_file_grp': f'{input_file_grp}',
+          'mets_name': "mets.xml"
+        },
+        'sbatch_args': {
+          'cpus': 4,
+          'ram': 32
+        }
     }
+
     req_headers = {'accept': 'application/json'}
     response = post(url=req_url, json=req_data, headers=req_headers, auth=auth)
     print(response.__dict__)
