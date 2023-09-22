@@ -18,8 +18,7 @@ from tests.constants import (
 def fixture_hpc_transfer_connector():
     assert_exists_file(OPERANDI_HPC_SSH_KEYPATH)
     try:
-        hpc_transfer_connector = HPCTransfer()
-        hpc_transfer_connector.connect(
+        hpc_transfer_connector = HPCTransfer(
             host=OPERANDI_HPC_HOST_TRANSFER,
             proxy_host=OPERANDI_HPC_HOST_TRANSFER_PROXY,
             username=OPERANDI_HPC_USERNAME,
@@ -35,8 +34,7 @@ def fixture_hpc_transfer_connector():
 def fixture_hpc_execution_connector():
     assert_exists_file(OPERANDI_HPC_SSH_KEYPATH)
     try:
-        hpc_paramiko_connector = HPCExecutor()
-        hpc_paramiko_connector.connect(
+        hpc_paramiko_connector = HPCExecutor(
             host=OPERANDI_HPC_HOST,
             proxy_host=OPERANDI_HPC_HOST_PROXY,
             username=OPERANDI_HPC_USERNAME,

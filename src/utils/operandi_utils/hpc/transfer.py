@@ -1,24 +1,11 @@
-from os import (
-    listdir,
-    makedirs,
-    remove,
-    symlink
-)
-from os.path import (
-    dirname,
-    exists,
-    join,
-    isdir,
-    isfile,
-    split
-)
-from typing import Tuple
-import logging
-from paramiko import AutoAddPolicy, SSHClient
+from logging import getLogger
+from os import listdir, makedirs, remove, symlink
+from os.path import dirname, join, isdir, split
 from pathlib import Path
 from shutil import rmtree, copytree
 from stat import S_ISDIR
 from tempfile import mkdtemp
+from typing import Tuple
 
 from operandi_utils import make_zip_archive, unpack_zip_archive
 from .constants import (
@@ -26,74 +13,34 @@ from .constants import (
     OPERANDI_HPC_DIR_SLURM_WORKSPACES,
     OPERANDI_HPC_HOST_TRANSFER,
     OPERANDI_HPC_HOST_TRANSFER_PROXY,
-    OPERANDI_HPC_HOST_PROXY,
     OPERANDI_HPC_USERNAME,
     OPERANDI_HPC_SSH_KEYPATH
 )
+from .utils import create_ssh_connection_to_hpc
 
 
 class HPCTransfer:
-    def __init__(self):
-        # TODO: Handle the exceptions properly
-        self.__ssh_paramiko = None
-        self.sftp = None
-        self.log = logging.getLogger(__name__)
-
-    @staticmethod
-    def create_proxy_jump(
-            host=OPERANDI_HPC_HOST_TRANSFER,
-            proxy_host=OPERANDI_HPC_HOST_TRANSFER_PROXY,
-            username=OPERANDI_HPC_USERNAME,
-            key_path=OPERANDI_HPC_SSH_KEYPATH
-    ):
-        jump_box = SSHClient()
-        jump_box.set_missing_host_key_policy(AutoAddPolicy())
-        jump_box.connect(
-            proxy_host,
-            username=username,
-            key_filename=key_path
-        )
-        jump_box_channel = jump_box.get_transport().open_channel(
-            kind="direct-tcpip",
-            dest_addr=(host, 22),
-            src_addr=(proxy_host, 22)
-        )
-        return jump_box_channel
-
-    # This connection uses proxy jump host to
-    # connect to the front-end node of the HPC cluster
-    def connect(
+    def __init__(
             self,
-            host=OPERANDI_HPC_HOST_TRANSFER,
-            proxy_host=OPERANDI_HPC_HOST_PROXY,
-            username=OPERANDI_HPC_USERNAME,
-            key_path=OPERANDI_HPC_SSH_KEYPATH
+            host: str = OPERANDI_HPC_HOST_TRANSFER,
+            proxy_host: str = OPERANDI_HPC_HOST_TRANSFER_PROXY,
+            username: str = OPERANDI_HPC_USERNAME,
+            key_path: str = OPERANDI_HPC_SSH_KEYPATH
     ):
-        self.check_keyfile_existence(key_path)
-        proxy_channel = self.create_proxy_jump(
+        self.log = getLogger(__name__)
+        self.log.info(f"Trying to connect to HPC host: {host}, "
+                      f"via proxy: {proxy_host}, "
+                      f"with username: {username}, "
+                      f"using the key path: {key_path}")
+        # TODO: Handle the exceptions properly
+        self.__ssh_paramiko = create_ssh_connection_to_hpc(
             host=host,
             proxy_host=proxy_host,
             username=username,
             key_path=key_path
         )
-        self.__ssh_paramiko = SSHClient()
-        self.__ssh_paramiko.set_missing_host_key_policy(AutoAddPolicy())
-        self.__ssh_paramiko.connect(
-            hostname=host,
-            username=username,
-            key_filename=key_path,
-            sock=proxy_channel,
-            allow_agent=False,
-            look_for_keys=False
-        )
+        self.log.info(f"Trying to open SFTP session")
         self.sftp = self.__ssh_paramiko.open_sftp()
-
-    @staticmethod
-    def check_keyfile_existence(hpc_key_path):
-        if not exists(hpc_key_path):
-            raise FileNotFoundError(f"HPC key path does not exists: {hpc_key_path}")
-        if not isfile(hpc_key_path):
-            raise FileNotFoundError(f"HPC key path is not a file: {hpc_key_path}")
 
     def put_batch_script(self, batch_script_id: str) -> str:
         local_batch_script_path = join(dirname(__file__), "batch_scripts", batch_script_id)
