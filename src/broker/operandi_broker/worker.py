@@ -69,19 +69,12 @@ class Worker:
 
             # Connect the HPC Executor
             self.hpc_executor = HPCExecutor()
-            if self.hpc_executor:
-                self.hpc_executor.connect()
-                self.log.info("HPC executor connection successful.")
-            else:
-                self.log.error("HPC executor connection has failed.")
+            self.log.info("HPC executor connection successful.")
 
             # Connect the HPC IO Transfer
             self.hpc_io_transfer = HPCTransfer()
-            if self.hpc_io_transfer:
-                self.hpc_io_transfer.connect()
-                self.log.info("HPC transfer connection successful.")
-            else:
-                self.log.error("HPC transfer connection has failed.")
+            self.log.info("HPC transfer connection successful.")
+
             self.log.info("Worker runs jobs in HPC.")
 
             self.connect_consumer()
