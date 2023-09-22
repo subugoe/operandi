@@ -181,7 +181,10 @@ class HPCExecutor:
                 self.log.info(f"Slurm job state is in: {slurm_fail_states}")
                 self.log.info(f"Returning False")
                 return False
-            raise ValueError(f"Invalid SLURM job state: {slurm_job_state}")
+            # Sometimes the slurm state is still
+            # not initialized inside the HPC environment.
+            # This is not a problem that requires a raise of Exception
+            self.log.warning(f"Invalid SLURM job state: {slurm_job_state}")
 
         # Timeout reached
         self.log.info("Polling slurm job status timeout reached")
