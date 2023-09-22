@@ -150,6 +150,7 @@ class HPCExecutor:
                 slurm_job_state = output[-1].split()[1]
             if slurm_job_state:
                 break
+            tries -= 1
             sleep(wait_time)
         if not slurm_job_state:
             self.log.warning(f"Returning a None slurm job state")
