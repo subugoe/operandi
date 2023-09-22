@@ -11,7 +11,7 @@ from operandi_utils.database import (
     sync_db_get_workflow,
     sync_db_get_workflow_job,
     sync_db_get_workspace,
-    sync_db_update_hpc_slurm_job,
+    sync_db_create_hpc_slurm_job,
     sync_db_update_workflow_job
 )
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
@@ -165,7 +165,7 @@ class Worker:
         try:
             self.prepare_and_trigger_slurm_job(
                 workflow_job_id=self.current_message_job_id,
-                workflow_job_dir=workflow_job_db.workflow_job_dir,
+                workflow_job_dir=workflow_job_db.job_dir,
                 workspace_id=self.current_message_ws_id,
                 workspace_dir=workspace_dir,
                 workspace_base_mets=mets_basename,
@@ -183,7 +183,7 @@ class Worker:
         job_state = "RUNNING"
         self.log.info(f"Setting new job state `{job_state}` of job_id: {self.current_message_job_id}")
         sync_db_update_workflow_job(
-            job_id=self.current_message_job_id,
+            find_job_id=self.current_message_job_id,
             job_state=job_state
         )
         self.has_consumed_message = False
@@ -194,7 +194,7 @@ class Worker:
         job_state = "FAILED"
         self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
         sync_db_update_workflow_job(
-            job_id=self.current_message_job_id,
+            find_job_id=self.current_message_job_id,
             job_state=job_state
         )
         self.has_consumed_message = False
@@ -279,8 +279,8 @@ class Worker:
             raise Exception(f"Triggering slurm job failed: {error}")
 
         try:
-            sync_db_update_hpc_slurm_job(
-                workflow_job_id=workflow_job_id,
+            sync_db_create_hpc_slurm_job(
+                find_workflow_job_id=workflow_job_id,
                 hpc_slurm_job_id=slurm_job_id,
                 hpc_batch_script_path=hpc_batch_script_path,
                 hpc_slurm_workspace_path=join(OPERANDI_HPC_DIR_SLURM_WORKSPACES, workflow_job_id)

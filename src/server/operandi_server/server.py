@@ -17,7 +17,7 @@ from operandi_utils import (
 )
 from operandi_utils.database import (
     db_initiate_database,
-    db_update_workflow_job
+    db_create_workflow_job
 )
 from operandi_utils.rabbitmq import (
     # Requests coming from the
@@ -327,8 +327,7 @@ class OperandiServer(FastAPI):
 
             # Save to the workflow job to the database
             self.log.info("Saving the workflow job to the database")
-            await db_update_workflow_job(
-                find_workflow_job_id=job_id,
+            await db_create_workflow_job(
                 job_id=job_id,
                 job_dir=job_dir,
                 job_state=job_state,

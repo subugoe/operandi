@@ -72,6 +72,7 @@ def post_workflow_job(
     }
     req_headers = {'accept': 'application/json'}
     response = post(url=req_url, json=req_data, headers=req_headers, auth=auth)
+    print(response.__dict__)
     workflow_job_id = response.json()['resource_id']
     return workflow_job_id
 
