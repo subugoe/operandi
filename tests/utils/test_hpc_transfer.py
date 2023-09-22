@@ -1,6 +1,10 @@
 from datetime import datetime
 from os.path import join
-from tests.constants import OPERANDI_SERVER_BASE_DIR, OPERANDI_HPC_DIR_PROJECT
+from tests.constants import (
+    OPERANDI_SERVER_BASE_DIR,
+    OPERANDI_TESTS_LOCAL_DIR_WORKSPACES,
+    OPERANDI_HPC_DIR_PROJECT
+)
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 from tests.helpers_utils import to_asset_path
 
@@ -42,7 +46,7 @@ def test_hpc_connector_transfer_dir(hpc_data_transfer):
         remote_dst=test_hpc_dir_path
     )
 
-    test_local_received_dir_path = join(OPERANDI_SERVER_BASE_DIR, workspace_id)
+    test_local_received_dir_path = join(OPERANDI_TESTS_LOCAL_DIR_WORKSPACES, workspace_id)
     hpc_data_transfer.get_dir(
         remote_src=test_hpc_dir_path,
         local_dst=test_local_received_dir_path
