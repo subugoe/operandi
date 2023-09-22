@@ -133,22 +133,27 @@ class HPCExecutor:
         assert int(slurm_job_id)
         return slurm_job_id
 
-    def check_slurm_job_state(self, slurm_job_id: str) -> str:
+    def check_slurm_job_state(self, slurm_job_id: str, tries: int = 3, wait_time: int = 2) -> str:
         command = "bash -lc"
         command += f" 'sacct -j {slurm_job_id} --format=jobid,state,exitcode'"
-
-        self.log.info(f"About to execute a blocking command: {command}")
-        output, err, return_code = self.execute_blocking(command)
-        self.log.info(f"Command output: {output}")
-        self.log.info(f"Command err: {err}")
-        self.log.info(f"Command return code: {return_code}")
-
-        # Split the last line and get the second element,
-        # i.e., the state element in the requested output format
         slurm_job_state = None
-        if output:
-            slurm_job_state = output[-1].split()[1]
-        self.log.info(f"Slurm job state: {slurm_job_state}")
+
+        while not slurm_job_state and tries > 0:
+            self.log.info(f"About to execute a blocking command: {command}")
+            output, err, return_code = self.execute_blocking(command)
+            self.log.info(f"Command output: {output}")
+            self.log.info(f"Command err: {err}")
+            self.log.info(f"Command return code: {return_code}")
+            if output:
+                # Split the last line and get the second element,
+                # i.e., the state element in the requested output format
+                slurm_job_state = output[-1].split()[1]
+            if slurm_job_state:
+                break
+            sleep(wait_time)
+        if not slurm_job_state:
+            self.log.warning(f"Returning a None slurm job state")
+        self.log.info(f"Slurm job state of {slurm_job_id}: {slurm_job_state}")
         return slurm_job_state
 
     def poll_till_end_slurm_job_state(self, slurm_job_id: str, interval: int = 5, timeout: int = 300) -> bool:
