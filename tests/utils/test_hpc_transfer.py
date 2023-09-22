@@ -42,7 +42,7 @@ def test_hpc_connector_transfer_dir(hpc_data_transfer):
     assert_exists_dir(test_local_dir_path)
 
     current_time = datetime.now().strftime("%Y%m%d_%H%M")
-    workspace_id = f"test_workspace_{current_time}"
+    workspace_id = f"test_folder_{current_time}"
     test_hpc_dir_path = join(OPERANDI_HPC_DIR_PROJECT, workspace_id)
     hpc_data_transfer.put_dir(
         local_src=test_local_dir_path,
