@@ -7,14 +7,11 @@ from operandi_server.exceptions import AuthenticationError, RegistrationError
 from operandi_server.models import UserAction
 
 router = APIRouter(tags=["User"])
-
 logger = logging.getLogger(__name__)
-# TODO: This may not be ideal, discussion needed
-security = HTTPBasic()
 
 
 @router.get("/user/login", responses={"200": {"model": UserAction}})
-async def user_login(auth: HTTPBasicCredentials = Depends(security)):
+async def user_login(auth: HTTPBasicCredentials = Depends(HTTPBasic())):
     """
     Used for user authentication.
     """

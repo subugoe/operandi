@@ -23,16 +23,14 @@ from .user import user_login
 
 
 router = APIRouter(tags=["Workflow"])
-
 logger = logging.getLogger(__name__)
 workflow_manager = WorkflowManager()
 workspace_manager = WorkspaceManager()
-security = HTTPBasic()
 
 
 # TODO: Refine all the exceptions...
 @router.get("/workflow")
-async def list_workflows(auth: HTTPBasicCredentials = Depends(security)) -> List[WorkflowRsrc]:
+async def list_workflows(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
     """
     Get a list of existing workflow spaces.
     Each workflow space has a Nextflow script inside.
@@ -53,7 +51,7 @@ async def list_workflows(auth: HTTPBasicCredentials = Depends(security)) -> List
 async def get_workflow_script(
         workflow_id: str,
         accept: str = Header(default="application/json"),
-        auth: HTTPBasicCredentials = Depends(security)
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> Union[WorkflowRsrc, FileResponse]:
     """
     Get an existing workflow space script specified with `workflow_id`.
@@ -90,7 +88,7 @@ async def get_workflow_script(
 @router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
 async def upload_workflow_script(
         nextflow_script: UploadFile,
-        auth: HTTPBasicCredentials = Depends(security)
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkflowRsrc:
     """
     Create a new workflow space and upload a Nextflow script inside.
@@ -115,7 +113,7 @@ async def upload_workflow_script(
 async def update_workflow_script(
         nextflow_script: UploadFile,
         workflow_id: str,
-        auth: HTTPBasicCredentials = Depends(security)
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkflowRsrc:
     """
     Update an existing workflow script specified with or `workflow_id` or upload a new workflow script.

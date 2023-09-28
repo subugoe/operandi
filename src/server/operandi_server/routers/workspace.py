@@ -27,12 +27,11 @@ router = APIRouter(tags=["Workspace"])
 
 logger = logging.getLogger(__name__)
 workspace_manager = WorkspaceManager()
-security = HTTPBasic()
 
 
 # TODO: Refine all the exceptions...
 @router.get("/workspace")
-async def list_workspaces(auth: HTTPBasicCredentials = Depends(security)) -> List[WorkspaceRsrc]:
+async def list_workspaces(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkspaceRsrc]:
     """
     Get a list of existing workspaces.
 
@@ -53,7 +52,7 @@ async def get_workspace(
         background_tasks: BackgroundTasks,
         workspace_id: str,
         accept: str = Header(default="application/json"),
-        auth: HTTPBasicCredentials = Depends(security)
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> Union[WorkspaceRsrc, FileResponse]:
     """
     Get an existing workspace specified with `workspace_id`.
@@ -96,7 +95,7 @@ async def get_workspace(
 )
 async def post_workspace(
         workspace: UploadFile,
-        auth: HTTPBasicCredentials = Depends(security)
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
     """
     Upload a new ocrd-zip workspace.
@@ -133,7 +132,7 @@ async def post_workspace(
 async def post_workspace_from_url(
         mets_url: str,
         file_grp: str = "DEFAULT",
-        auth: HTTPBasicCredentials = Depends(security)
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
 
     await user_login(auth)
@@ -161,7 +160,7 @@ async def post_workspace_from_url(
 async def put_workspace(
         workspace: UploadFile,
         workspace_id: str,
-        auth: HTTPBasicCredentials = Depends(security)
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
     """
     Update an existing workspace specified with `workspace_id` or create a new workspace.
@@ -185,7 +184,7 @@ async def put_workspace(
 @router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
 async def delete_workspace(
         workspace_id: str,
-        auth: HTTPBasicCredentials = Depends(security)
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
     """
     Delete an existing workspace specified with `workspace_id`

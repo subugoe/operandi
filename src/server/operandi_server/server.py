@@ -47,8 +47,6 @@ from operandi_server.models import (
 from operandi_server.routers import RouterDiscovery, user, workflow, workspace
 from operandi_server.utils import safe_init_logging
 
-security = HTTPBasic()
-
 
 class OperandiServer(FastAPI):
     def __init__(self, live_server_url: str, local_server_url: str, db_url: str, rabbitmq_url: str):
@@ -217,7 +215,7 @@ class OperandiServer(FastAPI):
             workflow_id: str,
             job_id: str,
             accept: str = Header(default="application/json"),
-            auth: HTTPBasicCredentials = Depends(security)
+            auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
         """
         Get the status of a workflow job specified with `workflow_id` and `job_id`.
@@ -290,7 +288,7 @@ class OperandiServer(FastAPI):
             workflow_id: str,
             workflow_args: WorkflowArguments,
             sbatch_args: SbatchArguments,
-            auth: HTTPBasicCredentials = Depends(security)
+            auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
         try:
             user_action = await user.user_login(auth)
