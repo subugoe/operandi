@@ -407,8 +407,6 @@ class OperandiServer(FastAPI):
 
     def include_webapi_routers(self):
         self.include_router(discovery.router)
-        # Don't put this out of comments yet - still missing
-        # self.app.include_router(processor.router)
         self.include_router(user.router)
         self.include_router(workflow.router)
         self.include_router(workspace.router)
