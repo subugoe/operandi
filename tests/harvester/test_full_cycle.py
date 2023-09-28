@@ -1,7 +1,6 @@
 from os.path import join
 from time import sleep
 
-from operandi_harvester import Harvester
 from tests.constants import OPERANDI_SERVER_BASE_DIR
 from tests.server.helpers_asserts import assert_response_status_code
 from ..constants import (
@@ -24,15 +23,6 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
         queue_name=OPERANDI_RABBITMQ_QUEUE_JOB_STATUSES,
         status_checker=True
     )
-
-    """
-    harvester = Harvester(
-        server_address=OPERANDI_LOCAL_SERVER_ADDR,
-        auth_username=auth[0],
-        auth_password=auth[1]
-    )
-    harvester.harvest_once_dummy()
-    """
 
     # Post a workflow script
     response = operandi.post(
