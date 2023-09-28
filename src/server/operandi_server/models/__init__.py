@@ -1,5 +1,5 @@
 __all__ = [
-    'DiscoveryResponse',
+    'PYDiscovery',
     'Job',
     'JobState',
     'Resource',
@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 from .base import Resource, Job, JobState, SbatchArguments, WorkflowArguments
-from .discovery import DiscoveryResponse
+from .discovery import PYDiscovery
 from .user import UserAction
 from .workflow import WorkflowRsrc, WorkflowJobRsrc
 from .workspace import WorkspaceRsrc

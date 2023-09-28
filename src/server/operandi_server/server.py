@@ -44,7 +44,7 @@ from operandi_server.models import (
     WorkflowArguments,
     WorkflowJobRsrc
 )
-from operandi_server.routers import discovery, user, workflow, workspace
+from operandi_server.routers import RouterDiscovery, user, workflow, workspace
 from operandi_server.utils import safe_init_logging
 
 security = HTTPBasic()
@@ -406,7 +406,7 @@ class OperandiServer(FastAPI):
         self.log.debug(f"Successfully connected RMQPublisher.")
 
     def include_webapi_routers(self):
-        self.include_router(discovery.router)
+        self.include_router(RouterDiscovery().router)
         self.include_router(user.router)
         self.include_router(workflow.router)
         self.include_router(workspace.router)

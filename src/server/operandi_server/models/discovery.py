@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class DiscoveryResponse(BaseModel):
+class PYDiscovery(BaseModel):
     ram: float = Field(
         default=0.0,
         description='All available RAM in bytes'
