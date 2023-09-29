@@ -1,13 +1,8 @@
 import datetime
 import logging
-import json
 from os import environ
-from shutil import make_archive
-import tempfile
 
-from fastapi import Depends, FastAPI, Header, HTTPException, status
-from fastapi.responses import FileResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import FastAPI, status
 
 from operandi_utils import (
     OPERANDI_VERSION,
@@ -15,7 +10,7 @@ from operandi_utils import (
     verify_database_uri,
     verify_and_parse_mq_uri
 )
-from operandi_utils.database import db_initiate_database, db_create_workflow_job, db_get_workflow_job
+from operandi_utils.database import db_initiate_database
 from operandi_utils.rabbitmq import (
     # Requests coming from the
     # Harvester are sent to this queue
@@ -30,16 +25,7 @@ from operandi_utils.rabbitmq import (
 )
 
 from operandi_server.authentication import create_user_if_not_available
-from operandi_server.constants import (
-    LOG_FILE_PATH,
-    LOG_LEVEL,
-    WORKFLOW_JOBS_ROUTER,
-    WORKFLOWS_ROUTER,
-    WORKSPACES_ROUTER
-)
-from operandi_server.exceptions import ResponseException
-from operandi_server.files_manager import create_resource_dir, get_resource_local, get_resource_url
-from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowJobRsrc
+from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
 from operandi_server.routers import RouterDiscovery, user, workflow, workspace
 from operandi_server.utils import safe_init_logging
 
@@ -93,30 +79,6 @@ class OperandiServer(FastAPI):
             summary="Get information about the server"
         )
 
-        self.router.add_api_route(
-            path="/workflow/{workflow_id}",
-            endpoint=self.submit_to_rabbitmq_queue,
-            methods=["POST"],
-            tags=["Workflow"],
-            status_code=status.HTTP_201_CREATED,
-            summary="Submit workflow job",
-            response_model=WorkflowJobRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
-        )
-
-        self.router.add_api_route(
-            path="/workflow/{workflow_id}/{job_id}",
-            endpoint=self.get_workflow_job_status,
-            methods=["GET"],
-            tags=["Workflow"],
-            status_code=status.HTTP_200_OK,
-            summary="Check workflow job status",
-            response_model=WorkflowJobRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
-        )
-
     async def startup_event(self):
         self.log.info(f"Operandi local server url: {self.local_server_url}")
         self.log.info(f"Operandi live server url: {self.live_server_url}")
@@ -156,165 +118,6 @@ class OperandiServer(FastAPI):
             "time": _time
         }
         return json_message
-
-    async def get_workflow_job_status(
-            self,
-            workflow_id: str,
-            job_id: str,
-            accept: str = Header(default="application/json"),
-            auth: HTTPBasicCredentials = Depends(HTTPBasic())
-    ):
-        """
-        Get the status of a workflow job specified with `workflow_id` and `job_id`.
-        Returns the `workflow_id`, `workspace_id`, `job_id`, and
-        one of the following job statuses:
-        1) QUEUED - The workflow job is queued for execution.
-        2) RUNNING - The workflow job is currently running.
-        3) STOPPED - The workflow job has failed.
-        4) SUCCESS - The workflow job has finished successfully.
-
-        Curl equivalent:
-        `curl -X GET SERVER_ADDR/workflow/{workflow_id}/{job_id}`
-        """
-        await user.user_login(auth)
-        # Create the job status message to be sent to the RabbitMQ queue
-        self.log.info("Creating a job status RabbitMQ message")
-        job_status_message = {
-            "job_id": f"{job_id}",
-        }
-        self.log.info(f"Encoding the job status RabbitMQ message: {job_status_message}")
-        encoded_workflow_message = json.dumps(job_status_message)
-        self.log.info(f"Pushing to the RabbitMQ queue for job statuses: {DEFAULT_QUEUE_FOR_JOB_STATUSES}")
-        self.rmq_publisher.publish_to_queue(
-            queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES,
-            message=encoded_workflow_message
-        )
-        try:
-            wf_job_db = await db_get_workflow_job(job_id)
-        except RuntimeError:
-            raise HTTPException(status_code=404, detail=f"No workflow job found for id: {job_id}")
-
-        try:
-            wf_job_local = get_resource_local(WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
-            wf_job_url = get_resource_url(WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
-            workflow_url = get_resource_url(WORKFLOWS_ROUTER, resource_id=wf_job_db.workflow_id)
-            workspace_url = get_resource_url(WORKSPACES_ROUTER, resource_id=wf_job_db.workspace_id)
-            job_state = wf_job_db.job_state
-        except Exception as e:
-            self.log.exception(f"Unexpected error in get_workflow_job: {e}")
-            # TODO: Don't provide the exception message to the outside world
-            raise ResponseException(500, {"error": f"internal server error: {e}"})
-
-        if accept == "application/vnd.zip":
-            tempdir = tempfile.mkdtemp(prefix="ocrd-wf-job-zip-")
-            job_archive_path = make_archive(
-                base_name=f'{tempdir}/{job_id}',
-                format='zip',
-                root_dir=wf_job_local,
-            )
-            return FileResponse(job_archive_path)
-
-        return WorkflowJobRsrc.create(
-            job_id=job_id,
-            job_url=wf_job_url,
-            workflow_id=workflow_id,
-            workflow_url=workflow_url,
-            workspace_id=wf_job_db.workspace_id,
-            workspace_url=workspace_url,
-            job_state=job_state
-        )
-
-    # TODO: Move this method inside routers/workflow
-    # Submits a workflow execution request to the RabbitMQ
-    async def submit_to_rabbitmq_queue(
-            self,
-            workflow_id: str,
-            workflow_args: WorkflowArguments,
-            sbatch_args: SbatchArguments,
-            auth: HTTPBasicCredentials = Depends(HTTPBasic())
-    ):
-        try:
-            user_action = await user.user_login(auth)
-            user_account_type = user_action.account_type
-        except Exception as error:
-            self.log.error(f"Authentication error: {error}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                headers={"WWW-Authenticate": "Basic"},
-                detail=f"Invalid login credentials or unapproved account."
-            )
-
-        try:
-            # Extract sbatch arguments
-            self.log.info("Extracting sbatch request arguments")
-            cpus = sbatch_args.cpus
-            ram = sbatch_args.ram
-
-            # Extract workflow arguments
-            self.log.info("Extracting workflow request arguments")
-            workspace_id = workflow_args.workspace_id
-            input_file_grp = workflow_args.input_file_grp
-
-            # Create job request parameters
-            self.log.info("Creating workflow job space")
-            job_id, job_dir = create_resource_dir(WORKFLOW_JOBS_ROUTER)
-            job_state = "QUEUED"
-
-            # Build urls to be sent as a response
-            self.log.info("Building urls to be sent as a response")
-            workspace_url = get_resource_url(resource_router=WORKSPACES_ROUTER, resource_id=workspace_id)
-            workflow_url = get_resource_url(resource_router=WORKFLOWS_ROUTER, resource_id=workflow_id)
-            job_url = get_resource_url(resource_router=WORKFLOW_JOBS_ROUTER, resource_id=job_id)
-
-            # Save to the workflow job to the database
-            self.log.info("Saving the workflow job to the database")
-            await db_create_workflow_job(
-                job_id=job_id,
-                job_dir=job_dir,
-                job_state=job_state,
-                workspace_id=workspace_id,
-                workflow_id=workflow_id
-            )
-
-            # Create the message to be sent to the RabbitMQ queue
-            self.log.info("Creating a workflow job RabbitMQ message")
-            workflow_processing_message = {
-                "workflow_id": f"{workflow_id}",
-                "workspace_id": f"{workspace_id}",
-                "job_id": f"{job_id}",
-                "input_file_grp": f"{input_file_grp}",
-                "cpus": f"{cpus}",
-                "ram": f"{ram}"
-            }
-            self.log.info(f"Encoding the workflow job RabbitMQ message: {workflow_processing_message}")
-            encoded_workflow_message = json.dumps(workflow_processing_message)
-
-            # Send the message to a queue based on the user_id
-            if user_account_type == "harvester":
-                self.log.info(f"Pushing to the RabbitMQ queue for the harvester: {DEFAULT_QUEUE_FOR_HARVESTER}")
-                self.rmq_publisher.publish_to_queue(
-                    queue_name=DEFAULT_QUEUE_FOR_HARVESTER,
-                    message=encoded_workflow_message
-                )
-            else:
-                self.log.info(f"Pushing to the RabbitMQ queue for the users: {DEFAULT_QUEUE_FOR_USERS}")
-                self.rmq_publisher.publish_to_queue(
-                    queue_name=DEFAULT_QUEUE_FOR_USERS,
-                    message=encoded_workflow_message
-                )
-        except Exception as error:
-            self.log.error(f"SERVER ERROR: {error}")
-            raise ResponseException(500, {"error": f"internal server error: {error}"})
-
-        return WorkflowJobRsrc.create(
-            job_id=job_id,
-            job_url=job_url,
-            workflow_id=workflow_id,
-            workflow_url=workflow_url,
-            workspace_id=workspace_id,
-            workspace_url=workspace_url,
-            job_state=job_state
-        )
 
     def connect_publisher(
             self,
