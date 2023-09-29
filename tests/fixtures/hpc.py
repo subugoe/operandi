@@ -14,7 +14,7 @@ from tests.constants import (
 )
 
 
-@fixture(scope="module", name="hpc_data_transfer")
+@fixture(scope="package", name="hpc_data_transfer")
 def fixture_hpc_transfer_connector():
     assert_exists_file(OPERANDI_HPC_SSH_KEYPATH)
     try:
@@ -30,7 +30,7 @@ def fixture_hpc_transfer_connector():
     yield hpc_transfer_connector
 
 
-@fixture(scope="module", name="hpc_command_executor")
+@fixture(scope="package", name="hpc_command_executor")
 def fixture_hpc_execution_connector():
     assert_exists_file(OPERANDI_HPC_SSH_KEYPATH)
     try:
