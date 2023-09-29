@@ -178,9 +178,9 @@ class OperandiServer(FastAPI):
         self.include_webapi_routers()
 
         # Used to extend/overwrite the Workflow routing endpoint of the OCR-D WebAPI
-        self.workflow_manager = workflow.workflow_manager
+        self.workflow_manager = workflow.manager_workflows
         # Used to extend/overwrite the Workspace routing endpoint of the OCR-D WebAPI
-        self.workspace_manager = workspace.workspace_manager
+        self.workspace_manager = workspace.manager_workspaces
 
     async def shutdown_event(self):
         # TODO: Gracefully shutdown and clean things here if needed

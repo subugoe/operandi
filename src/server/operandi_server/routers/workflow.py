@@ -11,21 +11,15 @@ from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_server.exceptions import ResponseException
-from operandi_server.managers import (
-    WorkflowManager,
-    WorkspaceManager
-)
-from operandi_server.models import (
-    WorkflowRsrc,
-    WorkflowJobRsrc
-)
+from operandi_server.managers import ManagerWorkflows, ManagerWorkspaces
+from operandi_server.models import WorkflowRsrc, WorkflowJobRsrc
 from .user import user_login
 
 
 router = APIRouter(tags=["Workflow"])
 logger = logging.getLogger(__name__)
-workflow_manager = WorkflowManager()
-workspace_manager = WorkspaceManager()
+manager_workflows = ManagerWorkflows()
+workspace_manager = ManagerWorkspaces()
 
 
 # TODO: Refine all the exceptions...
@@ -39,7 +33,7 @@ async def list_workflows(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> L
     `curl SERVER_ADDR/workflow`
     """
     await user_login(auth)
-    workflows = workflow_manager.get_workflows()
+    workflows = manager_workflows.get_workflows()
     response = []
     for workflow in workflows:
         wf_id, wf_url = workflow
@@ -64,12 +58,8 @@ async def get_workflow_script(
     """
     await user_login(auth)
     try:
-        workflow_script_url = workflow_manager.get_workflow_url(workflow_id)
-        workflow_script_path = workflow_manager.get_resource_file(
-            workflow_manager.workflow_router,
-            workflow_id,
-            file_ext=".nf"
-        )
+        workflow_script_url = manager_workflows.get_workflow_url(workflow_id)
+        workflow_script_path = manager_workflows.get_workflow_script_path(workflow_id)
     except Exception as e:
         logger.exception(f"Unexpected error in get_workflow_script: {e}")
         # TODO: Don't provide the exception message to the outside world
@@ -100,12 +90,11 @@ async def upload_workflow_script(
 
     await user_login(auth)
     try:
-        workflow_id, workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
+        workflow_id, workflow_url = await manager_workflows.create_workflow_space(nextflow_script)
     except Exception as e:
         logger.exception(f"Error in upload_workflow_script: {e}")
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
-
     return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
 
 
@@ -124,7 +113,7 @@ async def update_workflow_script(
 
     await user_login(auth)
     try:
-        workflow_id, updated_workflow_url = await workflow_manager.update_workflow_space(
+        workflow_id, updated_workflow_url = await manager_workflows.update_workflow_space(
             file=nextflow_script,
             workflow_id=workflow_id
         )

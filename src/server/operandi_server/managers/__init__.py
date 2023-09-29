@@ -1,9 +1,7 @@
 __all__ = [
-    "ResourceManager",
-    "WorkflowManager",
-    "WorkspaceManager"
+    "ManagerWorkflows",
+    "ManagerWorkspaces"
 ]
 
-from .resource_manager import ResourceManager
-from .workflow_manager import WorkflowManager
-from .workspace_manager import WorkspaceManager
+from .manager_workflows import ManagerWorkflows
+from .manager_workspaces import ManagerWorkspaces

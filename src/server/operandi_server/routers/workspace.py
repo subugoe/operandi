@@ -18,7 +18,7 @@ from operandi_server.exceptions import (
     WorkspaceGoneException,
     WorkspaceNotValidException,
 )
-from operandi_server.managers import WorkspaceManager
+from operandi_server.managers import ManagerWorkspaces
 from operandi_server.models import WorkspaceRsrc
 from .user import user_login
 
@@ -26,7 +26,7 @@ from .user import user_login
 router = APIRouter(tags=["Workspace"])
 
 logger = logging.getLogger(__name__)
-workspace_manager = WorkspaceManager()
+manager_workspaces = ManagerWorkspaces()
 
 
 # TODO: Refine all the exceptions...
@@ -39,7 +39,7 @@ async def list_workspaces(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> 
     `curl -X GET SERVER_ADDR/workspace`
     """
     await user_login(auth)
-    workspaces = workspace_manager.get_workspaces()
+    workspaces = manager_workspaces.get_workspaces()
     response = []
     for workspace in workspaces:
         ws_id, ws_url = workspace
@@ -65,7 +65,7 @@ async def get_workspace(
     """
     await user_login(auth)
     try:
-        workspace_url = workspace_manager.get_workspace_url(workspace_id)
+        workspace_url = manager_workspaces.get_workspace_url(workspace_id)
     except Exception as e:
         logger.exception(f"Unexpected error in get_workspace: {e}")
         # TODO: Don't provide the exception message to the outside world
@@ -75,7 +75,7 @@ async def get_workspace(
         raise ResponseException(404, {"error": "workspace_url is None"})
 
     if accept == "application/vnd.ocrd+zip":
-        bag_path = await workspace_manager.get_workspace_bag(workspace_id)
+        bag_path = await manager_workspaces.get_workspace_bag(workspace_id)
         if not bag_path:
             raise ResponseException(404, {"error": "bag_path is None"})
         # Remove the produced bag after sending it in the response
@@ -106,7 +106,7 @@ async def post_workspace(
     """
     await user_login(auth)
     try:
-        ws_url, ws_id = await workspace_manager.create_workspace_from_zip(workspace)
+        ws_url, ws_id = await manager_workspaces.create_workspace_from_zip(workspace)
     except WorkspaceNotValidException as e:
         raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
     except Exception as e:
@@ -137,7 +137,7 @@ async def post_workspace_from_url(
 
     await user_login(auth)
     try:
-        ws_url, ws_id = await workspace_manager.create_workspace_from_mets_url(
+        ws_url, ws_id = await manager_workspaces.create_workspace_from_mets_url(
             mets_url=mets_url,
             file_grp=file_grp,
             mets_basename="mets.xml"
@@ -148,7 +148,6 @@ async def post_workspace_from_url(
         logger.exception(f"Unexpected error in create_workspace_from_zip: {e}")
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
-
     return WorkspaceRsrc.create(
         workspace_id=ws_id,
         workspace_url=ws_url,
@@ -170,14 +169,13 @@ async def put_workspace(
     """
     await user_login(auth)
     try:
-        updated_workspace_url = await workspace_manager.update_workspace(file=workspace, workspace_id=workspace_id)
+        updated_workspace_url = await manager_workspaces.update_workspace(file=workspace, workspace_id=workspace_id)
     except WorkspaceNotValidException as e:
         raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
     except Exception as e:
         logger.exception(f"Unexpected error in put_workspace: {e}")
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
-
     return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=updated_workspace_url)
 
 
@@ -194,9 +192,7 @@ async def delete_workspace(
     """
     await user_login(auth)
     try:
-        deleted_workspace_url = await workspace_manager.delete_workspace(
-            workspace_id
-        )
+        deleted_workspace_url = await manager_workspaces.delete_workspace(workspace_id)
     except WorkspaceGoneException as e:
         raise ResponseException(410, {"error:": f"{e}"})
     except WorkspaceException as e:
