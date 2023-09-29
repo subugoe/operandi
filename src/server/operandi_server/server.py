@@ -32,11 +32,7 @@ from operandi_utils.rabbitmq import (
     RMQPublisher
 )
 
-from operandi_server.authentication import (
-    AuthenticationError,
-    authenticate_user,
-    register_user
-)
+from operandi_server.authentication import create_user_if_not_available
 from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
 from operandi_server.exceptions import ResponseException
 from operandi_server.models import (
@@ -129,45 +125,16 @@ class OperandiServer(FastAPI):
         safe_init_logging()
 
         # Reconfigure all loggers to the same format
-        reconfigure_all_loggers(
-            log_level=LOG_LEVEL,
-            log_file_path=LOG_FILE_PATH
-        )
+        reconfigure_all_loggers(log_level=LOG_LEVEL, log_file_path=LOG_FILE_PATH)
 
         # Initiate database client
         await db_initiate_database(self.db_url)
 
-        default_admin_user = environ.get("OPERANDI_SERVER_DEFAULT_USERNAME", None)
-        default_admin_pass = environ.get("OPERANDI_SERVER_DEFAULT_PASSWORD", None)
-        default_harvester_user = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME", None)
-        default_harvester_pass = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD", None)
-
-        self.log.info(f"Configuring default server auth")
-        if default_admin_user and default_admin_pass:
-            await self.create_user_if_not_available(
-                username=default_admin_user,
-                password=default_admin_pass,
-                account_type="administrator",
-                approved_user=True
-            )
-            self.log.info(f"Configured default server auth")
-
-        self.log.info(f"Configuring default harvester auth")
-        if default_harvester_user and default_harvester_pass:
-            await self.create_user_if_not_available(
-                username=default_harvester_user,
-                password=default_harvester_pass,
-                account_type="harvester",
-                approved_user=True
-            )
-            self.log.info(f"Configured default harvester auth")
+        # Insert the default server and harvester credentials to the DB
+        await self.insert_default_credentials()
 
         # Connect the publisher to the RabbitMQ Server
-        self.connect_publisher(
-            username=self.rmq_username,
-            password=self.rmq_password,
-            enable_acks=True
-        )
+        self.connect_publisher(username=self.rmq_username, password=self.rmq_password, enable_acks=True)
 
         # Create the message queues (nothing happens if they already exist)
         self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
@@ -185,21 +152,6 @@ class OperandiServer(FastAPI):
     async def shutdown_event(self):
         # TODO: Gracefully shutdown and clean things here if needed
         self.log.info(f"The Operandi Server is shutting down.")
-
-    @staticmethod
-    async def create_user_if_not_available(username: str, password: str, account_type: str, approved_user: bool):
-        # If the account is not available in the DB, create it
-        try:
-            await authenticate_user(username, password)
-        except AuthenticationError:
-            # TODO: Note that this account is never removed from
-            #  the DB automatically in the current implementation
-            await register_user(
-                email=username,
-                password=password,
-                account_type=account_type,
-                approved_user=approved_user
-            )
 
     async def home(self):
         message = f"The home page of the {self.title}"
@@ -408,3 +360,29 @@ class OperandiServer(FastAPI):
         self.include_router(user.router)
         self.include_router(workflow.router)
         self.include_router(workspace.router)
+
+    async def insert_default_credentials(self):
+        default_admin_user = environ.get("OPERANDI_SERVER_DEFAULT_USERNAME", None)
+        default_admin_pass = environ.get("OPERANDI_SERVER_DEFAULT_PASSWORD", None)
+        default_harvester_user = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME", None)
+        default_harvester_pass = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD", None)
+
+        self.log.info(f"Configuring default server auth")
+        if default_admin_user and default_admin_pass:
+            await create_user_if_not_available(
+                username=default_admin_user,
+                password=default_admin_pass,
+                account_type="administrator",
+                approved_user=True
+            )
+            self.log.info(f"Configured default server auth")
+
+        self.log.info(f"Configuring default harvester auth")
+        if default_harvester_user and default_harvester_pass:
+            await create_user_if_not_available(
+                username=default_harvester_user,
+                password=default_harvester_pass,
+                account_type="harvester",
+                approved_user=True
+            )
+            self.log.info(f"Configured default harvester auth")

@@ -9,6 +9,21 @@ from operandi_utils.database import (
 from operandi_server.exceptions import AuthenticationError, RegistrationError
 
 
+async def create_user_if_not_available(username: str, password: str, account_type: str, approved_user: bool):
+    # If the account is not available in the DB, create it
+    try:
+        await authenticate_user(username, password)
+    except AuthenticationError:
+        # TODO: Note that this account is never removed from
+        #  the DB automatically in the current implementation
+        await register_user(
+            email=username,
+            password=password,
+            account_type=account_type,
+            approved_user=approved_user
+        )
+
+
 async def authenticate_user(email: str, password: str) -> str:
     try:
         db_user = await db_get_user_account(email=email)
