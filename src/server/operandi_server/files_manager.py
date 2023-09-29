@@ -4,9 +4,8 @@ from os.path import isdir, isfile, join
 from pathlib import Path
 import shutil
 from typing import List, Tuple
-from ..constants import SERVER_URL
-from .constants import BASE_DIR
-from .utils import generate_id
+from operandi_server.constants import BASE_DIR, SERVER_URL
+from operandi_server.utils import generate_id
 
 
 def create_resource_base_dir(resource_router: str) -> str:
@@ -78,8 +77,9 @@ def get_resource_file(resource_router: str, resource_id: str, file_ext=None) -> 
     if not isdir(resource_dir):
         raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
     for file in listdir(resource_dir):
-        if file_ext and file.endswith(file_ext):
-            return join(resource_dir, file)
+        if isfile(file):
+            if file_ext and file.endswith(file_ext):
+                return join(resource_dir, file)
     raise FileNotFoundError(f"Resource file with ending '{file_ext}' not found in: {resource_dir}")
 
 

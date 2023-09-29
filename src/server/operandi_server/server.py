@@ -15,10 +15,7 @@ from operandi_utils import (
     verify_database_uri,
     verify_and_parse_mq_uri
 )
-from operandi_utils.database import (
-    db_initiate_database,
-    db_create_workflow_job
-)
+from operandi_utils.database import db_initiate_database, db_create_workflow_job, db_get_workflow_job
 from operandi_utils.rabbitmq import (
     # Requests coming from the
     # Harvester are sent to this queue
@@ -33,13 +30,16 @@ from operandi_utils.rabbitmq import (
 )
 
 from operandi_server.authentication import create_user_if_not_available
-from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
-from operandi_server.exceptions import ResponseException
-from operandi_server.models import (
-    SbatchArguments,
-    WorkflowArguments,
-    WorkflowJobRsrc
+from operandi_server.constants import (
+    LOG_FILE_PATH,
+    LOG_LEVEL,
+    WORKFLOW_JOBS_ROUTER,
+    WORKFLOWS_ROUTER,
+    WORKSPACES_ROUTER
 )
+from operandi_server.exceptions import ResponseException
+from operandi_server.files_manager import create_resource_dir, get_resource_local, get_resource_url
+from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowJobRsrc
 from operandi_server.routers import RouterDiscovery, user, workflow, workspace
 from operandi_server.utils import safe_init_logging
 
@@ -144,11 +144,6 @@ class OperandiServer(FastAPI):
         # Include the endpoints of the OCR-D WebAPI
         self.include_webapi_routers()
 
-        # Used to extend/overwrite the Workflow routing endpoint of the OCR-D WebAPI
-        self.workflow_manager = workflow.manager_workflows
-        # Used to extend/overwrite the Workspace routing endpoint of the OCR-D WebAPI
-        self.workspace_manager = workspace.manager_workspaces
-
     async def shutdown_event(self):
         # TODO: Gracefully shutdown and clean things here if needed
         self.log.info(f"The Operandi Server is shutting down.")
@@ -194,20 +189,16 @@ class OperandiServer(FastAPI):
             queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES,
             message=encoded_workflow_message
         )
-        wf_job_db = await self.workflow_manager.get_workflow_job(job_id=job_id)
-        if not wf_job_db:
-            raise ResponseException(404, {"error": f"workflow job not found: {job_id}"})
         try:
-            wf_job_url = self.workflow_manager.get_workflow_job_url(
-                job_id=wf_job_db.job_id,
-                workflow_id=wf_job_db.workflow_id
-            )
-            wf_job_local = self.workflow_manager.get_workflow_job_path(
-                job_id=wf_job_db.job_id,
-                workflow_id=wf_job_db.workflow_id
-            )
-            workflow_url = self.workflow_manager.get_workflow_url(wf_job_db.workflow_id)
-            workspace_url = self.workspace_manager.get_workspace_url(wf_job_db.workspace_id)
+            wf_job_db = await db_get_workflow_job(job_id)
+        except RuntimeError:
+            raise HTTPException(status_code=404, detail=f"No workflow job found for id: {job_id}")
+
+        try:
+            wf_job_local = get_resource_local(WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
+            wf_job_url = get_resource_url(WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
+            workflow_url = get_resource_url(WORKFLOWS_ROUTER, resource_id=wf_job_db.workflow_id)
+            workspace_url = get_resource_url(WORKSPACES_ROUTER, resource_id=wf_job_db.workspace_id)
             job_state = wf_job_db.job_state
         except Exception as e:
             self.log.exception(f"Unexpected error in get_workflow_job: {e}")
@@ -266,14 +257,14 @@ class OperandiServer(FastAPI):
 
             # Create job request parameters
             self.log.info("Creating workflow job space")
-            job_id, job_dir = self.workflow_manager.create_workflow_job_space()
+            job_id, job_dir = create_resource_dir(WORKFLOW_JOBS_ROUTER)
             job_state = "QUEUED"
 
             # Build urls to be sent as a response
             self.log.info("Building urls to be sent as a response")
-            workspace_url = self.workspace_manager.get_workspace_url(workspace_id=workspace_id)
-            workflow_url = self.workflow_manager.get_workflow_url(workflow_id=workflow_id)
-            job_url = self.workflow_manager.get_workflow_job_url(job_id=job_id, workflow_id=workflow_id)
+            workspace_url = get_resource_url(resource_router=WORKSPACES_ROUTER, resource_id=workspace_id)
+            workflow_url = get_resource_url(resource_router=WORKFLOWS_ROUTER, resource_id=workflow_id)
+            job_url = get_resource_url(resource_router=WORKFLOW_JOBS_ROUTER, resource_id=job_id)
 
             # Save to the workflow job to the database
             self.log.info("Saving the workflow job to the database")
@@ -324,15 +315,6 @@ class OperandiServer(FastAPI):
             workspace_url=workspace_url,
             job_state=job_state
         )
-
-    """
-    This causes problems in the WebAPI part. Disabled for now.
-    
-    @self.app.post("/workspace/import_local", tags=["Workspace"])
-    async def operandi_import_from_mets_dir(mets_dir: str):
-        ws_url, ws_id = await self.workspace_manager.create_workspace_from_mets_dir(mets_dir)
-        return WorkspaceRsrc.create(workspace_url=ws_url, description="Workspace from Mets URL")
-    """
 
     def connect_publisher(
             self,

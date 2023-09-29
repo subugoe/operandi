@@ -1,30 +1,36 @@
 import logging
+from os.path import join
 from typing import List, Union
-
 from fastapi import (
     APIRouter,
     Depends,
     Header,
+    HTTPException,
     UploadFile,
 )
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_server.exceptions import ResponseException
-from operandi_server.managers import ManagerWorkflows, ManagerWorkspaces
-from operandi_server.models import WorkflowRsrc, WorkflowJobRsrc
+from operandi_server.constants import WORKFLOWS_ROUTER
+from operandi_server.files_manager import (
+    create_resource_dir,
+    delete_resource_dir,
+    get_all_resources_url,
+    get_resource_url,
+    receive_resource
+)
+from operandi_server.models import WorkflowRsrc
+from operandi_utils.database import db_create_workflow, db_get_workflow
 from .user import user_login
-
 
 router = APIRouter(tags=["Workflow"])
 logger = logging.getLogger(__name__)
-manager_workflows = ManagerWorkflows()
-workspace_manager = ManagerWorkspaces()
 
 
-# TODO: Refine all the exceptions...
 @router.get("/workflow")
-async def list_workflows(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
+async def list_workflows(
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+) -> List[WorkflowRsrc]:
     """
     Get a list of existing workflow spaces.
     Each workflow space has a Nextflow script inside.
@@ -33,7 +39,7 @@ async def list_workflows(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> L
     `curl SERVER_ADDR/workflow`
     """
     await user_login(auth)
-    workflows = manager_workflows.get_workflows()
+    workflows = get_all_resources_url(WORKFLOWS_ROUTER)
     response = []
     for workflow in workflows:
         wf_id, wf_url = workflow
@@ -41,7 +47,7 @@ async def list_workflows(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> L
     return response
 
 
-@router.get("/workflow/{workflow_id}", response_model=None)
+@router.get(path="/workflow/{workflow_id}", response_model=None)
 async def get_workflow_script(
         workflow_id: str,
         accept: str = Header(default="application/json"),
@@ -58,20 +64,14 @@ async def get_workflow_script(
     """
     await user_login(auth)
     try:
-        workflow_script_url = manager_workflows.get_workflow_url(workflow_id)
-        workflow_script_path = manager_workflows.get_workflow_script_path(workflow_id)
-    except Exception as e:
-        logger.exception(f"Unexpected error in get_workflow_script: {e}")
-        # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": f"internal server error: {e}"})
-
+        db_workflow = await db_get_workflow(workflow_id=workflow_id)
+        workflow_script_url = get_resource_url(resource_router=WORKFLOWS_ROUTER, resource_id=workflow_id)
+    except RuntimeError:
+        raise HTTPException(status_code=404, detail=f"Non-existing DB entry for workflow id:{workflow_id}")
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Non-existing local entry workflow id:{workflow_id}")
     if accept == "text/vnd.ocrd.workflow":
-        if not workflow_script_path:
-            raise ResponseException(404, {})
-        return FileResponse(path=workflow_script_path, filename="workflow_script.nf")
-
-    if not workflow_script_url:
-        raise ResponseException(404, {})
+        return FileResponse(path=db_workflow.workflow_script_path, filename="workflow_script.nf")
     return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_script_url)
 
 
@@ -89,12 +89,19 @@ async def upload_workflow_script(
     """
 
     await user_login(auth)
+    workflow_id, workflow_dir = create_resource_dir(WORKFLOWS_ROUTER, resource_id=None)
+    nf_script_dest = join(workflow_dir, nextflow_script.filename)
     try:
-        workflow_id, workflow_url = await manager_workflows.create_workflow_space(nextflow_script)
-    except Exception as e:
-        logger.exception(f"Error in upload_workflow_script: {e}")
-        # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": f"internal server error: {e}"})
+        await receive_resource(file=nextflow_script, resource_dest=nf_script_dest)
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=f"Failed to receive the workflow resource, error: {error}")
+    await db_create_workflow(
+        workflow_id=workflow_id,
+        workflow_dir=workflow_dir,
+        workflow_script_path=nf_script_dest,
+        workflow_script_base=nextflow_script.filename
+    )
+    workflow_url = get_resource_url(WORKFLOWS_ROUTER, workflow_id)
     return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
 
 
@@ -113,19 +120,22 @@ async def update_workflow_script(
 
     await user_login(auth)
     try:
-        workflow_id, updated_workflow_url = await manager_workflows.update_workflow_space(
-            file=nextflow_script,
-            workflow_id=workflow_id
-        )
-    except Exception as e:
-        logger.exception(f"Error in update_workflow_script: {e}")
-        # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": f"internal server error: {e}"})
+        delete_resource_dir(WORKFLOWS_ROUTER, workflow_id)
+    except FileNotFoundError:
+        # Resource not available, nothing to be deleted
+        pass
 
-    return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=updated_workflow_url)
-
-    # Not in the Web API Specification. Will be implemented if needed.
-    # TODO: Implement that since we have some sort of dummy security check
-    # @router.delete("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
-    # async def delete_workflow_space(workflow_id: str) -> WorkflowRsrc:
-    #   pass
+    workflow_id, workflow_dir = create_resource_dir(WORKFLOWS_ROUTER, resource_id=workflow_id)
+    nf_script_dest = join(workflow_dir, nextflow_script.filename)
+    try:
+        await receive_resource(file=nextflow_script, resource_dest=nf_script_dest)
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=f"Failed to receive the workflow resource, error: {error}")
+    await db_create_workflow(
+        workflow_id=workflow_id,
+        workflow_dir=workflow_dir,
+        workflow_script_path=nf_script_dest,
+        workflow_script_base=nextflow_script.filename
+    )
+    workflow_url = get_resource_url(WORKFLOWS_ROUTER, workflow_id)
+    return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)

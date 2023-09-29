@@ -1,35 +1,41 @@
 import logging
-from os import unlink
+from os import remove, unlink
+from shutil import rmtree
 from typing import List, Union
-
 from fastapi import (
     APIRouter,
     BackgroundTasks,
     Depends,
     Header,
+    HTTPException,
     status,
     UploadFile,
 )
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from operandi_server.exceptions import (
-    ResponseException,
-    WorkspaceException,
-    WorkspaceGoneException,
-    WorkspaceNotValidException,
+
+from ocrd import Resolver
+from ocrd.workspace_bagger import WorkspaceBagger
+
+from operandi_server.constants import WORKSPACES_ROUTER, DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME
+from operandi_server.exceptions import WorkspaceNotValidException
+from operandi_server.files_manager import (
+    create_resource_dir,
+    delete_resource_dir,
+    get_all_resources_url,
+    get_resource_url,
+    receive_resource
 )
-from operandi_server.managers import ManagerWorkspaces
 from operandi_server.models import WorkspaceRsrc
+from operandi_server.utils import extract_bag_info, get_workspace_bag, validate_bag
+from operandi_utils.database import db_create_workspace, db_get_workspace, db_update_workspace
 from .user import user_login
 
 
 router = APIRouter(tags=["Workspace"])
-
 logger = logging.getLogger(__name__)
-manager_workspaces = ManagerWorkspaces()
 
 
-# TODO: Refine all the exceptions...
 @router.get("/workspace")
 async def list_workspaces(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkspaceRsrc]:
     """
@@ -39,7 +45,7 @@ async def list_workspaces(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> 
     `curl -X GET SERVER_ADDR/workspace`
     """
     await user_login(auth)
-    workspaces = manager_workspaces.get_workspaces()
+    workspaces = get_all_resources_url(WORKSPACES_ROUTER)
     response = []
     for workspace in workspaces:
         ws_id, ws_url = workspace
@@ -65,24 +71,80 @@ async def get_workspace(
     """
     await user_login(auth)
     try:
-        workspace_url = manager_workspaces.get_workspace_url(workspace_id)
-    except Exception as e:
-        logger.exception(f"Unexpected error in get_workspace: {e}")
-        # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": f"internal server error: {e}"})
-
-    if not workspace_url:
-        raise ResponseException(404, {"error": "workspace_url is None"})
-
+        db_workspace = await db_get_workspace(workspace_id=workspace_id)
+        workspace_url = get_resource_url(WORKSPACES_ROUTER, resource_id=workspace_id)
+    except RuntimeError:
+        raise HTTPException(status_code=404, detail=f"Non-existing DB entry for workspace id:{workspace_id}")
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Non-existing local entry workspace id:{workspace_id}")
     if accept == "application/vnd.ocrd+zip":
-        bag_path = await manager_workspaces.get_workspace_bag(workspace_id)
+        bag_path = get_workspace_bag(db_workspace)
         if not bag_path:
-            raise ResponseException(404, {"error": "bag_path is None"})
+            raise HTTPException(status_code=404, detail=f"No bag was produced for workspace id: {workspace_id}")
         # Remove the produced bag after sending it in the response
         background_tasks.add_task(unlink, bag_path)
         return FileResponse(bag_path)
-
     return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=workspace_url)
+
+
+@router.post(
+    path="/workspace/import_external",
+    response_model=WorkspaceRsrc,
+    status_code=status.HTTP_201_CREATED,
+    summary="Import workspace from mets url",
+    response_model_exclude_unset=True,
+    response_model_exclude_none=True
+)
+async def post_workspace_from_url(
+        mets_url: str,
+        file_grp: str = DEFAULT_FILE_GRP,
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+) -> WorkspaceRsrc:
+
+    await user_login(auth)
+    mets_basename: str = DEFAULT_METS_BASENAME
+    workspace_id, workspace_dir = create_resource_dir(WORKSPACES_ROUTER)
+    bag_dest = f"{workspace_dir}.zip"
+
+    resolver = Resolver()
+    # Create an OCR-D Workspace from a mets URL
+    # without downloading the files referenced in the mets file
+    workspace = resolver.workspace_from_url(
+        mets_url=mets_url,
+        clobber_mets=False,
+        mets_basename=mets_basename,
+        download=False
+    )
+
+    # TODO: This allows only a single file group
+    #  implement for a list of file groups
+    if file_grp:
+        # Remove unnecessary file groups from the mets file to reduce the size
+        remove_groups = [x for x in workspace.mets.file_groups if x not in file_grp]
+        for remove_group in remove_groups:
+            workspace.remove_file_group(remove_group, recursive=True, force=True)
+        workspace.save_mets()
+
+    # The ocrd workspace bagger automatically downloads the files/groups
+    WorkspaceBagger(resolver).bag(workspace, dest=bag_dest, ocrd_identifier=workspace_id, processes=1)
+    validate_bag(bag_dest)
+    # Remove old workspace dir (if any)
+    rmtree(workspace_dir, ignore_errors=True)
+    bag_info = extract_bag_info(bag_dest, workspace_dir)
+
+    # Remove the temporary directory
+    rmtree(workspace.directory, ignore_errors=True)
+    # Remove the created zip bag
+    remove(bag_dest)
+
+    await db_create_workspace(workspace_id, workspace_dir, bag_info)
+    workspace_url = get_resource_url(WORKSPACES_ROUTER, workspace_id)
+
+    return WorkspaceRsrc.create(
+        workspace_id=workspace_id,
+        workspace_url=workspace_url,
+        description="Workspace from Mets URL"
+    )
 
 
 @router.post(
@@ -105,53 +167,38 @@ async def post_workspace(
     `curl -X POST SERVER_ADDR/workspace -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
     """
     await user_login(auth)
+    ws_id, ws_dir = create_resource_dir(WORKSPACES_ROUTER, resource_id=None)
+    bag_dest = f"{ws_dir}.zip"
     try:
-        ws_url, ws_id = await manager_workspaces.create_workspace_from_zip(workspace)
-    except WorkspaceNotValidException as e:
-        raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
-    except Exception as e:
-        logger.exception(f"Unexpected error in post_workspace: {e}")
-        # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": f"internal server error: {e}"})
+        await receive_resource(file=workspace, resource_dest=bag_dest)
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=f"Failed to receive the workflow resource, error: {error}")
+    # Remove old workspace dir (if any)
+    rmtree(ws_dir, ignore_errors=True)
 
+    try:
+        validate_bag(bag_dest)
+    except WorkspaceNotValidException as error:
+        raise HTTPException(status_code=422, detail=f"Failed to validate workspace bag: {error}")
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to validate workspace bag: {error}")
+
+    try:
+        bag_info = extract_bag_info(bag_dest, ws_dir)
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to extract workspace bag info: {error}")
+
+    remove(bag_dest)
+    await db_create_workspace(
+        workspace_id=ws_id,
+        workspace_dir=ws_dir,
+        bag_info=bag_info
+    )
+    ws_url = get_resource_url(WORKSPACES_ROUTER, ws_id)
     return WorkspaceRsrc.create(
         workspace_id=ws_id,
         workspace_url=ws_url,
         description="Workspace from ocrd zip"
-    )
-
-
-@router.post(
-    path="/workspace/import_external",
-    response_model=WorkspaceRsrc,
-    status_code=status.HTTP_201_CREATED,
-    summary="Import workspace from mets url",
-    response_model_exclude_unset=True,
-    response_model_exclude_none=True
-)
-async def post_workspace_from_url(
-        mets_url: str,
-        file_grp: str = "DEFAULT",
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
-) -> WorkspaceRsrc:
-
-    await user_login(auth)
-    try:
-        ws_url, ws_id = await manager_workspaces.create_workspace_from_mets_url(
-            mets_url=mets_url,
-            file_grp=file_grp,
-            mets_basename="mets.xml"
-        )
-    except WorkspaceNotValidException as e:
-        raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
-    except Exception as e:
-        logger.exception(f"Unexpected error in create_workspace_from_zip: {e}")
-        # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": f"internal server error: {e}"})
-    return WorkspaceRsrc.create(
-        workspace_id=ws_id,
-        workspace_url=ws_url,
-        description="Workspace from Mets URL"
     )
 
 
@@ -169,14 +216,44 @@ async def put_workspace(
     """
     await user_login(auth)
     try:
-        updated_workspace_url = await manager_workspaces.update_workspace(file=workspace, workspace_id=workspace_id)
-    except WorkspaceNotValidException as e:
-        raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
-    except Exception as e:
-        logger.exception(f"Unexpected error in put_workspace: {e}")
-        # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": f"internal server error: {e}"})
-    return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=updated_workspace_url)
+        delete_resource_dir(WORKSPACES_ROUTER, workspace_id)
+    except FileNotFoundError:
+        # Nothing to be deleted
+        pass
+
+    ws_id, ws_dir = create_resource_dir(WORKSPACES_ROUTER, resource_id=workspace_id)
+    bag_dest = f"{ws_dir}.zip"
+    try:
+        await receive_resource(file=workspace, resource_dest=bag_dest)
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=f"Failed to receive the workflow resource, error: {error}")
+    # Remove old workspace dir (if any)
+    rmtree(ws_dir, ignore_errors=True)
+
+    try:
+        validate_bag(bag_dest)
+    except WorkspaceNotValidException as error:
+        raise HTTPException(status_code=422, detail=f"Failed to validate workspace bag: {error}")
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to validate workspace bag: {error}")
+
+    try:
+        bag_info = extract_bag_info(bag_dest, ws_dir)
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to extract workspace bag info: {error}")
+
+    remove(bag_dest)
+    await db_create_workspace(
+        workspace_id=ws_id,
+        workspace_dir=ws_dir,
+        bag_info=bag_info
+    )
+    ws_url = get_resource_url(WORKSPACES_ROUTER, ws_id)
+    return WorkspaceRsrc.create(
+        workspace_id=ws_id,
+        workspace_url=ws_url,
+        description="Workspace from ocrd zip"
+    )
 
 
 @router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
@@ -192,14 +269,14 @@ async def delete_workspace(
     """
     await user_login(auth)
     try:
-        deleted_workspace_url = await manager_workspaces.delete_workspace(workspace_id)
-    except WorkspaceGoneException as e:
-        raise ResponseException(410, {"error:": f"{e}"})
-    except WorkspaceException as e:
-        raise ResponseException(404, {"error:": f"{e}"})
-    except Exception as e:
-        logger.exception(f"Unexpected error in delete_workspace: {e}")
-        # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": f"internal server error: {e}"})
-
+        db_workspace = await db_get_workspace(workspace_id=workspace_id)
+        deleted_workspace_url = get_resource_url(WORKSPACES_ROUTER, resource_id=workspace_id)
+        delete_resource_dir(WORKSPACES_ROUTER, workspace_id)
+    except RuntimeError:
+        raise HTTPException(status_code=404, detail=f"Non-existing DB entry for workspace id: {workspace_id}")
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Non-existing local entry for workspace id: {workspace_id}")
+    if db_workspace.deleted:
+        raise HTTPException(status_code=410, detail=f"Workspace has been already deleted: {workspace_id}")
+    await db_update_workspace(find_workspace_id=workspace_id, deleted=True)
     return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=deleted_workspace_url)

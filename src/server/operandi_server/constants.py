@@ -8,9 +8,15 @@ except Exception as e:
     OPERANDI_SERVER_URL_LIVE = "http://localhost:8000"
 
 __all__ = [
-    'SERVER_URL',
+    "BASE_DIR",
+    "DEFAULT_FILE_GRP",
+    "DEFAULT_METS_BASENAME",
     "LOG_FILE_PATH",
-    "LOG_LEVEL"
+    "LOG_LEVEL",
+    "SERVER_URL",
+    "WORKFLOW_JOBS_ROUTER",
+    "WORKFLOWS_ROUTER",
+    "WORKSPACES_ROUTER"
 ]
 
 # variables for local testing are read from .env in base-dir with `load_dotenv()`
@@ -22,3 +28,11 @@ LOG_LEVEL: str = "INFO"
 
 # TODO: Revisit this, temporal fix for the test environment
 SERVER_URL: str = getenv("OPERANDI_SERVER_URL_LIVE", OPERANDI_SERVER_URL_LIVE)
+
+BASE_DIR: str = getenv("OPERANDI_SERVER_BASE_DIR", "/tmp/operandi_data")
+WORKFLOW_JOBS_ROUTER: str = "workflow_jobs"
+WORKFLOWS_ROUTER: str = "workflows"
+WORKSPACES_ROUTER: str = "workspaces"
+
+DEFAULT_FILE_GRP: str = "DEFAULT"
+DEFAULT_METS_BASENAME: str = "mets.xml"
