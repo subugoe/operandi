@@ -44,9 +44,10 @@ from .user import user_login
 
 # TODO: Fix this, the correct import must be made according to the env
 try:
-    from tests.constants import OPERANDI_RABBITMQ_URL
+    from tests.constants import OPERANDI_RABBITMQ_URL as RMQ_URL
+    OPERANDI_RABBITMQ_URL = RMQ_URL
 except Exception as e:
-    OPERANDI_RABBITMQ_URL = "http://localhost:5672"
+    OPERANDI_RABBITMQ_URL = "amqp://operandi_user:operandi_password@localhost:5672/"
 
 router = APIRouter(tags=["Workflow"])
 logger = logging.getLogger(__name__)
