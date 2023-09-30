@@ -48,7 +48,7 @@ except Exception as e:
     OPERANDI_RABBITMQ_URL = "amqp://operandi_user:operandi_password@localhost:5672/"
 
 router = APIRouter(tags=["Workflow"])
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("operandi_server.routers.workflow")
 
 # TODO: Fix this - should not be here!
 logger.info(f"Trying to connect RMQ Publisher to rabbitmq url: {OPERANDI_RABBITMQ_URL}")

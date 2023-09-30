@@ -33,7 +33,7 @@ from .user import user_login
 
 
 router = APIRouter(tags=["Workspace"])
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("operandi_server.routers.workspace")
 
 
 @router.get("/workspace")

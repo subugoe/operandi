@@ -18,7 +18,7 @@ OPERANDI_DB_URL: str = environ.get("OPERANDI_DB_URL")
 
 
 async def db_initiate_database(db_url: str, db_name: str = None, doc_models: List[Document] = None):
-    logger = getLogger(__name__)
+    logger = getLogger("operandi_utils.database.base")
     if db_name is None:
         db_name = OPERANDI_DB_NAME
     if doc_models is None:

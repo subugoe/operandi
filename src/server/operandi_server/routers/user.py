@@ -7,7 +7,7 @@ from operandi_server.exceptions import AuthenticationError, RegistrationError
 from operandi_server.models import UserAction
 
 router = APIRouter(tags=["User"])
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("operandi_server.routers.user")
 
 
 @router.get("/user/login", responses={"200": {"model": UserAction}})

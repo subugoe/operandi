@@ -16,7 +16,6 @@ __all__ = [
     'RECONNECT_WAIT',
     'RECONNECT_TRIES',
     'PREFETCH_COUNT',
-    'LOG_FORMAT',
     'LOG_LEVEL'
 ]
 
@@ -44,5 +43,4 @@ RECONNECT_TRIES: int = 3
 # Check here: https://www.rabbitmq.com/consumer-prefetch.html
 PREFETCH_COUNT: int = 1
 
-LOG_FORMAT: str = '%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
-LOG_LEVEL: int = logging.WARNING
+LOG_LEVEL: int = logging.INFO

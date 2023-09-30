@@ -26,8 +26,7 @@ from .constants import (
 
 
 class RMQConnector:
-    def __init__(self, logger, host: str = HOST, port: int = PORT, vhost: str = VHOST) -> None:
-        self._logger = logger
+    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST) -> None:
         self._host = host
         self._port = port
         self._vhost = vhost

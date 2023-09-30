@@ -1,7 +1,7 @@
 import json
 import logging
 import signal
-from os import getppid, setsid
+from os import getpid, getppid, setsid
 from sys import exit
 
 from operandi_utils import reconfigure_all_loggers
@@ -24,7 +24,7 @@ from .constants import (
 
 class JobStatusWorker:
     def __init__(self, db_url, rabbitmq_url, queue_name, test_sbatch=False):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
         self.queue_name = queue_name
         self.log_file_path = f"{LOG_FILE_PATH_WORKER_PREFIX}_{queue_name}.log"
         self.test_sbatch = test_sbatch
@@ -50,10 +50,7 @@ class JobStatusWorker:
             # Make the current process session leader
             setsid()
             # Reconfigure all loggers to the same format
-            reconfigure_all_loggers(
-                log_level=LOG_LEVEL_WORKER,
-                log_file_path=self.log_file_path
-            )
+            reconfigure_all_loggers(log_level=LOG_LEVEL_WORKER, log_file_path=self.log_file_path)
             self.log.info(f"Activating signal handler for SIGINT, SIGTERM")
             signal.signal(signal.SIGINT, self.signal_handler)
             signal.signal(signal.SIGTERM, self.signal_handler)

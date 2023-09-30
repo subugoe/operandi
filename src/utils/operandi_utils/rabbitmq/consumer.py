@@ -4,31 +4,20 @@ some part of the source code from the official
 RabbitMQ documentation.
 """
 
-import logging
+from logging import getLogger
 from typing import Any, Union
 
 from pika import PlainCredentials
 
-from .constants import (
-    DEFAULT_QUEUE,
-    LOG_LEVEL,
-    RABBIT_MQ_HOST as HOST,
-    RABBIT_MQ_PORT as PORT,
-    RABBIT_MQ_VHOST as VHOST
-)
+from .constants import LOG_LEVEL
 from .connector import RMQConnector
 
 
 class RMQConsumer(RMQConnector):
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST,
-                 logger_name: str = '') -> None:
-        if not logger_name:
-            logger_name = __name__
-        logger = logging.getLogger(logger_name)
-        logging.getLogger(logger_name).setLevel(LOG_LEVEL)
-        # This may mess up the global logger
-        logging.basicConfig(level=logging.WARNING)
-        super().__init__(logger=logger, host=host, port=port, vhost=vhost)
+    def __init__(self, host: str, port: int, vhost: str) -> None:
+        self.logger = getLogger("operandi_utils.rabbitmq.consumer")
+        self.logger.setLevel(LOG_LEVEL)
+        super().__init__(host=host, port=port, vhost=vhost)
 
         self.consumer_tag = None
         self.consuming = False
@@ -72,7 +61,7 @@ class RMQConsumer(RMQConnector):
             queue_name: str,
             callback_method: Any
     ) -> None:
-        self._logger.debug(f'Configuring consuming with queue: {queue_name}')
+        self.logger.debug(f'Configuring consuming with queue: {queue_name}')
         self._channel.add_on_cancel_callback(self.__on_consumer_cancelled)
         self.consumer_tag = self._channel.basic_consume(
             queue_name,
@@ -91,10 +80,10 @@ class RMQConsumer(RMQConnector):
         return None
 
     def __on_consumer_cancelled(self, frame: Any) -> None:
-        self._logger.warning(f'The consumer was cancelled remotely in frame: {frame}')
+        self.logger.warning(f'The consumer was cancelled remotely in frame: {frame}')
         if self._channel:
             self._channel.close()
 
     def ack_message(self, delivery_tag: int) -> None:
-        self._logger.debug(f'Acknowledging message {delivery_tag}')
+        self.logger.debug(f'Acknowledging message {delivery_tag}')
         self._channel.basic_ack(delivery_tag)

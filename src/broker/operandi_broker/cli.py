@@ -1,9 +1,9 @@
 import click
+from logging import getLogger
 from os import environ
 from time import sleep
 
 from operandi_utils import reconfigure_all_loggers
-from operandi_utils.database import sync_db_initiate_database
 from operandi_utils.rabbitmq import (
     DEFAULT_QUEUE_FOR_HARVESTER,
     DEFAULT_QUEUE_FOR_USERS,
@@ -39,6 +39,7 @@ def cli(**kwargs):  # pylint: disable=unused-argument
               help='The URL of the MongoDB, format: mongodb://host:port',
               type=DatabaseParamType())
 def start_broker(queue: str, database: str):
+    log = getLogger("operandi_broker.cli")
     service_broker = ServiceBroker(
         db_url=database,
         rabbitmq_url=queue
@@ -51,13 +52,13 @@ def start_broker(queue: str, database: str):
     ]
     try:
         for queue_name in queues:
-            service_broker.log.info(f"Creating a worker processes to consume from queue: {queue_name}")
+            log.info(f"Creating a worker processes to consume from queue: {queue_name}")
             service_broker.create_worker_process(queue_name=queue_name, status_checker=False)
-        service_broker.log.info(
+        log.info(
             f"Creating a status checker worker processes to consume from queue: {DEFAULT_QUEUE_FOR_JOB_STATUSES}")
         service_broker.create_worker_process(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES, status_checker=True)
     except Exception as error:
-        service_broker.log.error(f"Error while creating worker processes: {error}")
+        log.error(f"Error while creating worker processes: {error}")
 
     # Reconfigure all loggers to the same format
     reconfigure_all_loggers(
@@ -66,8 +67,6 @@ def start_broker(queue: str, database: str):
     )
 
     try:
-        sync_db_initiate_database(database)
-
         # Sleep the parent process till a signal is invoked
         # Better than sleeping in loop, not tested yet
         # signal.pause()
@@ -78,12 +77,12 @@ def start_broker(queue: str, database: str):
     # TODO: Check this in docker environment
     # This may not work with SSH/Docker, SIGINT may not be caught with KeyboardInterrupt.
     except KeyboardInterrupt:
-        service_broker.log.info(f"SIGINT signal received. Sending SIGINT to worker processes.")
+        log.info(f"SIGINT signal received. Sending SIGINT to worker processes.")
         # Sends SIGINT to workers
         service_broker.kill_workers()
-        service_broker.log.info(f"Closing gracefully in 3 seconds!")
+        log.info(f"Closing gracefully in 3 seconds!")
         sleep(3)
         exit(0)
     except Exception as error:
         # This is for logging any other errors
-        service_broker.log.error(f"Unexpected error: {error}")
+        log.error(f"Unexpected error: {error}")

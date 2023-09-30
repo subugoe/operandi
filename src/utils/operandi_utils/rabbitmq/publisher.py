@@ -1,33 +1,23 @@
-import logging
+from logging import getLogger
 from typing import Optional
 
-from pika import (
-    BasicProperties,
-    PlainCredentials
-)
+from pika import BasicProperties, PlainCredentials
 
+from .connector import RMQConnector
 from .constants import (
     DEFAULT_EXCHANGER_NAME,
-    DEFAULT_ROUTER,
-    LOG_FORMAT,
     LOG_LEVEL,
     RABBIT_MQ_HOST as HOST,
     RABBIT_MQ_PORT as PORT,
     RABBIT_MQ_VHOST as VHOST
 )
-from .connector import RMQConnector
 
 
 class RMQPublisher(RMQConnector):
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST,
-                 logger_name: str = None) -> None:
-        if logger_name is None:
-            logger_name = __name__
-        logger = logging.getLogger(logger_name)
-        logging.getLogger(logger_name).setLevel(LOG_LEVEL)
-        # This may mess up the global logger
-        logging.basicConfig(level=logging.WARNING)
-        super().__init__(logger=logger, host=host, port=port, vhost=vhost)
+    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST) -> None:
+        self.logger = getLogger("operandi_utils.rabbitmq.publisher")
+        self.logger.setLevel(LOG_LEVEL)
+        super().__init__(host=host, port=port, vhost=vhost)
 
         self.message_counter = 0
         self.deliveries = {}
@@ -112,6 +102,8 @@ class RMQPublisher(RMQConnector):
         # Note: There is no way to publish to a queue directly.
         # Publishing happens through an exchange agent with
         # a routing key - specified when binding the queue to the exchange
+        self.logger.info(f"Publishing message to queue: {queue_name}")
+        self.logger.debug(f"Publishing bytes: {message}")
         RMQConnector.basic_publish(
             self._channel,
             exchange_name=exchange_name,
@@ -123,8 +115,8 @@ class RMQPublisher(RMQConnector):
 
         self.message_counter += 1
         self.deliveries[self.message_counter] = True
-        self._logger.info(f'Published message #{self.message_counter}')
+        self.logger.info(f"Delivered message #{self.message_counter}")
 
     def enable_delivery_confirmations(self) -> None:
-        self._logger.debug('Enabling delivery confirmations (Confirm.Select RPC)')
+        self.logger.info("Enabling delivery confirmations")
         RMQConnector.confirm_delivery(channel=self._channel)

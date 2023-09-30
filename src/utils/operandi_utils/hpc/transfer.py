@@ -27,7 +27,7 @@ class HPCTransfer:
             username: str = OPERANDI_HPC_USERNAME,
             key_path: str = OPERANDI_HPC_SSH_KEYPATH
     ):
-        self.log = getLogger(__name__)
+        self.log = getLogger("operandi_utils.hpc.transfer")
         self.log.info(f"Trying to connect to HPC host: {host}, "
                       f"via proxy: {proxy_host}, "
                       f"with username: {username}, "

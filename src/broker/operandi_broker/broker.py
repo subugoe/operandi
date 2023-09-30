@@ -12,7 +12,7 @@ from .job_status_worker import JobStatusWorker
 
 class ServiceBroker:
     def __init__(self, db_url: str, rabbitmq_url: str, test_sbatch: bool = False):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger("operandi_broker.service_broker")
         self.test_sbatch = test_sbatch
 
         try:

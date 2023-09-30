@@ -18,7 +18,7 @@ from operandi_utils.database import db_initiate_database
 
 class OperandiServer(FastAPI):
     def __init__(self, live_server_url: str, local_server_url: str, db_url: str, rabbitmq_url: str):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger("operandi_server.server")
         self.live_server_url = live_server_url
         self.local_server_url = local_server_url
 

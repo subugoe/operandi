@@ -27,9 +27,8 @@ from operandi_utils import is_url_responsive
 
 class Harvester:
     def __init__(self, server_address: str, auth_username: str, auth_password: str):
-        self.logger = logging.getLogger(__name__)
-        logging.getLogger(__name__).setLevel(LOG_LEVEL)
-        logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+        self.logger = logging.getLogger("operandi_harvester.harvester")
+        self.logger.setLevel(LOG_LEVEL)
 
         # The address of the Operandi Server
         self.server_address = server_address
