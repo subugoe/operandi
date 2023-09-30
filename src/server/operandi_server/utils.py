@@ -2,7 +2,7 @@ from ocrd_utils import initLogging
 
 import bagit
 from tempfile import NamedTemporaryFile
-from typing import Union
+from typing import List, Union
 from uuid import uuid4
 from zipfile import ZipFile
 
@@ -10,10 +10,12 @@ from ocrd import Resolver
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
+from operandi_server.constants import DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME
 from operandi_server.exceptions import WorkspaceNotValidException
-from .constants import DEFAULT_METS_BASENAME
+
 
 __all__ = [
+    "create_workspace_bag_from_remote_url",
     "extract_bag_info",
     "generate_id",
     "get_workspace_bag",
@@ -36,9 +38,6 @@ def safe_init_logging() -> None:
 
 
 def generate_id(file_ext: str = None):
-    # TODO: We should consider using
-    #  uuid1 or uuid3 in the future
-    # Generate a random ID (uuid4)
     generated_id = str(uuid4())
     if file_ext:
         generated_id += file_ext
@@ -72,7 +71,6 @@ def validate_bag(bag_dest: str):
         raise WorkspaceNotValidException(valid_report.to_xml())
 
 
-# TODO: Refine this and get rid of the low level os.path bullshits
 def get_workspace_bag(db_workspace) -> Union[str, None]:
     """
     Create workspace bag.
@@ -104,3 +102,38 @@ def get_workspace_bag(db_workspace) -> Union[str, None]:
         processes=1
     )
     return bag_dest
+
+
+def create_workspace_bag_from_remote_url(
+        mets_url: str,
+        workspace_id: str,
+        bag_dest: str,
+        mets_basename: str = DEFAULT_METS_BASENAME,
+        preserve_file_grps: List[str] = None
+) -> str:
+    if not preserve_file_grps:
+        preserve_file_grps = [DEFAULT_FILE_GRP]
+
+    resolver = Resolver()
+    # Create an OCR-D Workspace from a remote mets URL
+    # without downloading the files referenced in the mets file
+    workspace = resolver.workspace_from_url(
+        mets_url=mets_url,
+        clobber_mets=False,
+        mets_basename=mets_basename,
+        download=False
+    )
+
+    remove_groups = [x for x in workspace.mets.file_groups if x not in preserve_file_grps]
+    for group in remove_groups:
+        workspace.remove_file_group(group, recursive=True, force=True)
+    workspace.save_mets()
+
+    # Resolves and downloads all file groups and files in the mets file
+    WorkspaceBagger(resolver).bag(
+        workspace,
+        dest=bag_dest,
+        ocrd_identifier=workspace_id,
+        processes=1   # Do not pass higher processes number
+    )
+    return workspace.directory

@@ -14,10 +14,7 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from ocrd import Resolver
-from ocrd.workspace_bagger import WorkspaceBagger
-
-from operandi_server.constants import WORKSPACES_ROUTER, DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME
+from operandi_server.constants import WORKSPACES_ROUTER
 from operandi_server.exceptions import WorkspaceNotValidException
 from operandi_server.files_manager import (
     create_resource_dir,
@@ -27,7 +24,12 @@ from operandi_server.files_manager import (
     receive_resource
 )
 from operandi_server.models import WorkspaceRsrc
-from operandi_server.utils import extract_bag_info, get_workspace_bag, validate_bag
+from operandi_server.utils import (
+    create_workspace_bag_from_remote_url,
+    extract_bag_info,
+    get_workspace_bag,
+    validate_bag
+)
 from operandi_utils.database import db_create_workspace, db_get_workspace, db_update_workspace
 from .user import user_login
 
@@ -97,43 +99,40 @@ async def get_workspace(
 )
 async def post_workspace_from_url(
         mets_url: str,
-        file_grp: str = DEFAULT_FILE_GRP,
+        preserve_file_grps: List[str] = None,
+        mets_basename: str = None,
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
 
     await user_login(auth)
-    mets_basename: str = DEFAULT_METS_BASENAME
     workspace_id, workspace_dir = create_resource_dir(WORKSPACES_ROUTER)
     bag_dest = f"{workspace_dir}.zip"
 
-    resolver = Resolver()
-    # Create an OCR-D Workspace from a mets URL
-    # without downloading the files referenced in the mets file
-    workspace = resolver.workspace_from_url(
+    ws_dir = create_workspace_bag_from_remote_url(
         mets_url=mets_url,
-        clobber_mets=False,
+        workspace_id=workspace_id,
+        bag_dest=bag_dest,
         mets_basename=mets_basename,
-        download=False
+        preserve_file_grps=preserve_file_grps
     )
 
-    # TODO: This allows only a single file group
-    #  implement for a list of file groups
-    if file_grp:
-        # Remove unnecessary file groups from the mets file to reduce the size
-        remove_groups = [x for x in workspace.mets.file_groups if x not in file_grp]
-        for remove_group in remove_groups:
-            workspace.remove_file_group(remove_group, recursive=True, force=True)
-        workspace.save_mets()
+    try:
+        validate_bag(bag_dest)
+    except WorkspaceNotValidException as error:
+        raise HTTPException(status_code=422, detail=f"Failed to validate workspace bag: {error}")
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to validate workspace bag: {error}")
 
-    # The ocrd workspace bagger automatically downloads the files/groups
-    WorkspaceBagger(resolver).bag(workspace, dest=bag_dest, ocrd_identifier=workspace_id, processes=1)
-    validate_bag(bag_dest)
     # Remove old workspace dir (if any)
     rmtree(workspace_dir, ignore_errors=True)
-    bag_info = extract_bag_info(bag_dest, workspace_dir)
+
+    try:
+        bag_info = extract_bag_info(bag_dest, workspace_dir)
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to extract workspace bag info: {error}")
 
     # Remove the temporary directory
-    rmtree(workspace.directory, ignore_errors=True)
+    rmtree(ws_dir, ignore_errors=True)
     # Remove the created zip bag
     remove(bag_dest)
 

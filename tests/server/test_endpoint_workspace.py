@@ -15,7 +15,7 @@ from .helpers_asserts import (
 
 
 # Disabled test - takes 13 secs to finish...
-def _test_post_workspace_url(operandi, auth, db_workspaces):
+def test_post_workspace_url(operandi, auth, db_workspaces):
     mets_url = "https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
     file_grp = "DEFAULT"
     response = operandi.post(
