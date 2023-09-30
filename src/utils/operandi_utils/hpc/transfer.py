@@ -254,11 +254,11 @@ class HPCTransfer:
         The remote source directory needs to exist.
         All subdirectories in source are created under destination.
         """
+        makedirs(name=local_dst, mode=mode, exist_ok=True)
         for item in self.sftp.listdir(remote_src):
             item_src = join(remote_src, item)
             item_dst = join(local_dst, item)
             if S_ISDIR(self.sftp.lstat(item_src).st_mode):
-                makedirs(name=item_dst, mode=mode, exist_ok=True)
                 self.get_dir(remote_src=item_src, local_dst=item_dst, mode=mode)
             else:
                 self.get_file(remote_src=item_src, local_dst=item_dst)
@@ -273,11 +273,11 @@ class HPCTransfer:
         The remote destination directory needs to exist.
         All subdirectories in source are created under destination.
         """
+        self.mkdir_p(remotepath=remote_dst, mode=mode)
         for item in listdir(local_src):
             item_src = join(local_src, item)
             item_dst = join(remote_dst, item)
             if isdir(item_src):
-                self.mkdir_p(remotepath=item_dst, mode=mode)
                 self.put_dir(local_src=item_src, remote_dst=item_dst, mode=mode)
             else:
                 self.sftp.chdir(remote_dst)

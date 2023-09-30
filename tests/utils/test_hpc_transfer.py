@@ -37,7 +37,7 @@ def test_hpc_connector_transfer_dir(hpc_data_transfer):
     """
     Testing the put_dir and get_dir functionality of the HPC transfer
     """
-    test_local_dir_path = join(to_asset_path(resource_type="workspaces", name="dummy_ws"), "data")
+    test_local_dir_path = to_asset_path(resource_type="workspaces", name="dummy_ws")
     assert_exists_dir(test_local_dir_path)
 
     current_time = datetime.now().strftime("%Y%m%d_%H%M")
@@ -47,7 +47,7 @@ def test_hpc_connector_transfer_dir(hpc_data_transfer):
         local_src=test_local_dir_path,
         remote_dst=test_hpc_dir_path
     )
-    sleep(2)
+    sleep(5)
     test_local_received_dir_path = join(OPERANDI_TESTS_LOCAL_DIR_WORKSPACES, workspace_id)
     hpc_data_transfer.get_dir(
         remote_src=test_hpc_dir_path,
