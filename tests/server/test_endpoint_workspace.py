@@ -1,12 +1,7 @@
 from os.path import join
 
-from tests.helpers_asserts import (
-    assert_exists_db_resource,
-    assert_exists_db_resource_not
-)
-from tests.constants import (
-    OPERANDI_TESTS_LOCAL_DIR_WORKSPACES
-)
+from tests.helpers_asserts import assert_exists_db_resource, assert_exists_db_resource_not
+from tests.constants import OPERANDI_TESTS_LOCAL_DIR_WORKSPACES
 from .helpers_asserts import (
     assert_local_dir_workspace,
     assert_local_dir_workspace_not,
@@ -14,7 +9,6 @@ from .helpers_asserts import (
 )
 
 
-# Disabled test - takes 13 secs to finish...
 def test_post_workspace_url(operandi, auth, db_workspaces):
     mets_url = "https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
     file_grp = "DEFAULT"
@@ -115,8 +109,7 @@ def test_delete_workspace(operandi, auth, db_workspaces, bytes_workspace2):
     assert_exists_db_resource_not(db_deleted_workspace, delete_workspace_id)
 
 
-# TODO for the WebAPI: Non-existing resource should not return an exception to the user!
-def _test_delete_workspace_non_existing(operandi, auth, bytes_workspace2):
+def test_delete_workspace_non_existing(operandi, auth, bytes_workspace2):
     response = operandi.post(
         "/workspace",
         files={"workspace": bytes_workspace2},
@@ -154,8 +147,7 @@ def test_get_workspace(operandi, auth, bytes_workspace2):
                 filePtr.write(chunk)
 
 
-# TODO for the WebAPI: Non-existing resource should not return an exception to the user!
-def _test_get_workspace_non_existing(operandi, auth):
+def test_get_workspace_non_existing(operandi, auth):
     non_workspace_id = "non_existing_workspace_id"
     response = operandi.get(
         f"/workspace/{non_workspace_id}",
