@@ -129,8 +129,8 @@ dmypy.json
 .pyre/
 
 # Nextflow cache and log files
-ExampleWorkflows/workflow*/.nextflow*
-ExampleWOrkflows/workflow*/work
+archived_workflows/workflow*/.nextflow*
+archived_workflows/workflow*/work
 
 # PyCharm files
 .idea/*
