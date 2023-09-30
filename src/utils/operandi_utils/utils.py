@@ -8,6 +8,7 @@ from re import match as re_match
 from requests import get, post
 from requests.exceptions import RequestException
 from shutil import make_archive, move, unpack_archive
+from typing import Dict
 
 
 # Based on:

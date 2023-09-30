@@ -7,8 +7,7 @@ from fastapi import FastAPI, status
 from operandi_utils import (
     OPERANDI_VERSION,
     reconfigure_all_loggers,
-    verify_database_uri,
-    verify_and_parse_mq_uri
+    verify_database_uri
 )
 from operandi_utils.database import db_initiate_database
 from operandi_utils.rabbitmq import (
@@ -21,7 +20,7 @@ from operandi_utils.rabbitmq import (
     # Requests for job status polling
     # are sent to this queue
     DEFAULT_QUEUE_FOR_JOB_STATUSES,
-    RMQPublisher
+    get_connection_publisher
 )
 
 from operandi_server.authentication import create_user_if_not_available
@@ -39,22 +38,18 @@ class OperandiServer(FastAPI):
         try:
             self.db_url = verify_database_uri(db_url)
             self.log.debug(f'Verified MongoDB URL: {db_url}')
-            rmq_data = verify_and_parse_mq_uri(rabbitmq_url)
-            self.log.debug(f'Verified RabbitMQ URL: {rabbitmq_url}')
-            self.rmq_username = rmq_data['username']
-            self.rmq_password = rmq_data['password']
-            self.rmq_host = rmq_data['host']
-            self.rmq_port = rmq_data['port']
-            self.rmq_vhost = rmq_data['vhost']
-            self.log.debug(f'Verified RabbitMQ Credentials: {self.rmq_username}:{self.rmq_password}')
-            self.log.debug(f'Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         except ValueError as e:
             raise ValueError(e)
 
         # These are initialized on startup_event of the server
-        self.rmq_publisher = None
-        self.workflow_manager = None
-        self.workspace_manager = None
+        self.log.info(f"Trying to connect RMQ Publisher to rabbitmq url: {rabbitmq_url}")
+        self.rmq_publisher = get_connection_publisher(rabbitmq_url=rabbitmq_url, enable_acks=True)
+        self.log.info(f"RMQPublisher connected")
+
+        # Create the message queues (nothing happens if they already exist)
+        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
+        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
+        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES, auto_delete=True)
 
         live_server_80 = {"url": self.live_server_url, "description": "The URL of the live OPERANDI server."}
         local_server = {"url": self.local_server_url, "description": "The URL of the local OPERANDI server."}
@@ -95,14 +90,6 @@ class OperandiServer(FastAPI):
         # Insert the default server and harvester credentials to the DB
         await self.insert_default_credentials()
 
-        # Connect the publisher to the RabbitMQ Server
-        self.connect_publisher(username=self.rmq_username, password=self.rmq_password, enable_acks=True)
-
-        # Create the message queues (nothing happens if they already exist)
-        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
-        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
-        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES, auto_delete=True)
-
         # Include the endpoints of the OCR-D WebAPI
         self.include_webapi_routers()
 
@@ -118,27 +105,6 @@ class OperandiServer(FastAPI):
             "time": _time
         }
         return json_message
-
-    def connect_publisher(
-            self,
-            username: str,
-            password: str,
-            enable_acks: bool = True
-    ) -> None:
-        self.log.info(f"Connecting RMQPublisher to RabbitMQ server: "
-                      f"{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
-        self.rmq_publisher = RMQPublisher(
-            host=self.rmq_host,
-            port=self.rmq_port,
-            vhost=self.rmq_vhost,
-        )
-        self.rmq_publisher.authenticate_and_connect(username=username, password=password)
-        if enable_acks:
-            self.rmq_publisher.enable_delivery_confirmations()
-            self.log.debug(f"Delivery confirmations are enabled")
-        else:
-            self.log.debug(f"Delivery confirmations are disabled")
-        self.log.debug(f"Successfully connected RMQPublisher.")
 
     def include_webapi_routers(self):
         self.include_router(RouterDiscovery().router)

@@ -14,7 +14,7 @@ from operandi_utils.database import (
     sync_db_update_workflow_job
 )
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
-from operandi_utils.rabbitmq import RMQConsumer
+from operandi_utils.rabbitmq import get_connection_consumer
 
 from .constants import (
     LOG_LEVEL_WORKER,
@@ -23,20 +23,18 @@ from .constants import (
 
 
 class JobStatusWorker:
-    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, rmq_username, rmq_password, queue_name, test_sbatch=False):
+    def __init__(self, db_url, rabbitmq_url, queue_name, test_sbatch=False):
         self.log = logging.getLogger(__name__)
         self.queue_name = queue_name
         self.log_file_path = f"{LOG_FILE_PATH_WORKER_PREFIX}_{queue_name}.log"
         self.test_sbatch = test_sbatch
 
         self.db_url = db_url
-        # Connection to RabbitMQ related parameters
-        self.rmq_host = rmq_host
-        self.rmq_port = rmq_port
-        self.rmq_vhost = rmq_vhost
-        self.rmq_username = rmq_username
-        self.rmq_password = rmq_password
-        self.rmq_consumer = None
+        self.log.info(f"Trying to connect RMQConsumer to rabbitmq url: {rabbitmq_url}")
+        self.rmq_consumer = get_connection_consumer(rabbitmq_url=rabbitmq_url)
+        self.log.info(f"RMQConsumer connected")
+        self.configure_consuming(self.queue_name, self.__on_message_consumed_callback_hpc)
+        self.log.info(f"Configured consuming")
 
         self.hpc_executor = None
         self.hpc_io_transfer = None
@@ -69,27 +67,10 @@ class JobStatusWorker:
             self.hpc_io_transfer = HPCTransfer()
             self.log.info("HPC transfer connection successful.")
 
-            self.connect_consumer()
-            self.configure_consuming(self.queue_name, self.__on_message_consumed_callback_hpc)
-
             self.start_consuming()
         except Exception as e:
             self.log.error(f"The worker failed to run, reason: {e}")
             raise Exception(f"The worker failed to run, reason: {e}")
-
-    def connect_consumer(self):
-        if self.rmq_consumer:
-            # If for some reason connect_consumer() is called more than once.
-            self.log.warning(f"The RMQConsumer was already instantiated. "
-                             f"Overwriting the existing RMQConsumer.")
-        self.log.info(f"Connecting RMQConsumer to RabbitMQ server: "
-                      f"{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
-        self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
-        # TODO: Remove this information before the release
-        self.log.debug(f"RMQConsumer authenticates with username: "
-                       f"{self.rmq_username}, password: {self.rmq_password}")
-        self.rmq_consumer.authenticate_and_connect(username=self.rmq_username, password=self.rmq_password)
-        self.log.info(f"Successfully connected RMQConsumer.")
 
     def configure_consuming(self, queue_name, callback_method):
         if not self.rmq_consumer:

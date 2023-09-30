@@ -15,7 +15,6 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_utils import verify_and_parse_mq_uri
 from operandi_utils.rabbitmq import (
     # Requests coming from the
     # Harvester are sent to this queue
@@ -26,7 +25,7 @@ from operandi_utils.rabbitmq import (
     # Requests for job status polling
     # are sent to this queue
     DEFAULT_QUEUE_FOR_JOB_STATUSES,
-    RMQPublisher
+    get_connection_publisher
 )
 from operandi_server.constants import WORKFLOWS_ROUTER, WORKFLOW_JOBS_ROUTER, WORKSPACES_ROUTER
 from operandi_server.files_manager import (
@@ -39,7 +38,6 @@ from operandi_server.files_manager import (
 )
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
 from operandi_utils.database import db_create_workflow, db_create_workflow_job, db_get_workflow, db_get_workflow_job
-from operandi_utils.rabbitmq import RMQPublisher
 from .user import user_login
 
 # TODO: Fix this, the correct import must be made according to the env
@@ -53,10 +51,7 @@ router = APIRouter(tags=["Workflow"])
 logger = logging.getLogger(__name__)
 
 # TODO: Fix this - should not be here!
-rmq_data = verify_and_parse_mq_uri(OPERANDI_RABBITMQ_URL)
-rmq_publisher = RMQPublisher(rmq_data['host'], rmq_data['port'], rmq_data['vhost'])
-rmq_publisher.authenticate_and_connect(username=rmq_data['username'], password=rmq_data['password'])
-rmq_publisher.enable_delivery_confirmations()
+rmq_publisher = get_connection_publisher(rabbitmq_url=OPERANDI_RABBITMQ_URL, enable_acks=True)
 
 
 @router.get("/workflow")

@@ -18,15 +18,9 @@ class ServiceBroker:
         try:
             self.db_url = verify_database_uri(db_url)
             self.log.debug(f'Verified MongoDB URL: {db_url}')
-            rmq_data = verify_and_parse_mq_uri(rabbitmq_url)
+            verify_and_parse_mq_uri(rabbitmq_url)
+            self.rabbitmq_url = rabbitmq_url
             self.log.debug(f'Verified RabbitMQ URL: {rabbitmq_url}')
-            self.rmq_username = rmq_data['username']
-            self.rmq_password = rmq_data['password']
-            self.rmq_host = rmq_data['host']
-            self.rmq_port = rmq_data['port']
-            self.rmq_vhost = rmq_data['vhost']
-            self.log.debug(f'Verified RabbitMQ Credentials: {self.rmq_username}:{self.rmq_password}')
-            self.log.debug(f'Verified RabbitMQ Server URL: {self.rmq_host}:{self.rmq_port}{self.rmq_vhost}')
         except ValueError as e:
             raise ValueError(e)
 
@@ -54,6 +48,7 @@ class ServiceBroker:
     def __create_child_process(self, queue_name, status_checker=False) -> int:
         self.log.debug(f"Trying to create a new worker process for queue: {queue_name}")
         try:
+            # TODO: Try to utilize Popen() instead of fork()
             created_pid = fork()
         except Exception as os_error:
             self.log.error(f"Failed to create a child process, reason: {os_error}")
@@ -65,22 +60,14 @@ class ServiceBroker:
                 if status_checker:
                     child_worker = JobStatusWorker(
                         db_url=self.db_url,
-                        rmq_host=self.rmq_host,
-                        rmq_port=self.rmq_port,
-                        rmq_vhost=self.rmq_vhost,
-                        rmq_username=self.rmq_username,
-                        rmq_password=self.rmq_password,
+                        rabbitmq_url=self.rabbitmq_url,
                         queue_name=queue_name,
                         test_sbatch=self.test_sbatch
                     )
                 else:
                     child_worker = Worker(
                         db_url=self.db_url,
-                        rmq_host=self.rmq_host,
-                        rmq_port=self.rmq_port,
-                        rmq_vhost=self.rmq_vhost,
-                        rmq_username=self.rmq_username,
-                        rmq_password=self.rmq_password,
+                        rabbitmq_url=self.rabbitmq_url,
                         queue_name=queue_name,
                         test_sbatch=self.test_sbatch
                     )
