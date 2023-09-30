@@ -245,6 +245,7 @@ class HPCTransfer:
             return True
 
     def get_file(self, remote_src, local_dst):
+        makedirs(name=Path(local_dst).parent.absolute(), exist_ok=True)
         self.sftp.get(remotepath=remote_src, localpath=local_dst)
 
     def get_dir(self, remote_src, local_dst, mode=0o766):
@@ -257,7 +258,7 @@ class HPCTransfer:
             item_src = join(remote_src, item)
             item_dst = join(local_dst, item)
             if S_ISDIR(self.sftp.lstat(item_src).st_mode):
-                makedirs(name=item_dst, mode=mode, exist_ok=True)
+                makedirs(name=local_dst, mode=mode, exist_ok=True)
                 self.get_dir(remote_src=item_src, local_dst=item_dst, mode=mode)
             else:
                 self.get_file(remote_src=item_src, local_dst=item_dst)
