@@ -51,7 +51,13 @@ router = APIRouter(tags=["Workflow"])
 logger = logging.getLogger(__name__)
 
 # TODO: Fix this - should not be here!
+logger.info(f"Trying to connect RMQ Publisher to rabbitmq url: {OPERANDI_RABBITMQ_URL}")
 rmq_publisher = get_connection_publisher(rabbitmq_url=OPERANDI_RABBITMQ_URL, enable_acks=True)
+logger.info(f"RMQPublisher connected")
+logger.info(f"Creating queues: {DEFAULT_QUEUE_FOR_USERS}, {DEFAULT_QUEUE_FOR_HARVESTER}, {DEFAULT_QUEUE_FOR_JOB_STATUSES}")
+rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
+rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
+rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES, auto_delete=True)
 
 
 @router.get("/workflow")

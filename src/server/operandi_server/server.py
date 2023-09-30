@@ -4,29 +4,16 @@ from os import environ
 
 from fastapi import FastAPI, status
 
+from operandi_server.authentication import create_user_if_not_available
+from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
+from operandi_server.routers import RouterDiscovery, user, workflow, workspace
+from operandi_server.utils import safe_init_logging
 from operandi_utils import (
     OPERANDI_VERSION,
     reconfigure_all_loggers,
     verify_database_uri
 )
 from operandi_utils.database import db_initiate_database
-from operandi_utils.rabbitmq import (
-    # Requests coming from the
-    # Harvester are sent to this queue
-    DEFAULT_QUEUE_FOR_HARVESTER,
-    # Requests coming from
-    # other users are sent to this queue
-    DEFAULT_QUEUE_FOR_USERS,
-    # Requests for job status polling
-    # are sent to this queue
-    DEFAULT_QUEUE_FOR_JOB_STATUSES,
-    get_connection_publisher
-)
-
-from operandi_server.authentication import create_user_if_not_available
-from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
-from operandi_server.routers import RouterDiscovery, user, workflow, workspace
-from operandi_server.utils import safe_init_logging
 
 
 class OperandiServer(FastAPI):
@@ -38,18 +25,11 @@ class OperandiServer(FastAPI):
         try:
             self.db_url = verify_database_uri(db_url)
             self.log.debug(f'Verified MongoDB URL: {db_url}')
+            self.rabbitmq_url = rabbitmq_url
         except ValueError as e:
             raise ValueError(e)
 
-        # These are initialized on startup_event of the server
-        self.log.info(f"Trying to connect RMQ Publisher to rabbitmq url: {rabbitmq_url}")
-        self.rmq_publisher = get_connection_publisher(rabbitmq_url=rabbitmq_url, enable_acks=True)
-        self.log.info(f"RMQPublisher connected")
-
-        # Create the message queues (nothing happens if they already exist)
-        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
-        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
-        self.rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES, auto_delete=True)
+        self.rmq_publisher = None
 
         live_server_80 = {"url": self.live_server_url, "description": "The URL of the live OPERANDI server."}
         local_server = {"url": self.local_server_url, "description": "The URL of the local OPERANDI server."}
