@@ -1,8 +1,5 @@
 from pytest import fixture
-from operandi_utils.hpc import (
-    HPCExecutor,
-    HPCTransfer
-)
+from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from tests.helpers_asserts import assert_exists_file
 from tests.constants import (
     OPERANDI_HPC_HOST,

@@ -14,7 +14,7 @@ from tests.constants import (
 )
 
 
-@fixture(scope="session", name='rabbitmq_defaults')
+@fixture(scope="package", name='rabbitmq_defaults')
 def fixture_configure_exchange_and_queue():
     rmq_data = verify_and_parse_mq_uri(OPERANDI_RABBITMQ_URL)
     rmq_username = rmq_data["username"]
@@ -55,14 +55,14 @@ def fixture_configure_exchange_and_queue():
     )
 
 
-@fixture(name='rabbitmq_publisher')
+@fixture(scope="package", name='rabbitmq_publisher')
 def fixture_rabbitmq_publisher(rabbitmq_defaults):
     verify_and_parse_mq_uri(OPERANDI_RABBITMQ_URL)
     publisher = get_connection_publisher(rabbitmq_url=OPERANDI_RABBITMQ_URL, enable_acks=True)
     yield publisher
 
 
-@fixture(name='rabbitmq_consumer')
+@fixture(scope="package", name='rabbitmq_consumer')
 def fixture_rabbitmq_consumer(rabbitmq_defaults):
     verify_and_parse_mq_uri(OPERANDI_RABBITMQ_URL)
     consumer = get_connection_consumer(rabbitmq_url=OPERANDI_RABBITMQ_URL)

@@ -4,10 +4,7 @@ from tests.constants import (
     OPERANDI_TESTS_LOCAL_DIR_WORKFLOWS,
     OPERANDI_TESTS_LOCAL_DIR_WORKSPACES
 )
-from tests.helpers_asserts import (
-    assert_exists_dir,
-    assert_exists_not
-)
+from tests.helpers_asserts import assert_exists_dir, assert_exists_not
 
 
 def __resolver_resource_path(resource_type: str, resource_id: str) -> str:

@@ -1,7 +1,6 @@
-from tests.helpers_asserts import assert_exists_db_resource, assert_exists_db_resource_not
+from tests.helpers_asserts import assert_exists_db_resource
 from .helpers_asserts import (
     assert_local_dir_workflow,
-    assert_local_dir_workflow_not,
     assert_response_status_code
 )
 

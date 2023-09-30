@@ -11,7 +11,7 @@ from tests.constants import (
 )
 
 
-@fixture(scope="session", name="operandi")
+@fixture(scope="package", name="operandi")
 def fixture_operandi_server():
     assert_availability_db(OPERANDI_DB_URL)
     operandi_app = OperandiServer(
