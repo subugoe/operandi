@@ -23,13 +23,13 @@ def test_hpc_connector_transfer_file(hpc_data_transfer):
         local_src=test_local_file_path,
         remote_dst=test_hpc_file_path
     )
-    sleep(3)
+    sleep(2)
     test_local_received_file_path = join(OPERANDI_SERVER_BASE_DIR, batch_script_id)
     hpc_data_transfer.get_file(
         remote_src=test_hpc_file_path,
         local_dst=test_local_received_file_path
     )
-    sleep(3)
+    sleep(2)
     assert_exists_file(test_local_received_file_path)
 
 
@@ -47,11 +47,11 @@ def test_hpc_connector_transfer_dir(hpc_data_transfer):
         local_src=test_local_dir_path,
         remote_dst=test_hpc_dir_path
     )
-    sleep(7)
+    sleep(2)
     test_local_received_dir_path = join(OPERANDI_TESTS_LOCAL_DIR_WORKSPACES, workspace_id)
     hpc_data_transfer.get_dir(
         remote_src=test_hpc_dir_path,
         local_dst=test_local_received_dir_path
     )
-    sleep(7)
+    sleep(2)
     assert_exists_dir(test_local_received_dir_path)
