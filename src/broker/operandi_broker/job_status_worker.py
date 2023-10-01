@@ -15,11 +15,7 @@ from operandi_utils.database import (
 )
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from operandi_utils.rabbitmq import get_connection_consumer
-
-from .constants import (
-    LOG_LEVEL_WORKER,
-    LOG_FILE_PATH_WORKER_PREFIX
-)
+from .constants import LOG_LEVEL_WORKER, LOG_FILE_PATH_WORKER_PREFIX
 
 
 class JobStatusWorker:
@@ -30,12 +26,8 @@ class JobStatusWorker:
         self.test_sbatch = test_sbatch
 
         self.db_url = db_url
-        self.log.info(f"Trying to connect RMQConsumer to rabbitmq url: {rabbitmq_url}")
-        self.rmq_consumer = get_connection_consumer(rabbitmq_url=rabbitmq_url)
-        self.log.info(f"RMQConsumer connected")
-        self.configure_consuming(self.queue_name, self.__on_message_consumed_callback_hpc)
-        self.log.info(f"Configured consuming")
-
+        self.rmq_url = rabbitmq_url
+        self.rmq_consumer = None
         self.hpc_executor = None
         self.hpc_io_transfer = None
 
@@ -54,37 +46,24 @@ class JobStatusWorker:
             self.log.info(f"Activating signal handler for SIGINT, SIGTERM")
             signal.signal(signal.SIGINT, self.signal_handler)
             signal.signal(signal.SIGTERM, self.signal_handler)
-            sync_db_initiate_database(self.db_url)
 
-            # Connect the HPC Executor
+            sync_db_initiate_database(self.db_url)
             self.hpc_executor = HPCExecutor()
             self.log.info("HPC executor connection successful.")
-
-            # Connect the HPC IO Transfer
             self.hpc_io_transfer = HPCTransfer()
             self.log.info("HPC transfer connection successful.")
 
-            self.start_consuming()
+            self.rmq_consumer = get_connection_consumer(rabbitmq_url=self.rmq_url)
+            self.log.info(f"RMQConsumer connected")
+            self.rmq_consumer.configure_consuming(queue_name=self.queue_name, callback_method=self.__callback)
+            self.log.info(f"Configured consuming from queue: {self.queue_name}")
+            self.log.info(f"Starting consuming from queue: {self.queue_name}")
+            self.rmq_consumer.start_consuming()
         except Exception as e:
-            self.log.error(f"The worker failed to run, reason: {e}")
-            raise Exception(f"The worker failed to run, reason: {e}")
+            self.log.error(f"The worker failed, reason: {e}")
+            raise Exception(f"The worker failed, reason: {e}")
 
-    def configure_consuming(self, queue_name, callback_method):
-        if not self.rmq_consumer:
-            raise Exception("The RMQConsumer connection is not configured or broken")
-        self.log.info(f"Configuring the consuming for queue: {queue_name}")
-        self.rmq_consumer.configure_consuming(
-            queue_name=queue_name,
-            callback_method=callback_method
-        )
-
-    def start_consuming(self):
-        if not self.rmq_consumer:
-            raise Exception("The RMQConsumer connection is not configured or broken")
-        self.log.info(f"Starting consuming from queue: {self.queue_name}")
-        self.rmq_consumer.start_consuming()
-
-    def __on_message_consumed_callback_hpc(self, ch, method, properties, body):
+    def __callback(self, ch, method, properties, body):
         self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
         self.log.debug(f"Consumed message: {body}")
 
