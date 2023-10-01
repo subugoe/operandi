@@ -1,14 +1,18 @@
+from datetime import datetime
 from pkg_resources import resource_filename
-import logging
+from operandi_utils import OPERANDI_LOGS_DIR
 
 __all__ = [
+    "LOG_FORMAT",
+    "LOG_LEVEL",
+    "LOG_FILE_PATH",
+    "TRIES_TILL_TIMEOUT",
+    "USE_WORKSPACE_FILE_GROUP",
     "VD18_IDS_FILE",
     "VD18_URL",
     "VD18_METS_EXT",
     "WAIT_TIME_BETWEEN_SUBMITS",
     "WAIT_TIME_BETWEEN_POLLS",
-    "LOG_FORMAT",
-    "LOG_LEVEL"
 ]
 
 # These are the VD18 constants
@@ -18,11 +22,16 @@ VD18_IDS_FILE: str = resource_filename(__name__, "assets/vd18IDs.txt")
 VD18_URL: str = "https://gdz.sub.uni-goettingen.de/mets/"
 VD18_METS_EXT: str = ".mets.xml"
 
-# Harvesting related constants
-# This is the time waited between the POST requests to the OPERANDI Server
+# Time waited between the POST requests to the OPERANDI Server
 WAIT_TIME_BETWEEN_SUBMITS: int = 15  # seconds
-# This is the time waited between checking the submitted workflow job status
+# Time waited between each workflow job status check
 WAIT_TIME_BETWEEN_POLLS: int = 15  # seconds
+# Times to perform workflow job status checks before timeout
+TRIES_TILL_TIMEOUT: int = 30
 
+USE_WORKSPACE_FILE_GROUP = "DEFAULT"
+
+current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
 LOG_FORMAT: str = '%(levelname) -7s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
-LOG_LEVEL: int = logging.INFO
+LOG_LEVEL: str = "INFO"
+LOG_FILE_PATH: str = f"{OPERANDI_LOGS_DIR}/harvester_{current_time}.log"

@@ -187,7 +187,7 @@ async def get_workflow_job_status(
     one of the following job statuses:
     1) QUEUED - The workflow job is queued for execution.
     2) RUNNING - The workflow job is currently running.
-    3) STOPPED - The workflow job has failed.
+    3) FAILED - The workflow job has failed.
     4) SUCCESS - The workflow job has finished successfully.
 
     Curl equivalent:

@@ -8,7 +8,6 @@ from re import match as re_match
 from requests import get, post
 from requests.exceptions import RequestException
 from shutil import make_archive, move, unpack_archive
-from typing import Dict
 
 
 # Based on:
@@ -58,6 +57,13 @@ def is_url_responsive(url: str) -> bool:
             return True
     except Exception as e:
         return False
+
+
+def receive_file(response, download_path):
+    with open(download_path, 'wb') as filePtr:
+        for chunk in response.iter_content(chunk_size=1024):
+            if chunk:
+                filePtr.write(chunk)
 
 
 def make_zip_archive(source, destination):

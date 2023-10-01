@@ -132,5 +132,7 @@ dmypy.json
 archived_workflows/nextflow/workflow*/.nextflow*
 archived_workflows/nextflow/workflow*/work
 
+src/harvester/operandi_harvester/results/*
+
 # PyCharm files
 .idea/*
