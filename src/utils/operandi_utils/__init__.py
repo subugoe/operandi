@@ -1,6 +1,4 @@
 __all__ = [
-    "OPERANDI_LOGS_DIR",
-    "OPERANDI_VERSION",
     "call_sync",
     "download_mets_file",
     "is_url_responsive",
@@ -13,7 +11,6 @@ __all__ = [
     "verify_database_uri"
 ]
 
-from operandi_utils.constants import OPERANDI_LOGS_DIR, OPERANDI_VERSION
 from operandi_utils.logging import reconfigure_all_loggers
 from operandi_utils.utils import (
     call_sync,

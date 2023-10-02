@@ -6,9 +6,8 @@ from requests.auth import HTTPBasicAuth
 from time import sleep
 
 from operandi_utils import is_url_responsive, reconfigure_all_loggers, receive_file
+from operandi_utils.constants import LOG_LEVEL_HARVESTER, LOG_FILE_PATH_HARVESTER
 from .constants import (
-    LOG_LEVEL,
-    LOG_FILE_PATH,
     TRIES_TILL_TIMEOUT,
     USE_WORKSPACE_FILE_GROUP,
     VD18_IDS_FILE,
@@ -27,16 +26,16 @@ class Harvester:
             auth_password: str = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD", None)
     ):
         self.logger = logging.getLogger("operandi_harvester.harvester")
-        self.logger.setLevel(LOG_LEVEL)
+        self.logger.setLevel(LOG_LEVEL_HARVESTER)
 
         # Reconfigure all loggers to the same format
         reconfigure_all_loggers(
-            log_level=LOG_LEVEL,
-            log_file_path=LOG_FILE_PATH
+            log_level=LOG_LEVEL_HARVESTER,
+            log_file_path=LOG_FILE_PATH_HARVESTER
         )
 
         if not auth_username or not auth_password:
-            raise ValueError("Harvester credentials were not set in the environment")
+            raise ValueError("Environment variables not set: harvester credentials")
         if not exists(VD18_IDS_FILE):
             raise FileNotFoundError(f"Path does not exist: {VD18_IDS_FILE}")
         if not isfile(VD18_IDS_FILE):

@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-import logging
 from os import environ
 
 __all__ = [
@@ -10,13 +9,9 @@ __all__ = [
     'DEFAULT_QUEUE_FOR_USERS',
     'DEFAULT_QUEUE_FOR_JOB_STATUSES',
     'DEFAULT_ROUTER',
-    'RABBIT_MQ_HOST',
-    'RABBIT_MQ_PORT',
-    'RABBIT_MQ_VHOST',
     'RECONNECT_WAIT',
     'RECONNECT_TRIES',
-    'PREFETCH_COUNT',
-    'LOG_LEVEL'
+    'PREFETCH_COUNT'
 ]
 
 load_dotenv()
@@ -30,11 +25,6 @@ DEFAULT_QUEUE_FOR_HARVESTER: str = environ.get("OPERANDI_RABBITMQ_QUEUE_HARVESTE
 DEFAULT_QUEUE_FOR_USERS: str = environ.get("OPERANDI_RABBITMQ_QUEUE_USERS", "operandi_queue_users")
 DEFAULT_QUEUE_FOR_JOB_STATUSES: str = environ.get("OPERANDI_RABBITMQ_QUEUE_JOB_STATUSES", "operandi_queue_job_statuses")
 
-# 'rabbit-mq-host' when Dockerized
-RABBIT_MQ_HOST: str = 'localhost'
-RABBIT_MQ_PORT: int = 5672
-RABBIT_MQ_VHOST: str = '/'
-
 # Wait seconds before next reconnect try
 RECONNECT_WAIT: int = 5
 # Reconnect tries before timeout
@@ -42,5 +32,3 @@ RECONNECT_TRIES: int = 3
 # QOS, i.e., how many messages to consume in a single go
 # Check here: https://www.rabbitmq.com/consumer-prefetch.html
 PREFETCH_COUNT: int = 1
-
-LOG_LEVEL: int = logging.INFO

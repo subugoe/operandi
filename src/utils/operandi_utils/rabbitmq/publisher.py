@@ -3,20 +3,15 @@ from typing import Optional
 
 from pika import BasicProperties, PlainCredentials
 
+from operandi_utils.constants import LOG_LEVEL_RMQ_PUBLISHER
 from .connector import RMQConnector
-from .constants import (
-    DEFAULT_EXCHANGER_NAME,
-    LOG_LEVEL,
-    RABBIT_MQ_HOST as HOST,
-    RABBIT_MQ_PORT as PORT,
-    RABBIT_MQ_VHOST as VHOST
-)
+from .constants import DEFAULT_EXCHANGER_NAME
 
 
 class RMQPublisher(RMQConnector):
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST) -> None:
+    def __init__(self, host: str, port: int, vhost: str) -> None:
         self.logger = getLogger("operandi_utils.rabbitmq.publisher")
-        self.logger.setLevel(LOG_LEVEL)
+        self.logger.setLevel(LOG_LEVEL_RMQ_PUBLISHER)
         super().__init__(host=host, port=port, vhost=vhost)
 
         self.message_counter = 0

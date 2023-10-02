@@ -3,11 +3,8 @@ from os import environ
 import uvicorn
 
 from operandi_utils import reconfigure_all_loggers
-from operandi_utils.validators import (
-    DatabaseParamType,
-    QueueServerParamType
-)
-from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
+from operandi_utils.constants import LOG_FILE_PATH_SERVER, LOG_LEVEL_SERVER
+from operandi_utils.validators import DatabaseParamType, QueueServerParamType
 from operandi_server.server import OperandiServer
 
 __all__ = ['cli']
@@ -46,8 +43,8 @@ def start_server(local_url: str, live_url: str, queue: str, database: str):
 
     # Reconfigure all loggers to the same format
     reconfigure_all_loggers(
-        log_level=LOG_LEVEL,
-        log_file_path=LOG_FILE_PATH
+        log_level=LOG_LEVEL_SERVER,
+        log_file_path=LOG_FILE_PATH_SERVER
     )
 
     uvicorn.run(

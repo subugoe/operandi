@@ -2,27 +2,25 @@ import aiofiles
 from os import listdir, scandir
 from os.path import isdir, isfile, join
 from pathlib import Path
-import shutil
+from shutil import rmtree
 from typing import List, Tuple
-from operandi_server.constants import BASE_DIR, SERVER_URL
+from operandi_utils.constants import SERVER_BASE_DIR
+from operandi_server.constants import SERVER_URL
 from operandi_server.utils import generate_id
 
 
 def create_resource_base_dir(resource_router: str) -> str:
-    resource_abs_path = join(BASE_DIR, resource_router)
-    if isdir(resource_abs_path):
-        return resource_abs_path
-    else:
-        Path(resource_abs_path).mkdir(mode=0o777, parents=True, exist_ok=True)
-        # If the resource base dir already exists, change the file mode
-        Path(resource_abs_path).chmod(mode=0o777)
-        return resource_abs_path
+    resource_abs_path = join(SERVER_BASE_DIR, resource_router)
+    Path(resource_abs_path).mkdir(mode=0o777, parents=True, exist_ok=True)
+    # If the resource base dir already exists, change the file mode
+    Path(resource_abs_path).chmod(mode=0o777)
+    return resource_abs_path
 
 
 def create_resource_dir(resource_router: str, resource_id: str = None) -> Tuple[str, str]:
     if resource_id is None:
         resource_id = generate_id()
-    resource_dir = join(BASE_DIR, resource_router, resource_id)
+    resource_dir = join(SERVER_BASE_DIR, resource_router, resource_id)
     if isdir(resource_dir):
         raise FileExistsError(f"Failed to create resource dir, already exists: {resource_dir}")
     Path(resource_dir).mkdir(mode=0o777)
@@ -30,17 +28,16 @@ def create_resource_dir(resource_router: str, resource_id: str = None) -> Tuple[
 
 
 def delete_resource_dir(resource_router: str, resource_id: str) -> Tuple[str, str]:
-    resource_dir = join(BASE_DIR, resource_router, resource_id)
-    if isdir(resource_dir):
-        shutil.rmtree(resource_dir, ignore_errors=True)
-    else:
+    resource_dir = join(SERVER_BASE_DIR, resource_router, resource_id)
+    if not isdir(resource_dir):
         raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
+    rmtree(resource_dir, ignore_errors=True)
     return resource_id, resource_dir
 
 
 def get_all_resources_local(resource_router: str) -> List[Tuple[str, str]]:
     resources = []
-    for res in scandir(join(BASE_DIR, resource_router)):
+    for res in scandir(join(SERVER_BASE_DIR, resource_router)):
         if res.is_dir():
             resource_id = str(res.name)
             resource_dir = str(res)
@@ -50,7 +47,7 @@ def get_all_resources_local(resource_router: str) -> List[Tuple[str, str]]:
 
 def get_all_resources_url(resource_router: str) -> List[Tuple[str, str]]:
     resources = []
-    for res in scandir(join(BASE_DIR, resource_router)):
+    for res in scandir(join(SERVER_BASE_DIR, resource_router)):
         if res.is_dir():
             resource_id = str(res.name)
             url = join(SERVER_URL, resource_router, resource_id)
@@ -59,21 +56,21 @@ def get_all_resources_url(resource_router: str) -> List[Tuple[str, str]]:
 
 
 def get_resource_local(resource_router: str, resource_id: str) -> str:
-    resource_dir = join(BASE_DIR, resource_router, resource_id)
-    if isdir(resource_dir):
-        return resource_dir
-    raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
+    resource_dir = join(SERVER_BASE_DIR, resource_router, resource_id)
+    if not isdir(resource_dir):
+        raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
+    return resource_dir
 
 
 def get_resource_url(resource_router: str, resource_id: str) -> str:
-    resource_dir = join(BASE_DIR, resource_router, resource_id)
-    if isdir(resource_dir):
-        return join(SERVER_URL, resource_router, resource_id)
-    raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
+    resource_dir = join(SERVER_BASE_DIR, resource_router, resource_id)
+    if not isdir(resource_dir):
+        raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
+    return join(SERVER_URL, resource_router, resource_id)
 
 
 def get_resource_file(resource_router: str, resource_id: str, file_ext=None) -> str:
-    resource_dir = join(BASE_DIR, resource_router, resource_id)
+    resource_dir = join(SERVER_BASE_DIR, resource_router, resource_id)
     if not isdir(resource_dir):
         raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
     for file in listdir(resource_dir):

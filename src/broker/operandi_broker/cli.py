@@ -15,7 +15,7 @@ from operandi_utils.validators import (
     QueueServerParamType
 )
 from .broker import ServiceBroker
-from .constants import LOG_LEVEL_BROKER, LOG_FILE_PATH_BROKER
+from operandi_utils.constants import LOG_LEVEL_BROKER, LOG_FILE_PATH_BROKER
 
 
 __all__ = ['cli']

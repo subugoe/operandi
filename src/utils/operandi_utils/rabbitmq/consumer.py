@@ -9,14 +9,14 @@ from typing import Any, Union
 
 from pika import PlainCredentials
 
-from .constants import LOG_LEVEL
 from .connector import RMQConnector
+from operandi_utils.constants import LOG_LEVEL_RMQ_CONSUMER
 
 
 class RMQConsumer(RMQConnector):
     def __init__(self, host: str, port: int, vhost: str) -> None:
         self.logger = getLogger("operandi_utils.rabbitmq.consumer")
-        self.logger.setLevel(LOG_LEVEL)
+        self.logger.setLevel(LOG_LEVEL_RMQ_CONSUMER)
         super().__init__(host=host, port=port, vhost=vhost)
 
         self.consumer_tag = None

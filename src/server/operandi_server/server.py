@@ -4,16 +4,20 @@ from os import environ
 
 from fastapi import FastAPI, status
 
-from operandi_server.authentication import create_user_if_not_available
-from operandi_server.constants import LOG_FILE_PATH, LOG_LEVEL
-from operandi_server.routers import RouterDiscovery, user, workflow, workspace
-from operandi_server.utils import safe_init_logging
-from operandi_utils import (
+from operandi_utils import reconfigure_all_loggers, verify_database_uri
+from operandi_utils.constants import (
+    LOG_FILE_PATH_SERVER,
+    LOG_LEVEL_SERVER,
     OPERANDI_VERSION,
-    reconfigure_all_loggers,
-    verify_database_uri
+    SERVER_WORKFLOW_JOBS_ROUTER,
+    SERVER_WORKFLOWS_ROUTER,
+    SERVER_WORKSPACES_ROUTER
 )
 from operandi_utils.database import db_initiate_database
+from operandi_server.authentication import create_user_if_not_available
+from operandi_server.files_manager import create_resource_base_dir
+from operandi_server.routers import RouterDiscovery, user, workflow, workspace
+from operandi_server.utils import safe_init_logging
 
 
 class OperandiServer(FastAPI):
@@ -61,8 +65,12 @@ class OperandiServer(FastAPI):
         # TODO: Recheck this again...
         safe_init_logging()
 
+        create_resource_base_dir(SERVER_WORKFLOW_JOBS_ROUTER)
+        create_resource_base_dir(SERVER_WORKFLOWS_ROUTER)
+        create_resource_base_dir(SERVER_WORKSPACES_ROUTER)
+
         # Reconfigure all loggers to the same format
-        reconfigure_all_loggers(log_level=LOG_LEVEL, log_file_path=LOG_FILE_PATH)
+        reconfigure_all_loggers(log_level=LOG_LEVEL_SERVER, log_file_path=LOG_FILE_PATH_SERVER)
 
         # Initiate database client
         await db_initiate_database(self.db_url)

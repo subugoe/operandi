@@ -1,11 +1,6 @@
-from datetime import datetime
 from pkg_resources import resource_filename
-from operandi_utils import OPERANDI_LOGS_DIR
 
 __all__ = [
-    "LOG_FORMAT",
-    "LOG_LEVEL",
-    "LOG_FILE_PATH",
     "TRIES_TILL_TIMEOUT",
     "USE_WORKSPACE_FILE_GROUP",
     "VD18_IDS_FILE",
@@ -30,8 +25,3 @@ WAIT_TIME_BETWEEN_POLLS: int = 15  # seconds
 TRIES_TILL_TIMEOUT: int = 30
 
 USE_WORKSPACE_FILE_GROUP = "DEFAULT"
-
-current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
-LOG_FORMAT: str = '%(levelname) -7s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
-LOG_LEVEL: str = "INFO"
-LOG_FILE_PATH: str = f"{OPERANDI_LOGS_DIR}/harvester_{current_time}.log"

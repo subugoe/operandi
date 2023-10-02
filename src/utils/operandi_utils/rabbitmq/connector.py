@@ -18,15 +18,12 @@ from .constants import (
     DEFAULT_EXCHANGER_TYPE,
     DEFAULT_QUEUE,
     DEFAULT_ROUTER,
-    RABBIT_MQ_HOST as HOST,
-    RABBIT_MQ_PORT as PORT,
-    RABBIT_MQ_VHOST as VHOST,
     PREFETCH_COUNT
 )
 
 
 class RMQConnector:
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST) -> None:
+    def __init__(self, host: str, port: int, vhost: str) -> None:
         self._host = host
         self._port = port
         self._vhost = vhost
@@ -67,12 +64,7 @@ class RMQConnector:
 
     # Connection related methods
     @staticmethod
-    def open_blocking_connection(
-            credentials: PlainCredentials,
-            host: str = HOST,
-            port: int = PORT,
-            vhost: str = VHOST
-    ) -> BlockingConnection:
+    def open_blocking_connection(credentials: PlainCredentials, host: str, port: int, vhost: str) -> BlockingConnection:
         blocking_connection = BlockingConnection(
             parameters=ConnectionParameters(
                 host=host,

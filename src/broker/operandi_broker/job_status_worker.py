@@ -5,6 +5,7 @@ from os import getpid, getppid, setsid
 from sys import exit
 
 from operandi_utils import reconfigure_all_loggers
+from operandi_utils.constants import LOG_LEVEL_WORKER, LOG_FILE_PATH_WORKER_PREFIX
 from operandi_utils.database import (
     sync_db_initiate_database,
     sync_db_get_hpc_slurm_job,
@@ -15,7 +16,6 @@ from operandi_utils.database import (
 )
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from operandi_utils.rabbitmq import get_connection_consumer
-from .constants import LOG_LEVEL_WORKER, LOG_FILE_PATH_WORKER_PREFIX
 
 
 class JobStatusWorker:

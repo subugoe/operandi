@@ -15,6 +15,8 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from operandi_utils.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
+from operandi_utils.database import db_create_workflow, db_create_workflow_job, db_get_workflow, db_get_workflow_job
 from operandi_utils.rabbitmq import (
     # Requests coming from the
     # Harvester are sent to this queue
@@ -27,7 +29,6 @@ from operandi_utils.rabbitmq import (
     DEFAULT_QUEUE_FOR_JOB_STATUSES,
     get_connection_publisher
 )
-from operandi_server.constants import WORKFLOWS_ROUTER, WORKFLOW_JOBS_ROUTER, WORKSPACES_ROUTER
 from operandi_server.files_manager import (
     create_resource_dir,
     delete_resource_dir,
@@ -37,7 +38,6 @@ from operandi_server.files_manager import (
     receive_resource
 )
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
-from operandi_utils.database import db_create_workflow, db_create_workflow_job, db_get_workflow, db_get_workflow_job
 from .user import user_login
 
 # TODO: Fix this, the correct import must be made according to the env
@@ -72,7 +72,7 @@ async def list_workflows(
     `curl SERVER_ADDR/workflow`
     """
     await user_login(auth)
-    workflows = get_all_resources_url(WORKFLOWS_ROUTER)
+    workflows = get_all_resources_url(SERVER_WORKFLOWS_ROUTER)
     response = []
     for workflow in workflows:
         wf_id, wf_url = workflow
@@ -98,7 +98,7 @@ async def get_workflow_script(
     await user_login(auth)
     try:
         db_workflow = await db_get_workflow(workflow_id=workflow_id)
-        workflow_script_url = get_resource_url(resource_router=WORKFLOWS_ROUTER, resource_id=workflow_id)
+        workflow_script_url = get_resource_url(resource_router=SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
     except RuntimeError:
         raise HTTPException(status_code=404, detail=f"Non-existing DB entry for workflow id:{workflow_id}")
     except FileNotFoundError:
@@ -122,7 +122,7 @@ async def upload_workflow_script(
     """
 
     await user_login(auth)
-    workflow_id, workflow_dir = create_resource_dir(WORKFLOWS_ROUTER, resource_id=None)
+    workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=None)
     nf_script_dest = join(workflow_dir, nextflow_script.filename)
     try:
         await receive_resource(file=nextflow_script, resource_dest=nf_script_dest)
@@ -134,7 +134,7 @@ async def upload_workflow_script(
         workflow_script_path=nf_script_dest,
         workflow_script_base=nextflow_script.filename
     )
-    workflow_url = get_resource_url(WORKFLOWS_ROUTER, workflow_id)
+    workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
     return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
 
 
@@ -153,12 +153,12 @@ async def update_workflow_script(
 
     await user_login(auth)
     try:
-        delete_resource_dir(WORKFLOWS_ROUTER, workflow_id)
+        delete_resource_dir(SERVER_WORKFLOWS_ROUTER, workflow_id)
     except FileNotFoundError:
         # Resource not available, nothing to be deleted
         pass
 
-    workflow_id, workflow_dir = create_resource_dir(WORKFLOWS_ROUTER, resource_id=workflow_id)
+    workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
     nf_script_dest = join(workflow_dir, nextflow_script.filename)
     try:
         await receive_resource(file=nextflow_script, resource_dest=nf_script_dest)
@@ -170,7 +170,7 @@ async def update_workflow_script(
         workflow_script_path=nf_script_dest,
         workflow_script_base=nextflow_script.filename
     )
-    workflow_url = get_resource_url(WORKFLOWS_ROUTER, workflow_id)
+    workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
     return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
 
 
@@ -207,10 +207,10 @@ async def get_workflow_job_status(
     job_state = wf_job_db.job_state
 
     try:
-        wf_job_local = get_resource_local(WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
-        wf_job_url = get_resource_url(WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
-        workflow_url = get_resource_url(WORKFLOWS_ROUTER, resource_id=wf_job_db.workflow_id)
-        workspace_url = get_resource_url(WORKSPACES_ROUTER, resource_id=wf_job_db.workspace_id)
+        wf_job_local = get_resource_local(SERVER_WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
+        wf_job_url = get_resource_url(SERVER_WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
+        workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, resource_id=wf_job_db.workflow_id)
+        workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=wf_job_db.workspace_id)
     except Exception as e:
         logger.exception(f"Unexpected error in get_workflow_job: {e}")
         # TODO: Don't provide the exception message to the outside world
@@ -268,14 +268,14 @@ async def submit_to_rabbitmq_queue(
 
         # Create job request parameters
         logger.info("Creating workflow job space")
-        job_id, job_dir = create_resource_dir(WORKFLOW_JOBS_ROUTER)
+        job_id, job_dir = create_resource_dir(SERVER_WORKFLOW_JOBS_ROUTER)
         job_state = "QUEUED"
 
         # Build urls to be sent as a response
         logger.info("Building urls to be sent as a response")
-        workspace_url = get_resource_url(resource_router=WORKSPACES_ROUTER, resource_id=workspace_id)
-        workflow_url = get_resource_url(resource_router=WORKFLOWS_ROUTER, resource_id=workflow_id)
-        job_url = get_resource_url(resource_router=WORKFLOW_JOBS_ROUTER, resource_id=job_id)
+        workspace_url = get_resource_url(resource_router=SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
+        workflow_url = get_resource_url(resource_router=SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
+        job_url = get_resource_url(resource_router=SERVER_WORKFLOW_JOBS_ROUTER, resource_id=job_id)
 
         # Save to the workflow job to the database
         logger.info("Saving the workflow job to the database")

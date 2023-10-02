@@ -14,7 +14,8 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_server.constants import WORKSPACES_ROUTER
+from operandi_utils.constants import SERVER_WORKSPACES_ROUTER
+from operandi_utils.database import db_create_workspace, db_get_workspace, db_update_workspace
 from operandi_server.exceptions import WorkspaceNotValidException
 from operandi_server.files_manager import (
     create_resource_dir,
@@ -30,7 +31,6 @@ from operandi_server.utils import (
     get_workspace_bag,
     validate_bag
 )
-from operandi_utils.database import db_create_workspace, db_get_workspace, db_update_workspace
 from .user import user_login
 
 
@@ -47,7 +47,7 @@ async def list_workspaces(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> 
     `curl -X GET SERVER_ADDR/workspace`
     """
     await user_login(auth)
-    workspaces = get_all_resources_url(WORKSPACES_ROUTER)
+    workspaces = get_all_resources_url(SERVER_WORKSPACES_ROUTER)
     response = []
     for workspace in workspaces:
         ws_id, ws_url = workspace
@@ -74,7 +74,7 @@ async def get_workspace(
     await user_login(auth)
     try:
         db_workspace = await db_get_workspace(workspace_id=workspace_id)
-        workspace_url = get_resource_url(WORKSPACES_ROUTER, resource_id=workspace_id)
+        workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
     except RuntimeError:
         raise HTTPException(status_code=404, detail=f"Non-existing DB entry for workspace id:{workspace_id}")
     except FileNotFoundError:
@@ -105,7 +105,7 @@ async def post_workspace_from_url(
 ) -> WorkspaceRsrc:
 
     await user_login(auth)
-    workspace_id, workspace_dir = create_resource_dir(WORKSPACES_ROUTER)
+    workspace_id, workspace_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
     bag_dest = f"{workspace_dir}.zip"
 
     ws_dir = create_workspace_bag_from_remote_url(
@@ -137,7 +137,7 @@ async def post_workspace_from_url(
     remove(bag_dest)
 
     await db_create_workspace(workspace_id, workspace_dir, bag_info)
-    workspace_url = get_resource_url(WORKSPACES_ROUTER, workspace_id)
+    workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, workspace_id)
 
     return WorkspaceRsrc.create(
         workspace_id=workspace_id,
@@ -166,7 +166,7 @@ async def post_workspace(
     `curl -X POST SERVER_ADDR/workspace -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
     """
     await user_login(auth)
-    ws_id, ws_dir = create_resource_dir(WORKSPACES_ROUTER, resource_id=None)
+    ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER, resource_id=None)
     bag_dest = f"{ws_dir}.zip"
     try:
         await receive_resource(file=workspace, resource_dest=bag_dest)
@@ -193,7 +193,7 @@ async def post_workspace(
         workspace_dir=ws_dir,
         bag_info=bag_info
     )
-    ws_url = get_resource_url(WORKSPACES_ROUTER, ws_id)
+    ws_url = get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id)
     return WorkspaceRsrc.create(
         workspace_id=ws_id,
         workspace_url=ws_url,
@@ -215,12 +215,12 @@ async def put_workspace(
     """
     await user_login(auth)
     try:
-        delete_resource_dir(WORKSPACES_ROUTER, workspace_id)
+        delete_resource_dir(SERVER_WORKSPACES_ROUTER, workspace_id)
     except FileNotFoundError:
         # Nothing to be deleted
         pass
 
-    ws_id, ws_dir = create_resource_dir(WORKSPACES_ROUTER, resource_id=workspace_id)
+    ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
     bag_dest = f"{ws_dir}.zip"
     try:
         await receive_resource(file=workspace, resource_dest=bag_dest)
@@ -247,7 +247,7 @@ async def put_workspace(
         workspace_dir=ws_dir,
         bag_info=bag_info
     )
-    ws_url = get_resource_url(WORKSPACES_ROUTER, ws_id)
+    ws_url = get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id)
     return WorkspaceRsrc.create(
         workspace_id=ws_id,
         workspace_url=ws_url,
@@ -269,8 +269,8 @@ async def delete_workspace(
     await user_login(auth)
     try:
         db_workspace = await db_get_workspace(workspace_id=workspace_id)
-        deleted_workspace_url = get_resource_url(WORKSPACES_ROUTER, resource_id=workspace_id)
-        delete_resource_dir(WORKSPACES_ROUTER, workspace_id)
+        deleted_workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
+        delete_resource_dir(SERVER_WORKSPACES_ROUTER, workspace_id)
     except RuntimeError:
         raise HTTPException(status_code=404, detail=f"Non-existing DB entry for workspace id: {workspace_id}")
     except FileNotFoundError:
