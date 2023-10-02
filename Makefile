@@ -6,16 +6,6 @@ PIP3_INSTALL = pip3 install
 BUILD_ORDER = src/utils src/server src/broker src/harvester
 UNINSTALL_ORDER = operandi_harvester operandi_broker operandi_server operandi_utils
 
-# Load env file if available
-ifneq (,$(wildcard ./.env))
-    include .env
-endif
-
-# Load the test env file if available
-ifneq (,$(wildcard ./tests/.env))
-    include ./tests/.env
-endif
-
 help:
 	@echo ""
 	@echo "Targets"
