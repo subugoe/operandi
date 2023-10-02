@@ -31,7 +31,7 @@ process ocrd_cis_ocropy_binarize {
 
   script:
   """
-  ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -m ${mets_file} -I ${input_group} -O "OCR-D-BIN"
+  ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -m ${mets_file} -I ${input_group} -O OCR-D-BIN
   """
 }
 

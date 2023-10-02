@@ -5,8 +5,8 @@ from requests import get, post
 from requests.auth import HTTPBasicAuth
 from time import sleep
 
-from operandi_utils import is_url_responsive, reconfigure_all_loggers, receive_file
-from operandi_utils.constants import LOG_LEVEL_HARVESTER, LOG_FILE_PATH_HARVESTER
+from operandi_utils import get_log_file_path_prefix, is_url_responsive, reconfigure_all_loggers, receive_file
+from operandi_utils.constants import LOG_LEVEL_HARVESTER
 from .constants import (
     TRIES_TILL_TIMEOUT,
     USE_WORKSPACE_FILE_GROUP,
@@ -28,10 +28,12 @@ class Harvester:
         self.logger = logging.getLogger("operandi_harvester.harvester")
         self.logger.setLevel(LOG_LEVEL_HARVESTER)
 
+        log_file_path = f"{get_log_file_path_prefix(module_type='harvester')}.log"
+
         # Reconfigure all loggers to the same format
         reconfigure_all_loggers(
             log_level=LOG_LEVEL_HARVESTER,
-            log_file_path=LOG_FILE_PATH_HARVESTER
+            log_file_path=log_file_path
         )
 
         if not auth_username or not auth_password:

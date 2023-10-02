@@ -3,13 +3,18 @@ Based on:
 https://pawamoy.github.io/posts/unify-logging-for-a-gunicorn-uvicorn-app/
 """
 
+from datetime import datetime
 import logging
 import loguru
 import sys
+from os import environ
+from os.path import join
+from pathlib import Path
 
 
 __all__ = [
-    "reconfigure_all_loggers"
+    "reconfigure_all_loggers",
+    "get_log_file_path_prefix"
 ]
 
 
@@ -46,3 +51,20 @@ def reconfigure_all_loggers(log_level: str, log_file_path: str):
             {"sink": log_file_path, "serialize": False}
         ]
     )
+
+
+# Returns log path for the modules, if module is worker, returns prefix for logging
+def get_log_file_path_prefix(module_type: str) -> str:
+    modules_types = ["server", "harvester", "broker", "worker"]
+    if module_type not in modules_types:
+        raise ValueError(f"Unknown module type: {module_type}, should be one of {modules_types}")
+
+    logging_rood_dir: str = environ.get("OPERANDI_LOGS_DIR", None)
+    if not logging_rood_dir:
+        raise ValueError("Environment variable not set: OPERANDI_LOGS_DIR")
+    Path(logging_rood_dir).mkdir(mode=0o777, parents=True, exist_ok=True)
+    Path(logging_rood_dir).chmod(mode=0o777)
+
+    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    log_file_path_prefix = join(logging_rood_dir, f"{module_type}_{current_time}")
+    return log_file_path_prefix

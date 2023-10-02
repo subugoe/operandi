@@ -14,8 +14,8 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_utils.constants import SERVER_WORKSPACES_ROUTER
 from operandi_utils.database import db_create_workspace, db_get_workspace, db_update_workspace
+from operandi_server.constants import SERVER_WORKSPACES_ROUTER
 from operandi_server.exceptions import WorkspaceNotValidException
 from operandi_server.files_manager import (
     create_resource_dir,

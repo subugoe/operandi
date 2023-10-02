@@ -1,27 +1,28 @@
 import datetime
 import logging
 from os import environ
+import uvicorn
 
 from fastapi import FastAPI, status
 
-from operandi_utils import reconfigure_all_loggers, verify_database_uri
-from operandi_utils.constants import (
-    LOG_FILE_PATH_SERVER,
-    LOG_LEVEL_SERVER,
-    OPERANDI_VERSION,
-    SERVER_WORKFLOW_JOBS_ROUTER,
-    SERVER_WORKFLOWS_ROUTER,
-    SERVER_WORKSPACES_ROUTER
-)
+from operandi_utils import get_log_file_path_prefix, reconfigure_all_loggers, verify_database_uri
+from operandi_utils.constants import LOG_LEVEL_SERVER, OPERANDI_VERSION
 from operandi_utils.database import db_initiate_database
 from operandi_server.authentication import create_user_if_not_available
+from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKFLOWS_ROUTER, SERVER_WORKSPACES_ROUTER
 from operandi_server.files_manager import create_resource_base_dir
 from operandi_server.routers import RouterDiscovery, user, workflow, workspace
 from operandi_server.utils import safe_init_logging
 
 
 class OperandiServer(FastAPI):
-    def __init__(self, live_server_url: str, local_server_url: str, db_url: str, rabbitmq_url: str):
+    def __init__(
+        self,
+        db_url: str = environ.get("OPERANDI_DB_URL"),
+        rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
+        live_server_url: str = environ.get("OPERANDI_SERVER_URL_LIVE"),
+        local_server_url: str = environ.get("OPERANDI_SERVER_URL_LOCAL")
+    ):
         self.log = logging.getLogger("operandi_server.server")
         self.live_server_url = live_server_url
         self.local_server_url = local_server_url
@@ -58,19 +59,23 @@ class OperandiServer(FastAPI):
             summary="Get information about the server"
         )
 
+    def run(self):
+        host, port = self.local_server_url.split("//")[1].split(":")
+        uvicorn.run(self, host=host, port=int(port))
+
     async def startup_event(self):
         self.log.info(f"Operandi local server url: {self.local_server_url}")
         self.log.info(f"Operandi live server url: {self.live_server_url}")
 
         # TODO: Recheck this again...
         safe_init_logging()
+        log_file_path = f"{get_log_file_path_prefix(module_type='server')}.log"
+        # Reconfigure all loggers to the same format
+        reconfigure_all_loggers(log_level=LOG_LEVEL_SERVER, log_file_path=log_file_path)
 
         create_resource_base_dir(SERVER_WORKFLOW_JOBS_ROUTER)
         create_resource_base_dir(SERVER_WORKFLOWS_ROUTER)
         create_resource_base_dir(SERVER_WORKSPACES_ROUTER)
-
-        # Reconfigure all loggers to the same format
-        reconfigure_all_loggers(log_level=LOG_LEVEL_SERVER, log_file_path=LOG_FILE_PATH_SERVER)
 
         # Initiate database client
         await db_initiate_database(self.db_url)

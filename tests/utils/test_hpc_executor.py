@@ -1,13 +1,12 @@
 from datetime import datetime
 from os.path import join
 from time import sleep
-from tests.constants import OPERANDI_HPC_DIR_PROJECT
 
 current_time = datetime.now().strftime("%Y%m%d_%H%M")
-test_dir_name = join(OPERANDI_HPC_DIR_PROJECT, f"test_dir_{current_time}")
 
 
 def test_hpc_connector_executor_mk_dir(hpc_command_executor):
+    test_dir_name = join(hpc_command_executor.project_root_dir, f"test_dir_{current_time}")
     sleep(0.5)
     output, err, return_code = hpc_command_executor.execute_blocking(
         command=f"bash -lc 'mkdir -p {test_dir_name}'"
@@ -18,6 +17,7 @@ def test_hpc_connector_executor_mk_dir(hpc_command_executor):
 
 
 def test_hpc_connector_executor_rm_dir_negative(hpc_command_executor):
+    test_dir_name = join(hpc_command_executor.project_root_dir, f"test_dir_{current_time}")
     sleep(0.5)
     output, err, return_code = hpc_command_executor.execute_blocking(
         command=f"bash -lc 'rm {test_dir_name}'"
@@ -29,6 +29,7 @@ def test_hpc_connector_executor_rm_dir_negative(hpc_command_executor):
 
 
 def test_hpc_connector_executor_rm_dir_positive(hpc_command_executor):
+    test_dir_name = join(hpc_command_executor.project_root_dir, f"test_dir_{current_time}")
     sleep(0.5)
     output, err, return_code = hpc_command_executor.execute_blocking(
         command=f"bash -lc 'rm -rf {test_dir_name}'"
@@ -39,6 +40,7 @@ def test_hpc_connector_executor_rm_dir_positive(hpc_command_executor):
 
 
 def test_hpc_connector_executor_cd_dir(hpc_command_executor):
+    test_dir_name = join(hpc_command_executor.project_root_dir, f"test_dir_{current_time}")
     sleep(0.5)
     output, err, return_code = hpc_command_executor.execute_blocking(
         command=f"bash -lc 'cd {test_dir_name}'"

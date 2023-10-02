@@ -4,8 +4,8 @@ import signal
 from os import getpid, getppid, setsid
 from sys import exit
 
-from operandi_utils import reconfigure_all_loggers
-from operandi_utils.constants import LOG_LEVEL_WORKER, LOG_FILE_PATH_WORKER_PREFIX
+from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
+from operandi_utils.constants import LOG_LEVEL_WORKER
 from operandi_utils.database import (
     sync_db_initiate_database,
     sync_db_get_hpc_slurm_job,
@@ -22,7 +22,7 @@ class JobStatusWorker:
     def __init__(self, db_url, rabbitmq_url, queue_name, test_sbatch=False):
         self.log = logging.getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
         self.queue_name = queue_name
-        self.log_file_path = f"{LOG_FILE_PATH_WORKER_PREFIX}_{queue_name}.log"
+        self.log_file_path = f"{get_log_file_path_prefix(module_type='worker')}_{queue_name}.log"
         self.test_sbatch = test_sbatch
 
         self.db_url = db_url
@@ -132,9 +132,8 @@ class JobStatusWorker:
                 self.hpc_io_transfer.get_and_unpack_slurm_workspace(
                     ocrd_workspace_dir=workspace_job_db.workspace_dir,
                     workflow_job_dir=workflow_job_db.job_dir,
-                    hpc_slurm_workspace_path=hpc_slurm_job_db.hpc_slurm_workspace_path
                 )
-                self.log.info(f"Transferred slurm workspace from hpc path: {hpc_slurm_job_db.hpc_slurm_workspace_path}")
+                self.log.info(f"Transferred slurm workspace from hpc path")
                 # Delete the result dir from the HPC home folder
                 # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
 

@@ -1,7 +1,7 @@
+from os import environ
 from pymongo import MongoClient
 from pytest import fixture
 
-from tests.constants import OPERANDI_DB_NAME, OPERANDI_DB_URL
 from tests.helpers_asserts import assert_availability_db
 
 DB_COLLECTIONS = [
@@ -14,8 +14,11 @@ DB_COLLECTIONS = [
 
 @fixture(scope="session")
 def fixture_test_mongo_client():
-    assert_availability_db(OPERANDI_DB_URL)
-    mongo_client = MongoClient(OPERANDI_DB_URL, serverSelectionTimeoutMS=3000)[OPERANDI_DB_NAME]
+    assert_availability_db(environ.get("OPERANDI_DB_URL"))
+    mongo_client = MongoClient(
+        environ.get("OPERANDI_DB_URL"),
+        serverSelectionTimeoutMS=3000
+    )[environ.get("OPERANDI_DB_NAME")]
     # drop previous test entries from the test database
     for db_collection in DB_COLLECTIONS:
         mongo_client[db_collection].drop()

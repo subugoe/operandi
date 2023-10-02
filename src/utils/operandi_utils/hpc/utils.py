@@ -1,4 +1,4 @@
-from os.path import exists, isfile
+from os.path import exists, isfile, join
 from paramiko import AutoAddPolicy, SSHClient
 
 
@@ -44,4 +44,21 @@ def create_proxy_jump(host: str, proxy_host: str, username: str, key_path: str):
     return jump_box_channel
 
 
+def resolve_hpc_user_home_dir(username: str) -> str:
+    return f"/home/users/{username}"
 
+
+def resolve_hpc_user_scratch_dir(username: str) -> str:
+    return f"/scratch1/users/{username}"
+
+
+def resolve_hpc_project_root_dir(username: str, project_root_dir: str) -> str:
+    return join(resolve_hpc_user_scratch_dir(username), project_root_dir)
+
+
+def resolve_hpc_batch_scripts_dir(username: str, project_root_dir: str) -> str:
+    return join(resolve_hpc_project_root_dir(username, project_root_dir), "batch_scripts")
+
+
+def resolve_hpc_slurm_workspaces_dir(username: str, project_root_dir: str) -> str:
+    return join(resolve_hpc_project_root_dir(username, project_root_dir), "slurm_workspaces")

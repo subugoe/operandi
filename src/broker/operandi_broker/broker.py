@@ -1,5 +1,5 @@
 import logging
-from os import fork, kill
+from os import environ, fork, kill
 from signal import SIGINT
 
 from operandi_utils import (
@@ -11,7 +11,12 @@ from .job_status_worker import JobStatusWorker
 
 
 class ServiceBroker:
-    def __init__(self, db_url: str, rabbitmq_url: str, test_sbatch: bool = False):
+    def __init__(
+        self,
+        db_url: str = environ.get("OPERANDI_DB_URL"),
+        rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
+        test_sbatch: bool = False
+    ):
         self.log = logging.getLogger("operandi_broker.service_broker")
         self.test_sbatch = test_sbatch
 

@@ -1,5 +1,5 @@
 from logging import getLogger
-from os import listdir, makedirs, remove, symlink
+from os import environ, listdir, makedirs, remove, symlink
 from os.path import dirname, join, isdir, split
 from pathlib import Path
 from shutil import rmtree, copytree
@@ -8,30 +8,42 @@ from tempfile import mkdtemp
 from typing import Tuple
 
 from operandi_utils import make_zip_archive, unpack_zip_archive
-from .constants import (
-    OPERANDI_HPC_DIR_BATCH_SCRIPTS,
-    OPERANDI_HPC_DIR_SLURM_WORKSPACES,
-    OPERANDI_HPC_HOST_TRANSFER,
-    OPERANDI_HPC_HOST_TRANSFER_PROXY,
-    OPERANDI_HPC_USERNAME,
-    OPERANDI_HPC_SSH_KEYPATH
+from .utils import (
+    create_ssh_connection_to_hpc,
+    resolve_hpc_user_home_dir,
+    resolve_hpc_user_scratch_dir,
+    resolve_hpc_project_root_dir,
+    resolve_hpc_batch_scripts_dir,
+    resolve_hpc_slurm_workspaces_dir,
 )
-from .utils import create_ssh_connection_to_hpc
 
 
 class HPCTransfer:
     def __init__(
-            self,
-            host: str = OPERANDI_HPC_HOST_TRANSFER,
-            proxy_host: str = OPERANDI_HPC_HOST_TRANSFER_PROXY,
-            username: str = OPERANDI_HPC_USERNAME,
-            key_path: str = OPERANDI_HPC_SSH_KEYPATH
-    ):
+        self,
+        host: str = environ.get("OPERANDI_HPC_HOST_TRANSFER", "transfer-scc.gwdg.de"),
+        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY_TRANSFER", "login.gwdg.de"),
+        username: str = environ.get("OPERANDI_HPC_USERNAME"),
+        key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH")
+    ) -> None:
+        if not username:
+            raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
+        if not key_path:
+            raise ValueError("Environment variable not set: OPERANDI_HPC_SSH_KEYPATH")
+
         self.log = getLogger("operandi_utils.hpc.transfer")
         self.log.info(f"Trying to connect to HPC host: {host}, "
                       f"via proxy: {proxy_host}, "
                       f"with username: {username}, "
                       f"using the key path: {key_path}")
+
+        self.user_home_dir = resolve_hpc_user_home_dir(username)
+        self.user_scratch_dir = resolve_hpc_user_scratch_dir(username)
+        project_name = environ.get("OPERANDI_HPC_PROJECT_NAME")
+        self.project_root_dir = resolve_hpc_project_root_dir(username, project_name)
+        self.batch_scripts_dir = resolve_hpc_batch_scripts_dir(username, project_name)
+        self.slurm_workspaces_dir = resolve_hpc_slurm_workspaces_dir(username, project_name)
+
         # TODO: Handle the exceptions properly
         self.__ssh_paramiko = create_ssh_connection_to_hpc(
             host=host,
@@ -44,7 +56,7 @@ class HPCTransfer:
 
     def put_batch_script(self, batch_script_id: str) -> str:
         local_batch_script_path = join(dirname(__file__), "batch_scripts", batch_script_id)
-        hpc_batch_script_path = join(OPERANDI_HPC_DIR_BATCH_SCRIPTS, batch_script_id)
+        hpc_batch_script_path = join(self.batch_scripts_dir, batch_script_id)
         self.put_file(
             local_src=local_batch_script_path,
             remote_dst=hpc_batch_script_path
@@ -55,13 +67,13 @@ class HPCTransfer:
     def create_slurm_workspace_zip(
             self,
             ocrd_workspace_dir: str,
-            workflow_job_dir: str,
+            workflow_job_id: str,
             nextflow_script_path: str,
             tempdir_prefix: str = "slurm_workspace-"
     ) -> str:
         self.log.info(f"Entering pack_slurm_workspace")
         self.log.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
-        self.log.info(f"workflow_job_dir: {workflow_job_dir}")
+        self.log.info(f"workflow_job_id: {workflow_job_id}")
         self.log.info(f"nextflow_script_path: {nextflow_script_path}")
         self.log.info(f"tempdir_prefix: {tempdir_prefix}")
 
@@ -71,8 +83,6 @@ class HPCTransfer:
         # Parse the ocrd workspace id from the dir path
         ocrd_workspace_id = ocrd_workspace_dir.split('/')[-1]
         self.log.info(f"OCR-D workspace id to be used: {ocrd_workspace_id}")
-        workflow_job_id = workflow_job_dir.split('/')[-1]
-        self.log.info(f"Workflow job id to be used: {workflow_job_id}")
 
         tempdir = mkdtemp(prefix=tempdir_prefix)
         self.log.info(f"Created a temp dir name: {tempdir}")
@@ -93,15 +103,9 @@ class HPCTransfer:
         self.log.info(f"Zip archive created from src: {temp_workflow_job_dir}, to dst: {dst_zip_path}")
         return dst_zip_path
 
-    def put_slurm_workspace(
-            self,
-            local_src_slurm_zip: str,
-            hpc_slurm_workspaces_root: str,
-            workflow_job_dir: str,
-    ):
-        workflow_job_id = workflow_job_dir.split('/')[-1]
+    def put_slurm_workspace(self, local_src_slurm_zip: str, workflow_job_id: str):
         self.log.info(f"Workflow job id to be used: {workflow_job_id}")
-        hpc_dst_slurm_zip = join(hpc_slurm_workspaces_root, f"{workflow_job_id}.zip")
+        hpc_dst_slurm_zip = join(self.slurm_workspaces_dir, f"{workflow_job_id}.zip")
         self.put_file(local_src=local_src_slurm_zip, remote_dst=hpc_dst_slurm_zip)
         self.log.info(f"Put file from local src: {local_src_slurm_zip}, to remote dst: {hpc_dst_slurm_zip}")
         self.log.info(f"Leaving put_slurm_workspace, returning: {hpc_dst_slurm_zip}")
@@ -109,22 +113,21 @@ class HPCTransfer:
         return hpc_dst_slurm_zip
 
     def pack_and_put_slurm_workspace(
-            self,
-            ocrd_workspace_dir: str,
-            workflow_job_dir: str,
-            nextflow_script_path: str,
-            hpc_slurm_workspaces_root: str = OPERANDI_HPC_DIR_SLURM_WORKSPACES,
-            tempdir_prefix: str = "slurm_workspace-"
+        self,
+        ocrd_workspace_dir: str,
+        workflow_job_id: str,
+        nextflow_script_path: str,
+        tempdir_prefix: str = "slurm_workspace-"
     ) -> Tuple[str, str]:
         self.log.info(f"Entering put_slurm_workspace")
         self.log.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
-        self.log.info(f"workflow_job_dir: {workflow_job_dir}")
+        self.log.info(f"workflow_job_id: {workflow_job_id}")
         self.log.info(f"nextflow_script_path: {nextflow_script_path}")
         self.log.info(f"tempdir_prefix: {tempdir_prefix}")
 
         local_src_slurm_zip = self.create_slurm_workspace_zip(
             ocrd_workspace_dir=ocrd_workspace_dir,
-            workflow_job_dir=workflow_job_dir,
+            workflow_job_id=workflow_job_id,
             nextflow_script_path=nextflow_script_path,
             tempdir_prefix=tempdir_prefix
         )
@@ -132,23 +135,20 @@ class HPCTransfer:
 
         hpc_dst = self.put_slurm_workspace(
             local_src_slurm_zip=local_src_slurm_zip,
-            hpc_slurm_workspaces_root=hpc_slurm_workspaces_root,
-            workflow_job_dir=workflow_job_dir
+            workflow_job_id=workflow_job_id
         )
 
         self.log.info(f"Leaving pack_and_put_slurm_workspace")
         return local_src_slurm_zip, hpc_dst
 
     def get_and_unpack_slurm_workspace(
-            self,
-            ocrd_workspace_dir: str,
-            workflow_job_dir: str,
-            hpc_slurm_workspace_path: str
+        self,
+        ocrd_workspace_dir: str,
+        workflow_job_dir: str,
     ):
         self.log.info(f"Entering get_and_unpack_slurm_workspace")
         self.log.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
         self.log.info(f"workflow_job_dir: {workflow_job_dir}")
-        self.log.info(f"hpc_slurm_workspace_path: {hpc_slurm_workspace_path}")
 
         # Parse the ocrd workspace id from the dir path
         ocrd_workspace_id = ocrd_workspace_dir.split('/')[-1]
@@ -156,7 +156,7 @@ class HPCTransfer:
         workflow_job_id = workflow_job_dir.split('/')[-1]
         self.log.info(f"Workflow job id to be used: {workflow_job_id}")
 
-        get_src = join(hpc_slurm_workspace_path, f"{workflow_job_id}.zip")
+        get_src = join(self.slurm_workspaces_dir, workflow_job_id, f"{workflow_job_id}.zip")
         get_dst = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
         self.log.info(f"Getting workflow job zip file")
         try:
@@ -187,7 +187,7 @@ class HPCTransfer:
         rmtree(ocrd_workspace_dir, ignore_errors=True)
         self.log.info(f"Removed tree dirs: {ocrd_workspace_dir}")
 
-        get_src = join(hpc_slurm_workspace_path, ocrd_workspace_id, f"{ocrd_workspace_id}.zip")
+        get_src = join(self.slurm_workspaces_dir, workflow_job_id, ocrd_workspace_id, f"{ocrd_workspace_id}.zip")
         get_dst = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
         self.log.info(f"Getting workspace zip file")
         try:

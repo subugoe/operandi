@@ -1,17 +1,12 @@
+from os import environ
 from pytest import fixture
-from tests.constants import (
-    OPERANDI_HARVESTER_DEFAULT_PASSWORD,
-    OPERANDI_HARVESTER_DEFAULT_USERNAME,
-    OPERANDI_SERVER_DEFAULT_PASSWORD,
-    OPERANDI_SERVER_DEFAULT_USERNAME
-)
 
 
 @fixture(scope="session", name="auth")
 def fixture_auth():
-    yield OPERANDI_SERVER_DEFAULT_USERNAME, OPERANDI_SERVER_DEFAULT_PASSWORD
+    yield environ.get("OPERANDI_SERVER_DEFAULT_USERNAME"), environ.get("OPERANDI_SERVER_DEFAULT_PASSWORD")
 
 
 @fixture(scope="session", name="auth_harvester")
 def fixture_auth_harvester():
-    yield OPERANDI_HARVESTER_DEFAULT_USERNAME, OPERANDI_HARVESTER_DEFAULT_PASSWORD
+    yield environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME"), environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD")

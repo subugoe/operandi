@@ -5,8 +5,8 @@ from os import getpid, getppid, setsid
 from os.path import join
 from sys import exit
 
-from operandi_utils import reconfigure_all_loggers
-from operandi_utils.constants import LOG_LEVEL_WORKER, LOG_FILE_PATH_WORKER_PREFIX
+from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
+from operandi_utils.constants import LOG_LEVEL_WORKER
 from operandi_utils.database import (
     sync_db_initiate_database,
     sync_db_get_workflow,
@@ -16,7 +16,6 @@ from operandi_utils.database import (
     sync_db_update_workflow_job
 )
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
-from operandi_utils.hpc.constants import OPERANDI_HPC_DIR_SLURM_WORKSPACES
 from operandi_utils.rabbitmq import get_connection_consumer
 
 
@@ -26,7 +25,7 @@ class Worker:
     def __init__(self, db_url, rabbitmq_url, queue_name, test_sbatch=False):
         self.log = logging.getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
         self.queue_name = queue_name
-        self.log_file_path = f"{LOG_FILE_PATH_WORKER_PREFIX}_{queue_name}.log"
+        self.log_file_path = f"{get_log_file_path_prefix(module_type='worker')}_{queue_name}.log"
         self.test_sbatch = test_sbatch
 
         self.db_url = db_url
@@ -96,7 +95,6 @@ class Worker:
         try:
             workflow_db = sync_db_get_workflow(self.current_message_wf_id)
             workspace_db = sync_db_get_workspace(self.current_message_ws_id)
-            workflow_job_db = sync_db_get_workflow_job(self.current_message_job_id)
 
             workflow_script_path = workflow_db.workflow_script_path
             workspace_dir = workspace_db.workspace_dir
@@ -116,7 +114,6 @@ class Worker:
         try:
             self.prepare_and_trigger_slurm_job(
                 workflow_job_id=self.current_message_job_id,
-                workflow_job_dir=workflow_job_db.job_dir,
                 workspace_id=self.current_message_ws_id,
                 workspace_dir=workspace_dir,
                 workspace_base_mets=mets_basename,
@@ -185,7 +182,6 @@ class Worker:
     def prepare_and_trigger_slurm_job(
             self,
             workflow_job_id: str,
-            workflow_job_dir: str,
             workspace_id: str,
             workspace_dir: str,
             workspace_base_mets: str,
@@ -205,7 +201,7 @@ class Worker:
         try:
             self.hpc_io_transfer.pack_and_put_slurm_workspace(
                 ocrd_workspace_dir=workspace_dir,
-                workflow_job_dir=workflow_job_dir,
+                workflow_job_id=workflow_job_id,
                 nextflow_script_path=workflow_script_path
             )
         except Exception as error:
@@ -231,7 +227,7 @@ class Worker:
                 workflow_job_id=workflow_job_id,
                 hpc_slurm_job_id=slurm_job_id,
                 hpc_batch_script_path=hpc_batch_script_path,
-                hpc_slurm_workspace_path=join(OPERANDI_HPC_DIR_SLURM_WORKSPACES, workflow_job_id)
+                hpc_slurm_workspace_path=join(self.hpc_io_transfer.slurm_workspaces_dir, workflow_job_id)
             )
         except Exception as error:
             raise Exception(f"Failed to save the hpc slurm job in DB: {error}")

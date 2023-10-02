@@ -3,19 +3,18 @@ from logging import getLogger
 from os import environ
 from time import sleep
 
-from operandi_utils import reconfigure_all_loggers
-from operandi_utils.rabbitmq import (
-    DEFAULT_QUEUE_FOR_HARVESTER,
-    DEFAULT_QUEUE_FOR_USERS,
-    DEFAULT_QUEUE_FOR_JOB_STATUSES
-)
-
+from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
 from operandi_utils.validators import (
     DatabaseParamType,
     QueueServerParamType
 )
 from .broker import ServiceBroker
-from operandi_utils.constants import LOG_LEVEL_BROKER, LOG_FILE_PATH_BROKER
+from operandi_utils.constants import LOG_LEVEL_BROKER
+from operandi_utils.rabbitmq.constants import (
+    RABBITMQ_QUEUE_HARVESTER,
+    RABBITMQ_QUEUE_USERS,
+    RABBITMQ_QUEUE_JOB_STATUSES
+)
 
 
 __all__ = ['cli']
@@ -40,31 +39,27 @@ def cli(**kwargs):  # pylint: disable=unused-argument
               type=DatabaseParamType())
 def start_broker(queue: str, database: str):
     log = getLogger("operandi_broker.cli")
-    service_broker = ServiceBroker(
-        db_url=database,
-        rabbitmq_url=queue
-    )
+    service_broker = ServiceBroker(db_url=database, rabbitmq_url=queue)
 
     # A list of queues for which a worker process should be created
     queues = [
-        DEFAULT_QUEUE_FOR_USERS,
-        DEFAULT_QUEUE_FOR_HARVESTER
+        RABBITMQ_QUEUE_HARVESTER,
+        RABBITMQ_QUEUE_USERS
     ]
     try:
         for queue_name in queues:
             log.info(f"Creating a worker processes to consume from queue: {queue_name}")
             service_broker.create_worker_process(queue_name=queue_name, status_checker=False)
         log.info(
-            f"Creating a status checker worker processes to consume from queue: {DEFAULT_QUEUE_FOR_JOB_STATUSES}")
-        service_broker.create_worker_process(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES, status_checker=True)
+            f"Creating a status checker worker processes to consume from queue: {RABBITMQ_QUEUE_JOB_STATUSES}")
+        service_broker.create_worker_process(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, status_checker=True)
     except Exception as error:
         log.error(f"Error while creating worker processes: {error}")
 
+    log_file_path = f"{get_log_file_path_prefix(module_type='broker')}.log"
+
     # Reconfigure all loggers to the same format
-    reconfigure_all_loggers(
-        log_level=LOG_LEVEL_BROKER,
-        log_file_path=LOG_FILE_PATH_BROKER
-    )
+    reconfigure_all_loggers(log_level=LOG_LEVEL_BROKER, log_file_path=log_file_path)
 
     try:
         # Sleep the parent process till a signal is invoked

@@ -1,16 +1,17 @@
-"""
-The source code in this file is adapted by reusing
-some part of the source code from the official
-RabbitMQ documentation.
-"""
-
 from logging import getLogger
 from typing import Any, Union
 
 from pika import PlainCredentials
 
-from .connector import RMQConnector
 from operandi_utils.constants import LOG_LEVEL_RMQ_CONSUMER
+from .connector import RMQConnector
+from .constants import (
+    DEFAULT_EXCHANGER_NAME,
+    DEFAULT_EXCHANGER_TYPE,
+    RABBITMQ_QUEUE_JOB_STATUSES,
+    RABBITMQ_QUEUE_HARVESTER,
+    RABBITMQ_QUEUE_USERS
+)
 
 
 class RMQConsumer(RMQConnector):
@@ -39,9 +40,49 @@ class RMQConsumer(RMQConnector):
             credentials=credentials,
         )
         self._channel = RMQConnector.open_blocking_channel(self._connection)
+        self.setup_defaults()
+        RMQConnector.set_qos(self._channel)
 
     def setup_defaults(self) -> None:
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
+        self.create_queue(queue_name=RABBITMQ_QUEUE_HARVESTER)
+        self.create_queue(queue_name=RABBITMQ_QUEUE_USERS)
+        self.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES)
+
+    def create_queue(
+            self,
+            queue_name: str,
+            exchange_name: str = DEFAULT_EXCHANGER_NAME,
+            exchange_type: str = DEFAULT_EXCHANGER_TYPE,
+            passive: bool = False,
+            durable: bool = False,
+            auto_delete: bool = False,
+            exclusive: bool = False
+    ) -> None:
+        RMQConnector.exchange_declare(
+            channel=self._channel,
+            exchange_name=exchange_name,
+            exchange_type=exchange_type,
+            passive=False,
+            durable=False,
+            auto_delete=False,
+            internal=False
+        )
+        RMQConnector.queue_declare(
+            channel=self._channel,
+            queue_name=queue_name,
+            passive=passive,
+            durable=durable,
+            auto_delete=auto_delete,
+            exclusive=exclusive
+        )
+        RMQConnector.queue_bind(
+            channel=self._channel,
+            queue_name=queue_name,
+            exchange_name=exchange_name,
+            # the routing key matches the queue name
+            routing_key=queue_name
+        )
 
     def get_one_message(
             self,

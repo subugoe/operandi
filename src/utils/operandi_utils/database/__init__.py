@@ -1,6 +1,4 @@
 __all__ = [
-    "OPERANDI_DB_NAME",
-    "OPERANDI_DB_URL",
     "DBHPCSlurmJob",
     "DBUserAccount",
     "DBWorkflow",
@@ -40,12 +38,8 @@ __all__ = [
     "sync_db_update_workspace",
 ]
 
-from .base import (
-    OPERANDI_DB_NAME,
-    OPERANDI_DB_URL,
-    db_initiate_database,
-    sync_db_initiate_database
-)
+from .base import db_initiate_database, sync_db_initiate_database
+from .models import DBHPCSlurmJob, DBUserAccount, DBWorkflow, DBWorkflowJob, DBWorkspace
 from .db_hpc_slurm_job import (
     db_create_hpc_slurm_job,
     db_get_hpc_slurm_job,
@@ -85,11 +79,4 @@ from .db_workspace import (
     sync_db_create_workspace,
     sync_db_get_workspace,
     sync_db_update_workspace
-)
-from .models import (
-    DBHPCSlurmJob,
-    DBUserAccount,
-    DBWorkflow,
-    DBWorkflowJob,
-    DBWorkspace
 )

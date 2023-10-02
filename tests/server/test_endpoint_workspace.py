@@ -1,7 +1,8 @@
+from os import environ
 from os.path import join
+from operandi_server.constants import SERVER_WORKSPACES_ROUTER
 
 from tests.helpers_asserts import assert_exists_db_resource, assert_exists_db_resource_not
-from tests.constants import OPERANDI_TESTS_LOCAL_DIR_WORKSPACES
 from .helpers_asserts import (
     assert_local_dir_workspace,
     assert_local_dir_workspace_not,
@@ -140,7 +141,12 @@ def test_get_workspace(operandi, auth, bytes_workspace2):
     assert response.headers.get('content-type').find("zip") > -1, \
         "content-type should be something with 'zip'"
 
-    zip_local_path = join(OPERANDI_TESTS_LOCAL_DIR_WORKSPACES, f"{workspace_id}.zip")
+    # TODO: Use a method that resolves with ID
+    zip_local_path = join(
+        environ.get("OPERANDI_SERVER_BASE_DIR"),
+        SERVER_WORKSPACES_ROUTER,
+        f"{workspace_id}.zip"
+    )
     with open(zip_local_path, 'wb') as filePtr:
         for chunk in response.iter_bytes(chunk_size=1024):
             if chunk:

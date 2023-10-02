@@ -1,28 +1,42 @@
 from logging import getLogger
+from os import environ
 from time import sleep
-
-from .constants import (
-    OPERANDI_HPC_HOST,
-    OPERANDI_HPC_HOST_PROXY,
-    OPERANDI_HPC_USERNAME,
-    OPERANDI_HPC_SSH_KEYPATH
+from .utils import (
+    create_ssh_connection_to_hpc,
+    resolve_hpc_user_home_dir,
+    resolve_hpc_user_scratch_dir,
+    resolve_hpc_project_root_dir,
+    resolve_hpc_batch_scripts_dir,
+    resolve_hpc_slurm_workspaces_dir,
 )
-from .utils import create_ssh_connection_to_hpc
 
 
 class HPCExecutor:
     def __init__(
-            self,
-            host: str = OPERANDI_HPC_HOST,
-            proxy_host: str = OPERANDI_HPC_HOST_PROXY,
-            username: str = OPERANDI_HPC_USERNAME,
-            key_path: str = OPERANDI_HPC_SSH_KEYPATH
-    ):
+        self,
+        host: str = environ.get("OPERANDI_HPC_HOST", "login-mdc.hpc.gwdg.de"),
+        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY", "login.gwdg.de"),
+        username: str = environ.get("OPERANDI_HPC_USERNAME"),
+        key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH")
+    ) -> None:
+        if not username:
+            raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
+        if not key_path:
+            raise ValueError("Environment variable not set: OPERANDI_HPC_SSH_KEYPATH")
+
         self.log = getLogger("operandi_utils.hpc.executor")
         self.log.info(f"Trying to connect to HPC host: {host}, "
                       f"via proxy: {proxy_host}, "
                       f"with username: {username}, "
                       f"using the key path: {key_path}")
+
+        self.user_home_dir = resolve_hpc_user_home_dir(username)
+        self.user_scratch_dir = resolve_hpc_user_scratch_dir(username)
+        project_name = environ.get("OPERANDI_HPC_PROJECT_NAME")
+        self.project_root_dir = resolve_hpc_project_root_dir(username, project_name)
+        self.batch_scripts_dir = resolve_hpc_batch_scripts_dir(username, project_name)
+        self.slurm_workspaces_dir = resolve_hpc_slurm_workspaces_dir(username, project_name)
+
         # TODO: Handle the exceptions properly
         self.__ssh_paramiko = create_ssh_connection_to_hpc(
             host=host,

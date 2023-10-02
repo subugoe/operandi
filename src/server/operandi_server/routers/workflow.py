@@ -15,20 +15,14 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_utils.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
 from operandi_utils.database import db_create_workflow, db_create_workflow_job, db_get_workflow, db_get_workflow_job
 from operandi_utils.rabbitmq import (
-    # Requests coming from the
-    # Harvester are sent to this queue
-    DEFAULT_QUEUE_FOR_HARVESTER,
-    # Requests coming from
-    # other users are sent to this queue
-    DEFAULT_QUEUE_FOR_USERS,
-    # Requests for job status polling
-    # are sent to this queue
-    DEFAULT_QUEUE_FOR_JOB_STATUSES,
-    get_connection_publisher
+    get_connection_publisher,
+    RABBITMQ_QUEUE_JOB_STATUSES,
+    RABBITMQ_QUEUE_HARVESTER,
+    RABBITMQ_QUEUE_USERS
 )
+from operandi_server.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
 from operandi_server.files_manager import (
     create_resource_dir,
     delete_resource_dir,
@@ -40,24 +34,17 @@ from operandi_server.files_manager import (
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
 from .user import user_login
 
-# TODO: Fix this, the correct import must be made according to the env
-try:
-    from tests.constants import OPERANDI_RABBITMQ_URL as RMQ_URL
-    OPERANDI_RABBITMQ_URL = RMQ_URL
-except Exception as e:
-    OPERANDI_RABBITMQ_URL = "amqp://operandi_user:operandi_password@localhost:5672/"
-
 router = APIRouter(tags=["Workflow"])
 logger = logging.getLogger("operandi_server.routers.workflow")
 
-# TODO: Fix this - should not be here!
-logger.info(f"Trying to connect RMQ Publisher to rabbitmq url: {OPERANDI_RABBITMQ_URL}")
-rmq_publisher = get_connection_publisher(rabbitmq_url=OPERANDI_RABBITMQ_URL, enable_acks=True)
+logger.info(f"Trying to connect RMQ Publisher")
+rmq_publisher = get_connection_publisher(enable_acks=True)
 logger.info(f"RMQPublisher connected")
-logger.info(f"Creating queues: {DEFAULT_QUEUE_FOR_USERS}, {DEFAULT_QUEUE_FOR_HARVESTER}, {DEFAULT_QUEUE_FOR_JOB_STATUSES}")
-rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_HARVESTER)
-rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_USERS)
-rmq_publisher.create_queue(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES, auto_delete=True)
+
+# TODO: Reconsider this
+rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_HARVESTER)
+rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_USERS)
+rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES)
 
 
 @router.get("/workflow")
@@ -198,8 +185,8 @@ async def get_workflow_job_status(
     job_status_message = {"job_id": f"{job_id}"}
     logger.info(f"Encoding the job status RabbitMQ message: {job_status_message}")
     encoded_workflow_message = json.dumps(job_status_message)
-    logger.info(f"Pushing to the RabbitMQ queue for job statuses: {DEFAULT_QUEUE_FOR_JOB_STATUSES}")
-    rmq_publisher.publish_to_queue(queue_name=DEFAULT_QUEUE_FOR_JOB_STATUSES, message=encoded_workflow_message)
+    logger.info(f"Pushing to the RabbitMQ queue for job statuses: {RABBITMQ_QUEUE_JOB_STATUSES}")
+    rmq_publisher.publish_to_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, message=encoded_workflow_message)
     try:
         wf_job_db = await db_get_workflow_job(job_id)
     except RuntimeError:
@@ -302,15 +289,15 @@ async def submit_to_rabbitmq_queue(
 
         # Send the message to a queue based on the user_id
         if user_account_type == "harvester":
-            logger.info(f"Pushing to the RabbitMQ queue for the harvester: {DEFAULT_QUEUE_FOR_HARVESTER}")
+            logger.info(f"Pushing to the RabbitMQ queue for the harvester: {RABBITMQ_QUEUE_HARVESTER}")
             rmq_publisher.publish_to_queue(
-                queue_name=DEFAULT_QUEUE_FOR_HARVESTER,
+                queue_name=RABBITMQ_QUEUE_HARVESTER,
                 message=encoded_workflow_message
             )
         else:
-            logger.info(f"Pushing to the RabbitMQ queue for the users: {DEFAULT_QUEUE_FOR_USERS}")
+            logger.info(f"Pushing to the RabbitMQ queue for the users: {RABBITMQ_QUEUE_USERS}")
             rmq_publisher.publish_to_queue(
-                queue_name=DEFAULT_QUEUE_FOR_USERS,
+                queue_name=RABBITMQ_QUEUE_USERS,
                 message=encoded_workflow_message
             )
     except Exception as error:
