@@ -76,7 +76,6 @@ clean-all-image-based-docker-modules:
 	docker rmi -f ghcr.io/subugoe/operandi-broker:main
 
 start-all-docker-modules:
-	docker compose -f ./docker-compose.yml --env-file ./docker.env build --no-cache
 	docker compose -f ./docker-compose.yml --env-file ./docker.env up -d
 
 stop-all-docker-modules:

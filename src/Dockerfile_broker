@@ -35,4 +35,6 @@ RUN pip3 install /usr/src/utils
 RUN python3 -m pip install -r /usr/src/broker/requirements.txt --ignore-installed
 RUN pip3 install /usr/src/broker
 
+RUN chmod 777 /tmp
+
 RUN echo "Operandi broker build success"

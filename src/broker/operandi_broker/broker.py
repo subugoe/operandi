@@ -17,6 +17,11 @@ class ServiceBroker:
         rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
         test_sbatch: bool = False
     ):
+        if not db_url:
+            raise ValueError("Environment variable not set: OPERANDI_DB_URL")
+        if not rabbitmq_url:
+            raise ValueError("Environment variable not set: OPERANDI_RABBITMQ_URL")
+
         self.log = logging.getLogger("operandi_broker.service_broker")
         self.test_sbatch = test_sbatch
 

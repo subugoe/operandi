@@ -32,4 +32,6 @@ RUN pip3 install /usr/src/utils
 RUN python3 -m pip install -r /usr/src/server/requirements.txt --ignore-installed
 RUN pip3 install /usr/src/server
 
+RUN chmod 777 /tmp
+
 RUN echo "Operandi server build success"

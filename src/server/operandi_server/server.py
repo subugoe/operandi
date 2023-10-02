@@ -23,6 +23,15 @@ class OperandiServer(FastAPI):
         live_server_url: str = environ.get("OPERANDI_SERVER_URL_LIVE"),
         local_server_url: str = environ.get("OPERANDI_SERVER_URL_LOCAL")
     ):
+        if not db_url:
+            raise ValueError("Environment variable not set: OPERANDI_DB_URL")
+        if not rabbitmq_url:
+            raise ValueError("Environment variable not set: OPERANDI_RABBITMQ_URL")
+        if not live_server_url:
+            raise ValueError("Environment variable not set: OPERANDI_SERVER_URL_LIVE")
+        if not local_server_url:
+            raise ValueError("Environment variable not set: OPERANDI_SERVER_URL_LOCAL")
+
         self.log = logging.getLogger("operandi_server.server")
         self.live_server_url = live_server_url
         self.local_server_url = local_server_url

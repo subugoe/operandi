@@ -63,7 +63,7 @@ def get_log_file_path_prefix(module_type: str) -> str:
     if not logging_rood_dir:
         raise ValueError("Environment variable not set: OPERANDI_LOGS_DIR")
     Path(logging_rood_dir).mkdir(mode=0o777, parents=True, exist_ok=True)
-    Path(logging_rood_dir).chmod(mode=0o777)
+    # Path(logging_rood_dir).chmod(mode=0o777)
 
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
     log_file_path_prefix = join(logging_rood_dir, f"{module_type}_{current_time}")
