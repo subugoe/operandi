@@ -12,7 +12,7 @@ COPY utils/ /usr/src/utils
 WORKDIR /usr/src/server/operandi_server
 
 # install dependencies    
-RUN apt-get update && apt-get -y install \
+RUN apt-get update && apt-get install -y \
     curl \
     git  \
     make \
@@ -32,6 +32,7 @@ RUN pip3 install /usr/src/utils
 RUN python3 -m pip install -r /usr/src/server/requirements.txt --ignore-installed
 RUN pip3 install /usr/src/server
 
-RUN chmod 777 /tmp
+RUN chmod 777 ${OPERANDI_LOGS_DIR}
+RUN chmod 777 ${OPERANDI_SERVER_BASE_DIR}
 
 RUN echo "Operandi server build success"

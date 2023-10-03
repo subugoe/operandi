@@ -66,20 +66,20 @@ uninstall:
 	for mod in $(UNINSTALL_ORDER);do $(PIP3) uninstall -y $$mod;done
 
 start-all-image-based-docker-modules:
-	docker compose -f ./docker-compose_image_based.yml --env-file .env up -d
+	docker compose -f ./docker-compose_image_based.yml --env-file docker.env up -d
 
 stop-all-image-based-docker-modules:
-	docker compose -f ./docker-compose_image_based.yml down --remove-orphans
+	docker compose -f ./docker-compose_image_based.yml --env-file docker.env down --remove-orphans
 
 clean-all-image-based-docker-modules:
 	docker rmi -f ghcr.io/subugoe/operandi-server:main
 	docker rmi -f ghcr.io/subugoe/operandi-broker:main
 
 start-all-docker-modules:
-	docker compose -f ./docker-compose.yml --env-file ./docker.env up -d
+	docker compose -f ./docker-compose.yml --env-file docker.env up -d
 
 stop-all-docker-modules:
-	docker compose -f ./docker-compose.yml down --remove-orphans
+	docker compose -f ./docker-compose.yml --env-file docker.env down --remove-orphans
 
 clean-all-docker-modules:
 	docker rmi -f operandi-broker:latest

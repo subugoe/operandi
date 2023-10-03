@@ -1,5 +1,12 @@
 version: '3.8'
 
+networks:
+  operandi:
+    name: operandi
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
+
 services:
   operandi-rabbitmq:
     image: "rabbitmq:3.8-management"
@@ -16,6 +23,7 @@ services:
       - type: bind
         source: ./src/rabbitmq_definitions.json
         target: /rmq_definitions.json
+    user: ${USER_ID}:${GROUP_ID}
     environment:
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
     networks:
@@ -34,6 +42,7 @@ services:
       - "27017:27017"
     volumes:
       - "/operandi-mongodb:/data/db"
+    user: ${USER_ID}:${GROUP_ID}
     networks:
       - operandi
     healthcheck:
@@ -65,6 +74,7 @@ services:
       - OPERANDI_SERVER_DEFAULT_PASSWORD=${OPERANDI_SERVER_DEFAULT_PASSWORD}
       - OPERANDI_SERVER_URL_LIVE=${OPERANDI_SERVER_URL_LIVE}
       - OPERANDI_SERVER_URL_LOCAL=${OPERANDI_SERVER_URL_LOCAL}
+    user: ${USER_ID}:${GROUP_ID}
     volumes:
       - "${OPERANDI_LOGS_DIR}:${OPERANDI_LOGS_DIR}"
       - "${OPERANDI_SERVER_BASE_DIR}:${OPERANDI_SERVER_BASE_DIR}"
@@ -89,6 +99,7 @@ services:
       - OPERANDI_HPC_SSH_KEYPATH=/home/root/.ssh/gwdg_hpc_key
       - OPERANDI_LOGS_DIR=${OPERANDI_LOGS_DIR}
       - OPERANDI_RABBITMQ_URL=${OPERANDI_RABBITMQ_URL}
+    user: ${USER_ID}:${GROUP_ID}
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "${OPERANDI_LOGS_DIR}:${OPERANDI_LOGS_DIR}"
@@ -97,10 +108,3 @@ services:
     networks:
       - operandi
     command: operandi-broker start
-
-networks:
-  operandi:
-    name: operandi
-    driver: bridge
-    driver_opts:                         
-      com.docker.network.driver.mtu: 1450
