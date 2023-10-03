@@ -190,28 +190,24 @@ jobs:
           SSH_HOST: ${{ secrets.OPERANDI_SSH_HOST_DEV }}
         run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/operandi/start-operandi-docker.sh
 
+  deploy-production:
+    name: Deploy to live VM
+    environment:
+      name: production
+    needs: build-and-push-docker-images
+    runs-on: ubuntu-latest
 
-# NOTE: THE LIVE INSTACE VM IS CURRENTLY LOCKED UP DUE TO SECURITY CONCERNS. WORKING ON FIXING THESE.
+    steps:
+      - name: copy ssh key
+        env:
+          SSH_KEY: ${{ secrets.OPERANDI_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
 
-# Just a duplicate from the one above. The duplication can and should be removed in the near future.
-#  deploy-production:
-#    name: Deploy to live VM
-#    environment:
-#      name: production
-#    needs: build-and-push-docker-images
-#    runs-on: ubuntu-latest
-
-#    steps:
-#      - name: copy ssh key
-#        env:
-#          SSH_KEY: ${{ secrets.OPERANDI_SSH_KEY }}
-#        run: |
-#          mkdir -p ~/.ssh/
-#          echo "$SSH_KEY" > ~/.ssh/key
-#          chmod 600 ~/.ssh/key
-
-#      - name: deploy
-#        env:
-#          SSH_USER: ${{ secrets.OPERANDI_SSH_USER }}
-#          SSH_HOST: ${{ secrets.OPERANDI_SSH_HOST_PROD }}
-#        run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/repos/operandi/start-operandi-docker.sh
+      - name: deploy
+        env:
+          SSH_USER: ${{ secrets.OPERANDI_SSH_USER }}
+          SSH_HOST: ${{ secrets.OPERANDI_SSH_HOST_PROD }}
+        run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/repos/operandi/start-operandi-docker.sh
