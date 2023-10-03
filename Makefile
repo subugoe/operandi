@@ -19,10 +19,9 @@ help:
 	@echo " start-server-native     Start the native Operandi Server"
 	@echo " start-harvester-native  Start the native Operandi Harvester"
 	@echo ""
+	@echo " USED ONLY FOR RUNNING THE TESTS "
 	@echo " start-mongo-docker      Start the dockerized MongoDB"
 	@echo " start-rabbitmq-docker   Start the dockerized RabbitMQ Server"
-	@echo " start-broker-docker     Start the dockerized Operandi Broker"
-	@echo " start-server-docker     Start the dockerized Operandi Server"
 	@echo ""
 	@echo " start-all-docker-modules       Start all docker modules from local"
 	@echo " stop-all-docker-modules        Stop all docker modules from local"
@@ -86,16 +85,10 @@ clean-all-docker-modules:
 	docker rmi -f operandi-server:latest
 
 start-mongo-docker:
-	docker compose -f ./docker-compose.yml --env-file docker.env up -d operandi-mongodb
+	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-mongodb
 
 start-rabbitmq-docker:
-	docker compose -f ./docker-compose.yml --env-file docker.env up -d operandi-rabbitmq
-
-start-broker-docker:
-	docker compose -f ./docker-compose.yml --env-file docker.env up -d operandi-broker
-
-start-server-docker:
-	docker compose -f ./docker-compose.yml --env-file docker.env up -d operandi-server
+	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-rabbitmq
 
 start-broker-native:
 	export $(shell sed 's/=.*//' .env)
