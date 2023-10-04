@@ -24,7 +24,7 @@ services:
         source: ${OPERANDI_RABBITMQ_CONFIG_JSON}
         target: /rmq_definitions.json
     environment:
-      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
+      - RABBITMQ_SERVER_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
     networks:
       - operandi
     healthcheck:
