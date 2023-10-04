@@ -23,7 +23,6 @@ services:
       - type: bind
         source: ${OPERANDI_RABBITMQ_CONFIG_JSON}
         target: /rmq_definitions.json
-    user: ${USER_ID}:${GROUP_ID}
     environment:
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
     networks:
@@ -42,7 +41,6 @@ services:
       - "27017:27017"
     volumes:
       - "/operandi-mongodb:/data/db"
-    user: ${USER_ID}:${GROUP_ID}
     networks:
       - operandi
     healthcheck:
@@ -61,7 +59,7 @@ services:
         condition: service_healthy
     restart: on-failure
     ports:
-      - "8000:8000"
+      - "80:8000"
     environment:
       - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
       - OPERANDI_DB_URL=${OPERANDI_DB_URL}
@@ -74,7 +72,6 @@ services:
       - OPERANDI_SERVER_DEFAULT_PASSWORD=${OPERANDI_SERVER_DEFAULT_PASSWORD}
       - OPERANDI_SERVER_URL_LIVE=${OPERANDI_SERVER_URL_LIVE}
       - OPERANDI_SERVER_URL_LOCAL=${OPERANDI_SERVER_URL_LOCAL}
-    user: ${USER_ID}:${GROUP_ID}
     volumes:
       - "${OPERANDI_LOGS_DIR}:${OPERANDI_LOGS_DIR}"
       - "${OPERANDI_SERVER_BASE_DIR}:${OPERANDI_SERVER_BASE_DIR}"
@@ -99,7 +96,6 @@ services:
       - OPERANDI_HPC_SSH_KEYPATH=/home/root/.ssh/gwdg_hpc_key
       - OPERANDI_LOGS_DIR=${OPERANDI_LOGS_DIR}
       - OPERANDI_RABBITMQ_URL=${OPERANDI_RABBITMQ_URL}
-    user: ${USER_ID}:${GROUP_ID}
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "${OPERANDI_LOGS_DIR}:${OPERANDI_LOGS_DIR}"
