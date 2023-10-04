@@ -210,4 +210,4 @@ jobs:
         env:
           SSH_USER: ${{ secrets.OPERANDI_SSH_USER }}
           SSH_HOST: ${{ secrets.OPERANDI_SSH_HOST_PROD }}
-        run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/repos/operandi/start-operandi-docker.sh
+        run: ssh $SSH_USER@$SSH_HOST -o StrictHostKeyChecking=no -i ~/.ssh/key /home/$SSH_USER/start-operandi-docker.sh
