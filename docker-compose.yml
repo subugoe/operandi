@@ -41,6 +41,9 @@ services:
       - "27017:27017"
     volumes:
       - "/operandi-mongodb:/data/db"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${OPERANDI_DB_ROOT_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${OPERANDI_DB_ROOT_PASS}
     networks:
       - operandi
     healthcheck:
