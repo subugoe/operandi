@@ -21,7 +21,7 @@ services:
       - "/rabbitmq-data/data/:/var/lib/rabbitmq/"
       - "/rabbitmq-data/log/:/var/log/rabbitmq/"
       - type: bind
-        source: ./src/rabbitmq_definitions.json
+        source: ${OPERANDI_RABBITMQ_CONFIG_JSON}
         target: /rmq_definitions.json
     user: ${USER_ID}:${GROUP_ID}
     environment:
