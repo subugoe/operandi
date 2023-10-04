@@ -74,6 +74,7 @@ class HPCExecutor:
             input_file_grp: str,
             workspace_id: str,
             mets_basename: str,
+            job_deadline_time: str,
             cpus: int,
             ram: int
     ) -> str:
@@ -83,11 +84,15 @@ class HPCExecutor:
         command += " 'sbatch"
 
         # SBATCH arguments passed to the batch script
+        command += f" --partition medium"
+        command += f" --time={job_deadline_time}"
+        command += f" --output={self.project_root_dir}/slurm-job-%J.txt"
         command += f" --cpus-per-task={cpus}"
         command += f" --mem={ram}G"
 
         # Regular arguments passed to the batch script
         command += f" {batch_script_path}"
+        command += f" {self.slurm_workspaces_dir}"
         command += f" {workflow_job_id}"
         command += f" {nextflow_script_id}"
         command += f" {input_file_grp}"

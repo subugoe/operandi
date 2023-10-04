@@ -1,31 +1,29 @@
 #!/bin/bash
 #SBATCH --constraint scratch
-#SBATCH --partition medium
-#SBATCH --time 48:00:00
-#SBATCH --output /scratch1/users/mmustaf/operandi/slurm-job-%J.txt
 
 # Parameters are as follows:
 # S0 - This batch script
-# $1 - Workflow job id
-# $2 - Nextflow script id
-# $3 - Entry input file group
-# $4 - Workspace id
-# $5 - Mets basename - default "mets.xml"
-# $6 - CPUs for the Nextflow processes
-# $7 - RAM for the Nextflow processes
+# S1 - The scratch base for slurm workspaces
+# $2 - Workflow job id
+# $3 - Nextflow script id
+# $4 - Entry input file group
+# $5 - Workspace id
+# $6 - Mets basename - default "mets.xml"
+# $7 - CPUs for the Nextflow processes
+# $8 - RAM for the Nextflow processes
 
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
-SCRATCH_BASE="/scratch1/users/${USER}/operandi/slurm_workspaces"
 OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
 
-WORKFLOW_JOB_ID=$1
-NEXTFLOW_SCRIPT_ID=$2
-IN_FILE_GRP=$3
-WORKSPACE_ID=$4
-METS_BASENAME=$5
-CPUS=$6
-RAM=$7
+SCRATCH_BASE=$1
+WORKFLOW_JOB_ID=$2
+NEXTFLOW_SCRIPT_ID=$3
+IN_FILE_GRP=$4
+WORKSPACE_ID=$5
+METS_BASENAME=$6
+CPUS=$7
+RAM=$8
 
 SCRATCH_SLURM_DIR_PATH="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 

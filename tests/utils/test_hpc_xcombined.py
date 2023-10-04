@@ -17,7 +17,7 @@ ID_WORKSPACE = f"test_ws_{current_time}"
 def test_pack_and_put_slurm_workspace(hpc_data_transfer, path_workflow1):
     # Move the test asset to actual workspaces location
     local_workspace_dir = copytree(
-        src=join(to_asset_path("workspaces", "dummy_ws"), "data"),
+        src=join(to_asset_path(resource_type="workspaces", name="dummy_ws"), "data"),
         dst=join(
             environ.get("OPERANDI_SERVER_BASE_DIR"),
             SERVER_WORKSPACES_ROUTER,
@@ -44,16 +44,16 @@ def test_pack_and_put_slurm_workspace(hpc_data_transfer, path_workflow1):
 
 
 def test_hpc_connector_put_batch_script(hpc_data_transfer):
-    batch_script_id = "test_submit_workflow_job.sh"
+    batch_script_id = "submit_workflow_job.sh"
     hpc_batch_script_path = join(hpc_data_transfer.batch_scripts_dir, batch_script_id)
     hpc_data_transfer.put_file(
-        local_src=to_asset_path('batch_scripts', batch_script_id),
+        local_src=to_asset_path(resource_type="batch_scripts", name=batch_script_id),
         remote_dst=hpc_batch_script_path
     )
 
 
 def test_hpc_connector_run_batch_script(hpc_command_executor, path_workflow1):
-    batch_script_id = "test_submit_workflow_job.sh"
+    batch_script_id = "submit_workflow_job.sh"
     hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, batch_script_id)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path,
@@ -62,6 +62,7 @@ def test_hpc_connector_run_batch_script(hpc_command_executor, path_workflow1):
         input_file_grp="OCR-D-IMG",
         workspace_id=ID_WORKSPACE,
         mets_basename="mets.xml",
+        job_deadline_time="1:00:00",
         cpus=2,
         ram=8
     )

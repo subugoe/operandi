@@ -11,7 +11,7 @@ def test_hpc_connector_transfer_file(hpc_data_transfer):
     Testing the put_file and get_file functionality of the HPC transfer
     """
     batch_script_id = "test_empty.sh"
-    test_local_file_path = to_asset_path(resource_type='batch_scripts', name=batch_script_id)
+    test_local_file_path = to_asset_path(resource_type="batch_scripts", name=batch_script_id)
     assert_exists_file(test_local_file_path)
 
     test_hpc_file_path = join(hpc_data_transfer.project_root_dir, batch_script_id)

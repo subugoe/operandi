@@ -192,11 +192,13 @@ class Worker:
     ) -> str:
 
         if self.test_sbatch:
-            batch_script_id = "test_submit_workflow_job.sh"
+            # The deadline of the test job - 1 hour
+            job_deadline_time = "1:00:00"
         else:
-            batch_script_id = "submit_workflow_job.sh"
+            # The deadline of the regular jobs - 48 hours
+            job_deadline_time = "48:00:00"
 
-        hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(batch_script_id=batch_script_id)
+        hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(batch_script_id="submit_workflow_job.sh")
 
         try:
             self.hpc_io_transfer.pack_and_put_slurm_workspace(
@@ -216,6 +218,7 @@ class Worker:
                 workspace_id=workspace_id,
                 mets_basename=workspace_base_mets,
                 input_file_grp=input_file_grp,
+                job_deadline_time=job_deadline_time,
                 cpus=cpus,
                 ram=ram
             )
