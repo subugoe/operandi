@@ -57,7 +57,7 @@ jobs:
     name: Run operandi tests
     needs: build-native
     env:
-      ENV_FILE: ./.github/workflows/tests/.env
+      ENV_FILE: ./.github/workflows/.env
     strategy:
       fail-fast: false
       matrix:

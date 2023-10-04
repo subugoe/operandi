@@ -6,6 +6,14 @@ PIP3_INSTALL = pip3 install
 BUILD_ORDER = src/utils src/server src/broker src/harvester
 UNINSTALL_ORDER = operandi_harvester operandi_broker operandi_server operandi_utils
 
+ifneq (,$(wildcard ./.env))
+    include ./.env
+endif
+
+ifneq (,$(wildcard ./tests/.env))
+    include ./tests/.env
+endif
+
 help:
 	@echo ""
 	@echo "Targets"
@@ -91,15 +99,15 @@ start-rabbitmq-docker:
 	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-rabbitmq
 
 start-broker-native:
-	export $(shell sed 's/=.*//' .env)
+	export $(shell sed 's/=.*//' ./.env)
 	operandi-broker start
 
 start-server-native:
-	export $(shell sed 's/=.*//' .env)
+	export $(shell sed 's/=.*//' ./.env)
 	operandi-server start
 
 start-harvester-native:
-	export $(shell sed 's/=.*//' .env)
+	export $(shell sed 's/=.*//' ./.env)
 	operandi-harvester start-dummy --address http://localhost:8000
 
 run-tests: run-tests-server run-tests-broker run-tests-utils run-tests-harvester
