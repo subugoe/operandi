@@ -108,6 +108,9 @@ jobs:
       - name: start MongoDB
         run: docker compose -f ./docker-compose.yml --env-file ${{ env.ENV_FILE }} up -d operandi-mongodb
 
+      - name: wait starting of RabbitMQ and MongoDB
+        run: sleep 25
+
       - name: run broker tests
         run: |
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
