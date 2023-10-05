@@ -25,7 +25,7 @@ help:
 	@echo ""
 	@echo " start-broker-native     Start the native Operandi Broker"
 	@echo " start-server-native     Start the native Operandi Server"
-	@echo " start-harvester-native  Start the native Operandi Harvester"
+	@echo " start-harvester-dummy   Start the native Operandi Harvester with a dummy 1 cycle"
 	@echo ""
 	@echo " USED ONLY FOR RUNNING THE TESTS "
 	@echo " start-mongo-docker      Start the dockerized MongoDB"
@@ -106,9 +106,9 @@ start-server-native:
 	export $(shell sed 's/=.*//' ./.env)
 	operandi-server start
 
-start-harvester-native:
+start-harvester-dummy:
 	export $(shell sed 's/=.*//' ./.env)
-	operandi-harvester start-dummy --address http://localhost:8000
+	operandi-harvester start-dummy --address http://localhost
 
 run-tests: run-tests-server run-tests-broker run-tests-utils run-tests-harvester
 
