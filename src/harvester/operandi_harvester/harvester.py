@@ -1,5 +1,5 @@
 import logging
-from os import environ
+from os import environ, makedirs
 from os.path import dirname, exists, join, isfile
 from requests import get, post
 from requests.auth import HTTPBasicAuth
@@ -44,6 +44,7 @@ class Harvester:
             raise FileNotFoundError(f"Path is not a file: {VD18_IDS_FILE}")
 
         self.results_download_dir: str = join(dirname(__file__), "results")
+        makedirs(self.results_download_dir, exist_ok=True)
         self.default_workflow_id = None
         self.default_nf_workflow: str = join(dirname(__file__), "assets", "default_workflow.nf")
         self.dummy_ws_zip: str = join(dirname(__file__), "assets", "dummy_ws.ocrd.zip")
