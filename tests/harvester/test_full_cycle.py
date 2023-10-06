@@ -10,9 +10,9 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
     response = operandi.get("/")
     assert response.json()["message"] == "The home page of the OPERANDI Server"
 
-    # Create a background service worker for the harvester queue
+    # Create a background worker for the harvester queue
     service_broker.create_worker_process(queue_name=RABBITMQ_QUEUE_HARVESTER, status_checker=False)
-    # Create a background service status checker worker
+    # Create a background worker for the job statuses queue
     service_broker.create_worker_process(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, status_checker=True)
 
     # Post a workflow script
@@ -90,3 +90,5 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
         for chunk in response.iter_bytes(chunk_size=1024):
             if chunk:
                 filePtr.write(chunk)
+
+
