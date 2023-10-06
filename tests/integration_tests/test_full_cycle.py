@@ -3,7 +3,7 @@ from os.path import join
 from time import sleep
 
 from operandi_utils.rabbitmq import RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_JOB_STATUSES
-from tests.server.helpers_asserts import assert_response_status_code
+from tests.tests_server.helpers_asserts import assert_response_status_code
 
 
 def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, bytes_workspace1):

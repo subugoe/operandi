@@ -110,23 +110,27 @@ start-harvester-dummy:
 	export $(shell sed 's/=.*//' ./.env)
 	operandi-harvester start-dummy --address http://localhost
 
-run-tests: run-tests-server run-tests-broker run-tests-utils run-tests-harvester
+run-tests:  run-tests-server run-tests-harvester run-tests-broker run-tests-utils run-tests-integration
 
 run-tests-broker:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/broker/test_*.py
+	pytest tests/tests_broker/test_*.py
 
 run-tests-harvester:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/harvester/test_*.py
+	pytest tests/tests_harvester/test_*.py
 
 run-tests-server:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/server/test_*.py
+	pytest tests/tests_server/test_*.py
 
 run-tests-utils:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/utils/test_*.py
+	pytest tests/tests_utils/test_*.py
+
+run-tests-integration:
+	export $(shell sed 's/=.*//' ./tests/.env)
+	pytest tests/integration_tests/test_*.py
 
 pyclean:
 	rm -f **/*.pyc

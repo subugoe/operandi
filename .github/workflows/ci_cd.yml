@@ -111,25 +111,30 @@ jobs:
       - name: wait starting of RabbitMQ and MongoDB
         run: sleep 25
 
-      - name: run broker tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/broker/test_*.py
-
       - name: run server tests
         run: |
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/server/test_*.py
-
-      - name: run utils tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/utils/test_*.py
+          pytest tests/tests_server/test_*.py
 
       - name: run harvester tests
         run: |
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/harvester/test_*.py
+          pytest tests/tests_harvester/test_*.py
+
+      - name: run broker tests
+        run: |
+          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
+          pytest tests/tests_broker/test_*.py
+
+      - name: run utils tests
+        run: |
+          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
+          pytest tests/tests_utils/test_*.py
+
+      - name: run integration tests
+        run: |
+          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
+          pytest tests/integration_tests/test_*.py -s -v
 
   build-and-push-docker-images:
     name: Push ${{matrix.services.module}} to image registry
