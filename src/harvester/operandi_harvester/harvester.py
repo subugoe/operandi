@@ -119,12 +119,12 @@ class Harvester:
         if not has_finished:
             raise ValueError("The workflow job state polling failed or reached a timeout")
 
-    def post_workspace_url(self, mets_url: str) -> str:
+    def post_workspace_url(self, mets_url: str, file_grp: str = USE_WORKSPACE_FILE_GROUP) -> str:
         if not is_url_responsive(mets_url):
             raise ValueError(f"Workspace mets url is not responsive: {mets_url}")
         self.logger.info(f"Posting workspace mets url: {mets_url}")
         response = post(
-            url=f"{self.server_address}/workspace/import_external?mets_url={mets_url}",
+            url=f"{self.server_address}/workspace/import_external?mets_url={mets_url}&file_grp={file_grp}",
             auth=self.auth
         )
         self.logger.debug(response.json())
