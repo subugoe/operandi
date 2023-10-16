@@ -3,269 +3,399 @@ This is the OPERANDI project's repository. The Readme file is still a draft and 
 The file may be slightly outdated. Will be updated after integrating the OCR-D WebApi.
 
 ## 1. Introduction
-OPERANDI is one of the implementation projects funded by the DFG initiative OCR-D. The main goal of OCR-D is the conceptual and technical preparation of the full-text transformation of the 16th to 18th-century prints published in the German language area. The task of automatic full-text recognition is broken down into individual process steps, which can be reproduced in the open-source OCR-D software. This makes it possible to create optimal workflows for the prints to be processed, and thus generate scientifically usable full texts.
+OPERANDI is one of the implementation projects funded by the DFG initiative OCR-D. The main goal of OCR-D is the 
+conceptual and technical preparation of the full-text transformation of the 16th to 18th-century prints published in 
+the German language area. The task of automatic full-text recognition is broken down into individual process steps, 
+which can be reproduced in the open-source OCR-D software. This makes it possible to create optimal workflows for 
+the prints to be processed, and thus generate scientifically usable full texts.
 
-The goal of OPERANDI is to develop and build an OCR-D-based implementation package for mass full-text capture with improved throughput while improving the quality of the results. At the same time, the goal is that the implementation package can also be used by other projects and institutions with comparable requirements. Two scenarios were identified during the pilot. In the first scenario, OCR generation is to take place for works that have already been digitized, resulting in mass full-text capture. In the second scenario, OCR generation for new works to be digitized will take place as part of the digitization process.
+The goal of OPERANDI is to develop and build an OCR-D-based implementation package for mass full-text capture with 
+improved throughput while improving the quality of the results. At the same time, the goal is that the implementation 
+package can also be used by other projects and institutions with comparable requirements. Two scenarios were identified 
+during the pilot. In the first scenario, OCR generation is to take place for works that have already been digitized, 
+resulting in mass full-text capture. In the second scenario, OCR generation for new works to be digitized will take 
+place as part of the digitization process.
 
 ## 2. Architecture
 <picture>
   <img src="https://raw.githubusercontent.com/subugoe/operandi/main/OPERANDI_arch.png">
 </picture>
 
-## 3. Installation of OPERANDI from source
-#### 3.1. Clone the repository and enter its directory.
-```sh
-git clone git@github.com:subugoe/operandi.git
-cd operandi
-```
+### Module details:
+#### 2.1. MongoDB:
+Different resources such as `workspaces`, `workflows`, and `workflow jobs` are stored in the database under 
+[unique resource IDs](https://en.wikipedia.org/wiki/Universally_unique_identifier): `workspace_id`, `workflow_id`, 
+and `workflow_job_id`, respectively. That ID is used for faster accessing/searching for the resources and their 
+metadata. The resource ID is also useful as a persistent identifier since the path of the resource itself may change 
+over time.
 
-#### 3.2. Install dependencies
-```sh
-sudo apt-get update
-sudo apt-get -y install make
-sudo make deps-ubuntu
-```
+#### 2.2. RabbitMQ Server:
+The message exchange broker (server) between `Operandi Server` and `Operandi Broker`. The Operandi Server is the 
+publisher and the workers of the Operandi Broker are the consumers. Depending on the coming request to the Operandi 
+Server, the server forwards the requests to one of the 3 queues. On the other side, the Operandi Broker creates workers 
+to consume messages from the queues to process them. Currently, there are 3 message queues available:
+- for user workflow job requests (currently, there is no prioritization among users based on their type)
+- for harvester workflow job requests
+- for job status checks
 
-#### 3.3. Create a virtual Python environment and activate it.
-```sh
-python3 -m venv $HOME/venv-operandi
-source $HOME/venv-operandi/bin/activate
-```
-
-#### 3.4. Install the modules of OPERANDI.
-```sh
-make install-dev
-```
-
-## 4. Configurations
-
-Select either of the two options and fulfill the requirements.
-
-#### 4.1 Option 1: The service broker executes workflows on the local host
+#### 2.3. Operandi Server:
+Provides various endpoints that can be used to obtain information about different resources. 
+Using the endpoints the users can create, delete, get, or update resources.
+The provided endpoints are respecting the proposed 
+[OCR-D Web API](https://app.swaggerhub.com/apis/kba/ocr-d_web_api/0.0.1) endpoints.  
+The `processing` endpoint is not utilized since Operandi concentrates mainly on running entire OCR-D workflows instead 
+of single steps. However, the user could still create a workflow that has a single OCR-D processor step and execute it.
 
 <details>
-<summary> 4.1.1 Requirements </summary>
+<summary> Resource types </summary>
 
-1. OCR-D Software, check [here](https://ocr-d.de/en/setup) for more details. 
-For simplicity, just pull the docker image of `ocrd/all:maximum`. 
-As the tag hints, this will download the entire OCR-D software (~13.5GB).
-```sh
-docker pull ocrd/all:maximum
-```
-
-2. Nextflow installed locally, check [here](https://www.nextflow.io/docs/latest/getstarted.html) for more details.
-```sh
-curl -s https://get.nextflow.io | bash
-chmod +x nextflow
-mv nextflow /usr/local/bin/
-nextflow -v
-```
-
+- `Users` - used to store user related metadata. The unique identifier is the e-mail address of each user.
+- `Workspaces` - each workspace must contain a [METS file](https://ocr-d.de/en/spec/mets), has at least 1 file group, and 
+some images belonging to that file group. The input/output type of workspaces when interacting with the server is in 
+the [OCRD-ZIP](https://ocr-d.de/en/spec/ocrd_zip) format used by our OCR-D community.
+- `Workflows` - each workflow is a [Nextflow](https://www.nextflow.io/docs/latest/script.html) script. 
+The input/output type of the workflows when interacting with the server is the Nextflow scripting language.
+- `Workflow Jobs` - a combination of a `Workspace` and a `Workflow` resource. The specified Workflow resource is 
+executed on the specified Workspace resource. Each workflow job resource contains metadata about the execution of 
+the workflow such as logs of each step and reports with resource (CPU, RAM, etc.) usage. 
+Each workflow job status can be queried to get the job's current state.
 </details>
 
 <details>
- <summary> 4.1.2 Configurations </summary>
-By default the service broker is configured to run locally. 
-No further configurations needed.
+<summary> Endpoint interactions </summary>
+
+The Operandi Server is responsible for accepting requests related to `users`, `workspaces`, `workflows`, and 
+`workflow job` resources. In case of a `workflow job` request, the server pushes the request to one of the RabbitMQ 
+queues for further delegation to the HPC environment.
+
+A user (i.e., client) would usually send requests in the following order:
+1. The user registers using the endpoint and contacts the Operandi team to get their account verified and approved. 
+Once the account is approved, the user can access and use all other Operandi endpoints.
+2. The user uploads a workspace of images in the [OCRD-ZIP](https://ocr-d.de/en/spec/ocrd_zip) and receives a 
+unique `workspace_id` as a response.
+3. The user uploads a Nextflow script and receives a unique `workflow_id` as a response.
+4. The user starts a workflow job by specifying which workflow (i.e., `workflow_id`) should be executed on which 
+workspace (i.e., `workspace_id`). The user should also mention which file group of images should be used as an entry 
+point to the workflow. The default file group is `DEFAULT`. The response is a unique `workflow_job_id`.
+5. The user polls the workflow job status using the `workflow_job_id` (till it fails or succeeds).
+6. The user downloads the workspace results as an [OCRD-ZIP](https://ocr-d.de/en/spec/ocrd_zip) using the 
+`workspace_id`.
+7. The user downloads the workflow job execution metadata as a zip using the `workflow_job_id`.
 </details>
 
-#### 4.2 Option 2: The service broker executes workflows in the HPC environment
+#### 2.4. Operandi Service Broker:
+The mediator between the `Operandi Server` and the `HPC environment`. The Operandi Broker is 
+responsible for the creation and management of workers. A separate worker is created for each of the RabbitMQ queues.
+Then each worker configures a connection and starts listening for messages coming from their respective queue. 
+There are 2 types of workers. 
 
 <details>
-<summary> 4.2.1 Requirements </summary>
+<summary> Type 1 </summary>
 
-1. GWDG credentials, check [here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:account_activation).
-2. Access to the HPC environment, check [here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:connect_with_ssh).
+Workers for creating a slurm workspaces, transferring the workspace to the HPC environment, and triggering a slurm 
+job on the transferred slurm workspace. (`W1` and `W2` on the architecture diagram). When a Type 1 worker consumes 
+a message from the queue the following happens:
+1. A slurm workspace zip containing a batch script, an ocrd workspace, and a Nextflow workflow is created. 
+The workspace and workflow are identified again based on their `workspace_id` and `workflow_id`, respectively.
+The [batch script](https://github.com/subugoe/operandi/blob/main/src/utils/operandi_utils/hpc/batch_scripts/submit_workflow_job.sh) 
+contains instructions to be submitted to the HPC slurm scheduler. Some of #SBATCH directives are dynamically passed 
+by the worker.
+2. The slurm workspace is transferred to the HPC environment
+3. A slurm job is started inside the HPC environment with the batch script.
+4. The worker is not blocking till the workflow job finishes execution.
 </details>
 
 <details>
-<summary> 4.2.2 Configurations </summary>
+<summary> Type 2 </summary>
 
-1. Set the HPC related credentials `HPC_USERNAME` and `HPC_KEY_PATH` inside the 
-`operandi/src/service_broker/service_broker/config.toml` file of the 
-service broker module.
-
-2. Reinstall the OPERANDI modules to save the changes of the previous step
-```sh
-make install-dev
-```
-
-Soon there will be a more convenient way to configure things 
-and reinstallation of modules will not be needed.
+Workers for checking slurm job statuses in the HPC environment and transferring the results back from the HPC 
+environment. (`W3` on the architecture diagram). When a Type 2 worker consumes a message from the queue the 
+following happens:
+1. Checks the slurm job state of the workflow job (these two are different things)
+2. If there is a state change, changes the state of the workflow job in the database
+3. If the state is `success` pulls the results from the HPC.
 </details>
 
-## 5. Executing one full cycle of OPERANDI
+The introduction of Type 2 worker was required to avoid the blocking of the Type 1 worker 
+till a slurm job finishes. Simple approach with a timeout for the Type 1 worker was not reliable enough since a slurm 
+job duration may take up to 48 hours and still be successful.
 
-Executing steps `5.1` and `5.2` for the first time will take more time - downloading and building.
+#### 2.5. Operandi Harvester:
+The harvesting module which automatizes the data processing in the following order: 
 
-#### 5.1 Start the MongoDB docker container
-```bash
-make start-mongo-docker
-```
+1. Uploads a workspace (either mets URL or ocrd workspace zip) - receives a `workspace_id`
+2. uploading a workflow (Nextflow script) - receives a `workflow_id`. 
+Of course, this step can be skipped if the workflow to be used is already available on the Operandi Server 
+and can be referenced with some `workflow_id`
+3. starting a workflow job - receives a `workflow_job_id`
+4. polling the workflow job status by using the `workflow_job_id`
+5. downloading the workspace output results (ocrd-zip) using the `workspace_id`
+6. downloading the workflow job output results (zip) using the `workflow_job_id`
 
-#### 5.2 Start the RabbitMQ docker container
-```bash
-make start-rabbitmq-docker
-```
-
-<details>
- <summary> Check if MongoDB and RabbitMQ are running: </summary>
-
-`sudo lsof -i -P -n | grep LISTEN` or `docker ps`
-
-By default, the MongoDB is listening on port 27018 and 
-RabbitMQ is listening on ports 5672, 15672, and 25672.
-```sh
-docker-pr 102316  root  4u  IPv4 635588  0t0  TCP *:27018 (LISTEN)
-docker-pr 102323  root  4u  IPv6 644201  0t0  TCP *:27018 (LISTEN)
-docker-pr 103097  root  4u  IPv4 637506  0t0  TCP *:25672 (LISTEN)
-docker-pr 103103  root  4u  IPv6 646574  0t0  TCP *:25672 (LISTEN)
-docker-pr 103116  root  4u  IPv4 648464  0t0  TCP *:15672 (LISTEN)
-docker-pr 103122  root  4u  IPv6 630453  0t0  TCP *:15672 (LISTEN)
-docker-pr 103134  root  4u  IPv4 642880  0t0  TCP *:5672 (LISTEN)
-docker-pr 103141  root  4u  IPv6 642885  0t0  TCP *:5672 (LISTEN)
-```
-</details>
-
-#### 5.3 Start the Operandi server
-Open a new terminal, activate the virtual Python environment created in `step 3.3`, and 
-start the Operandi server instance:
-```bash
-source $HOME/venv-operandi/bin/activate
-make start-server-native
-```
-
-Note: Starting the Operandi server for the first time creates a RabbitMQ message queue 
-used to communicate with the Operandi broker.
-
-#### 5.4 Start the Harvester
-As in `step 5.3`, activate the environment, then start the harvester.
-```bash
-source $HOME/venv-operandi/bin/activate
-make start-harvester-native
-```
-The harvesting module will harvest only a single mets url workspace by default.
-It is also possible to harvest more than one mets url. 
-To do so start the harvester by setting the desired limit.
-Currently, there are no limit checks, so do not use a big `N` value.
-```bash
-operandi-harvester start --limit N
-```
-
-Note: Starting the Harvester for the first time creates a RabbitMQ message queue 
-used to communicate with the Operandi broker.
-
-#### 5.5 Start the Operandi broker
-Depending on the configuration in `step 3`, there are two options. 
-To run a service broker instance that executes workflows locally:
-
-As in `step 5.3`, activate the environment, and start one of the broker instances.
+#### 2.6 GWDG HPC:
+File systems - there are different file systems available in the GWDG HPC (check 
+[here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:file_systems)), 
+but Operandi uses only two: `home` and `scratch1`. Currently, the `home` directory is not utilized and is planned to be 
+used for backing up failed executions that require manual investigation.
 
 <details>
- <summary> Local instance </summary>
+<summary> Uploading to HPC </summary>
 
-```bash
-source $HOME/venv-operandi/bin/activate
-make start-broker-native
+- to the user `home` directory first and then moved to the `scratch1` file system. This step is needed when the 
+transfer happens through the globally accessible transfer host of GWDG.
+- to the `scratch1`. This is the more efficient approach since that file system has higher transfer rates and no 
+additional transfer happens through the user `home` directory. However, the transfer host for the `scratch1` file 
+system is only accessible from GÖNET, i.e., an additional proxy jump is required to connect to the GÖNET first.
+
+Uploading with SCP: 
+```shell
+scp -rp LOCAL_FILE_PATH USER@transfer.gwdg.de:HPC_FILE_PATH
+```
+
+Uploading with RSYNC:
+```shell
+rsync -avvH LOCAL_FILE_PATH USER@transfer-scc.gwdg.de:HPC_FILE_PATH
 ```
 </details>
 
 <details>
- <summary> HPC instance - disabled till we have a proper authentication </summary>
+<summary> Downloading from HPC </summary>
+
+- from the user `home` - again just through the globally accessible transfer host.
+- From the `scratch1` - an additional proxy jump through GÖNET is required.
+
+Downloading with SCP: 
+```shell
+scp -rp USER@transfer.gwdg.de:HPC_FILE_PATH LOCAL_FILE_PATH
+```
+
+Downloading with RSYNC:
+```shell
+rsync -avvH USER@transfer-scc.gwdg.de:HPC_FILE_PATH LOCAL_FILE_PATH 
+```
 </details>
 
-Note: The broker listens for new requests comming from the 2 RabbitMQ message queues
-created in `step 5.3` and `step 5.4`.
+The transfer in Operandi happens directly to and from the `scratch1` file system. For that purpose, a proxy jump 
+through `login.gwdg.de` is utilized. The authentication used on the proxy happens with the same key pair used for the 
+HPC cluster. So, no additional key pair is required. In order to boost the transfer rates further, all files that 
+belong to a single slurm workspace are uploaded and downloaded as a single zip file.
 
-Warning: Running the Operandi broker first before Operandi Server and Harvester may result in errors. 
-As mentioned in the previous Notes, the respective message queues used for communication are created 
-by the Operandi server and the Harvester. 
-The Operandi broker does not create the queues if they're missing.
+## 3. Deployment of modules
+### 3.1 Prerequisites
+1. Docker Engine - check the official documentation [here](https://docs.docker.com/engine/install/). 
 
-#### 5.6 Interactive API documentation
+<details>
+<summary> 2. GWDG account and HPC access </summary>
 
-Check the interactive API documentation of the Operandi server once there is a running server instance (http://localhost:8000/docs).
-Operandi reuses the provided API from OCR-D and extends it.
+In order to use the HPC environment, a GWDG account with GWDG HPC access is required. That account will be used as 
+an Operandi admin account inside the HPC environment when you deploy your own instance. The admin user account is 
+important because all data that is processed inside the HPC are either stored under the home directory or the 
+scratch directory linked to that specific admin account.
+
+Follow these steps:
+- Get a GWDG account, check 
+[here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:account_activation).
+- Create an SSH key pair and add it to your account, check 
+[here](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:connect_with_ssh).
+- Make sure you have access to the HPC environment before proceeding ahead
+</details>
+
+<details>
+<summary> 3. Convert OCR-D all maximum software</summary>
+
+This is the ocr-d all docker image of the OCR-D processors. Since running docker containers is not allowed inside the 
+HPC due to security concerns, a singularity container wrapper is required. To do so, the `ocrd_all:maximum` docker image 
+shall be first converted to a Singularity Image Format (SIF). Fortunately, there is already a ready to use batch script 
+inside the Operandi repository - check 
+[here](https://github.com/subugoe/operandi/blob/main/src/utils/operandi_utils/hpc/batch_scripts/create_sif_ocrd_all_maximum.sh).
+
+Follow the steps:
+1. Connect to the HPC
+2. Copy the script to your home directory (in HPC)
+3. Execute it with SLURM - `sbatch /path/to/the/script`. That will return a slurm job id and trigger a SLURM job which 
+converts the docker image to SIF.
+4. The job status can then be queried with `sacct -j slurm_job_id` (replace with the correct id).
+5. Wait till the job finishes. The job duration varies in the range of 30-60 minutes.
+
+As a result, a SIF file will be created. The full path will be: `/scratch1/users/${USER}/ocrd_all_maximum_image.sif`, 
+where `${USER}` is the admin account created in the previous step.
+</details>
+
+<details>
+<summary> 4. Download OCR-D processor models</summary>
+
+Some OCR-D processors require trained models - check [here](https://ocr-d.de/en/models) for more details. To make sure 
+that each processor inside a Nextflow workflow description is fully functional, all models should be already available. 
+
+Again, there is a ready to use batch script that does that - check 
+[here](https://github.com/subugoe/operandi/blob/main/src/utils/operandi_utils/hpc/batch_scripts/download_all_ocrd_models.sh).
+As in the previous step execute the batch script and wait for the slurm job to finish.
+
+As a result, all models will be downloaded and available in path: `/scratch1/users/${USER}/ocrd_models`, 
+where `${USER}` is the admin account.
+</details>
+
+### 3.2. Operandi configurations
+<details>
+<summary> 1. RabbitMQ definitions file </summary>
+
+Used to configure users, virtual hosts, message queues, and more. It is suggested to create a single admin account to 
+be used for authentication purposes. Check an example definitions file for Operandi 
+[here](https://github.com/subugoe/operandi/blob/main/src/rabbitmq_definitions.json). That definition creates a user 
+account `operandi_user` with password `operandi_password`, creates two virtual hosts `/` (default/root) and `test`. 
+Sets permissions for `operandi_user` to access both virtual hosts. It also creates several queues per virtual host. 
+The exchanges and bindings are left empty because they are defined programmatically, check 
+[here](https://github.com/subugoe/operandi/tree/main/src/utils/operandi_utils/rabbitmq). For more details regarding 
+the definitions check the official RabbitMQ documentation [here](https://www.rabbitmq.com/configure.html).
+
+Warning: Do not use the already exposed credentials for your production environment. Make sure to create your own 
+definitions file and set the correct path as an environment variable (coming next).
+
+</details>
+
+<details>
+<summary> 2. Environment variables </summary>
+
+The Operandi repository contains several environment files (`.env`, `docker.env`, `tests/.env`) that can be used after modifying the relevant fields. 
+For a working environment simply replace the variables below:
+
+```dotenv
+OPERANDI_HPC_USERNAME=GWDG_USER
+OPERANDI_HPC_SSH_KEYPATH=PATH_TO_HPC_SSH_KEY
+```
+
+The HPC username is your GWDG account and the ssh key is the key produced in the `Prerequisites` section above.
+
+Warning: For the production environment make sure to properly configure all environment variables related to the 
+credentials!
+
+</details>
+
+### 3.3. Deploy all modules in docker
+After adapting the `docker.env` file, simply run:
+```shell
+docker compose -f ./docker-compose_image_based.yml --env-file docker.env up -d
+```
+
+There are 2 identical docker compose files. The one used in the command above downloads the prebuilt remote docker 
+images of the Operandi Server and Operandi Broker. The other one, `docker-compose.ymp`, builds docker images from the 
+source code. 
+
+<details>
+ <summary> Check if modules are running: </summary>
+
+By default, the MongoDB is listening on port 27018 and the RabbitMQ server is listening on ports 5672, 15672, and 25672. 
+The Operandi Server is listening on port 80. Check by either:
+
+```sh
+docker ps
+```
+```
+CONTAINER ID   IMAGE                                  COMMAND                  CREATED          STATUS                    PORTS                                                                                                                                                                                     NAMES
+694fa8b9961d   ghcr.io/subugoe/operandi-server:main   "operandi-server sta…"   15 seconds ago   Up 11 seconds             0.0.0.0:80->8000/tcp, :::80->8000/tcp                                                                                                                                                     operandi-server
+73159ad43f96   ghcr.io/subugoe/operandi-broker:main   "operandi-broker sta…"   15 seconds ago   Up 11 seconds                                                                                                                                                                                                       operandi-broker
+8fe666ecd451   rabbitmq:3.12-management               "docker-entrypoint.s…"   15 seconds ago   Up 14 seconds (healthy)   4369/tcp, 5671/tcp, 0.0.0.0:5672->5672/tcp, :::5672->5672/tcp, 15671/tcp, 0.0.0.0:15672->15672/tcp, :::15672->15672/tcp, 15691-15692/tcp, 0.0.0.0:25672->25672/tcp, :::25672->25672/tcp   operandi-rabbitmq
+2bcdae9b19b9   mongo                                  "docker-entrypoint.s…"   15 seconds ago   Up 14 seconds (healthy)   0.0.0.0:27017->27017/tcp, :::27017->27017/tcp                                                                                                                                             operandi-mongodb
+
+```
+
+or
+
+```sh
+sudo lsof -i -P -n | grep LISTEN
+```
+```
+docker-pr 19979            root    4u  IPv4 203595      0t0  TCP *:27017 (LISTEN)
+docker-pr 19986            root    4u  IPv6 199569      0t0  TCP *:27017 (LISTEN)
+docker-pr 19999            root    4u  IPv4 210212      0t0  TCP *:25672 (LISTEN)
+docker-pr 20005            root    4u  IPv6 214698      0t0  TCP *:25672 (LISTEN)
+docker-pr 20017            root    4u  IPv4 206766      0t0  TCP *:15672 (LISTEN)
+docker-pr 20023            root    4u  IPv6 216148      0t0  TCP *:15672 (LISTEN)
+docker-pr 20036            root    4u  IPv4 202653      0t0  TCP *:5672 (LISTEN)
+docker-pr 20042            root    4u  IPv6 210254      0t0  TCP *:5672 (LISTEN)
+docker-pr 20582            root    4u  IPv4 220165      0t0  TCP *:80 (LISTEN)
+docker-pr 20589            root    4u  IPv6 219177      0t0  TCP *:80 (LISTEN)
+
+```
+
+
+</details>
+
+### 3.4. Deploy modules separately
+
+If either the Operandi Server or Operandi Broker fails to run, you may want to try running them locally.
+
+<details>
+<summary> Install Operandi from source </summary>
+
+1. Install dependencies:
+    ```sh
+    sudo apt-get update && 
+    sudo apt-get install -y make &&
+    sudo make deps-ubuntu
+    ```
+2. Create a virtual Python environment and activate it:
+    ```sh
+    python3 -m venv $HOME/venv-operandi &&
+    source $HOME/venv-operandi/bin/activate
+    ```
+3. Install Operandi modules
+    ```sh
+    make install-dev
+    ```
+
+</details>
+
+<details>
+<summary> Deploy modules </summary>
+
+1. Stop and remove previously deployed docker modules:
+    ```bash
+    docker compose -f ./docker-compose_image_based.yml --env-file docker.env down --remove-orphans
+    ```
+2. Start MongoDB:
+    ```bash
+    docker compose -f ./docker-compose.yml --env-file .env up -d operandi-mongodb
+    ```
+3. Start RabbitMQ Server
+    ```bash
+    docker compose -f ./docker-compose.yml --env-file .env up -d operandi-rabbitmq
+    ```
+4. Start Operandi Server
+    ```bash
+    make start-server-native
+    ```
+5. Start Operandi Broker
+    ```bash
+    make start-broker-native
+    ```
+
+Pay attention that in the docker calls above the `.env` file is used. Since the server and broker are not deployed with 
+docker compose they are not part of the network created by the docker compose. Thus, the address of the MongoDB and 
+RabbitMQ is just the localhost and not the docker network.
+</details>
+
+### 3.5. Interactive API documentation
+
+Check the interactive API documentation of the Operandi server once there is a running server 
+instance (http://localhost/docs). Operandi implements the Web API from OCR-D and extends it.
 
 1. OCR-D WebAPI [spec](https://github.com/OCR-D/spec/blob/master/openapi.yml)
 2. OCR-D WebAPI [swagger](https://app.swaggerhub.com/apis/kba/ocr-d_web_api/0.0.1#/).
 3. OCR-D WebAPI [repo](https://github.com/OCR-D/ocrd-webapi-implementation).
 
-#### 5.7 Curl requests
-These are the curl requests we support in the alpha release of Operandi, e.g., 
-the `default` tag in the interactive API documentation.
-
-<details>
- <summary> 1. Post a workspace, parameters: `METS URL` and `workspace_id`. </summary>
-
-```sh
-E.g.:
-mets_url=https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml
-workspace_id=PPN631277528
-```
-`Warning`: Note that in `mets_url=VALUE` the `:` and `/` are replaced with `%3A` and `%2F`, respectively, in the curl command below.
-Do not just copy and paste a browser link.
-
-```sh
-curl -X 'POST' 'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528'
-```
-
-The `workspace_id` is modified with a timestamp suffix, i.e., `workspace_id_{timestamp}`
-
-Once you submit the `mets_url` and the `workspace_id`, the service broker creates a directory named `workspace_id_%Y%m%d_%H%M`,
-downloads the mets file, and the images of fileGrp `DEFAULT` inside the mets file.
-Then the broker triggers a Nextflow workflow on that workspace using the base Nextflow script inside the service broker
-(the base Nextflow script runs only the binarization processor). 
-
-Soon, we will support a way to provide the desired `fileGrp` to be used. 
-Moreover, we will offer several ready-to-run Nextflow scripts to choose from instead of running just the base Nextflow script.
-In addition, there will be a way to provide an OCR-D process workflow text file which will be converted to a Nextflow script.
-Check [here](https://github.com/MehmedGIT/OtoN_Converter) for additional information on the OtoN (OCR-D to Nextflow) converter. 
-
-</details>
-
-<details>
- <summary> 2. List available workspaces.</summary> 
-
-It shows all `workspace_id`'s currently available on the Operandi Server. E.g.:
-```sh
-curl -X 'GET' 'http://localhost:8000/workspaces/'
-```
-
-</details>
-
-
-<details>
- <summary> 3. Download a workspace + workflow results </summary>
-
-Download the zip of a `workspace_id_timestamp`. Suggestion: first list the available `workspace_id`'s to find your 
-`workspace_id` with the timestamp suffix. Then replace `workspace_id=VALUE` appropriately.
-Set the `output` path of the zip appropriately, i.e., the download location of the zip.
-```sh
-curl -X 'GET' 'http://localhost:8000/workspaces/workspace_id?workspace_id=PPN631277528_20220728_1700' --output ~/operandi_results/PPN631277528.zip
-```
-
-The zip file includes the following:
-1. A `bin` directory with the `ocrd-workspace` and the executed base Nextflow script.
-2. A `work` directory that has detailed information on the processes executed with Nextflow (logs, outputs, errors, etc.). 
-This is especially useful for debugging!
-3. A Nextflow report with execution details such as execution duration and used resources: `report.html` 
-4. An `output.txt` that holds the `stdout` of the current Nextflow execution.
-
-</details>
-
-## 6. Solutions to potential problems
+## 4. Solutions to potential problems
 
 This section provides solutions for potential problems that may arise.
 
 <details>
- <summary> 1. Authentication errors using SSH when starting the `service-broker-hpc`.</summary>
+ <summary> 1. Authentication errors using SSH .</summary>
 
 A potential reason for that error could be that your private key was not added to the SSH Agent.
 
 Solution:
 ```sh
-eval `ssh-agent -s`
+eval `ssh-agent -s` &&
 ssh-add /path/to/your_key
 ```
 
@@ -277,152 +407,33 @@ Make sure to provide the correct path for your local installation.
 
 </details>
 
-<details>
- <summary> 2. Downloading images referenced inside the METS file fails with an HTTP request exception.</summary>
+## 5. More insights regarding Operandi, Nextflow, and GWDG HPC cluster:
+The `submit_workflow_job.sh` is submitted to the SLURM scheduler through the front-end node of the HPC by the worker of 
+the Service Broker module. The SLURM scheduler then starts the workflow job, i.e., the submitted Nextflow script with 
+the number of resources and conditions specified in the request. The user/harvester currently can specify only the CPUs 
+and RAM to be used with each workflow.
 
-This is a known problem. This usually happens with METS files coming from the GDZ. 
+The SLURM executor of Nextflow then manages the allocation of separate jobs for each Nextflow process by talking to the 
+SLURM scheduler of HPC and requesting resources specified inside the Nextflow workflow file. The upper limit for a 
+resource is the resource allocated when executing the Nextflow script.
 
-The URLs to the images inside the mets file sometimes trigger server-side error exceptions, e.g., `Exception: HTTP request failed: URL (HTTP 500)`
-
-- Bad solution: Find-all and replace `http://gdz-srv1.` with `https://gdz.` inside the mets file.
-- Better Solution: Try a METS file URL from another library. E.g.,
-```sh
-https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml
-```
-```sh
-curl -X 'POST' 'http://localhost:8000/mets_url/?mets_url=https%3A%2F%2Fcontent.staatsbibliothek-berlin.de%2Fdc%2FPPN631277528.mets.xml&workspace_id=PPN631277528'
-```
-</details>
-
-## 7. Some insights regarding Operandi, Nextflow, and GWDG HPC cluser:
-Consider the following 3 files and their contents:
-<details>
-<summary> batch_script.sh </summary>
-
-```bash
-#!/bin/bash
-#SBATCH --partition medium
-#SBATCH --constraint scratch
-#SBATCH --cpus-per-task 4
-#SBATCH --mem 16G
-#SBATCH --output /home/users/mmustaf/jobs_output/job-%J.txt
-
-# clear the environment then load singularity and nextflow
-module purge
-module load singularity  # loads "git" and "go" as well
-module load nextflow  # loads "openjdk" as well
-
-... 
-# managing the creation of directories and moving files here 
-...
-
-# execute the main Nextflow script
-nextflow run ./simple.nf --file_group "DEFAULT" --volumedir "path/to/workspace"
-
-... 
-# transferring the results from the scratch storage to somewhere else
-# cleaning no longer needed files
-...
-```
-</details>
-
-<details>
-<summary> nextflow.config </summary>
-
-```nextflow
-singularity {
-  enabled = true
-  // Path to the singularity SIF file of the OCR-D all software
-  cacheDir = '/scratch1/users/mmustaf/singularityCache'
-}
-
-executor {
-  name = 'slurm'
-  // ...
-  // Other SLURM related configurations 
-  // ...
-}
-
-process {
-  withName: download_workspace {
-    cpus = 1
-    memory = 8.GB
-    queue = 'medium'  // partition
-  }
-  withName: ocrd_cis_ocropy_binarize {
-    cpus = 4
-    memory = 16.GB
-  }
-  withLabel: active_gpu {
-     queue = 'gpu'  // partition
-     containerOptions = '--nv'  // to make GPU drivers accessible in the singularity container
-  }
-}
-```
-</details>
-
-<details>
-<summary> simple.nf </summary>
-
-```nextflow
-nextflow.enable.dsl=2
-
-params.file_group = ""
-params.volume_dir = ""
-// $projectDir is the directory where this NF script is located
-params.mets_path = "$projectDir/ocrd-workspace/mets.xml"
-
-process download_workspace {
-  input:
-    val file_group
-  output:
-    val file_group
-
-  script:
-  """
-  singularity exec --bind ${params.volume_dir} docker://ocrd/all:maximum ocrd workspace find --file-grp ${file_group} --download --wait 1
-  """
-}
-
-process ocrd_cis_ocropy_binarize {
-  label 'active_gpu'
-  input:
-    path mets_file 
-    path dir_name
-  output:
-    val "OCR-D-BIN"
-  
-  script:
-  """
-  singularity exec --bind ${params.volume_dir} docker://ocrd/all:maximum ocrd-cis-ocropy-binarize -m ${mets_file} -I ${dir_name} -O "OCR-D-BIN"
-  """
-}
-
-// This is the main workflow
-workflow {
-  main:
-    download_workspace(params.file_group)
-    ocrd_cis_ocropy_binarize(params.mets_path, download_workspace.out)
-}
-```
-</details>
-
-NOTE: The examples are not tested/executed, and are provided as a reference.
-
-1. The `batch_script.sh` is submitted to the SLURM scheduler through the front-end node of the HPC by the Service Broker module worker. The SLURM scheduler then starts the workflow job, i.e., the submitted Nextflow script with the number of resources and conditions specified inside the batch script.
-2. The SLURM executor of Nextflow then manages the allocation of separate jobs for each Nextflow process by talking to the SLURM scheduler of HPC and requesting resources specified inside the `nextflow.config` file. The upper limit for a resource is the resource allocated when executing the Nextflow script. In this example, 4 CPUs and 16GBs of memory.
-3. With the `nextflow.config` (check [here](https://www.nextflow.io/docs/latest/config.html#config-scopes) regarding the scopes) it's possible to configure resources to be allocated for each step inside the NF script. So, that single configuration file could be used with any number of NF scripts as long as 1) the process names are consistent between the two files, or 2) specific labels are added inside the NF script inside processes as a directive to tag them into a group.
-4. Using the GPU resource is possible when running the job inside the GPU partition (according to the [GWDG documentation](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:running_jobs_slurm), this may be different for other HPC environments). So inside the batch script, the partition parameter should be replaced and the GPU unit specified with format `name:cores`:
+Using the GPU resource is possible when running the job inside the GPU partition (according to the 
+[GWDG documentation](https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:running_jobs_slurm), this may be different for other HPC environments). So inside the batch script, the partition 
+parameter should be replaced and the GPU unit specified with format `name:cores`:
 ```bash
 #SBATCH --partition gpu
 #SBATCH -G gtx1080:6
 ```
 or just allocating 6 cores of any available GPU: `#SBATCH -G 6`. 
 
-Overall, it's very hard to estimate the required resources for each OCR-D processor step in the OCR-D workflow based on the provided workspace (images). To provide more flexible configurations, it is required to produce the batch scripts and the nextflow config files dynamically. 
+Overall, it is very hard to estimate the required computational resources for each OCR-D processor step in the Nextflow 
+workflow for efficient computations. To provide more flexible configurations, it is required to either produce the 
+batch scripts dynamically or pass arguments to the batch scripts dynamically. Operandi implements the second option. 
+There is already a base scratch script which receives some arguments when executed.
 
-The `errorStrategy` and `maxErrors` directives inside the process block could help with the dynamic allocation of resources when a process failes due to lack of enough resources (i.e. memory). These directives can, of course, be specified in a `nextflow.config` file as well in order to group the error strategy and max retries for a group of processes. Consider this simple example below: 
-```nextflow
+The `errorStrategy` and `maxErrors` directives inside the process block could help with the dynamic allocation of 
+resources when a process fails due to lack of enough resources (i.e. memory). Consider this simple example below: 
+```shell
 process binarization {
   memory { 2.GB * task.attempt }
   errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
@@ -434,5 +445,3 @@ process binarization {
   """
 }
 ```
-
-The binarization process is executed and if the task fails due to out of memory error, the next execution attempts will increase the memory allocation and try again. Also note that the task exit status codes are not standard and can change depending on the resource manager used in the HPC cluster.
