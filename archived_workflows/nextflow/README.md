@@ -26,7 +26,7 @@ As a result, two output files named `multiplied_1.txt` and `multiplied_2.txt` ar
 - Each execution has also its own log files (`.nextflow.log.*`)
 - The cache and history are stored under the `.nextflow` directory.
 - Make sure to clear the cache and the output files to avoid potential bugs during the testing/learning process. This could also be done automatically by using either a `beforeScript` or `afterScript` directives inside the processes (check workflow2 for more information about such directives).
-- To execute the workflow use `nextflow run flow_name.nf` in the terminal (e.g. `nextflow run multuplier_process_dsl.nf`)
+- To execute the workflow use `nextflow run flow_name.nf` in the terminal (e.g. `nextflow run multiplier_process_dsl.nf`)
 
 ## workflow2
 Inside this folder, there is a `complex_workflow.nf` file that represents a complex workflow execution.
