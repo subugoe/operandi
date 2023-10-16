@@ -2,39 +2,59 @@ from hashlib import sha512
 from random import random
 from typing import Tuple
 
-from operandi_utils.database.database import create_user, get_user
+from operandi_utils.database import (
+    db_create_user_account,
+    db_get_user_account
+)
 from operandi_server.exceptions import AuthenticationError, RegistrationError
 
 
+async def create_user_if_not_available(username: str, password: str, account_type: str, approved_user: bool):
+    # If the account is not available in the DB, create it
+    try:
+        await authenticate_user(username, password)
+    except AuthenticationError:
+        # TODO: Note that this account is never removed from
+        #  the DB automatically in the current implementation
+        await register_user(
+            email=username,
+            password=password,
+            account_type=account_type,
+            approved_user=approved_user
+        )
+
+
 async def authenticate_user(email: str, password: str) -> str:
-    db_user = await get_user(email=email)
-    if not db_user:
-        raise AuthenticationError(f"User not found: {email}")
+    try:
+        db_user = await db_get_user_account(email=email)
+    except RuntimeError:
+        raise AuthenticationError(f"Not found user account for email: {email}")
     password_status = validate_password(
         plain_password=password,
         encrypted_password=db_user.encrypted_pass
     )
     if not password_status:
-        raise AuthenticationError(f"Wrong credentials for: {email}")
+        raise AuthenticationError(f"Wrong credentials for email: {email}")
     if not db_user.approved_user:
-        raise AuthenticationError(f"The account was not approved by the admin yet.")
+        raise AuthenticationError(f"The account has not been approved by the admin yet.")
     return db_user.account_type
 
 
 async def register_user(email: str, password: str, account_type: str, approved_user=False):
     salt, encrypted_password = encrypt_password(password)
-    db_user = await get_user(email)
-    if db_user:
-        raise RegistrationError(f"User is already registered: {email}")
-    created_user = await create_user(
-        email=email,
-        encrypted_pass=encrypted_password,
-        salt=salt,
-        account_type=account_type,
-        approved_user=approved_user
-    )
-    if not created_user:
-        raise RegistrationError(f"Failed to register user: {email}")
+    try:
+        db_user = await db_get_user_account(email)
+    except RuntimeError:
+        # No user existing with the provided e-mail, register
+        created_user = await db_create_user_account(
+            email=email,
+            encrypted_pass=encrypted_password,
+            salt=salt,
+            account_type=account_type,
+            approved_user=approved_user
+        )
+        return
+    raise RegistrationError(f"Another user is already registered with email: {email}")
 
 
 def encrypt_password(plain_password: str) -> Tuple[str, str]:

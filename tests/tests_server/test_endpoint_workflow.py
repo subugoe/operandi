@@ -1,15 +1,11 @@
-from tests.helpers_asserts import (
-    assert_exists_db_resource,
-    assert_exists_db_resource_not
-)
+from tests.helpers_asserts import assert_exists_db_resource
 from .helpers_asserts import (
     assert_local_dir_workflow,
-    assert_local_dir_workflow_not,
     assert_response_status_code
 )
 
 
-def test_post_workflow_script(operandi, auth, workflow_collection, bytes_workflow1):
+def test_post_workflow_script(operandi, auth, db_workflows, bytes_workflow1):
     # Post a new workflow script
     response = operandi.post(
         "/workflow",
@@ -19,13 +15,11 @@ def test_post_workflow_script(operandi, auth, workflow_collection, bytes_workflo
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
-    db_workflow = workflow_collection.find_one(
-        {"workflow_id": workflow_id}
-    )
-    assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
+    db_workflow = db_workflows.find_one({"workflow_id": workflow_id})
+    assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
 
 
-def test_put_workflow_script(operandi, auth, workflow_collection, bytes_workflow1, bytes_workflow2):
+def test_put_workflow_script(operandi, auth, db_workflows, bytes_workflow1, bytes_workflow2):
     put_workflow_id = "put_workflow_id"
     # The first put request creates a new workflow
     response = operandi.put(
@@ -36,10 +30,8 @@ def test_put_workflow_script(operandi, auth, workflow_collection, bytes_workflow
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
-    db_workflow = workflow_collection.find_one(
-        {"workflow_id": workflow_id}
-    )
-    assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
+    db_workflow = db_workflows.find_one({"workflow_id": workflow_id})
+    assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
 
     workflow_dir1 = db_workflow["workflow_dir"]
     workflow_path1 = db_workflow["workflow_script_path"]
@@ -55,10 +47,8 @@ def test_put_workflow_script(operandi, auth, workflow_collection, bytes_workflow
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
-    db_workflow = workflow_collection.find_one(
-        {"workflow_id": workflow_id}
-    )
-    assert_exists_db_resource(db_workflow, "workflow_id", workflow_id)
+    db_workflow = db_workflows.find_one({"workflow_id": workflow_id})
+    assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
 
     workflow_dir2 = db_workflow["workflow_dir"]
     workflow_path2 = db_workflow["workflow_script_path"]
@@ -104,16 +94,21 @@ def test_get_workflow_script(operandi, auth, bytes_workflow1):
         "filename should have the '.nf' extension"
 
 
-# TODO: To be implemented
+def test_get_workflow_non_existing(operandi, auth):
+    non_workflow_id = "non_existing_workflow_id"
+    response = operandi.get(
+        f"/workflow/{non_workflow_id}",
+        headers={"accept": "text/vnd.ocrd.workflow"},
+        auth=auth
+    )
+    assert_response_status_code(response.status_code, expected_floor=4)
+
+
+# This is already implemented as a part of the harvester full cycle test
 def _test_run_operandi_workflow():
     pass
 
 
-# TODO: To be implemented
-def _test_run_operandi_workflow_different_mets():
-    pass
-
-
-# TODO: To be implemented
+# This is already implemented as a part of the harvester full cycle test
 def _test_running_workflow_job_status():
     pass

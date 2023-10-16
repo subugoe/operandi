@@ -36,15 +36,12 @@ class Job(Resource):
         allow_population_by_field_name = True
 
 
-class ProcessorArgs(BaseModel):
-    workspace_id: str = None
-    input_file_grps: str = None
-    output_file_grps: str = None
-    page_id: str = None
-    parameters: Optional[Dict[str, Any]] = {}
-
-
 class WorkflowArguments(BaseModel):
     workspace_id: str
     input_file_grp: Optional[str] = "DEFAULT"
     mets_name: Optional[str] = "mets.xml"
+
+
+class SbatchArguments(BaseModel):
+    cpus: int = 4  # cpus per job allocated by default
+    ram: int = 32  # RAM (in GB) per job allocated by default

@@ -1,18 +1,6 @@
-from os import (
-    listdir,
-    makedirs,
-    remove,
-    symlink
-)
-from os.path import (
-    dirname,
-    exists,
-    join,
-    isdir,
-    isfile,
-    split
-)
-from paramiko import AutoAddPolicy, SSHClient
+from logging import getLogger
+from os import environ, listdir, makedirs, remove, symlink
+from os.path import dirname, join, isdir, split
 from pathlib import Path
 from shutil import rmtree, copytree
 from stat import S_ISDIR
@@ -20,172 +8,195 @@ from tempfile import mkdtemp
 from typing import Tuple
 
 from operandi_utils import make_zip_archive, unpack_zip_archive
-from .constants import (
-    OPERANDI_HPC_DIR_BATCH_SCRIPTS,
-    OPERANDI_HPC_DIR_SLURM_WORKSPACES,
-    OPERANDI_HPC_HOST_TRANSFER,
-    OPERANDI_HPC_HOST_TRANSFER_PROXY,
-    OPERANDI_HPC_HOST_PROXY,
-    OPERANDI_HPC_USERNAME,
-    OPERANDI_HPC_SSH_KEYPATH
+from .utils import (
+    create_ssh_connection_to_hpc,
+    resolve_hpc_user_home_dir,
+    resolve_hpc_user_scratch_dir,
+    resolve_hpc_project_root_dir,
+    resolve_hpc_batch_scripts_dir,
+    resolve_hpc_slurm_workspaces_dir,
 )
 
 
 class HPCTransfer:
-    def __init__(self):
+    def __init__(
+        self,
+        host: str = environ.get("OPERANDI_HPC_HOST_TRANSFER", "transfer-scc.gwdg.de"),
+        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY_TRANSFER", "login.gwdg.de"),
+        username: str = environ.get("OPERANDI_HPC_USERNAME"),
+        key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH")
+    ) -> None:
+        if not username:
+            raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
+        if not key_path:
+            raise ValueError("Environment variable not set: OPERANDI_HPC_SSH_KEYPATH")
+
+        self.log = getLogger("operandi_utils.hpc.transfer")
+        self.log.info(f"Trying to connect to HPC host: {host}, "
+                      f"via proxy: {proxy_host}, "
+                      f"with username: {username}, "
+                      f"using the key path: {key_path}")
+
+        self.user_home_dir = resolve_hpc_user_home_dir(username)
+        self.user_scratch_dir = resolve_hpc_user_scratch_dir(username)
+        project_name = environ.get("OPERANDI_HPC_PROJECT_NAME")
+        self.project_root_dir = resolve_hpc_project_root_dir(username, project_name)
+        self.batch_scripts_dir = resolve_hpc_batch_scripts_dir(username, project_name)
+        self.slurm_workspaces_dir = resolve_hpc_slurm_workspaces_dir(username, project_name)
+
         # TODO: Handle the exceptions properly
-        self.__ssh_paramiko = None
-        self.sftp = None
-
-    @staticmethod
-    def create_proxy_jump(
-            host=OPERANDI_HPC_HOST_TRANSFER,
-            proxy_host=OPERANDI_HPC_HOST_TRANSFER_PROXY,
-            username=OPERANDI_HPC_USERNAME,
-            key_path=OPERANDI_HPC_SSH_KEYPATH
-    ):
-        jump_box = SSHClient()
-        jump_box.set_missing_host_key_policy(AutoAddPolicy())
-        jump_box.connect(
-            proxy_host,
-            username=username,
-            key_filename=key_path
-        )
-        jump_box_channel = jump_box.get_transport().open_channel(
-            kind="direct-tcpip",
-            dest_addr=(host, 22),
-            src_addr=(proxy_host, 22)
-        )
-        return jump_box_channel
-
-    # This connection uses proxy jump host to
-    # connect to the front-end node of the HPC cluster
-    def connect(
-            self,
-            host=OPERANDI_HPC_HOST_TRANSFER,
-            proxy_host=OPERANDI_HPC_HOST_PROXY,
-            username=OPERANDI_HPC_USERNAME,
-            key_path=OPERANDI_HPC_SSH_KEYPATH
-    ):
-        keyfile = self.check_keyfile_existence(key_path)
-        if not keyfile:
-            print(f"Error: HPC key path does not exist or is not readable!")
-            print(f"Checked path: \n{key_path}")
-            exit(1)
-
-        proxy_channel = self.create_proxy_jump(
+        self.__ssh_paramiko = create_ssh_connection_to_hpc(
             host=host,
             proxy_host=proxy_host,
             username=username,
             key_path=key_path
         )
-        self.__ssh_paramiko = SSHClient()
-        self.__ssh_paramiko.set_missing_host_key_policy(AutoAddPolicy())
-        self.__ssh_paramiko.connect(
-            hostname=host,
-            username=username,
-            key_filename=key_path,
-            sock=proxy_channel,
-            allow_agent=False,
-            look_for_keys=False
-        )
-
+        self.log.info(f"Trying to open SFTP session")
         self.sftp = self.__ssh_paramiko.open_sftp()
-
-    @staticmethod
-    def check_keyfile_existence(hpc_key_path):
-        if exists(hpc_key_path) and isfile(hpc_key_path):
-            return hpc_key_path
-        return None
 
     def put_batch_script(self, batch_script_id: str) -> str:
         local_batch_script_path = join(dirname(__file__), "batch_scripts", batch_script_id)
-        hpc_batch_script_path = join(OPERANDI_HPC_DIR_BATCH_SCRIPTS, batch_script_id)
+        hpc_batch_script_path = join(self.batch_scripts_dir, batch_script_id)
         self.put_file(
             local_src=local_batch_script_path,
             remote_dst=hpc_batch_script_path
         )
+        self.log.info(f"Put file from local src: {local_batch_script_path}, to dst: {hpc_batch_script_path}")
         return hpc_batch_script_path
 
-    def pack_and_put_slurm_workspace(
+    def create_slurm_workspace_zip(
             self,
             ocrd_workspace_dir: str,
             workflow_job_id: str,
             nextflow_script_path: str,
             tempdir_prefix: str = "slurm_workspace-"
-    ) -> Tuple[str, str]:
-
-        tempdir = mkdtemp(prefix=tempdir_prefix)
-        temp_workflow_job_dir = join(tempdir, workflow_job_id)
-        makedirs(temp_workflow_job_dir)
+    ) -> str:
+        self.log.info(f"Entering pack_slurm_workspace")
+        self.log.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
+        self.log.info(f"workflow_job_id: {workflow_job_id}")
+        self.log.info(f"nextflow_script_path: {nextflow_script_path}")
+        self.log.info(f"tempdir_prefix: {tempdir_prefix}")
 
         # Parse the nextflow file name from the script path
         nextflow_filename = nextflow_script_path.split('/')[-1]
+        self.log.info(f"Nextflow file name to be used: {nextflow_filename}")
         # Parse the ocrd workspace id from the dir path
         ocrd_workspace_id = ocrd_workspace_dir.split('/')[-1]
+        self.log.info(f"OCR-D workspace id to be used: {ocrd_workspace_id}")
 
-        symlink(
-            src=nextflow_script_path,
-            dst=join(temp_workflow_job_dir, nextflow_filename),
-        )
-        copytree(
-            src=ocrd_workspace_dir,
-            dst=join(temp_workflow_job_dir, ocrd_workspace_id)
-        )
-        make_zip_archive(temp_workflow_job_dir, f"{temp_workflow_job_dir}.zip")
-        self.put_file(
-            local_src=f"{temp_workflow_job_dir}.zip",
-            remote_dst=join(OPERANDI_HPC_DIR_SLURM_WORKSPACES, f"{workflow_job_id}.zip")
-        )
+        tempdir = mkdtemp(prefix=tempdir_prefix)
+        self.log.info(f"Created a temp dir name: {tempdir}")
+        temp_workflow_job_dir = join(tempdir, workflow_job_id)
+        makedirs(temp_workflow_job_dir)
+        self.log.info(f"Created a slurm workspace dir: {temp_workflow_job_dir}")
 
+        dst_script_path = join(temp_workflow_job_dir, nextflow_filename)
+        symlink(src=nextflow_script_path, dst=dst_script_path)
+        self.log.info(f"Symlink created from src: {nextflow_script_path}, to dst: {dst_script_path}")
+
+        dst_workspace_path = join(temp_workflow_job_dir, ocrd_workspace_id)
+        copytree(src=ocrd_workspace_dir, dst=dst_workspace_path)
+        self.log.info(f"Copied tree from src: {ocrd_workspace_dir}, to dst: {dst_workspace_path}")
+
+        dst_zip_path = f"{temp_workflow_job_dir}.zip"
+        make_zip_archive(source=temp_workflow_job_dir, destination=dst_zip_path)
+        self.log.info(f"Zip archive created from src: {temp_workflow_job_dir}, to dst: {dst_zip_path}")
+        return dst_zip_path
+
+    def put_slurm_workspace(self, local_src_slurm_zip: str, workflow_job_id: str):
+        self.log.info(f"Workflow job id to be used: {workflow_job_id}")
+        hpc_dst_slurm_zip = join(self.slurm_workspaces_dir, f"{workflow_job_id}.zip")
+        self.put_file(local_src=local_src_slurm_zip, remote_dst=hpc_dst_slurm_zip)
+        self.log.info(f"Put file from local src: {local_src_slurm_zip}, to remote dst: {hpc_dst_slurm_zip}")
+        self.log.info(f"Leaving put_slurm_workspace, returning: {hpc_dst_slurm_zip}")
         # Zip path inside the HPC environment
-        return OPERANDI_HPC_DIR_SLURM_WORKSPACES
+        return hpc_dst_slurm_zip
+
+    def pack_and_put_slurm_workspace(
+        self,
+        ocrd_workspace_dir: str,
+        workflow_job_id: str,
+        nextflow_script_path: str,
+        tempdir_prefix: str = "slurm_workspace-"
+    ) -> Tuple[str, str]:
+        self.log.info(f"Entering put_slurm_workspace")
+        self.log.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
+        self.log.info(f"workflow_job_id: {workflow_job_id}")
+        self.log.info(f"nextflow_script_path: {nextflow_script_path}")
+        self.log.info(f"tempdir_prefix: {tempdir_prefix}")
+
+        local_src_slurm_zip = self.create_slurm_workspace_zip(
+            ocrd_workspace_dir=ocrd_workspace_dir,
+            workflow_job_id=workflow_job_id,
+            nextflow_script_path=nextflow_script_path,
+            tempdir_prefix=tempdir_prefix
+        )
+        self.log.info(f"Created slurm workspace zip: {local_src_slurm_zip}")
+
+        hpc_dst = self.put_slurm_workspace(
+            local_src_slurm_zip=local_src_slurm_zip,
+            workflow_job_id=workflow_job_id
+        )
+
+        self.log.info(f"Leaving pack_and_put_slurm_workspace")
+        return local_src_slurm_zip, hpc_dst
 
     def get_and_unpack_slurm_workspace(
-            self,
-            ocrd_workspace_dir: str,
-            workflow_job_dir: str,
-            hpc_slurm_workspace_path: str
+        self,
+        ocrd_workspace_dir: str,
+        workflow_job_dir: str,
     ):
+        self.log.info(f"Entering get_and_unpack_slurm_workspace")
+        self.log.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
+        self.log.info(f"workflow_job_dir: {workflow_job_dir}")
 
         # Parse the ocrd workspace id from the dir path
         ocrd_workspace_id = ocrd_workspace_dir.split('/')[-1]
+        self.log.info(f"OCR-D workspace id to be used: {ocrd_workspace_id}")
         workflow_job_id = workflow_job_dir.split('/')[-1]
+        self.log.info(f"Workflow job id to be used: {workflow_job_id}")
 
-        get_src = join(hpc_slurm_workspace_path, workflow_job_id, f"{workflow_job_id}.zip")
+        get_src = join(self.slurm_workspaces_dir, workflow_job_id, f"{workflow_job_id}.zip")
         get_dst = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
+        self.log.info(f"Getting workflow job zip file")
         try:
             self.get_file(remote_src=get_src, local_dst=get_dst)
         except Exception as error:
             raise Exception(
-                f"error when getting file: {error}, get_src: {get_src}, get_dst: {get_dst}"
+                f"Error when getting workflow job zip file: {error}, get_src: {get_src}, get_dst: {get_dst}"
             )
+        self.log.info(f"Got workflow job zip file from src: {get_src}, to dst: {get_dst}")
 
-        unpack_src = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
+        unpack_src = get_dst
         unpack_dst = workflow_job_dir
         try:
             unpack_zip_archive(source=unpack_src, destination=unpack_dst)
         except Exception as error:
             raise Exception(
-                f"error when unpacking zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}"
+                f"Error when unpacking workflow job zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}"
             )
+        self.log.info(f"Unpacked workflow job zip from src: {unpack_src}, to dst: {unpack_dst}")
 
-        # Remove the temporary zip
+        # Remove the temporary workflow job zip
         remove(unpack_src)
+        self.log.info(f"Removed the temp workflow job zip: {unpack_src}")
 
         # Remove the workspace dir from the local storage,
         # before transferring the results to avoid potential
         # overwrite errors or duplications
         rmtree(ocrd_workspace_dir, ignore_errors=True)
+        self.log.info(f"Removed tree dirs: {ocrd_workspace_dir}")
 
-        get_src = join(hpc_slurm_workspace_path, workflow_job_id, ocrd_workspace_id, f"{ocrd_workspace_id}.zip")
+        get_src = join(self.slurm_workspaces_dir, workflow_job_id, ocrd_workspace_id, f"{ocrd_workspace_id}.zip")
         get_dst = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
+        self.log.info(f"Getting workspace zip file")
         try:
             self.get_file(remote_src=get_src, local_dst=get_dst)
         except Exception as error:
             raise Exception(
-                f"error when getting file2: {error}, get_src: {get_src}, get_dst: {get_dst}"
+                f"Error when getting workspace zip file: {error}, get_src: {get_src}, get_dst: {get_dst}"
             )
+        self.log.info(f"Got workspace zip file from src: {get_src}, to dst: {get_dst}")
 
         unpack_src = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
         unpack_dst = ocrd_workspace_dir
@@ -193,11 +204,13 @@ class HPCTransfer:
             unpack_zip_archive(source=unpack_src, destination=unpack_dst)
         except Exception as error:
             raise Exception(
-                f"error when unpacking zip2: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}"
+                f"Error when unpacking workspace zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}"
             )
+        self.log.info(f"Unpacked workspace zip from src: {unpack_src}, to dst: {unpack_dst}")
 
-        # Remove the temporary zip
+        # Remove the temporary workspace zip
         remove(unpack_src)
+        self.log.info(f"Removed the temp workspace zip: {unpack_src}")
 
         # Remove the workspace dir from the local workflow job dir,
         # and. Then create a symlink of the workspace dir inside the
@@ -211,8 +224,10 @@ class HPCTransfer:
             )
         except Exception as error:
             raise Exception(
-                f"error when symlink: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}"
+                f"Error when symlink: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}"
             )
+        self.log.info(f"Symlinked from src: {ocrd_workspace_dir}, to dst: {workspace_dir_in_workflow_job}")
+        self.log.info(f"Leaving get_and_unpack_slurm_workspace")
 
     def mkdir_p(self, remotepath, mode=0o766):
         if remotepath == '/':
@@ -230,6 +245,7 @@ class HPCTransfer:
             return True
 
     def get_file(self, remote_src, local_dst):
+        makedirs(name=Path(local_dst).parent.absolute(), exist_ok=True)
         self.sftp.get(remotepath=remote_src, localpath=local_dst)
 
     def get_dir(self, remote_src, local_dst, mode=0o766):
@@ -238,11 +254,11 @@ class HPCTransfer:
         The remote source directory needs to exist.
         All subdirectories in source are created under destination.
         """
+        makedirs(name=local_dst, mode=mode, exist_ok=True)
         for item in self.sftp.listdir(remote_src):
             item_src = join(remote_src, item)
             item_dst = join(local_dst, item)
             if S_ISDIR(self.sftp.lstat(item_src).st_mode):
-                makedirs(name=item_dst, mode=mode, exist_ok=True)
                 self.get_dir(remote_src=item_src, local_dst=item_dst, mode=mode)
             else:
                 self.get_file(remote_src=item_src, local_dst=item_dst)
@@ -257,11 +273,11 @@ class HPCTransfer:
         The remote destination directory needs to exist.
         All subdirectories in source are created under destination.
         """
+        self.mkdir_p(remotepath=remote_dst, mode=mode)
         for item in listdir(local_src):
             item_src = join(local_src, item)
             item_dst = join(remote_dst, item)
             if isdir(item_src):
-                self.mkdir_p(remotepath=item_dst, mode=mode)
                 self.put_dir(local_src=item_src, remote_dst=item_dst, mode=mode)
             else:
                 self.sftp.chdir(remote_dst)

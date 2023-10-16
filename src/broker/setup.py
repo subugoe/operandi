@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
-from operandi_utils import OPERANDI_VERSION
+from operandi_utils.constants import OPERANDI_VERSION
 
 install_requires = open('requirements.txt').read().split('\n')
 install_requires.append(f'operandi_utils == {OPERANDI_VERSION}')

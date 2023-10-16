@@ -1,12 +1,32 @@
-from beanie import Document
 from typing import Optional
-
-# NOTE: Database models must not reuse any
-# response models [discovery, processor, user, workflow, workspace]
-# Database models are supposed to be low level models
+from beanie import Document
 
 
-class UserAccountDB(Document):
+class DBHPCSlurmJob(Document):
+    """
+    Model to store an HPC slurm job in the MongoDB
+
+    Attributes:
+        workflow_job_id             the id of the workflow job
+        hpc_slurm_job_id            the id of the Slurm job that runs this workflow job
+        hpc_slurm_job_state         the state of the slurm job inside the HPC
+        hpc_batch_script_path       path of the batch script inside the HPC
+        hpc_slurm_workspace_path    path of the slurm workspace inside the HPC
+        deleted                     whether this record is deleted by the user
+                                    (still available in the DB itself)
+    """
+    workflow_job_id: str
+    hpc_slurm_job_id: str
+    hpc_slurm_job_state: Optional[str]
+    hpc_batch_script_path: Optional[str]
+    hpc_slurm_workspace_path: Optional[str]
+    deleted: bool = False
+
+    class Settings:
+        name = "hpc_slurm_jobs"
+
+
+class DBUserAccount(Document):
     """
     Model to store a user account in the database
 
@@ -25,40 +45,13 @@ class UserAccountDB(Document):
     salt: str
     account_type: str
     approved_user: bool = False
+    deleted: bool = False
 
     class Settings:
         name = "user_accounts"
 
 
-class WorkspaceDB(Document):
-    """
-    Model to store a workspace in the mongo-database.
-
-    Information to handle workspaces and from bag-info.txt are stored here.
-
-    Attributes:
-        ocrd_identifier             Ocrd-Identifier (mandatory)
-        bagit_profile_identifier    BagIt-Profile-Identifier (mandatory)
-        ocrd_base_version_checksum  Ocrd-Base-Version-Checksum (mandatory)
-        mets_basename               Alternative name to the default "mets.xml"
-        bag_info_adds               bag-info.txt can also (optionally) contain additional
-                                    key-value-pairs which are saved here
-    """
-    workspace_id: str
-    workspace_dir: str
-    workspace_mets_path: str
-    ocrd_identifier: str
-    bagit_profile_identifier: str
-    ocrd_base_version_checksum: Optional[str]
-    mets_basename: Optional[str]
-    bag_info_adds: Optional[dict]
-    deleted: bool = False
-
-    class Settings:
-        name = "workspaces"
-
-
-class WorkflowDB(Document):
+class DBWorkflow(Document):
     """
     Model to store a workflow in the mongo-database.
 
@@ -80,7 +73,7 @@ class WorkflowDB(Document):
         name = "workflows"
 
 
-class WorkflowJobDB(Document):
+class DBWorkflowJob(Document):
     """
     Model to store a Workflow-Job in the MongoDB.
 
@@ -101,34 +94,38 @@ class WorkflowJobDB(Document):
     job_state: str
     workflow_id: str
     workspace_id: str
-    workflow_dir: str = None
-    workspace_dir: str = None
-    hpc_slurm_job_id: str = None
+    workflow_dir: Optional[str]
+    workspace_dir: Optional[str]
+    hpc_slurm_job_id: Optional[str]
     deleted: bool = False
 
     class Settings:
         name = "workflow_jobs"
 
 
-class HPCSlurmJobDB(Document):
+class DBWorkspace(Document):
     """
-    Model to store an HPC slurm job in the MongoDB
+    Model to store a workspace in the mongo-database.
+
+    Information to handle workspaces and from bag-info.txt are stored here.
 
     Attributes:
-        workflow_job_id             the id of the workflow job
-        hpc_slurm_job_id            the id of the Slurm job that runs this workflow job
-        hpc_slurm_job_state         the state of the slurm job inside the HPC
-        hpc_batch_script_path       path of the batch script inside the HPC
-        hpc_slurm_workspace_path    path of the slurm workspace inside the HPC
-        deleted                     whether this record is deleted by the user
-                                    (still available in the DB itself)
+        ocrd_identifier             Ocrd-Identifier (mandatory)
+        bagit_profile_identifier    BagIt-Profile-Identifier (mandatory)
+        ocrd_base_version_checksum  Ocrd-Base-Version-Checksum (mandatory)
+        mets_basename               Alternative name to the default "mets.xml"
+        bag_info_adds               bag-info.txt can also (optionally) contain additional
+                                    key-value-pairs which are saved here
     """
-    workflow_job_id: str
-    hpc_slurm_job_id: str
-    hpc_slurm_job_state: str = None
-    hpc_batch_script_path: str = None
-    hpc_slurm_workspace_path: str = None
+    workspace_id: str
+    workspace_dir: str
+    workspace_mets_path: str
+    ocrd_identifier: Optional[str]
+    bagit_profile_identifier: Optional[str]
+    ocrd_base_version_checksum: Optional[str]
+    mets_basename: Optional[str]
+    bag_info_adds: Optional[dict]
     deleted: bool = False
 
     class Settings:
-        name = "hpc_slurm_jobs"
+        name = "workspaces"

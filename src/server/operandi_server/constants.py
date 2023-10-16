@@ -1,24 +1,13 @@
-from datetime import datetime
-from dotenv import load_dotenv
-from os import getenv
-from operandi_utils import OPERANDI_LOGS_DIR
-try:
-    from tests.constants import OPERANDI_SERVER_URL_LIVE
-except Exception as e:
-    OPERANDI_SERVER_URL_LIVE = "http://localhost:8000"
-
 __all__ = [
-    'SERVER_URL',
-    "LOG_FILE_PATH",
-    "LOG_LEVEL"
+    "DEFAULT_FILE_GRP",
+    "DEFAULT_METS_BASENAME",
+    "SERVER_WORKFLOW_JOBS_ROUTER",
+    "SERVER_WORKFLOWS_ROUTER",
+    "SERVER_WORKSPACES_ROUTER"
 ]
 
-# variables for local testing are read from .env in base-dir with `load_dotenv()`
-load_dotenv()
-
-current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
-LOG_FILE_PATH: str = f"{OPERANDI_LOGS_DIR}/server_{current_time}.log"
-LOG_LEVEL: str = "INFO"
-
-# TODO: Revisit this, temporal fix for the test environment
-SERVER_URL: str = getenv("OPERANDI_SERVER_URL_LIVE", OPERANDI_SERVER_URL_LIVE)
+DEFAULT_FILE_GRP: str = "DEFAULT"
+DEFAULT_METS_BASENAME: str = "mets.xml"
+SERVER_WORKFLOW_JOBS_ROUTER: str = "workflow_jobs"
+SERVER_WORKFLOWS_ROUTER: str = "workflows"
+SERVER_WORKSPACES_ROUTER: str = "workspaces"

@@ -1,8 +1,3 @@
-"""
-The source code in this file is adapted by reusing
-some part of the source code from the official
-RabbitMQ documentation.
-"""
 from typing import Any, Optional, Union
 
 from pika import (
@@ -16,18 +11,13 @@ from pika.adapters.blocking_connection import BlockingChannel
 from .constants import (
     DEFAULT_EXCHANGER_NAME,
     DEFAULT_EXCHANGER_TYPE,
-    DEFAULT_QUEUE,
-    DEFAULT_ROUTER,
-    RABBIT_MQ_HOST as HOST,
-    RABBIT_MQ_PORT as PORT,
-    RABBIT_MQ_VHOST as VHOST,
+    RABBITMQ_QUEUE_DEFAULT,
     PREFETCH_COUNT
 )
 
 
 class RMQConnector:
-    def __init__(self, logger, host: str = HOST, port: int = PORT, vhost: str = VHOST) -> None:
-        self._logger = logger
+    def __init__(self, host: str, port: int, vhost: str) -> None:
         self._host = host
         self._port = port
         self._vhost = vhost
@@ -48,32 +38,23 @@ class RMQConnector:
         if connection and connection.is_open:
             if channel and channel.is_open:
                 # Declare the default exchange agent
-                RMQConnector.exchange_declare(
-                    channel=channel,
-                    exchange_name=DEFAULT_EXCHANGER_NAME,
-                    exchange_type=DEFAULT_EXCHANGER_TYPE,
-                )
+                RMQConnector.exchange_declare(channel=channel)
                 # Declare the default queue
                 RMQConnector.queue_declare(
                     channel,
-                    queue_name=DEFAULT_QUEUE
+                    queue_name=RABBITMQ_QUEUE_DEFAULT
                 )
                 # Bind the default queue to the default exchange
                 RMQConnector.queue_bind(
                     channel,
-                    queue_name=DEFAULT_QUEUE,
+                    queue_name=RABBITMQ_QUEUE_DEFAULT,
                     exchange_name=DEFAULT_EXCHANGER_NAME,
-                    routing_key=DEFAULT_ROUTER
+                    routing_key=RABBITMQ_QUEUE_DEFAULT
                 )
 
     # Connection related methods
     @staticmethod
-    def open_blocking_connection(
-            credentials: PlainCredentials,
-            host: str = HOST,
-            port: int = PORT,
-            vhost: str = VHOST
-    ) -> BlockingConnection:
+    def open_blocking_connection(credentials: PlainCredentials, host: str, port: int, vhost: str) -> BlockingConnection:
         blocking_connection = BlockingConnection(
             parameters=ConnectionParameters(
                 host=host,
@@ -114,8 +95,8 @@ class RMQConnector:
     @staticmethod
     def exchange_declare(
             channel: BlockingChannel,
-            exchange_name: str,
-            exchange_type: str,
+            exchange_name: str = DEFAULT_EXCHANGER_NAME,
+            exchange_type: str = DEFAULT_EXCHANGER_TYPE,
             passive: bool = False,
             durable: bool = False,
             auto_delete: bool = False,
@@ -167,12 +148,22 @@ class RMQConnector:
             )
 
     @staticmethod
-    def queue_bind(channel: BlockingChannel, queue_name: str, exchange_name: str, routing_key: str,
-                   arguments: Optional[Any] = None) -> None:
+    def queue_bind(
+            channel: BlockingChannel,
+            queue_name: str,
+            exchange_name: str,
+            routing_key: str,
+            arguments: Optional[Any] = None
+    ) -> None:
         if arguments is None:
             arguments = {}
         if channel and channel.is_open:
-            channel.queue_bind(queue=queue_name, exchange=exchange_name, routing_key=routing_key, arguments=arguments)
+            channel.queue_bind(
+                queue=queue_name,
+                exchange=exchange_name,
+                routing_key=routing_key,
+                arguments=arguments
+            )
 
     @staticmethod
     def queue_declare(

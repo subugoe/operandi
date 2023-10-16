@@ -12,7 +12,7 @@ COPY utils/ /usr/src/utils
 WORKDIR /usr/src/server/operandi_server
 
 # install dependencies    
-RUN apt-get update && apt-get -y install \
+RUN apt-get update && apt-get install -y \
     curl \
     git  \
     make \

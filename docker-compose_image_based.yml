@@ -1,8 +1,15 @@
 version: '3.8'
 
+networks:
+  operandi:
+    name: operandi
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
+
 services:
   operandi-rabbitmq:
-    image: "rabbitmq:3.8-management"
+    image: "rabbitmq:3.12-management"
     container_name: operandi-rabbitmq
     hostname: rabbit-mq-host
     ports:
@@ -14,10 +21,11 @@ services:
       - "/rabbitmq-data/data/:/var/lib/rabbitmq/"
       - "/rabbitmq-data/log/:/var/log/rabbitmq/"
       - type: bind
-        source: ./src/rabbitmq_definitions.json
+        source: ${OPERANDI_RABBITMQ_CONFIG_JSON}
         target: /rmq_definitions.json
     environment:
-      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
+      - RABBITMQ_SERVER_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
+      - RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version
     networks:
       - operandi
     healthcheck:
@@ -34,6 +42,9 @@ services:
       - "27017:27017"
     volumes:
       - "/operandi-mongodb:/data/db"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${OPERANDI_DB_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${OPERANDI_DB_ROOT_PASS}
     networks:
       - operandi
     healthcheck:
@@ -52,7 +63,7 @@ services:
         condition: service_healthy
     restart: on-failure
     ports:
-      - "8000:8000"
+      - "80:8000"
     environment:
       - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
       - OPERANDI_DB_URL=${OPERANDI_DB_URL}
@@ -64,6 +75,7 @@ services:
       - OPERANDI_SERVER_DEFAULT_USERNAME=${OPERANDI_SERVER_DEFAULT_USERNAME}
       - OPERANDI_SERVER_DEFAULT_PASSWORD=${OPERANDI_SERVER_DEFAULT_PASSWORD}
       - OPERANDI_SERVER_URL_LIVE=${OPERANDI_SERVER_URL_LIVE}
+      - OPERANDI_SERVER_URL_LOCAL=${OPERANDI_SERVER_URL_LOCAL}
     volumes:
       - "${OPERANDI_LOGS_DIR}:${OPERANDI_LOGS_DIR}"
       - "${OPERANDI_SERVER_BASE_DIR}:${OPERANDI_SERVER_BASE_DIR}"
@@ -84,6 +96,7 @@ services:
       - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
       - OPERANDI_DB_URL=${OPERANDI_DB_URL}
       - OPERANDI_HPC_PROJECT_NAME=${OPERANDI_HPC_PROJECT_NAME}
+      - OPERANDI_HPC_USERNAME=${OPERANDI_HPC_USERNAME}
       - OPERANDI_HPC_SSH_KEYPATH=/home/root/.ssh/gwdg_hpc_key
       - OPERANDI_LOGS_DIR=${OPERANDI_LOGS_DIR}
       - OPERANDI_RABBITMQ_URL=${OPERANDI_RABBITMQ_URL}
@@ -95,10 +108,3 @@ services:
     networks:
       - operandi
     command: operandi-broker start
-
-networks:
-  operandi:
-    name: operandi
-    driver: bridge
-    driver_opts:                         
-      com.docker.network.driver.mtu: 1450

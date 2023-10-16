@@ -1,37 +1,35 @@
 import json
 import logging
 import signal
-from os import getppid, setsid
+from os import getpid, getppid, setsid
 from sys import exit
 
-from operandi_utils import reconfigure_all_loggers
-import operandi_utils.database.database as db
-from operandi_utils.hpc import HPCExecutor
-from operandi_utils.rabbitmq import RMQConsumer
-
-from .constants import (
-    LOG_LEVEL_WORKER,
-    LOG_FILE_PATH_WORKER_PREFIX
+from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
+from operandi_utils.constants import LOG_LEVEL_WORKER
+from operandi_utils.database import (
+    sync_db_initiate_database,
+    sync_db_get_hpc_slurm_job,
+    sync_db_get_workflow_job,
+    sync_db_get_workspace,
+    sync_db_update_hpc_slurm_job,
+    sync_db_update_workflow_job
 )
+from operandi_utils.hpc import HPCExecutor, HPCTransfer
+from operandi_utils.rabbitmq import get_connection_consumer
 
 
 class JobStatusWorker:
-    def __init__(self, db_url, rmq_host, rmq_port, rmq_vhost, rmq_username, rmq_password, queue_name, test_sbatch=False):
-        self.log = logging.getLogger(__name__)
+    def __init__(self, db_url, rabbitmq_url, queue_name, test_sbatch=False):
+        self.log = logging.getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
         self.queue_name = queue_name
-        self.log_file_path = f"{LOG_FILE_PATH_WORKER_PREFIX}_{queue_name}.log"
+        self.log_file_path = f"{get_log_file_path_prefix(module_type='worker')}_{queue_name}.log"
         self.test_sbatch = test_sbatch
 
         self.db_url = db_url
-        # Connection to RabbitMQ related parameters
-        self.rmq_host = rmq_host
-        self.rmq_port = rmq_port
-        self.rmq_vhost = rmq_vhost
-        self.rmq_username = rmq_username
-        self.rmq_password = rmq_password
+        self.rmq_url = rabbitmq_url
         self.rmq_consumer = None
-
         self.hpc_executor = None
+        self.hpc_io_transfer = None
 
         # Currently consumed message related parameters
         self.current_message_delivery_tag = None
@@ -44,61 +42,28 @@ class JobStatusWorker:
             # Make the current process session leader
             setsid()
             # Reconfigure all loggers to the same format
-            reconfigure_all_loggers(
-                log_level=LOG_LEVEL_WORKER,
-                log_file_path=self.log_file_path
-            )
+            reconfigure_all_loggers(log_level=LOG_LEVEL_WORKER, log_file_path=self.log_file_path)
             self.log.info(f"Activating signal handler for SIGINT, SIGTERM")
             signal.signal(signal.SIGINT, self.signal_handler)
             signal.signal(signal.SIGTERM, self.signal_handler)
-            db.sync_initiate_database(self.db_url)
 
-            # Connect the HPC Executor
+            sync_db_initiate_database(self.db_url)
             self.hpc_executor = HPCExecutor()
-            if self.hpc_executor:
-                self.hpc_executor.connect()
-                self.log.info("HPC executor connection successful.")
-            else:
-                self.log.error("HPC executor connection has failed.")
+            self.log.info("HPC executor connection successful.")
+            self.hpc_io_transfer = HPCTransfer()
+            self.log.info("HPC transfer connection successful.")
 
-            self.connect_consumer()
-            self.configure_consuming(self.queue_name, self.__on_message_consumed_callback_hpc)
-
-            self.start_consuming()
+            self.rmq_consumer = get_connection_consumer(rabbitmq_url=self.rmq_url)
+            self.log.info(f"RMQConsumer connected")
+            self.rmq_consumer.configure_consuming(queue_name=self.queue_name, callback_method=self.__callback)
+            self.log.info(f"Configured consuming from queue: {self.queue_name}")
+            self.log.info(f"Starting consuming from queue: {self.queue_name}")
+            self.rmq_consumer.start_consuming()
         except Exception as e:
-            self.log.error(f"The worker failed to run, reason: {e}")
-            raise Exception(f"The worker failed to run, reason: {e}")
+            self.log.error(f"The worker failed, reason: {e}")
+            raise Exception(f"The worker failed, reason: {e}")
 
-    def connect_consumer(self):
-        if self.rmq_consumer:
-            # If for some reason connect_consumer() is called more than once.
-            self.log.warning(f"The RMQConsumer was already instantiated. "
-                             f"Overwriting the existing RMQConsumer.")
-        self.log.info(f"Connecting RMQConsumer to RabbitMQ server: "
-                      f"{self.rmq_host}:{self.rmq_port}{self.rmq_vhost}")
-        self.rmq_consumer = RMQConsumer(host=self.rmq_host, port=self.rmq_port, vhost=self.rmq_vhost)
-        # TODO: Remove this information before the release
-        self.log.debug(f"RMQConsumer authenticates with username: "
-                       f"{self.rmq_username}, password: {self.rmq_password}")
-        self.rmq_consumer.authenticate_and_connect(username=self.rmq_username, password=self.rmq_password)
-        self.log.info(f"Successfully connected RMQConsumer.")
-
-    def configure_consuming(self, queue_name, callback_method):
-        if not self.rmq_consumer:
-            raise Exception("The RMQConsumer connection is not configured or broken")
-        self.log.info(f"Configuring the consuming for queue: {queue_name}")
-        self.rmq_consumer.configure_consuming(
-            queue_name=queue_name,
-            callback_method=callback_method
-        )
-
-    def start_consuming(self):
-        if not self.rmq_consumer:
-            raise Exception("The RMQConsumer connection is not configured or broken")
-        self.log.info(f"Starting consuming from queue: {self.queue_name}")
-        self.rmq_consumer.start_consuming()
-
-    def __on_message_consumed_callback_hpc(self, ch, method, properties, body):
+    def __callback(self, ch, method, properties, body):
         self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
         self.log.debug(f"Consumed message: {body}")
 
@@ -118,44 +83,62 @@ class JobStatusWorker:
 
         # Handle database related reads and set the workflow job status to RUNNING
         try:
-            # TODO: This should be optimized, i.e., single read to the DB instead of three
-            workflow_job_db = db.sync_get_workflow_job(self.current_message_job_id)
-            hpc_slurm_job_db = db.sync_get_hpc_slurm_job(self.current_message_job_id)
+            workflow_job_db = sync_db_get_workflow_job(self.current_message_job_id)
+            workspace_job_db = sync_db_get_workspace(workflow_job_db.workspace_id)
+            hpc_slurm_job_db = sync_db_get_hpc_slurm_job(self.current_message_job_id)
+        except RuntimeError as error:
+            self.log.error(f"Database run-time error has occurred: {error}")
+            self.__handle_message_failure(interruption=False)
+            return
         except Exception as error:
             self.log.error(f"Database related error has occurred: {error}")
             self.__handle_message_failure(interruption=False)
             return
 
-        if workflow_job_db:
-            slurm_job_id = hpc_slurm_job_db.hpc_slurm_job_id
-            if not slurm_job_id:
-                self.log.warning(f"slurm_job_id is: {slurm_job_id}")
-            slurm_job_state = self.hpc_executor.check_slurm_job_state(slurm_job_id=slurm_job_id)
-            if not slurm_job_state:
-                self.log.warning(f"slurm_job_id: {slurm_job_id}, slurm job state is: {slurm_job_state}")
-            else:
-                self.log.info(f"Slurm job state is: {slurm_job_state}")
+        # Take the latest slurm job state
+        old_slurm_job_state = hpc_slurm_job_db.hpc_slurm_job_state
+        # Check the slurm job state through the hpc executor
+        new_slurm_job_state = self.hpc_executor.check_slurm_job_state(
+            slurm_job_id=hpc_slurm_job_db.hpc_slurm_job_id
+        )
+        # If there has been a change of slurm job state, update it
+        if old_slurm_job_state != new_slurm_job_state:
+            self.log.debug(f"Slurm job: {hpc_slurm_job_db.hpc_slurm_job_id}, "
+                           f"old state: {old_slurm_job_state}, "
+                           f"new state: {new_slurm_job_state}")
+            # Update the hpc slurm job state in the DB
+            sync_db_update_hpc_slurm_job(
+                find_workflow_job_id=workflow_job_db.job_id,
+                hpc_slurm_job_state=new_slurm_job_state
+            )
 
-            # TODO: This duplication is the same as in executor.py
-            #  Refactor it when things are working
-            slurm_fail_states = ["BOOT_FAIL", "CANCELLED", "DEADLINE", "FAILED", "NODE_FAIL",
-                                 "OUT_OF_MEMORY", "PREEMPTED", "REVOKED", "TIMEOUT"]
-            slurm_success_states = ["COMPLETED"]
-            slurm_waiting_states = ["RUNNING", "PENDING", "COMPLETING", "REQUEUED", "RESIZING", "SUSPENDED"]
+        # Take the latest workflow job state
+        old_workflow_job_status = workflow_job_db.job_state
+        # Convert the slurm job state to operandi workflow job state
+        new_workflow_job_status = self.convert_slurm_to_operandi_state(
+            slurm_job_state=new_slurm_job_state
+        )
 
-            # Take the latest workflow job state
-            workflow_job_status = workflow_job_db.job_state
-            if slurm_job_state in slurm_success_states:
-                workflow_job_status = "SUCCESS"
-            if slurm_job_state in slurm_waiting_states:
-                workflow_job_status = "RUNNING"
-            if slurm_job_state in slurm_fail_states:
-                workflow_job_status = "STOPPED"
+        # If there has been a change of operandi workflow state, update it
+        if old_workflow_job_status != new_workflow_job_status:
+            self.log.debug(f"Workflow job id: {self.current_message_job_id}, "
+                           f"old state: {old_workflow_job_status}, "
+                           f"new state: {new_workflow_job_status}")
+            sync_db_update_workflow_job(
+                find_job_id=self.current_message_job_id,
+                job_state=new_workflow_job_status
+            )
+            if new_workflow_job_status == 'SUCCESS':
+                self.hpc_io_transfer.get_and_unpack_slurm_workspace(
+                    ocrd_workspace_dir=workspace_job_db.workspace_dir,
+                    workflow_job_dir=workflow_job_db.job_dir,
+                )
+                self.log.info(f"Transferred slurm workspace from hpc path")
+                # Delete the result dir from the HPC home folder
+                # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
 
-            self.log.info(f"Setting workflow job state to: {workflow_job_status}")
-            db.sync_set_workflow_job_state(self.current_message_job_id, job_state=workflow_job_status)
-        else:
-            self.log.warning(f"Workflow job not existing in DB: {self.current_message_job_id}")
+        self.log.info(f"Latest slurm job state: {new_slurm_job_state}")
+        self.log.info(f"Latest workflow job state: {new_workflow_job_status}")
 
         self.has_consumed_message = False
         self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
@@ -195,3 +178,23 @@ class JobStatusWorker:
         self.rmq_consumer = None
         self.log.info("Exiting gracefully.")
         exit(0)
+
+    @staticmethod
+    def convert_slurm_to_operandi_state(slurm_job_state: str) -> str:
+        # TODO: This duplication is the same as in executor.py
+        #  Refactor it when things are working
+        slurm_fail_states = ["BOOT_FAIL", "CANCELLED", "DEADLINE", "FAILED", "NODE_FAIL",
+                             "OUT_OF_MEMORY", "PREEMPTED", "REVOKED", "TIMEOUT"]
+        slurm_success_states = ["COMPLETED"]
+        slurm_waiting_states = ["RUNNING", "PENDING", "COMPLETING", "REQUEUED", "RESIZING", "SUSPENDED"]
+
+        # Take the latest workflow job state
+        workflow_job_status = None
+        if slurm_job_state in slurm_success_states:
+            workflow_job_status = "SUCCESS"
+        elif slurm_job_state in slurm_waiting_states:
+            workflow_job_status = "RUNNING"
+        elif slurm_job_state in slurm_fail_states:
+            workflow_job_status = "FAILED"
+
+        return workflow_job_status

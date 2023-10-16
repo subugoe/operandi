@@ -1,11 +1,9 @@
 __all__ = [
-    'DiscoveryResponse',
+    'PYDiscovery',
     'Job',
     'JobState',
-    'ProcessorArgs',
-    'ProcessorRsrc',
-    'ProcessorJobRsrc',
     'Resource',
+    'SbatchArguments',
     'UserAction',
     'WorkflowArguments',
     'WorkflowRsrc',
@@ -13,9 +11,8 @@ __all__ = [
     'WorkspaceRsrc'
 ]
 
-from .base import Resource, Job, JobState, ProcessorArgs, WorkflowArguments
-from .discovery import DiscoveryResponse
-from .processor import ProcessorRsrc, ProcessorJobRsrc
+from .base import Resource, Job, JobState, SbatchArguments, WorkflowArguments
+from .discovery import PYDiscovery
 from .user import UserAction
 from .workflow import WorkflowRsrc, WorkflowJobRsrc
 from .workspace import WorkspaceRsrc

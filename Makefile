@@ -6,12 +6,10 @@ PIP3_INSTALL = pip3 install
 BUILD_ORDER = src/utils src/server src/broker src/harvester
 UNINSTALL_ORDER = operandi_harvester operandi_broker operandi_server operandi_utils
 
-# Load env file if available
 ifneq (,$(wildcard ./.env))
-    include .env
+    include ./.env
 endif
 
-# Load the test env file if available
 ifneq (,$(wildcard ./tests/.env))
     include ./tests/.env
 endif
@@ -25,18 +23,21 @@ help:
 	@echo " install-dev             Install with pip install -e"
 	@echo " uninstall               Uninstall the modules"
 	@echo ""
-	@echo " start-mongo-docker      Start the dockerized MongoDB"
-	@echo " start-rabbitmq-docker   Start the dockerized RabbitMQ Server"
-	@echo " start-broker-docker     Start the dockerized Operandi Broker"
-	@echo " start-server-docker     Start the dockerized Operandi Server"
-	@echo ""
 	@echo " start-broker-native     Start the native Operandi Broker"
 	@echo " start-server-native     Start the native Operandi Server"
-	@echo " start-harvester-native  Start the native Operandi Harvester"
+	@echo " start-harvester-dummy   Start the native Operandi Harvester with a dummy 1 cycle"
 	@echo ""
-	@echo " start-all-modules       Start all image based docker modules"
-	@echo " stop-all-modules        Stop all image based docker modules"
-	@echo " clean-all-modules       Clean all image based docker modules"
+	@echo " USED ONLY FOR RUNNING THE TESTS "
+	@echo " start-mongo-docker      Start the dockerized MongoDB"
+	@echo " start-rabbitmq-docker   Start the dockerized RabbitMQ Server"
+	@echo ""
+	@echo " start-all-docker-modules       Start all docker modules from local"
+	@echo " stop-all-docker-modules        Stop all docker modules from local"
+	@echo " clean-all-docker-modules       Clean all docker modules from local"
+	@echo ""
+	@echo " start-all-image-based-docker-modules       Start all docker modules from repo images"
+	@echo " stop-all-image-based-docker-modules        Stop all docker modules from repo image"
+	@echo " clean-all-image-based-docker-modules       Clean all docker modules from repo images"
 	@echo ""
 	@echo " In order to run the tests, MongoDB must be running on port 27018"
 	@echo " In order to run the tests, RabbitMQ Server must be running on port 5672"
@@ -71,23 +72,23 @@ install-dev: uninstall
 uninstall:
 	for mod in $(UNINSTALL_ORDER);do $(PIP3) uninstall -y $$mod;done
 
-start-all-modules:
-	docker compose -f ./docker-compose_image_based.yml --env-file .env up -d
+start-all-image-based-docker-modules:
+	docker compose -f ./docker-compose_image_based.yml --env-file docker.env up -d
 
-stop-all-modules:
-	docker compose -f ./docker-compose_image_based.yml down --remove-orphans
+stop-all-image-based-docker-modules:
+	docker compose -f ./docker-compose_image_based.yml --env-file docker.env down --remove-orphans
 
-clean-all-modules:
+clean-all-image-based-docker-modules:
 	docker rmi -f ghcr.io/subugoe/operandi-server:main
 	docker rmi -f ghcr.io/subugoe/operandi-broker:main
 
-start-all-local-modules:
-	docker compose -f ./docker-compose.yml --env-file .env up -d
+start-all-docker-modules:
+	docker compose -f ./docker-compose.yml --env-file docker.env up -d
 
-stop-all-local-modules:
-	docker compose -f ./docker-compose.yml down --remove-orphans
+stop-all-docker-modules:
+	docker compose -f ./docker-compose.yml --env-file docker.env down --remove-orphans
 
-clean-all-local-modules:
+clean-all-docker-modules:
 	docker rmi -f operandi-broker:latest
 	docker rmi -f operandi-server:latest
 
@@ -97,41 +98,39 @@ start-mongo-docker:
 start-rabbitmq-docker:
 	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-rabbitmq
 
-start-broker-docker:
-	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-broker
-
-start-server-docker:
-	docker compose -f ./docker-compose.yml --env-file .env up -d operandi-server
-
 start-broker-native:
-	export $(shell sed 's/=.*//' .env)
+	export $(shell sed 's/=.*//' ./.env)
 	operandi-broker start
 
 start-server-native:
-	export $(shell sed 's/=.*//' .env)
+	export $(shell sed 's/=.*//' ./.env)
 	operandi-server start
 
-start-harvester-native:
-	export $(shell sed 's/=.*//' .env)
-	operandi-harvester start-dummy --address http://localhost:8000
+start-harvester-dummy:
+	export $(shell sed 's/=.*//' ./.env)
+	operandi-harvester start-dummy --address http://localhost
 
-run-tests: run-tests-server run-tests-broker run-tests-utils run-tests-harvester
+run-tests:  run-tests-server run-tests-harvester run-tests-broker run-tests-utils run-tests-integration
 
 run-tests-broker:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/broker/test_*.py
+	pytest tests/tests_broker/test_*.py
 
 run-tests-harvester:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/harvester/test_*.py
+	pytest tests/tests_harvester/test_*.py
 
 run-tests-server:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/server/test_*.py
+	pytest tests/tests_server/test_*.py
 
 run-tests-utils:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/utils/test_*.py
+	pytest tests/tests_utils/test_*.py
+
+run-tests-integration:
+	export $(shell sed 's/=.*//' ./tests/.env)
+	pytest tests/integration_tests/test_*.py
 
 pyclean:
 	rm -f **/*.pyc

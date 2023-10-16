@@ -1,45 +1,50 @@
+from os import environ
 from pymongo import MongoClient
 from pytest import fixture
 
-from tests.constants import (
-    OPERANDI_DB_NAME,
-    OPERANDI_DB_URL
-)
 from tests.helpers_asserts import assert_availability_db
+
+DB_COLLECTIONS = [
+    "hpc_slurm_jobs",
+    "workflows",
+    "workflow_jobs",
+    "workspaces"
+]
 
 
 @fixture(scope="session")
-def fixture_mongo_client():
-    assert_availability_db(OPERANDI_DB_URL)
-    mongo_client = MongoClient(OPERANDI_DB_URL, serverSelectionTimeoutMS=3000)
+def fixture_test_mongo_client():
+    assert_availability_db(environ.get("OPERANDI_DB_URL"))
+    mongo_client = MongoClient(
+        environ.get("OPERANDI_DB_URL"),
+        serverSelectionTimeoutMS=3000
+    )[environ.get("OPERANDI_DB_NAME")]
+    # drop previous test entries from the test database
+    for db_collection in DB_COLLECTIONS:
+        mongo_client[db_collection].drop()
     yield mongo_client
 
 
-@fixture(scope="session", name="workspace_collection")
-def fixture_mongo_workspace_collection(fixture_mongo_client):
-    mydb = fixture_mongo_client[OPERANDI_DB_NAME]
-    workspace_collection = mydb["workspaces"]
-    workspace_collection.drop()
-    yield workspace_collection
-    # The collections gets dropped when the fixture is torn down
-    # workspace_collection.drop()
+@fixture(scope="session", name="db_hpc_slurm_jobs")
+def fixture_db_hpc_slurm_jobs_collection(fixture_test_mongo_client):
+    yield fixture_test_mongo_client["hpc_slurm_jobs"]
 
 
-@fixture(scope="session", name="workflow_collection")
-def fixture_mongo_workflow_collection(fixture_mongo_client):
-    mydb = fixture_mongo_client[OPERANDI_DB_NAME]
-    workflow_collection = mydb["workflows"]
-    workflow_collection.drop()
-    yield workflow_collection
-    # The collections gets dropped when the fixture is torn down
-    # workflow_collection.drop()
+@fixture(scope="session", name="db_user_accounts")
+def fixture_db_user_accounts_collection(fixture_test_mongo_client):
+    yield fixture_test_mongo_client["user_accounts"]
 
 
-@fixture(scope="session", name="workflow_job_collection")
-def fixture_mongo_workflow_job_collection(fixture_mongo_client):
-    mydb = fixture_mongo_client[OPERANDI_DB_NAME]
-    workflow_job_collection = mydb["workflow_jobs"]
-    workflow_job_collection.drop()
-    yield workflow_job_collection
-    # The collections gets dropped when the fixture is torn down
-    # workflow_job_collection.drop()
+@fixture(scope="session", name="db_workflows")
+def fixture_db_workflows_collection(fixture_test_mongo_client):
+    yield fixture_test_mongo_client["workflows"]
+
+
+@fixture(scope="session", name="db_workflow_jobs")
+def fixture_db_workflow_jobs_collection(fixture_test_mongo_client):
+    yield fixture_test_mongo_client["workflow_jobs"]
+
+
+@fixture(scope="session", name="db_workspaces")
+def fixture_db_workspaces_collection(fixture_test_mongo_client):
+    yield fixture_test_mongo_client["workspaces"]

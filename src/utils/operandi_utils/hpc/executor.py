@@ -1,77 +1,49 @@
-from os.path import exists, isfile
-import paramiko
+from logging import getLogger
+from os import environ
 from time import sleep
-
-from .constants import (
-    OPERANDI_HPC_HOST,
-    OPERANDI_HPC_HOST_PROXY,
-    OPERANDI_HPC_USERNAME,
-    OPERANDI_HPC_SSH_KEYPATH
+from .utils import (
+    create_ssh_connection_to_hpc,
+    resolve_hpc_user_home_dir,
+    resolve_hpc_user_scratch_dir,
+    resolve_hpc_project_root_dir,
+    resolve_hpc_batch_scripts_dir,
+    resolve_hpc_slurm_workspaces_dir,
 )
 
 
 class HPCExecutor:
-    def __init__(self):
+    def __init__(
+        self,
+        host: str = environ.get("OPERANDI_HPC_HOST", "login-mdc.hpc.gwdg.de"),
+        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY", "login.gwdg.de"),
+        username: str = environ.get("OPERANDI_HPC_USERNAME"),
+        key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH")
+    ) -> None:
+        if not username:
+            raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
+        if not key_path:
+            raise ValueError("Environment variable not set: OPERANDI_HPC_SSH_KEYPATH")
+
+        self.log = getLogger("operandi_utils.hpc.executor")
+        self.log.info(f"Trying to connect to HPC host: {host}, "
+                      f"via proxy: {proxy_host}, "
+                      f"with username: {username}, "
+                      f"using the key path: {key_path}")
+
+        self.user_home_dir = resolve_hpc_user_home_dir(username)
+        self.user_scratch_dir = resolve_hpc_user_scratch_dir(username)
+        project_name = environ.get("OPERANDI_HPC_PROJECT_NAME")
+        self.project_root_dir = resolve_hpc_project_root_dir(username, project_name)
+        self.batch_scripts_dir = resolve_hpc_batch_scripts_dir(username, project_name)
+        self.slurm_workspaces_dir = resolve_hpc_slurm_workspaces_dir(username, project_name)
+
         # TODO: Handle the exceptions properly
-        self.__ssh_paramiko = None
-
-    @staticmethod
-    def create_proxy_jump(
-            host=OPERANDI_HPC_HOST,
-            proxy_host=OPERANDI_HPC_HOST_PROXY,
-            username=OPERANDI_HPC_USERNAME,
-            key_path=OPERANDI_HPC_SSH_KEYPATH
-    ):
-        jump_box = paramiko.SSHClient()
-        jump_box.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        jump_box.connect(
-            proxy_host,
-            username=username,
-            key_filename=key_path
-        )
-        jump_box_channel = jump_box.get_transport().open_channel(
-            kind="direct-tcpip",
-            dest_addr=(host, 22),
-            src_addr=(proxy_host, 22)
-        )
-        return jump_box_channel
-
-    # This connection uses proxy jump host to
-    # connect to the front-end node of the HPC cluster
-    def connect(
-            self,
-            host=OPERANDI_HPC_HOST,
-            proxy_host=OPERANDI_HPC_HOST_PROXY,
-            username=OPERANDI_HPC_USERNAME,
-            key_path=OPERANDI_HPC_SSH_KEYPATH
-    ):
-        keyfile = self.check_keyfile_existence(key_path)
-        if not keyfile:
-            print(f"Error: HPC key path does not exist or is not readable!")
-            print(f"Checked path: \n{key_path}")
-            exit(1)
-
-        proxy_channel = self.create_proxy_jump(
+        self.__ssh_paramiko = create_ssh_connection_to_hpc(
             host=host,
             proxy_host=proxy_host,
             username=username,
             key_path=key_path
         )
-
-        self.__ssh_paramiko = paramiko.SSHClient()
-        self.__ssh_paramiko.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.__ssh_paramiko.connect(
-            hostname=host,
-            username=username,
-            key_filename=key_path,
-            sock=proxy_channel
-        )
-
-    @staticmethod
-    def check_keyfile_existence(hpc_key_path):
-        if exists(hpc_key_path) and isfile(hpc_key_path):
-            return hpc_key_path
-        return None
 
     # TODO: Handle the output and return_code instead of just returning them
     # Execute blocking commands
@@ -101,41 +73,71 @@ class HPCExecutor:
             nextflow_script_path: str,
             input_file_grp: str,
             workspace_id: str,
-            mets_basename: str
+            mets_basename: str,
+            job_deadline_time: str,
+            cpus: int,
+            ram: int
     ) -> str:
 
         nextflow_script_id = nextflow_script_path.split('/')[-1]
         command = "bash -lc"
         command += " 'sbatch"
+
+        # SBATCH arguments passed to the batch script
+        command += f" --partition medium"
+        command += f" --time={job_deadline_time}"
+        command += f" --output={self.project_root_dir}/slurm-job-%J.txt"
+        command += f" --cpus-per-task={cpus}"
+        command += f" --mem={ram}G"
+
+        # Regular arguments passed to the batch script
         command += f" {batch_script_path}"
+        command += f" {self.slurm_workspaces_dir}"
         command += f" {workflow_job_id}"
         command += f" {nextflow_script_id}"
         command += f" {input_file_grp}"
         command += f" {workspace_id}"
-        command += f" {mets_basename}'"
+        command += f" {mets_basename}"
+        command += f" {cpus}"
+        command += f" {ram}GB"
+        command += "'"
 
+        self.log.info(f"About to execute a blocking command: {command}")
         output, err, return_code = self.execute_blocking(command)
+        self.log.info(f"Command output: {output}")
+        self.log.info(f"Command err: {err}")
+        self.log.info(f"Command return code: {return_code}")
         slurm_job_id = output[0].strip('\n').split(' ')[-1]
+        self.log.info(f"Slurm job id: {slurm_job_id}")
         assert int(slurm_job_id)
         return slurm_job_id
 
-    def check_slurm_job_state(self, slurm_job_id: str) -> str:
+    def check_slurm_job_state(self, slurm_job_id: str, tries: int = 3, wait_time: int = 2) -> str:
         command = "bash -lc"
         command += f" 'sacct -j {slurm_job_id} --format=jobid,state,exitcode'"
-        output, err, return_code = self.execute_blocking(command)
+        slurm_job_state = None
 
-        # Split the last line and get the second element,
-        # i.e., the state element in the requested output format
-        slurm_job_state = "None"
-        if output:
-            slurm_job_state = output[-1].split()[1]
-        else:
-            print(f"Output: {output}")
-            print(f"Error: {err}")
-            print(f"RC: {return_code}")
+        while not slurm_job_state and tries > 0:
+            self.log.info(f"About to execute a blocking command: {command}")
+            output, err, return_code = self.execute_blocking(command)
+            self.log.info(f"Command output: {output}")
+            self.log.info(f"Command err: {err}")
+            self.log.info(f"Command return code: {return_code}")
+            if output:
+                # Split the last line and get the second element,
+                # i.e., the state element in the requested output format
+                slurm_job_state = output[-1].split()[1]
+            if slurm_job_state:
+                break
+            tries -= 1
+            sleep(wait_time)
+        if not slurm_job_state:
+            self.log.warning(f"Returning a None slurm job state")
+        self.log.info(f"Slurm job state of {slurm_job_id}: {slurm_job_state}")
         return slurm_job_state
 
     def poll_till_end_slurm_job_state(self, slurm_job_id: str, interval: int = 5, timeout: int = 300) -> bool:
+        self.log.info(f"Polling slurm job status till end")
         # TODO: Create a separate SlurmJob class
         slurm_fail_states = ["BOOT_FAIL", "CANCELLED", "DEADLINE", "FAILED", "NODE_FAIL",
                              "OUT_OF_MEMORY", "PREEMPTED", "REVOKED", "TIMEOUT"]
@@ -143,17 +145,33 @@ class HPCExecutor:
         slurm_waiting_states = ["RUNNING", "PENDING", "COMPLETING", "REQUEUED", "RESIZING", "SUSPENDED"]
 
         tries_left = timeout/interval
+        self.log.info(f"Tries to be performed: {tries_left}")
         while tries_left:
+            self.log.info(f"Sleeping for {interval} secs")
             sleep(interval)
             tries_left -= 1
+            self.log.info(f"Tries left: {tries_left}")
             slurm_job_state = self.check_slurm_job_state(slurm_job_id)
+            if not slurm_job_state:
+                self.log.info(f"Slurm job state is not available yet")
+                continue
             if slurm_job_state in slurm_success_states:
+                self.log.info(f"Slurm job state is in: {slurm_success_states}")
+                self.log.info(f"Returning True")
                 return True
             if slurm_job_state in slurm_waiting_states:
+                self.log.info(f"Slurm job state is in: {slurm_waiting_states}")
                 continue
             if slurm_job_state in slurm_fail_states:
+                self.log.info(f"Slurm job state is in: {slurm_fail_states}")
+                self.log.info(f"Returning False")
                 return False
-            raise ValueError(f"Invalid SLURM job state: {slurm_job_state}")
+            # Sometimes the slurm state is still
+            # not initialized inside the HPC environment.
+            # This is not a problem that requires a raise of Exception
+            self.log.warning(f"Invalid SLURM job state: {slurm_job_state}")
 
         # Timeout reached
+        self.log.info("Polling slurm job status timeout reached")
+        self.log.info(f"Returning False")
         return False

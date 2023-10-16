@@ -59,6 +59,13 @@ def is_url_responsive(url: str) -> bool:
         return False
 
 
+def receive_file(response, download_path):
+    with open(download_path, 'wb') as filePtr:
+        for chunk in response.iter_content(chunk_size=1024):
+            if chunk:
+                filePtr.write(chunk)
+
+
 def make_zip_archive(source, destination):
     base = basename(destination)
     name = base.split('.')[0]

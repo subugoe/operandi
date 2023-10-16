@@ -1,5 +1,4 @@
 import click
-from os import environ
 from .harvester import Harvester
 
 __all__ = ['cli']
@@ -20,13 +19,7 @@ def cli(**kwargs):  # pylint: disable=unused-argument
               default='http://localhost:8000',
               help='The address of the Operandi Server.')
 def start_harvesting(limit, address):
-    if limit > 1:
-        raise ValueError("Temporary: the limit cannot be bigger than 1")
-    harvester = Harvester(
-        server_address=address,
-        auth_username=environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME"),
-        auth_password=environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD")
-    )
+    harvester = Harvester(server_address=address)
     harvester.start_harvesting(limit)
 
 
@@ -35,9 +28,5 @@ def start_harvesting(limit, address):
               default='http://localhost:8000',
               help='The address of the Operandi Server.')
 def start_harvesting(address):
-    harvester = Harvester(
-        server_address=address,
-        auth_username=environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME"),
-        auth_password=environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD")
-    )
+    harvester = Harvester(server_address=address)
     harvester.harvest_once_dummy()

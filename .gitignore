@@ -102,7 +102,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -129,8 +128,10 @@ dmypy.json
 .pyre/
 
 # Nextflow cache and log files
-ExampleWorkflows/workflow*/.nextflow*
-ExampleWOrkflows/workflow*/work
+archived_workflows/nextflow/workflow*/.nextflow*
+archived_workflows/nextflow/workflow*/work
+
+src/harvester/operandi_harvester/results/*
 
 # PyCharm files
 .idea/*

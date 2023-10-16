@@ -1,17 +1,22 @@
 __all__ = [
-    'RMQConsumer',
-    'RMQConnector',
-    'RMQPublisher',
-    'DEFAULT_QUEUE_FOR_HARVESTER',
-    'DEFAULT_QUEUE_FOR_USERS',
-    'DEFAULT_QUEUE_FOR_JOB_STATUSES'
+    "DEFAULT_EXCHANGER_NAME",
+    "DEFAULT_EXCHANGER_TYPE",
+    "get_connection_consumer",
+    "get_connection_publisher",
+    "RABBITMQ_QUEUE_DEFAULT",
+    "RABBITMQ_QUEUE_JOB_STATUSES",
+    "RABBITMQ_QUEUE_HARVESTER",
+    "RABBITMQ_QUEUE_USERS",
+    "RMQConnector"
 ]
 
-from .consumer import RMQConsumer
 from .connector import RMQConnector
-from .publisher import RMQPublisher
 from .constants import (
-    DEFAULT_QUEUE_FOR_HARVESTER,
-    DEFAULT_QUEUE_FOR_USERS,
-    DEFAULT_QUEUE_FOR_JOB_STATUSES
+    DEFAULT_EXCHANGER_NAME,
+    DEFAULT_EXCHANGER_TYPE,
+    RABBITMQ_QUEUE_DEFAULT,
+    RABBITMQ_QUEUE_JOB_STATUSES,
+    RABBITMQ_QUEUE_HARVESTER,
+    RABBITMQ_QUEUE_USERS
 )
+from .wrappers import get_connection_consumer, get_connection_publisher

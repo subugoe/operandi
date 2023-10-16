@@ -7,69 +7,20 @@
       "tags": "administrator"
     }
   ],
-  "vhosts": [
-    {
-      "name": "/"
-    },
-    {
-      "name": "test"
-    }
-  ],
+  "vhosts": [{"name": "/"}, {"name": "test"}],
   "permissions": [
-    {
-      "user": "operandi_user",
-      "vhost": "/",
-      "configure": ".*",
-      "write": ".*",
-      "read": ".*"
-    },
-    {
-      "user": "operandi_user",
-      "vhost": "test",
-      "configure": ".*",
-      "write": ".*",
-      "read": ".*"
-    }
+    {"user": "operandi_user", "vhost": "/", "configure": ".*", "write": ".*", "read": ".*"},
+    {"user": "operandi_user", "vhost": "test", "configure": ".*", "write": ".*", "read": ".*"}
   ],
   "parameters": [],
   "policies": [],
   "queues": [
-    {
-    "name": "operandi_queue_users",
-    "vhost": "/",
-    "durable": false,
-    "auto_delete": false
-    },
-    {
-    "name": "operandi_queue_harvester",
-    "vhost": "/",
-    "durable": false,
-    "auto_delete": false
-    },
-    {
-    "name": "operandi_queue_job_statuses",
-    "vhost": "/",
-    "durable": false,
-    "auto_delete": true
-    },
-    {
-    "name": "operandi_queue_users",
-    "vhost": "test",
-    "durable": false,
-    "auto_delete": false
-    },
-    {
-    "name": "operandi_queue_harvester",
-    "vhost": "test",
-    "durable": false,
-    "auto_delete": false
-    },
-    {
-    "name": "operandi_queue_job_statuses",
-    "vhost": "test",
-    "durable": false,
-    "auto_delete": true
-    }
+    {"name": "operandi_queue_users", "vhost": "/", "durable": false, "auto_delete": false},
+    {"name": "operandi_queue_users", "vhost": "test", "durable": false, "auto_delete": false},
+    {"name": "operandi_queue_harvester", "vhost": "/", "durable": false, "auto_delete": false},
+    {"name": "operandi_queue_harvester", "vhost": "test", "durable": false, "auto_delete": false},
+    {"name": "operandi_queue_job_statuses", "vhost": "/", "durable": false, "auto_delete": false},
+    {"name": "operandi_queue_job_statuses", "vhost": "test", "durable": false, "auto_delete": false}
   ],
   "exchanges": [],
   "bindings": []

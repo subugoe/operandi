@@ -12,7 +12,7 @@ COPY utils/ /usr/src/utils
 WORKDIR /usr/src/broker/operandi_broker
 
 # install dependencies    
-RUN apt-get update && apt-get -y install \
+RUN apt-get update && apt-get install -y \
     apt-transport-https \
     ca-certificates \
     curl \
