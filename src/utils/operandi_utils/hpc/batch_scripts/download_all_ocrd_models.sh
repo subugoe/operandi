@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --constraint scratch
 #SBATCH --partition medium
-#SBATCH --cpus-per-task 8
-#SBATCH --mem 16G
+#SBATCH --cpus-per-task 16
+#SBATCH --mem 64G
 #SBATCH --time 240
 #SBATCH --output ./download_all_ocrd_models_job-%J.txt
 
@@ -15,7 +15,7 @@ slurm_resources
 # This sif file is generated with another batch script
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
 OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
-OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
+OCRD_MODELS_DIR_IN_DOCKER="/models"
 
 if [ ! -f "${SIF_PATH}" ]; then
   echo "Required ocrd_all_image sif file not found at: ${SIF_PATH}"
