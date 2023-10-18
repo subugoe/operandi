@@ -14,7 +14,7 @@
 
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
 OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
-OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
+OCRD_MODELS_DIR_IN_DOCKER="/models"
 
 SCRATCH_BASE=$1
 WORKFLOW_JOB_ID=$2
