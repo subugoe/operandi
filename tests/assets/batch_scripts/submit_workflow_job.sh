@@ -93,7 +93,8 @@ nextflow run "${NF_SCRIPT_PATH}" \
 --ram "${RAM}"
 
 # Stop the mets server started above
-curl -X DELETE "http+unix://${METS_SERVER_SOCKET_PATH}/"
+REQUEST_URL=$(echo "${METS_SERVER_SOCKET_PATH}" | sed 's/\//\%2F/g')
+curl -X DELETE "http+unix://${REQUEST_URL}/"
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete
