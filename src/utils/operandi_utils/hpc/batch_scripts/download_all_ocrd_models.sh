@@ -15,7 +15,7 @@ slurm_resources
 # This sif file is generated with another batch script
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
 OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
-OCRD_MODELS_DIR_IN_DOCKER="/models"
+OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
 
 if [ ! -f "${SIF_PATH}" ]; then
   echo "Required ocrd_all_image sif file not found at: ${SIF_PATH}"
