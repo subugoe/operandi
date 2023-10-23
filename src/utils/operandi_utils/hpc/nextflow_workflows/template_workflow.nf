@@ -5,6 +5,7 @@ nextflow.enable.dsl=2
 params.input_file_group = "null"
 params.mets = "null"
 params.mets_socket = "null"
+params.workspace_dir = "null"
 params.singularity_wrapper = "null"
 params.cpus = "null"
 params.ram = "null"
@@ -32,7 +33,7 @@ process ocrd_cis_ocropy_binarize {
 
   script:
   """
-  ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -U ${params.mets_socket} -m ${mets_file} -I ${input_group} -O OCR-D-BIN
+  ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} -I ${input_group} -O OCR-D-BIN
   """
 }
 

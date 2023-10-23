@@ -79,7 +79,7 @@ else
 fi
 
 # Start the mets server for the specific workspace
-singularity run --bind "${SCRATCH_SLURM_DIR_PATH}" "${SIF_PATH}" "ocrd workspace --mets-server-url ${METS_SERVER_SOCKET_PATH} -d ${WORKSPACE_DIR_PATH} server start"
+singularity run --bind "${SCRATCH_SLURM_DIR_PATH}" "${SIF_PATH}" "ocrd workspace -U ${METS_SERVER_SOCKET_PATH} -d ${WORKSPACE_DIR_PATH} server start"
 
 # Execute the Nextflow script
 nextflow run "${NF_SCRIPT_PATH}" \
@@ -88,6 +88,7 @@ nextflow run "${NF_SCRIPT_PATH}" \
 --input_file_group "${IN_FILE_GRP}" \
 --mets "${METS_PATH}" \
 --mets_socket "${METS_SERVER_SOCKET_PATH}" \
+--workspace_dir "${WORKSPACE_DIR_PATH}" \
 --singularity_wrapper "singularity exec --bind ${SCRATCH_SLURM_DIR_PATH} --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
 --cpus "${CPUS}" \
 --ram "${RAM}"
