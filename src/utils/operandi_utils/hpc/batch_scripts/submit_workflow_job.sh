@@ -26,9 +26,10 @@ CPUS=$7
 RAM=$8
 
 SCRATCH_SLURM_DIR_PATH="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
-
 NF_SCRIPT_PATH="${SCRATCH_SLURM_DIR_PATH}/${NEXTFLOW_SCRIPT_ID}"
-METS_PATH="${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}/${METS_BASENAME}"
+WORKSPACE_DIR_PATH="${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}"
+METS_PATH="${WORKSPACE_DIR_PATH}/${METS_BASENAME}"
+METS_SERVER_SOCKET_PATH="${WORKSPACE_DIR_PATH}/mets_server.sock"
 
 hostname
 slurm_resources
@@ -77,15 +78,22 @@ else
   cd "${SCRATCH_SLURM_DIR_PATH}" || exit 1
 fi
 
+# Start the mets server for the specific workspace
+singularity run --bind "${SCRATCH_SLURM_DIR_PATH}" "${SIF_PATH} ocrd workspace --mets-server-url ${METS_SERVER_SOCKET_PATH} -d ${WORKSPACE_DIR_PATH} server start"
+
 # Execute the Nextflow script
 nextflow run "${NF_SCRIPT_PATH}" \
 -ansi-log false \
 -with-report \
 --input_file_group "${IN_FILE_GRP}" \
 --mets "${METS_PATH}" \
+--mets_socket "${METS_SERVER_SOCKET_PATH}" \
 --singularity_wrapper "singularity exec --bind ${SCRATCH_SLURM_DIR_PATH} --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
 --cpus "${CPUS}" \
 --ram "${RAM}"
+
+# Stop the mets server started above
+curl -X DELETE "http+unix://${METS_SERVER_SOCKET_PATH}/"
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete
