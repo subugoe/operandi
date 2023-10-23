@@ -29,7 +29,7 @@ SCRATCH_SLURM_DIR_PATH="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 NF_SCRIPT_PATH="${SCRATCH_SLURM_DIR_PATH}/${NEXTFLOW_SCRIPT_ID}"
 WORKSPACE_DIR_PATH="${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}"
 METS_PATH="${WORKSPACE_DIR_PATH}/${METS_BASENAME}"
-METS_SERVER_SOCKET_PATH="${SCRATCH_SLURM_DIR_PATH}/mets_server.sock"
+METS_SERVER_SOCKET_PATH="${WORKSPACE_DIR_PATH}/mets_server.sock"
 
 hostname
 slurm_resources
@@ -78,8 +78,12 @@ else
   cd "${SCRATCH_SLURM_DIR_PATH}" || exit 1
 fi
 
-# Start the mets server for the specific workspace
-singularity run --bind "${SCRATCH_SLURM_DIR_PATH}" "${SIF_PATH}" ocrd workspace -U "${METS_SERVER_SOCKET_PATH}" -d "${WORKSPACE_DIR_PATH}" server start
+# Start the mets server for the specific workspace as a service (in the background)
+singularity instance start \
+  --bind "${WORKSPACE_DIR_PATH}:/data" \
+  "${SIF_PATH}" \
+  instance_mets_server \
+  ocrd workspace -U "/data/mets_server.sock" -d "/data" server start
 
 # Execute the Nextflow script
 nextflow run "${NF_SCRIPT_PATH}" \
@@ -96,6 +100,7 @@ nextflow run "${NF_SCRIPT_PATH}" \
 # TODO: Stop the mets server started above
 # REQUEST_URL=$(echo "${METS_SERVER_SOCKET_PATH}" | sed 's/\//\%2F/g')
 # curl -X DELETE "http+unix://${REQUEST_URL}/"
+singularity instance stop instance_mets_server
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete
