@@ -27,9 +27,7 @@ RAM=$8
 
 SCRATCH_SLURM_DIR_PATH="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 NF_SCRIPT_PATH="${SCRATCH_SLURM_DIR_PATH}/${NEXTFLOW_SCRIPT_ID}"
-WORKSPACE_DIR_PATH="${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}"
-METS_PATH="${WORKSPACE_DIR_PATH}/${METS_BASENAME}"
-METS_SERVER_SOCKET_PATH="${WORKSPACE_DIR_PATH}/mets_server.sock"
+METS_SOCKET_BASENAME="mets_server.sock"
 
 hostname
 slurm_resources
@@ -78,34 +76,47 @@ else
   cd "${SCRATCH_SLURM_DIR_PATH}" || exit 1
 fi
 
-# Start the mets server for the specific workspace as a service (in the background)
-# Start the mets server for the specific workspace as a service (in the background)
-singularity instance start \
-  --bind "${WORKSPACE_DIR_PATH}:/data" \
+# TODO: Would be better to start the mets server as an instance, but this is still broken
+# singularity instance start \
+#   --bind "${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}:/ws_data" \
+#   "${SIF_PATH}" \
+#   instance_mets_server \
+#  ocrd workspace -U "/ws_data/${METS_SOCKET_BASENAME}" -d "/ws_data" server start
+
+# Start the mets server for the specific workspace in the background
+singularity exec \
+  --bind "${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}:/ws_data" \
   "${SIF_PATH}" \
-  instance_mets_server \
-  ocrd workspace -U "/data/mets_server.sock" -d "/data" server start
+  ocrd workspace -U "/ws_data/${METS_SOCKET_BASENAME}" -d "/ws_data" server start \
+  > "${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}/mets_server.log" 2>&1 &
 
 # Execute the Nextflow script
 nextflow run "${NF_SCRIPT_PATH}" \
 -ansi-log false \
 -with-report \
 --input_file_group "${IN_FILE_GRP}" \
---mets "${METS_PATH}" \
---mets_socket "${METS_SERVER_SOCKET_PATH}" \
---workspace_dir "${WORKSPACE_DIR_PATH}" \
---singularity_wrapper "singularity exec --bind ${SCRATCH_SLURM_DIR_PATH} --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
+--mets "/ws_data/${METS_BASENAME}" \
+--mets_socket "/ws_data/${METS_SOCKET_BASENAME}" \
+--workspace_dir "/ws_data" \
+--singularity_wrapper "singularity exec --bind ${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}:/ws_data --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
 --cpus "${CPUS}" \
 --ram "${RAM}"
 
-# TODO: Stop the mets server started above
-# REQUEST_URL=$(echo "${METS_SERVER_SOCKET_PATH}" | sed 's/\//\%2F/g')
-# curl -X DELETE "http+unix://${REQUEST_URL}/"
-singularity instance stop instance_mets_server
+# Not supported in the HPC (the version there is <7.40)
+# curl -X DELETE --unix-socket "${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}/${METS_SOCKET_BASENAME}" "http://localhost/"
+
+# TODO Stop the instance here
+# singularity instance stop instance_mets_server
+
+# Stop the mets server started above
+singularity exec \
+  --bind "${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}:/ws_data" \
+  "${SIF_PATH}" \
+  ocrd workspace -U "/ws_data/${METS_SOCKET_BASENAME}" -d "/ws_data" server stop
 
 # Delete symlinks created for the Nextflow workers
 find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete
 # Create a zip of the ocrd workspace dir
-cd "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}/${WORKSPACE_ID}" && zip -r "${WORKSPACE_ID}.zip" "."
+cd "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}/${WORKSPACE_ID}" && zip -r "${WORKSPACE_ID}.zip" "." -x "*.sock"
 # Create a zip of the Nextflow run results by excluding the ocrd workspace dir
 cd "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**"
