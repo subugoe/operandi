@@ -25,8 +25,9 @@ METS_BASENAME=$6
 CPUS=$7
 RAM=$8
 
-SCRATCH_SLURM_DIR_PATH="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
-NF_SCRIPT_PATH="${SCRATCH_SLURM_DIR_PATH}/${NEXTFLOW_SCRIPT_ID}"
+WORKFLOW_JOB_DIR="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
+WORKSPACE_DIR="${WORKFLOW_JOB_DIR}/${WORKSPACE_ID}"
+NF_SCRIPT_PATH="${WORKFLOW_JOB_DIR}/${NEXTFLOW_SCRIPT_ID}"
 METS_SOCKET_BASENAME="mets_server.sock"
 
 hostname
@@ -35,6 +36,7 @@ slurm_resources
 module purge
 module load singularity
 module load nextflow
+# module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
 
 # To submit separate jobs for each process in the NF script
 # export NXF_EXECUTOR=slurm
@@ -59,36 +61,36 @@ if [ ! -d "${SCRATCH_BASE}" ]; then
   fi
 fi
 
-if [ ! -f "${SCRATCH_SLURM_DIR_PATH}.zip" ]; then
-  echo "Required scratch slurm workspace zip is not available: ${SCRATCH_SLURM_DIR_PATH}.zip"
+if [ ! -f "${WORKFLOW_JOB_DIR}.zip" ]; then
+  echo "Required scratch slurm workspace zip is not available: ${WORKFLOW_JOB_DIR}.zip"
   exit 1
 else
-  echo "Unzipping ${SCRATCH_SLURM_DIR_PATH}.zip to: ${SCRATCH_SLURM_DIR_PATH}"
-  unzip "${SCRATCH_SLURM_DIR_PATH}.zip" -d "${SCRATCH_BASE}"
-  echo "Removing zip: ${SCRATCH_SLURM_DIR_PATH}.zip"
-  rm "${SCRATCH_SLURM_DIR_PATH}.zip"
+  echo "Unzipping ${WORKFLOW_JOB_DIR}.zip to: ${WORKFLOW_JOB_DIR}"
+  unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}"
+  echo "Removing zip: ${WORKFLOW_JOB_DIR}.zip"
+  rm "${WORKFLOW_JOB_DIR}.zip"
 fi
 
-if [ ! -d "${SCRATCH_SLURM_DIR_PATH}" ]; then
-  echo "Required scratch slurm dir not available: ${SCRATCH_SLURM_DIR_PATH}"
+if [ ! -d "${WORKFLOW_JOB_DIR}" ]; then
+  echo "Required scratch slurm workflow dir not available: ${WORKFLOW_JOB_DIR}"
   exit 1
 else
-  cd "${SCRATCH_SLURM_DIR_PATH}" || exit 1
+  cd "${WORKFLOW_JOB_DIR}" || exit 1
 fi
 
 # TODO: Would be better to start the mets server as an instance, but this is still broken
 # singularity instance start \
-#   --bind "${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}:/ws_data" \
+#   --bind "${WORKSPACE_DIR}:/ws_data" \
 #   "${SIF_PATH}" \
 #   instance_mets_server \
 #  ocrd workspace -U "/ws_data/${METS_SOCKET_BASENAME}" -d "/ws_data" server start
 
 # Start the mets server for the specific workspace in the background
 singularity exec \
-  --bind "${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}:/ws_data" \
+  --bind "${WORKSPACE_DIR}:/ws_data" \
   "${SIF_PATH}" \
   ocrd workspace -U "/ws_data/${METS_SOCKET_BASENAME}" -d "/ws_data" server start \
-  > "${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}/mets_server.log" 2>&1 &
+  > "${WORKSPACE_DIR}/mets_server.log" 2>&1 &
 
 # Execute the Nextflow script
 nextflow run "${NF_SCRIPT_PATH}" \
@@ -98,25 +100,25 @@ nextflow run "${NF_SCRIPT_PATH}" \
 --mets "/ws_data/${METS_BASENAME}" \
 --mets_socket "/ws_data/${METS_SOCKET_BASENAME}" \
 --workspace_dir "/ws_data" \
---singularity_wrapper "singularity exec --bind ${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}:/ws_data --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
+--singularity_wrapper "singularity exec --bind ${WORKSPACE_DIR}:/ws_data --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
 --cpus "${CPUS}" \
 --ram "${RAM}"
 
 # Not supported in the HPC (the version there is <7.40)
-# curl -X DELETE --unix-socket "${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}/${METS_SOCKET_BASENAME}" "http://localhost/"
+# curl -X DELETE --unix-socket "${WORKSPACE_DIR}/${METS_SOCKET_BASENAME}" "http://localhost/"
 
 # TODO Stop the instance here
 # singularity instance stop instance_mets_server
 
 # Stop the mets server started above
 singularity exec \
-  --bind "${SCRATCH_SLURM_DIR_PATH}/${WORKSPACE_ID}:/ws_data" \
+  --bind "${WORKSPACE_DIR}:/ws_data" \
   "${SIF_PATH}" \
   ocrd workspace -U "/ws_data/${METS_SOCKET_BASENAME}" -d "/ws_data" server stop
 
 # Delete symlinks created for the Nextflow workers
-find "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" -type l -delete
+find "${WORKFLOW_JOB_DIR}" -type l -delete
 # Create a zip of the ocrd workspace dir
-cd "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}/${WORKSPACE_ID}" && zip -r "${WORKSPACE_ID}.zip" "." -x "*.sock"
+cd "${WORKSPACE_DIR}" && zip -r "${WORKSPACE_ID}.zip" "." -x "*.sock"
 # Create a zip of the Nextflow run results by excluding the ocrd workspace dir
-cd "${SCRATCH_BASE}/${WORKFLOW_JOB_ID}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**"
+cd "${WORKFLOW_JOB_DIR}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**"
