@@ -77,7 +77,8 @@ class HPCExecutor:
             job_deadline_time: str,
             cpus: int,
             ram: int,
-            nf_process_forks: int
+            nf_process_forks: int,
+            ws_pages_amount: int
     ) -> str:
 
         nextflow_script_id = nextflow_script_path.split('/')[-1]
@@ -102,6 +103,7 @@ class HPCExecutor:
         command += f" {cpus}"
         command += f" {ram}GB"
         command += f" {nf_process_forks}"
+        command += f" {ws_pages_amount}"
         command += "'"
 
         self.log.info(f"About to execute a blocking command: {command}")

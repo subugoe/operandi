@@ -6,6 +6,8 @@ params.input_file_group = "null"
 params.mets = "null"
 params.mets_socket = "null"
 params.workspace_dir = "null"
+// amount of pages of the workspace
+params.pages = "null"
 params.singularity_wrapper = "null"
 params.cpus = "null"
 params.ram = "null"
@@ -19,6 +21,7 @@ log.info """\
          mets                : ${params.mets}
          mets_socket         : ${params.mets_socket}
          workspace_dir       : ${params.workspace_dir}
+         pages               : ${params.pages}
          singularity_wrapper : ${params.singularity_wrapper}
          cpus                : ${params.cpus}
          ram                 : ${params.ram}
