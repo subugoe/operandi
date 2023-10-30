@@ -9,6 +9,8 @@ params.workspace_dir = "null"
 params.singularity_wrapper = "null"
 params.cpus = "null"
 params.ram = "null"
+// by default single instance of each OCR-D processor
+params.forks = 1
 
 log.info """\
          O P E R A N D I - H P C - T E M P L A T E   P I P E L I N E
@@ -22,7 +24,7 @@ log.info """\
          .stripIndent()
 
 process ocrd_cis_ocropy_binarize {
-  maxForks 1
+  maxForks params.forks
   cpus params.cpus
   memory params.ram
   echo true
