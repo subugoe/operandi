@@ -11,6 +11,7 @@
 # $6 - Mets basename - default "mets.xml"
 # $7 - CPUs for the Nextflow processes
 # $8 - RAM for the Nextflow processes
+# $9 - Amount of forks per OCR-D processor in the NF script
 
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
 OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
@@ -24,6 +25,7 @@ WORKSPACE_ID=$5
 METS_BASENAME=$6
 CPUS=$7
 RAM=$8
+FORKS=$9
 
 WORKFLOW_JOB_DIR="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 WORKSPACE_DIR="${WORKFLOW_JOB_DIR}/${WORKSPACE_ID}"
@@ -102,7 +104,8 @@ nextflow run "${NF_SCRIPT_PATH}" \
 --workspace_dir "/ws_data" \
 --singularity_wrapper "singularity exec --bind ${WORKSPACE_DIR}:/ws_data --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
 --cpus "${CPUS}" \
---ram "${RAM}"
+--ram "${RAM}" \
+--forks "${FORKS}"
 
 # Not supported in the HPC (the version there is <7.40)
 # curl -X DELETE --unix-socket "${WORKSPACE_DIR}/${METS_SOCKET_BASENAME}" "http://localhost/"

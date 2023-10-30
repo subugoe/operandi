@@ -17,9 +17,12 @@ log.info """\
          ===========================================
          input_file_group    : ${params.input_file_group}
          mets                : ${params.mets}
+         mets_socket         : ${params.mets_socket}
+         workspace_dir       : ${params.workspace_dir}
          singularity_wrapper : ${params.singularity_wrapper}
          cpus                : ${params.cpus}
          ram                 : ${params.ram}
+         forks               : ${params.forks}
          """
          .stripIndent()
 
