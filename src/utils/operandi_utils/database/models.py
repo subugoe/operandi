@@ -110,6 +110,7 @@ class DBWorkspace(Document):
     Information to handle workspaces and from bag-info.txt are stored here.
 
     Attributes:
+        pages_amount                The amount of the physical pages, used for creating page ranges
         ocrd_identifier             Ocrd-Identifier (mandatory)
         bagit_profile_identifier    BagIt-Profile-Identifier (mandatory)
         ocrd_base_version_checksum  Ocrd-Base-Version-Checksum (mandatory)
@@ -120,6 +121,7 @@ class DBWorkspace(Document):
     workspace_id: str
     workspace_dir: str
     workspace_mets_path: str
+    pages_amount: int
     ocrd_identifier: Optional[str]
     bagit_profile_identifier: Optional[str]
     ocrd_base_version_checksum: Optional[str]

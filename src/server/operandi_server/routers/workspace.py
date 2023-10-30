@@ -1,5 +1,6 @@
 import logging
 from os import remove, unlink
+from os.path import join
 from shutil import rmtree
 from typing import List, Union
 from fastapi import (
@@ -15,7 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.database import db_create_workspace, db_get_workspace, db_update_workspace
-from operandi_server.constants import SERVER_WORKSPACES_ROUTER
+from operandi_server.constants import SERVER_WORKSPACES_ROUTER, DEFAULT_METS_BASENAME
 from operandi_server.exceptions import WorkspaceNotValidException
 from operandi_server.files_manager import (
     create_resource_dir,
@@ -28,6 +29,7 @@ from operandi_server.models import WorkspaceRsrc
 from operandi_server.utils import (
     create_workspace_bag_from_remote_url,
     extract_bag_info,
+    get_ocrd_workspace_physical_pages,
     get_workspace_bag,
     validate_bag
 )
@@ -90,7 +92,7 @@ async def get_workspace(
 
 
 @router.post(
-    path="/workspace/import_external",
+    path="/import_external_workspace",
     response_model=WorkspaceRsrc,
     status_code=status.HTTP_201_CREATED,
     summary="Import workspace from mets url",
@@ -99,8 +101,8 @@ async def get_workspace(
 )
 async def post_workspace_from_url(
         mets_url: str,
-        preserve_file_grps: List[str] = None,
-        mets_basename: str = None,
+        preserve_file_grps: str,
+        mets_basename: str = DEFAULT_METS_BASENAME,
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
 
@@ -108,12 +110,19 @@ async def post_workspace_from_url(
     workspace_id, workspace_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
     bag_dest = f"{workspace_dir}.zip"
 
+    try:
+        # Split the file groups
+        # E.g., `DEFAULT` -> [`DEFAULT`] ; `DEFAULT,MAX` -> ['DEFAULT', 'MAX']
+        file_grps_to_preserver = preserve_file_grps.split(",")
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to parse the file groups to be preserved: {error}")
+
     ws_dir = create_workspace_bag_from_remote_url(
         mets_url=mets_url,
         workspace_id=workspace_id,
         bag_dest=bag_dest,
         mets_basename=mets_basename,
-        preserve_file_grps=preserve_file_grps
+        preserve_file_grps=file_grps_to_preserver
     )
 
     try:
@@ -130,13 +139,20 @@ async def post_workspace_from_url(
         bag_info = extract_bag_info(bag_dest, workspace_dir)
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Failed to extract workspace bag info: {error}")
-
     # Remove the temporary directory
     rmtree(ws_dir, ignore_errors=True)
     # Remove the created zip bag
     remove(bag_dest)
 
-    await db_create_workspace(workspace_id, workspace_dir, bag_info)
+    if "Ocrd-Mets" in bag_info:
+        mets_basename = bag_info.get("Ocrd-Mets")
+    try:
+        physical_pages = get_ocrd_workspace_physical_pages(mets_path=join(workspace_dir, mets_basename))
+        pages_amount = len(physical_pages)
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to extract pages amount: {error}")
+
+    await db_create_workspace(workspace_id, workspace_dir, pages_amount, bag_info)
     workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, workspace_id)
 
     return WorkspaceRsrc.create(
@@ -186,11 +202,21 @@ async def post_workspace(
         bag_info = extract_bag_info(bag_dest, ws_dir)
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Failed to extract workspace bag info: {error}")
-
     remove(bag_dest)
+
+    mets_basename = DEFAULT_METS_BASENAME
+    if "Ocrd-Mets" in bag_info:
+        mets_basename = bag_info.get("Ocrd-Mets")
+    try:
+        physical_pages = get_ocrd_workspace_physical_pages(mets_path=join(ws_dir, mets_basename))
+        pages_amount = len(physical_pages)
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to extract pages amount: {error}")
+
     await db_create_workspace(
         workspace_id=ws_id,
         workspace_dir=ws_dir,
+        pages_amount=pages_amount,
         bag_info=bag_info
     )
     ws_url = get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id)
@@ -240,11 +266,21 @@ async def put_workspace(
         bag_info = extract_bag_info(bag_dest, ws_dir)
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Failed to extract workspace bag info: {error}")
-
     remove(bag_dest)
+
+    mets_basename = DEFAULT_METS_BASENAME
+    if "Ocrd-Mets" in bag_info:
+        mets_basename = bag_info.get("Ocrd-Mets")
+    try:
+        physical_pages = get_ocrd_workspace_physical_pages(mets_path=join(ws_dir, mets_basename))
+        pages_amount = len(physical_pages)
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Failed to extract pages amount: {error}")
+
     await db_create_workspace(
         workspace_id=ws_id,
         workspace_dir=ws_dir,
+        pages_amount=pages_amount,
         bag_info=bag_info
     )
     ws_url = get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id)
