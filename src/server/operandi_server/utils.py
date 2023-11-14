@@ -129,6 +129,9 @@ def create_workspace_bag_from_remote_url(
     for group in remove_groups:
         workspace.remove_file_group(group, recursive=True, force=True)
     workspace.save_mets()
+    ws_files = workspace.find_files()
+    for ws_file in ws_files:
+        workspace.download_file(f=ws_file)
 
     # Resolves and downloads all file groups and files in the mets file
     WorkspaceBagger(resolver).bag(
