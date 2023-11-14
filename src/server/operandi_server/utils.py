@@ -1,6 +1,5 @@
-from ocrd_utils import initLogging
-
 import bagit
+import pathlib
 from tempfile import NamedTemporaryFile
 from typing import List, Union
 from uuid import uuid4
@@ -9,6 +8,7 @@ from zipfile import ZipFile
 from ocrd import Resolver
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger
+from ocrd_utils import initLogging
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from operandi_server.constants import DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME
 from operandi_server.exceptions import WorkspaceNotValidException
@@ -18,6 +18,7 @@ __all__ = [
     "create_workspace_bag_from_remote_url",
     "extract_bag_info",
     "generate_id",
+    "get_ocrd_workspace_physical_pages",
     "get_workspace_bag",
     "safe_init_logging",
     "validate_bag"
@@ -128,6 +129,9 @@ def create_workspace_bag_from_remote_url(
     for group in remove_groups:
         workspace.remove_file_group(group, recursive=True, force=True)
     workspace.save_mets()
+    ws_files = workspace.find_files()
+    for ws_file in ws_files:
+        workspace.download_file(f=ws_file)
 
     # Resolves and downloads all file groups and files in the mets file
     WorkspaceBagger(resolver).bag(
@@ -137,3 +141,7 @@ def create_workspace_bag_from_remote_url(
         processes=1   # Do not pass higher processes number
     )
     return workspace.directory
+
+
+def get_ocrd_workspace_physical_pages(mets_path: str) -> List[str]:
+    return Resolver().workspace_from_url(mets_url=mets_path).mets.physical_pages

@@ -11,11 +11,12 @@ from .helpers_asserts import (
 
 
 # TODO: Turned off since it slows down the tests time
-def _test_post_workspace_url(operandi, auth, db_workspaces):
+def test_post_workspace_url(operandi, auth, db_workspaces):
     mets_url = "https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
-    file_grp = "DEFAULT"
+    # Separate with `,` to add a second file group to be preserved, e.g., `DEFAULT,MAX`
+    preserve_file_grps = "DEFAULT"
     response = operandi.post(
-        url=f"/workspace/import_external?mets_url={mets_url}&file_grp={file_grp}",
+        url=f"/import_external_workspace?mets_url={mets_url}&preserve_file_grps={preserve_file_grps}",
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)

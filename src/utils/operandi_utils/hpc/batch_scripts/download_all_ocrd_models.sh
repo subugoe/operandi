@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --constraint scratch
 #SBATCH --partition medium
-#SBATCH --cpus-per-task 8
-#SBATCH --mem 16G
+#SBATCH --cpus-per-task 16
+#SBATCH --mem 64G
 #SBATCH --time 240
 #SBATCH --output ./download_all_ocrd_models_job-%J.txt
 

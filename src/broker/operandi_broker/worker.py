@@ -86,6 +86,8 @@ class Worker:
             input_file_grp = consumed_message["input_file_grp"]
             slurm_job_cpus = int(consumed_message["cpus"])
             slurm_job_ram = int(consumed_message["ram"])
+            # How many process instances to create for each OCR-D processor
+            nf_process_forks = 2
         except Exception as error:
             self.log.error(f"Parsing the consumed message has failed: {error}")
             self.__handle_message_failure(interruption=False)
@@ -99,6 +101,7 @@ class Worker:
             workflow_script_path = workflow_db.workflow_script_path
             workspace_dir = workspace_db.workspace_dir
             mets_basename = workspace_db.mets_basename
+            ws_pages_amount = workspace_db.pages_amount
             if not mets_basename:
                 mets_basename = "mets.xml"
         except RuntimeError as error:
@@ -120,7 +123,9 @@ class Worker:
                 workflow_script_path=workflow_script_path,
                 input_file_grp=input_file_grp,
                 cpus=slurm_job_cpus,
-                ram=slurm_job_ram
+                ram=slurm_job_ram,
+                nf_process_forks=nf_process_forks,
+                ws_pages_amount=ws_pages_amount
             )
         except Exception as error:
             self.log.error(f"Triggering a slurm job in the HPC has failed: {error}")
@@ -189,6 +194,8 @@ class Worker:
             input_file_grp: str,
             cpus: int,
             ram: int,
+            nf_process_forks: int,
+            ws_pages_amount: int
     ) -> str:
 
         if self.test_sbatch:
@@ -220,7 +227,9 @@ class Worker:
                 input_file_grp=input_file_grp,
                 job_deadline_time=job_deadline_time,
                 cpus=cpus,
-                ram=ram
+                ram=ram,
+                nf_process_forks=nf_process_forks,
+                ws_pages_amount=ws_pages_amount
             )
         except Exception as error:
             raise Exception(f"Triggering slurm job failed: {error}")

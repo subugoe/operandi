@@ -64,7 +64,9 @@ def test_hpc_connector_run_batch_script(hpc_command_executor, path_workflow1):
         mets_basename="mets.xml",
         job_deadline_time="1:00:00",
         cpus=2,
-        ram=8
+        ram=8,
+        nf_process_forks=1,
+        ws_pages_amount=1
     )
     finished_successfully = hpc_command_executor.poll_till_end_slurm_job_state(
         slurm_job_id=slurm_job_id,

@@ -47,6 +47,7 @@ help:
 	@echo " run-tests-harvester     Run all harvester tests"
 	@echo " run-tests-server        Run all server tests"
 	@echo " run-tests-utils         Run all utils tests"
+	@echo " run-tests-integration   Run the integration test"
 	@echo ""
 
 

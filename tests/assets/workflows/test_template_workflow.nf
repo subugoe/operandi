@@ -4,23 +4,33 @@ nextflow.enable.dsl=2
 // Based on internal values and options provided in the request
 params.input_file_group = "null"
 params.mets = "null"
+params.mets_socket = "null"
+params.workspace_dir = "null"
+// amount of pages of the workspace
+params.pages = "null"
 params.singularity_wrapper = "null"
 params.cpus = "null"
 params.ram = "null"
+// by default single instance of each OCR-D processor
+params.forks = 1
 
 log.info """\
          O P E R A N D I - H P C - T E M P L A T E   P I P E L I N E
          ===========================================
          input_file_group    : ${params.input_file_group}
          mets                : ${params.mets}
+         mets_socket         : ${params.mets_socket}
+         workspace_dir       : ${params.workspace_dir}
+         pages               : ${params.pages}
          singularity_wrapper : ${params.singularity_wrapper}
          cpus                : ${params.cpus}
          ram                 : ${params.ram}
+         forks               : ${params.forks}
          """
          .stripIndent()
 
 process ocrd_cis_ocropy_binarize {
-  maxForks 1
+  maxForks params.forks
   cpus params.cpus
   memory params.ram
   echo true
@@ -31,7 +41,7 @@ process ocrd_cis_ocropy_binarize {
 
   script:
   """
-  ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -m ${mets_file} -I ${input_group} -O OCR-D-BIN
+  ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} -I ${input_group} -O OCR-D-BIN
   """
 }
 

@@ -124,7 +124,7 @@ class Harvester:
             raise ValueError(f"Workspace mets url is not responsive: {mets_url}")
         self.logger.info(f"Posting workspace mets url: {mets_url}")
         response = post(
-            url=f"{self.server_address}/workspace/import_external?mets_url={mets_url}&file_grp={file_grp}",
+            url=f"{self.server_address}/import_external_workspace?mets_url={mets_url}&preserve_file_grps={file_grp}",
             auth=self.auth
         )
         self.logger.debug(response.json())

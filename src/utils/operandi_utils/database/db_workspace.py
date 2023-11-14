@@ -7,6 +7,7 @@ from .models import DBWorkspace
 async def db_create_workspace(
         workspace_id: str,
         workspace_dir: str,
+        pages_amount: int,
         bag_info: dict
 ) -> DBWorkspace:
     bag_info = dict(bag_info)
@@ -28,6 +29,7 @@ async def db_create_workspace(
             workspace_id=workspace_id,
             workspace_dir=workspace_dir,
             workspace_mets_path=workspace_mets_path,
+            pages_amount=pages_amount,
             mets_basename=mets_basename,
             ocrd_identifier=ocrd_identifier,
             bagit_profile_identifier=bagit_profile_identifier,
@@ -38,6 +40,7 @@ async def db_create_workspace(
         db_workspace.workspace_dir = workspace_dir
         db_workspace.workspace_mets_path = workspace_mets_path
         db_workspace.mets_basename = mets_basename
+        db_workspace.pages_amount = pages_amount
         db_workspace.ocrd_identifier = ocrd_identifier
         db_workspace.bagit_profile_identifier = bagit_profile_identifier
         db_workspace.ocrd_base_version_checksum = ocrd_base_version_checksum
@@ -50,9 +53,10 @@ async def db_create_workspace(
 async def sync_db_create_workspace(
         workspace_id: str,
         workspace_dir: str,
+        pages_amount: int,
         bag_info: dict
 ) -> DBWorkspace:
-    return await db_create_workspace(workspace_id, workspace_dir, bag_info)
+    return await db_create_workspace(workspace_id, workspace_dir, pages_amount, bag_info)
 
 
 async def db_get_workspace(workspace_id: str) -> DBWorkspace:
@@ -79,6 +83,8 @@ async def db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorkspace:
             db_workspace.workspace_dir = value
         elif key == 'workspace_mets_path':
             db_workspace.workspace_mets_path = value
+        elif key == 'pages_amount':
+            db_workspace.pages_amount = value
         elif key == 'ocrd_identifier':
             db_workspace.ocrd_identifier = value
         elif key == 'bagit_profile_identifier':
