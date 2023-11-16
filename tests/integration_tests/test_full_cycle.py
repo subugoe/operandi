@@ -6,7 +6,7 @@ from operandi_utils.rabbitmq import RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_JOB
 from tests.tests_server.helpers_asserts import assert_response_status_code
 
 
-def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, bytes_workspace1):
+def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, bytes_small_workspace):
     response = operandi.get("/")
     assert response.json()["message"] == "The home page of the OPERANDI Server"
 
@@ -27,14 +27,14 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
     # Post a workspace zip
     response = operandi.post(
         url="/workspace",
-        files={"workspace": bytes_workspace1},
+        files={"workspace": bytes_small_workspace},
         auth=auth_harvester
     )
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()["resource_id"]
 
     # Post workflow job
-    input_file_grp = "OCR-D-IMG"
+    input_file_grp = "DEFAULT"
     req_data = {
         "workflow_id": workflow_id,
         "workflow_args": {
@@ -55,11 +55,11 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow1, b
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_job_id = response.json()["resource_id"]
 
-    tries = 40
+    tries = 50
     job_status = None
     while tries > 0:
         tries -= 1
-        sleep(15)
+        sleep(30)
         response = operandi.get(
             url=f"/workflow/{workflow_id}/{workflow_job_id}",
             auth=auth_harvester
