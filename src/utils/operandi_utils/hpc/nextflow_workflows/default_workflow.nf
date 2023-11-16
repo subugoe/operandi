@@ -12,7 +12,8 @@ params.singularity_wrapper = "null"
 params.cpus = "null"
 params.ram = "null"
 // by default single instance of each OCR-D processor
-params.forks = 1
+params.forks = 2
+params.pages_per_range = params.pages / params.forks
 
 log.info """\
          O P E R A N D I - H P C - D E F A U L T  P I P E L I N E
@@ -26,178 +27,190 @@ log.info """\
          cpus                : ${params.cpus}
          ram                 : ${params.ram}
          forks               : ${params.forks}
+         pages_per_range     : ${params.pages_per_range}
          """
          .stripIndent()
 
+process split_page_ranges {
+    maxForks 1
+    cpus params.cpus
+    memory params.ram
+
+    input:
+        val range_multiplier
+    output:
+        val current_range_pages
+    exec:
+        range_start = 1 + params.pages_per_range * range_multiplier
+        range_end = range_start + params.pages_per_range - 1
+        // Works only for workspaces with regular page_id ranges
+        start = sprintf("PHYS_%04d", range_start.intValue())
+        end = sprintf("PHYS_%04d", range_end.intValue())
+        current_range_pages = start + ".." + end
+}
+
 process ocrd_cis_ocropy_binarize {
-  maxForks params.forks
-  cpus params.cpus
-  memory params.ram
-  echo true
+    maxForks params.forks
+    cpus params.cpus
+    memory params.ram
+    echo true
 
-  input:
-    path mets_file
-    val input_group
-    val output_group
+    input:
+        val page_range
+        val input_group
+        val output_group
+    output:
+        val page_range
 
-  output:
-    path mets_file
-
-  script:
-  """
-  ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} -I ${input_group} -O ${output_group}
-  """
+    script:
+    """
+    ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -U ${params.mets_socket} -w ${params.workspace_dir} --page-id ${page_range} -m ${params.mets} -I ${input_group} -O ${output_group}
+    """
 }
 
 process ocrd_anybaseocr_crop {
-  maxForks params.forks
-  cpus params.cpus
-  memory params.ram
-  echo true
+    maxForks params.forks
+    cpus params.cpus
+    memory params.ram
+    echo true
 
-  input:
-    path mets_file
-    val input_group
-    val output_group
+    input:
+        val page_range
+        val input_group
+        val output_group
+    output:
+        val page_range
 
-  output:
-    path mets_file
-
-  script:
-  """
-  ${params.singularity_wrapper} ocrd-anybaseocr-crop -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} -I ${input_group} -O ${output_group}
-  """
+    script:
+    """
+    ${params.singularity_wrapper} ocrd-anybaseocr-crop -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group}
+    """
 }
 
 process ocrd_skimage_binarize {
-  maxForks params.forks
-  cpus params.cpus
-  memory params.ram
-  echo true
+    maxForks params.forks
+    cpus params.cpus
+    memory params.ram
+    echo true
 
-  input:
-    path mets_file
-    val input_group
-    val output_group
+    input:
+        val page_range
+        val input_group
+        val output_group
+    output:
+        val page_range
 
-  output:
-    path mets_file
-
-  script:
-  """
-  ${params.singularity_wrapper} ocrd-skimage-binarize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
-  """
+    script:
+    """
+    ${params.singularity_wrapper} ocrd-skimage-binarize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
+    """
 }
 
 process ocrd_skimage_denoise {
-  maxForks params.forks
-  cpus params.cpus
-  memory params.ram
-  echo true
+    maxForks params.forks
+    cpus params.cpus
+    memory params.ram
+    echo true
 
-  input:
-    path mets_file
-    val input_group
-    val output_group
+    input:
+        val page_range
+        val input_group
+        val output_group
+    output:
+        val page_range
 
-  output:
-    path mets_file
-
-  script:
-  """
-  ${params.singularity_wrapper} ocrd-skimage-denoise -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
-  """
+    script:
+    """
+    ${params.singularity_wrapper} ocrd-skimage-denoise -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+    """
 }
 
 process ocrd_tesserocr_deskew {
-  maxForks params.forks
-  cpus params.cpus
-  memory params.ram
-  echo true
+    maxForks params.forks
+    cpus params.cpus
+    memory params.ram
+    echo true
 
-  input:
-    path mets_file
-    val input_group
-    val output_group
+    input:
+        val page_range
+        val input_group
+        val output_group
+    output:
+        val page_range
 
-  output:
-    path mets_file
-
-  script:
-  """
-  ${params.singularity_wrapper} ocrd-tesserocr-deskew -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
-  """
+    script:
+    """
+    ${params.singularity_wrapper} ocrd-tesserocr-deskew -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
+    """
 }
 
 process ocrd_cis_ocropy_segment {
-  maxForks params.forks
-  cpus params.cpus
-  memory params.ram
-  echo true
+    maxForks params.forks
+    cpus params.cpus
+    memory params.ram
+    echo true
 
-  input:
-    path mets_file
-    val input_group
-    val output_group
+    input:
+        val page_range
+        val input_group
+        val output_group
+    output:
+        val page_range
 
-  output:
-    path mets_file
-
-  script:
-  """
-  ${params.singularity_wrapper} ocrd-cis-ocropy-segment -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
-  """
+    script:
+    """
+    ${params.singularity_wrapper} ocrd-cis-ocropy-segment -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+    """
 }
 
 process ocrd_cis_ocropy_dewarp {
-  maxForks params.forks
-  cpus params.cpus
-  memory params.ram
-  echo true
+    maxForks params.forks
+    cpus params.cpus
+    memory params.ram
+    echo true
 
-  input:
-    path mets_file
-    val input_group
-    val output_group
+    input:
+        val page_range
+        val input_group
+        val output_group
+    output:
+        val page_range
 
-  output:
-    path mets_file
-
-  script:
-  """
-  ${params.singularity_wrapper} ocrd-cis-ocropy-dewarp -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} -I ${input_group} -O ${output_group}
-  """
+    script:
+    """
+    ${params.singularity_wrapper} ocrd-cis-ocropy-dewarp -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group}
+    """
 }
 
 process ocrd_calamari_recognize {
-  maxForks params.forks
-  cpus params.cpus
-  memory params.ram
-  echo true
+    maxForks params.forks
+    cpus params.cpus
+    memory params.ram
+    echo true
 
-  input:
-    path mets_file
-    val input_group
-    val output_group
+    input:
+        val page_range
+        val input_group
+        val output_group
+    output:
+        val page_range
 
-  output:
-    path mets_file
-
-  script:
-  """
-  ${params.singularity_wrapper} ocrd-calamari-recognize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
-  """
+    script:
+    """
+    ${params.singularity_wrapper} ocrd-calamari-recognize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
+    """
 }
 
-
 workflow {
-  main:
-    ocrd_cis_ocropy_binarize(params.mets, params.input_file_group, "OCR-D-BIN")
-    ocrd_anybaseocr_crop(ocrd_cis_ocropy_binarize.out, "OCR-D-BIN", "OCR-D-CROP")
-    ocrd_skimage_binarize(ocrd_anybaseocr_crop.out, "OCR-D-CROP", "OCR-D-BIN2")
-    ocrd_skimage_denoise(ocrd_skimage_binarize.out, "OCR-D-BIN2", "OCR-D-BIN-DENOISE")
-    ocrd_tesserocr_deskew(ocrd_skimage_denoise.out, "OCR-D-BIN-DENOISE", "OCR-D-BIN-DENOISE-DESKEW")
-    ocrd_cis_ocropy_segment(ocrd_tesserocr_deskew.out, "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG")
-    ocrd_cis_ocropy_dewarp(ocrd_cis_ocropy_segment.out, "OCR-D-SEG", "OCR-D-SEG-LINE-RESEG-DEWARP")
-    ocrd_calamari_recognize(ocrd_cis_ocropy_dewarp.out, "OCR-D-SEG-LINE-RESEG-DEWARP", "OCR-D-OCR")
+    main:
+        ch_range_multipliers = Channel.of(0..params.forks-1)
+        split_page_ranges(ch_range_multipliers)
+        ocrd_cis_ocropy_binarize(split_page_ranges.out, params.input_file_group, "OCR-D-BIN")
+        ocrd_anybaseocr_crop(ocrd_cis_ocropy_binarize.out, "OCR-D-BIN", "OCR-D-CROP")
+        ocrd_skimage_binarize(ocrd_anybaseocr_crop.out, "OCR-D-CROP", "OCR-D-BIN2")
+        ocrd_skimage_denoise(ocrd_skimage_binarize.out, "OCR-D-BIN2", "OCR-D-BIN-DENOISE")
+        ocrd_tesserocr_deskew(ocrd_skimage_denoise.out, "OCR-D-BIN-DENOISE", "OCR-D-BIN-DENOISE-DESKEW")
+        ocrd_cis_ocropy_segment(ocrd_tesserocr_deskew.out, "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG")
+        ocrd_cis_ocropy_dewarp(ocrd_cis_ocropy_segment.out, "OCR-D-SEG", "OCR-D-SEG-LINE-RESEG-DEWARP")
+        ocrd_calamari_recognize(ocrd_cis_ocropy_dewarp.out, "OCR-D-SEG-LINE-RESEG-DEWARP", "OCR-D-OCR")
 }
