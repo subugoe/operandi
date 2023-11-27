@@ -11,11 +11,11 @@ params.pages = "null"
 params.singularity_wrapper = "null"
 params.cpus = "null"
 params.ram = "null"
-params.forks = "full"
+params.forks = params.cpus
 // Do not pass these parameters from the caller unless you know what you are doing
-params.pages_per_range = Math.round(params.pages.intValue() / params.forks.intValue()).intValue()
-params.cpus_per_fork = (params.cpus.intValue() / params.forks.intValue()).intValue()
-params.ram_per_fork = (params.ram.intValue() / params.forks.intValue()).intValue()
+params.pages_per_range = Math.round(params.pages.toInteger() / params.forks.toInteger()).intValue()
+params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intValue()
+params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())
 
 log.info """\
          O P E R A N D I - H P C - D E F A U L T  P I P E L I N E
@@ -47,14 +47,14 @@ process split_page_ranges {
     exec:
         range_start = (1 + params.pages_per_range * range_multiplier).intValue()
         range_end = (range_start + params.pages_per_range - 1).intValue()
-        pages_int = params.pages.intValue()
+        pages_int = params.pages.toInteger()
         // Prevent range overflow
         if(range_end > pages_int){
             range_end = pages_int
         }
         // Prevent last pages being left out
         pages_left = pages_int - range_end
-        if(pages_left < params.pages_per_range.intValue()){
+        if(pages_left < params.pages_per_range){
             range_end = range_end + pages_left
         }
         // Works only for workspaces with regular page_id ranges
@@ -217,7 +217,7 @@ process ocrd_calamari_recognize {
 
 workflow {
     main:
-        ch_range_multipliers = Channel.of(0..params.forks-1)
+        ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
         split_page_ranges(ch_range_multipliers)
         ocrd_cis_ocropy_binarize(split_page_ranges.out, params.input_file_group, "OCR-D-BIN")
         ocrd_anybaseocr_crop(ocrd_cis_ocropy_binarize.out, "OCR-D-BIN", "OCR-D-CROP")
