@@ -97,6 +97,8 @@ singularity exec \
   ocrd workspace -U "/ws_data/${METS_SOCKET_BASENAME}" -d "/ws_data" server start \
   > "${WORKSPACE_DIR}/mets_server.log" 2>&1 &
 
+sleep 7
+
 # Execute the Nextflow script
 nextflow run "${NF_SCRIPT_PATH}" \
 -ansi-log false \
