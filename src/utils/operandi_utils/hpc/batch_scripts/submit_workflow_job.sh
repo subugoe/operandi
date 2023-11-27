@@ -70,7 +70,7 @@ if [ ! -f "${WORKFLOW_JOB_DIR}.zip" ]; then
   exit 1
 else
   echo "Unzipping ${WORKFLOW_JOB_DIR}.zip to: ${WORKFLOW_JOB_DIR}"
-  unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}"
+  unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}" > "${WORKFLOW_JOB_DIR}/workflow_job_unzipping.log"
   echo "Removing zip: ${WORKFLOW_JOB_DIR}.zip"
   rm "${WORKFLOW_JOB_DIR}.zip"
 fi
@@ -125,6 +125,6 @@ singularity exec \
 # Delete symlinks created for the Nextflow workers
 find "${WORKFLOW_JOB_DIR}" -type l -delete
 # Create a zip of the ocrd workspace dir
-cd "${WORKSPACE_DIR}" && zip -r "${WORKSPACE_ID}.zip" "." -x "*.sock"
+cd "${WORKSPACE_DIR}" && zip -r "${WORKSPACE_ID}.zip" "." -x "*.sock" > "workspace_zipping.log"
 # Create a zip of the Nextflow run results by excluding the ocrd workspace dir
-cd "${WORKFLOW_JOB_DIR}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**"
+cd "${WORKFLOW_JOB_DIR}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**" > "workflow_job_zipping.log"

@@ -61,6 +61,7 @@ process split_page_ranges {
         start = sprintf("PHYS_%04d", range_start)
         end = sprintf("PHYS_%04d", range_end)
         current_range_pages = start + ".." + end
+        println("Current page range: ${current_range_pages}")
 }
 
 process ocrd_cis_ocropy_binarize {
