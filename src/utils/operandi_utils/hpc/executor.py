@@ -101,7 +101,7 @@ class HPCExecutor:
         command += f" {workspace_id}"
         command += f" {mets_basename}"
         command += f" {cpus}"
-        command += f" {ram}GB"
+        command += f" {ram}"
         command += f" {nf_process_forks}"
         command += f" {ws_pages_amount}"
         command += "'"
