@@ -11,9 +11,11 @@ params.pages = "null"
 params.singularity_wrapper = "null"
 params.cpus = "null"
 params.ram = "null"
-// by default single instance of each OCR-D processor
-params.forks = 2
-params.pages_per_range = params.pages / params.forks
+params.forks = "full"
+// Do not pass these parameters from the caller unless you know what you are doing
+params.pages_per_range = Math.round(params.pages.intValue() / params.forks.intValue()).intValue()
+params.cpus_per_fork = (params.cpus.intValue() / params.forks.intValue()).intValue()
+params.ram_per_fork = (params.ram.intValue() / params.forks.intValue()).intValue()
 
 log.info """\
          O P E R A N D I - H P C - D E F A U L T  P I P E L I N E
@@ -28,31 +30,43 @@ log.info """\
          ram                 : ${params.ram}
          forks               : ${params.forks}
          pages_per_range     : ${params.pages_per_range}
+         cpus_per_fork       : ${params.cpus_per_fork}
+         ram_per_fork        : ${params.ram_per_fork}
          """
          .stripIndent()
 
 process split_page_ranges {
-    maxForks 1
-    cpus params.cpus
-    memory params.ram
+    maxForks params.forks
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
 
     input:
         val range_multiplier
     output:
         val current_range_pages
     exec:
-        range_start = 1 + params.pages_per_range * range_multiplier
-        range_end = range_start + params.pages_per_range - 1
+        range_start = (1 + params.pages_per_range * range_multiplier).intValue()
+        range_end = (range_start + params.pages_per_range - 1).intValue()
+        pages_int = params.pages.intValue()
+        // Prevent range overflow
+        if(range_end > pages_int){
+            range_end = pages_int
+        }
+        // Prevent last pages being left out
+        pages_left = pages_int - range_end
+        if(pages_left < params.pages_per_range.intValue()){
+            range_end = range_end + pages_left
+        }
         // Works only for workspaces with regular page_id ranges
-        start = sprintf("PHYS_%04d", range_start.intValue())
-        end = sprintf("PHYS_%04d", range_end.intValue())
+        start = sprintf("PHYS_%04d", range_start)
+        end = sprintf("PHYS_%04d", range_end)
         current_range_pages = start + ".." + end
 }
 
 process ocrd_cis_ocropy_binarize {
     maxForks params.forks
-    cpus params.cpus
-    memory params.ram
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
     echo true
 
     input:
@@ -70,8 +84,8 @@ process ocrd_cis_ocropy_binarize {
 
 process ocrd_anybaseocr_crop {
     maxForks params.forks
-    cpus params.cpus
-    memory params.ram
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
     echo true
 
     input:
@@ -89,8 +103,8 @@ process ocrd_anybaseocr_crop {
 
 process ocrd_skimage_binarize {
     maxForks params.forks
-    cpus params.cpus
-    memory params.ram
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
     echo true
 
     input:
@@ -108,8 +122,8 @@ process ocrd_skimage_binarize {
 
 process ocrd_skimage_denoise {
     maxForks params.forks
-    cpus params.cpus
-    memory params.ram
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
     echo true
 
     input:
@@ -127,8 +141,8 @@ process ocrd_skimage_denoise {
 
 process ocrd_tesserocr_deskew {
     maxForks params.forks
-    cpus params.cpus
-    memory params.ram
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
     echo true
 
     input:
@@ -146,8 +160,8 @@ process ocrd_tesserocr_deskew {
 
 process ocrd_cis_ocropy_segment {
     maxForks params.forks
-    cpus params.cpus
-    memory params.ram
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
     echo true
 
     input:
@@ -165,8 +179,8 @@ process ocrd_cis_ocropy_segment {
 
 process ocrd_cis_ocropy_dewarp {
     maxForks params.forks
-    cpus params.cpus
-    memory params.ram
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
     echo true
 
     input:
@@ -184,8 +198,8 @@ process ocrd_cis_ocropy_dewarp {
 
 process ocrd_calamari_recognize {
     maxForks params.forks
-    cpus params.cpus
-    memory params.ram
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
     echo true
 
     input:
