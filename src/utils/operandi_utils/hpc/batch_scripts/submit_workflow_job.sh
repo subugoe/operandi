@@ -70,8 +70,9 @@ if [ ! -f "${WORKFLOW_JOB_DIR}.zip" ]; then
   exit 1
 else
   echo "Unzipping ${WORKFLOW_JOB_DIR}.zip to: ${WORKFLOW_JOB_DIR}"
-  unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}" > "${WORKFLOW_JOB_DIR}/workflow_job_unzipping.log"
+  unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}" > "${SCRATCH_BASE}/workflow_job_unzipping.log"
   echo "Removing zip: ${WORKFLOW_JOB_DIR}.zip"
+  mv "${SCRATCH_BASE}/workflow_job_unzipping.log" "${WORKFLOW_JOB_DIR}/workflow_job_unzipping.log"
   rm "${WORKFLOW_JOB_DIR}.zip"
 fi
 
