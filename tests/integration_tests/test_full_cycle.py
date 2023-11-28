@@ -44,7 +44,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_workflow2, b
         },
         "sbatch_args": {
           "cpus": 8,
-          "ram": 64
+          "ram": 32
         }
     }
     response = operandi.post(

@@ -169,7 +169,7 @@ class Harvester:
             input_file_grp: str = "DEFAULT",
             mets_base: str = "mets.xml",
             cpus: int = 8,
-            ram: int = 64
+            ram: int = 32
     ) -> str:
         self.logger.info(f"Posting workflow job with workflow id: {workflow_id} on workspace id: {workspace_id}")
         request_json = {
