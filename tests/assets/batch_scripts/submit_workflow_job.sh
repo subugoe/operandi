@@ -1,1 +1,1 @@
-/home/mm/Desktop/operandi/src/utils/operandi_utils/hpc/batch_scripts/submit_workflow_job.sh
+../../../src/utils/operandi_utils/hpc/batch_scripts/submit_workflow_job.sh
