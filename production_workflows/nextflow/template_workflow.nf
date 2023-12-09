@@ -1,1 +1,1 @@
-/home/mm/Desktop/operandi/src/utils/operandi_utils/hpc/nextflow_workflows/template_workflow.nf
+../../src/utils/operandi_utils/hpc/nextflow_workflows/template_workflow.nf
