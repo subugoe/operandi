@@ -32,21 +32,20 @@ log.info """\
          .stripIndent()
 
 process split_page_ranges {
-    maxForks 1
-    cpus params.cpus
-    memory params.ram
+    maxForks params.forks
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
+    debug true
 
     input:
         val range_multiplier
     output:
-        val current_range_pages
-    exec:
-        range_start = 1 + params.pages_per_range * range_multiplier
-        range_end = range_start + params.pages_per_range - 1
-        // Works only for workspaces with regular page_id ranges
-        start = sprintf("PHYS_%04d", range_start.intValue())
-        end = sprintf("PHYS_%04d", range_end.intValue())
-        current_range_pages = start + ".." + end
+        env current_range_pages
+    shell:
+    '''
+    current_range_pages=$(!{params.singularity_wrapper} ocrd workspace -d !{params.workspace_dir} list-page -D !{params.forks} -C !{range_multiplier})
+    echo "Current range is: $current_range_pages"
+    '''
 }
 
 process ocrd_cis_ocropy_binarize {

@@ -13,12 +13,11 @@ params.cpus = "null"
 params.ram = "null"
 params.forks = params.cpus
 // Do not pass these parameters from the caller unless you know what you are doing
-params.pages_per_range = Math.round(params.pages.toInteger() / params.forks.toInteger()).intValue()
 params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intValue()
 params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())
 
 log.info """\
-         O P E R A N D I - H P C - WORKFLOW ODEM
+         O P E R A N D I - H P C - O D E M  W O R K F L O W
          ===========================================
          input_file_group    : ${params.input_file_group}
          mets                : ${params.mets}
@@ -29,7 +28,6 @@ log.info """\
          cpus                : ${params.cpus}
          ram                 : ${params.ram}
          forks               : ${params.forks}
-         pages_per_range     : ${params.pages_per_range}
          cpus_per_fork       : ${params.cpus_per_fork}
          ram_per_fork        : ${params.ram_per_fork}
          """
@@ -39,36 +37,24 @@ process split_page_ranges {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
+    debug true
 
     input:
         val range_multiplier
     output:
-        val current_range_pages
-    exec:
-        range_start = (1 + params.pages_per_range * range_multiplier).intValue()
-        range_end = (range_start + params.pages_per_range - 1).intValue()
-        pages_int = params.pages.toInteger()
-        // Prevent range overflow
-        if(range_end > pages_int){
-            range_end = pages_int
-        }
-        // Prevent last pages being left out
-        pages_left = pages_int - range_end
-        if(pages_left < params.pages_per_range){
-            range_end = range_end + pages_left
-        }
-        // Works only for workspaces with regular page_id ranges
-        start = sprintf("PHYS_%04d", range_start)
-        end = sprintf("PHYS_%04d", range_end)
-        current_range_pages = start + ".." + end
-        println("Current page range: ${current_range_pages}")
+        env current_range_pages
+    shell:
+    '''
+    current_range_pages=$(!{params.singularity_wrapper} ocrd workspace -d !{params.workspace_dir} list-page -D !{params.forks} -C !{range_multiplier})
+    echo "Current range is: $current_range_pages"
+    '''
 }
 
 process ocrd_cis_ocropy_binarize_0 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
-    echo true
+    debug true
 
     input:
         val page_range
@@ -87,7 +73,7 @@ process ocrd_anybaseocr_crop_1 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
-    echo true
+    debug true
 
     input:
         val page_range
@@ -106,7 +92,7 @@ process ocrd_cis_ocropy_denoise_2 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
-    echo true
+    debug true
 
     input:
         val page_range
@@ -125,7 +111,7 @@ process ocrd_cis_ocropy_deskew_3 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
-    echo true
+    debug true
 
     input:
         val page_range
@@ -144,7 +130,7 @@ process ocrd_tesserocr_segment_region_4 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
-    echo true
+    debug true
 
     input:
         val page_range
@@ -163,7 +149,7 @@ process ocrd_segment_repair_5 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
-    echo true
+    debug true
 
     input:
         val page_range
@@ -182,7 +168,7 @@ process ocrd_cis_ocropy_clip_6 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
-    echo true
+    debug true
 
     input:
         val page_range
@@ -201,7 +187,7 @@ process ocrd_cis_ocropy_segment_7 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
-    echo true
+    debug true
 
     input:
         val page_range
@@ -220,7 +206,7 @@ process ocrd_cis_ocropy_dewarp_8 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
-    echo true
+    debug true
 
     input:
         val page_range
@@ -239,7 +225,7 @@ process ocrd_tesserocr_recognize_9 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
-    echo true
+    debug true
 
     input:
         val page_range
