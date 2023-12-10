@@ -10,7 +10,6 @@ from .helpers_asserts import (
 )
 
 
-# TODO: Turned off since it slows down the tests time
 def test_post_workspace_url(operandi, auth, db_workspaces):
     mets_url = "https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
     # Separate with `,` to add a second file group to be preserved, e.g., `DEFAULT,MAX`
@@ -26,10 +25,10 @@ def test_post_workspace_url(operandi, auth, db_workspaces):
     assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
 
 
-def test_post_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1):
+def test_post_workspace_zip(operandi, auth, db_workspaces, bytes_dummy_workspace):
     response = operandi.post(
         "/workspace",
-        files={"workspace": bytes_workspace1},
+        files={"workspace": bytes_dummy_workspace},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -39,10 +38,10 @@ def test_post_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1):
     assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
 
 
-def test_post_workspace_zip_different_mets(operandi, auth, db_workspaces, bytes_workspace2):
+def test_post_workspace_zip_different_mets(operandi, auth, db_workspaces, bytes_ws_different_mets):
     response = operandi.post(
         "/workspace",
-        files={"workspace": bytes_workspace2},
+        files={"workspace": bytes_ws_different_mets},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -52,12 +51,12 @@ def test_post_workspace_zip_different_mets(operandi, auth, db_workspaces, bytes_
     assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
 
 
-def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1, bytes_workspace2):
+def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_dummy_workspace, bytes_ws_different_mets):
     put_workspace_id = "put_workspace_id"
     # The first put request creates a new workspace
     response = operandi.put(
         f"/workspace/{put_workspace_id}",
-        files={"workspace": bytes_workspace1},
+        files={"workspace": bytes_dummy_workspace},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -72,7 +71,7 @@ def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1, byte
     # The second put request replaces the previously created workspace
     response = operandi.put(
         f"/workspace/{put_workspace_id}",
-        files={"workspace": bytes_workspace2},
+        files={"workspace": bytes_ws_different_mets},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -87,11 +86,11 @@ def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_workspace1, byte
         f"Ocrd identifiers should not, but match: {ocrd_identifier1} == {ocrd_identifier2}"
 
 
-def test_delete_workspace(operandi, auth, db_workspaces, bytes_workspace2):
+def test_delete_workspace(operandi, auth, db_workspaces, bytes_ws_different_mets):
     # Post a workspace
     response = operandi.post(
         url="/workspace",
-        files={"workspace": bytes_workspace2},
+        files={"workspace": bytes_ws_different_mets},
         auth=auth
     )
     posted_workspace_id = response.json()['resource_id']
@@ -112,10 +111,10 @@ def test_delete_workspace(operandi, auth, db_workspaces, bytes_workspace2):
     assert_exists_db_resource_not(db_deleted_workspace, delete_workspace_id)
 
 
-def test_delete_workspace_non_existing(operandi, auth, bytes_workspace2):
+def test_delete_workspace_non_existing(operandi, auth, bytes_ws_different_mets):
     response = operandi.post(
         "/workspace",
-        files={"workspace": bytes_workspace2},
+        files={"workspace": bytes_ws_different_mets},
         auth=auth
     )
     posted_workspace_id = response.json()['resource_id']
@@ -126,10 +125,10 @@ def test_delete_workspace_non_existing(operandi, auth, bytes_workspace2):
     assert_response_status_code(response.status_code, expected_floor=4)  # Not available
 
 
-def test_get_workspace(operandi, auth, bytes_workspace2):
+def test_get_workspace(operandi, auth, bytes_ws_different_mets):
     response = operandi.post(
         "/workspace",
-        files={"workspace": bytes_workspace2},
+        files={"workspace": bytes_ws_different_mets},
         auth=auth
     )
     workspace_id = response.json()['resource_id']

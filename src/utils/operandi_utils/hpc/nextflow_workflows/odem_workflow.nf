@@ -17,7 +17,7 @@ params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intV
 params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())
 
 log.info """\
-         O P E R A N D I - H P C - D E F A U L T  W O R K F L O W
+         O P E R A N D I - H P C - O D E M  W O R K F L O W
          ===========================================
          input_file_group    : ${params.input_file_group}
          mets                : ${params.mets}
@@ -50,7 +50,7 @@ process split_page_ranges {
     '''
 }
 
-process ocrd_cis_ocropy_binarize {
+process ocrd_cis_ocropy_binarize_0 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
@@ -65,11 +65,11 @@ process ocrd_cis_ocropy_binarize {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -U ${params.mets_socket} -w ${params.workspace_dir} --page-id ${page_range} -m ${params.mets} -I ${input_group} -O ${output_group}
+    ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -U ${params.mets_socket} -w ${params.workspace_dir} --page-id ${page_range} -m ${params.mets} -I ${input_group} -O ${output_group} -P dpi 300
     """
 }
 
-process ocrd_anybaseocr_crop {
+process ocrd_anybaseocr_crop_1 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
@@ -84,11 +84,11 @@ process ocrd_anybaseocr_crop {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-anybaseocr-crop -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group}
+    ${params.singularity_wrapper} ocrd-anybaseocr-crop -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P dpi 300
     """
 }
 
-process ocrd_skimage_binarize {
+process ocrd_cis_ocropy_denoise_2 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
@@ -103,11 +103,11 @@ process ocrd_skimage_binarize {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-skimage-binarize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
+    ${params.singularity_wrapper} ocrd-cis-ocropy-denoise -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P dpi 300
     """
 }
 
-process ocrd_skimage_denoise {
+process ocrd_cis_ocropy_deskew_3 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
@@ -122,11 +122,11 @@ process ocrd_skimage_denoise {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-skimage-denoise -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+    ${params.singularity_wrapper} ocrd-cis-ocropy-deskew -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P level-of-operation page
     """
 }
 
-process ocrd_tesserocr_deskew {
+process ocrd_tesserocr_segment_region_4 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
@@ -141,11 +141,11 @@ process ocrd_tesserocr_deskew {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-tesserocr-deskew -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
+    ${params.singularity_wrapper} ocrd-tesserocr-segment-region -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P padding 5.0 -P find_tables false -P dpi 300
     """
 }
 
-process ocrd_cis_ocropy_segment {
+process ocrd_segment_repair_5 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
@@ -160,11 +160,49 @@ process ocrd_cis_ocropy_segment {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-cis-ocropy-segment -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+    ${params.singularity_wrapper} ocrd-segment-repair -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P plausibilize true -P plausibilize_merge_min_overlap 0.7
     """
 }
 
-process ocrd_cis_ocropy_dewarp {
+process ocrd_cis_ocropy_clip_6 {
+    maxForks params.forks
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
+    debug true
+
+    input:
+        val page_range
+        val input_group
+        val output_group
+    output:
+        val page_range
+
+    script:
+    """
+    ${params.singularity_wrapper} ocrd-cis-ocropy-clip -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group}
+    """
+}
+
+process ocrd_cis_ocropy_segment_7 {
+    maxForks params.forks
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
+    debug true
+
+    input:
+        val page_range
+        val input_group
+        val output_group
+    output:
+        val page_range
+
+    script:
+    """
+    ${params.singularity_wrapper} ocrd-cis-ocropy-segment -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P dpi 300
+    """
+}
+
+process ocrd_cis_ocropy_dewarp_8 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
@@ -183,7 +221,7 @@ process ocrd_cis_ocropy_dewarp {
     """
 }
 
-process ocrd_calamari_recognize {
+process ocrd_tesserocr_recognize_9 {
     maxForks params.forks
     cpus params.cpus_per_fork
     memory params.ram_per_fork
@@ -198,7 +236,7 @@ process ocrd_calamari_recognize {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-calamari-recognize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
+    ${params.singularity_wrapper} ocrd-tesserocr-recognize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P model Fraktur
     """
 }
 
@@ -206,12 +244,14 @@ workflow {
     main:
         ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
         split_page_ranges(ch_range_multipliers)
-        ocrd_cis_ocropy_binarize(split_page_ranges.out, params.input_file_group, "OCR-D-BIN")
-        ocrd_anybaseocr_crop(ocrd_cis_ocropy_binarize.out, "OCR-D-BIN", "OCR-D-CROP")
-        ocrd_skimage_binarize(ocrd_anybaseocr_crop.out, "OCR-D-CROP", "OCR-D-BIN2")
-        ocrd_skimage_denoise(ocrd_skimage_binarize.out, "OCR-D-BIN2", "OCR-D-BIN-DENOISE")
-        ocrd_tesserocr_deskew(ocrd_skimage_denoise.out, "OCR-D-BIN-DENOISE", "OCR-D-BIN-DENOISE-DESKEW")
-        ocrd_cis_ocropy_segment(ocrd_tesserocr_deskew.out, "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG")
-        ocrd_cis_ocropy_dewarp(ocrd_cis_ocropy_segment.out, "OCR-D-SEG", "OCR-D-SEG-LINE-RESEG-DEWARP")
-        ocrd_calamari_recognize(ocrd_cis_ocropy_dewarp.out, "OCR-D-SEG-LINE-RESEG-DEWARP", "OCR-D-OCR")
+        ocrd_cis_ocropy_binarize_0(split_page_ranges.out, params.input_file_group, "OCR-D-BINPAGE")
+        ocrd_anybaseocr_crop_1(ocrd_cis_ocropy_binarize_0.out, "OCR-D-BINPAGE", "OCR-D-SEG-PAGE-ANYOCR")
+        ocrd_cis_ocropy_denoise_2(ocrd_anybaseocr_crop_1.out, "OCR-D-SEG-PAGE-ANYOCR", "OCR-D-DENOISE-OCROPY")
+        ocrd_cis_ocropy_deskew_3(ocrd_cis_ocropy_denoise_2.out, "OCR-D-DENOISE-OCROPY", "OCR-D-DESKEW-OCROPY")
+        ocrd_tesserocr_segment_region_4(ocrd_cis_ocropy_deskew_3.out, "OCR-D-DESKEW-OCROPY", "OCR-D-SEG-BLOCK-TESSERACT")
+        ocrd_segment_repair_5(ocrd_tesserocr_segment_region_4.out, "OCR-D-SEG-BLOCK-TESSERACT", "OCR-D-SEGMENT-REPAIR")
+        ocrd_cis_ocropy_clip_6(ocrd_segment_repair_5.out, "OCR-D-SEGMENT-REPAIR", "OCR-D-CLIP")
+        ocrd_cis_ocropy_segment_7(ocrd_cis_ocropy_clip_6.out, "OCR-D-CLIP", "OCR-D-SEGMENT-OCROPY")
+        ocrd_cis_ocropy_dewarp_8(ocrd_cis_ocropy_segment_7.out, "OCR-D-SEGMENT-OCROPY", "OCR-D-DEWARP")
+        ocrd_tesserocr_recognize_9(ocrd_cis_ocropy_dewarp_8.out, "OCR-D-DEWARP", "OCR-D-OCR")
 }

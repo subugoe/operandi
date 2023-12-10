@@ -1,0 +1,328 @@
+<mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OBJID="" xsi:schemaLocation="http://www.loc.gov/standards/premis/ http://www.loc.gov/standards/premis/v2/premis-v2-0.xsd http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-5.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd http://www.loc.gov/standards/mix/ http://www.loc.gov/standards/mix/mix.xsd">
+  <mets:metsHdr CREATEDATE="2018-09-18T13:10:02Z">
+    <mets:agent OTHERTYPE="SOFTWARE" ROLE="CREATOR" TYPE="OTHER">
+      <mets:name>Goobi - ugh-3.0-ugh-2.0.0-29-g3b6efe1 - 21−December−2016</mets:name>
+      <mets:note>Goobi</mets:note>
+    </mets:agent>
+  </mets:metsHdr>
+  <mets:dmdSec ID="DMDLOG_0001">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+          <mods:titleInfo>
+            <mods:title>Warum man solle Gott dienen</mods:title>
+          </mods:titleInfo>
+          <mods:originInfo>
+            <mods:place>
+              <mods:placeTerm type="text">Zu Zug in der Schweitz</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Gedruckt ... Bey Heinrich Antoni Schäll</mods:publisher>
+            <mods:dateIssued encoding="iso8601" point="start">1743</mods:dateIssued>
+            <mods:edition>Die zweyte Auflag</mods:edition>
+          </mods:originInfo>
+          <mods:originInfo eventType="digitization">
+            <mods:place>
+              <mods:placeTerm type="text">Göttingen</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Niedersächsische Staats- und Universitätsbibliothek</mods:publisher>
+            <mods:dateCaptured encoding="iso8601" point="start">2018</mods:dateCaptured>
+            <mods:edition>[Electronic ed.]</mods:edition>
+          </mods:originInfo>
+          <mods:language>
+            <mods:languageTerm authority="iso639-2b" type="code">und</mods:languageTerm>
+            <mods:scriptTerm type="text">Fraktur</mods:scriptTerm>
+          </mods:language>
+          <mods:language>
+            <mods:languageTerm authority="iso639-2b" type="code">ger</mods:languageTerm>
+          </mods:language>
+          <mods:physicalDescription>
+            <mods:extent>1 ungezähltes Blatt Tafel, 20 ungezählte Seiten, 118 Seiten : 1 Illustration ; 8°</mods:extent>
+          </mods:physicalDescription>
+          <mods:note>Die Illustration ist ein gestochenes Frontispiz</mods:note>
+          <mods:note>Autopsie nach dem Exemplar der SUB Göttingen</mods:note>
+          <mods:note>Vorlageform der Veröffentlichungsangabe: "Gedruckt zu Zug in der Schweitz, Bey Heinrich Antoni Schäll, 1743."</mods:note>
+          <mods:note type="action">Langzeitarchivierung gewährleistet, SUB Göttingen.</mods:note>
+          <mods:note type="reproduction">Electronic reproduction. Göttingen : Niedersächsische Staats- und Universitätsbibliothek, 2018. TIFF, Vers.6.0, 300 ppi, 24 bit (Farbe), RGB; Digitalisierungsvorlage: Primärausgabe. (VD18 digital)</mods:note>
+          <mods:relatedItem type="series">
+            <mods:titleInfo>
+              <mods:title>VD18 digital</mods:title>
+            </mods:titleInfo>
+          </mods:relatedItem>
+          <mods:relatedItem type="host">
+            <mods:titleInfo>
+              <mods:title>Christlicher Soldat, Das ist: Wie ein Christlicher Soldat In seinem Stand Gott dienen müsse und könne. Erster Theil</mods:title>
+            </mods:titleInfo>
+            <mods:recordInfo>
+              <mods:recordIdentifier source="gbv-ppn">PPN1023134772</mods:recordIdentifier>
+            </mods:recordInfo>
+          </mods:relatedItem>
+          <mods:identifier type="GBVKat">1023134829</mods:identifier>
+          <mods:identifier type="PPNanalog">PPN1015308384</mods:identifier>
+          <mods:identifier type="vd18">VD18 90681584</mods:identifier>
+          <mods:location>
+            <mods:physicalLocation>Nds. Staats- und Universitätsbibliothek Göttingen (DE-7)</mods:physicalLocation>
+            <mods:url access="object in context">http://resolver.sub.uni-goettingen.de/purl?PPN1023134829</mods:url>
+          </mods:location>
+          <mods:location>
+            <mods:physicalLocation>SUB Göttingen</mods:physicalLocation>
+            <mods:shelfLocator>DD2017 A 154: 1</mods:shelfLocator>
+          </mods:location>
+          <mods:accessCondition type="use and reproduction">http://creativecommons.org/publicdomain/mark/1.0/</mods:accessCondition>
+          <mods:part order="10" type="host">
+            <mods:detail>
+              <mods:number>Theil 1</mods:number>
+            </mods:detail>
+          </mods:part>
+          <mods:extension>
+            <mods:mods>
+              <mods:originInfo>
+                <mods:place>
+                  <mods:placeTerm type="text">Zug</mods:placeTerm>
+                </mods:place>
+              </mods:originInfo>
+            </mods:mods>
+            <edm:edm xmlns:edm="http://www.europeana.eu/schemas/edm/">
+              <edm:isGatheredInto>VD18 digital</edm:isGatheredInto>
+            </edm:edm>
+          </mods:extension>
+          <mods:recordInfo>
+            <mods:recordIdentifier source="gbv-ppn">PPN1023134829</mods:recordIdentifier>
+          </mods:recordInfo>
+          <mods:name authority="gnd" authorityURI="http://d-nb.info/gnd/" type="personal" valueURI="http://d-nb.info/gnd/1037503856">
+            <mods:role>
+              <mods:roleTerm authority="marcrelator" type="code" valueURI="http://id.loc.gov/vocabulary/relators/prt">prt</mods:roleTerm>
+            </mods:role>
+            <mods:namePart type="family">Schäll</mods:namePart>
+            <mods:namePart type="given">Heinrich Antoni</mods:namePart>
+            <mods:displayForm>Schäll, Heinrich Antoni</mods:displayForm>
+          </mods:name>
+          <mods:name authority="gnd" authorityURI="http://d-nb.info/gnd/" type="personal" valueURI="http://d-nb.info/gnd/1089396163">
+            <mods:role>
+              <mods:roleTerm authority="marcrelator" type="code" valueURI="http://id.loc.gov/vocabulary/relators/egr">egr</mods:roleTerm>
+            </mods:role>
+            <mods:namePart type="family">Störchlin</mods:namePart>
+            <mods:namePart type="given">Karl</mods:namePart>
+            <mods:displayForm>Störchlin, Karl</mods:displayForm>
+          </mods:name>
+          <mods:name authority="gnd" authorityURI="http://d-nb.info/gnd/" type="personal" valueURI="http://d-nb.info/gnd/1069587834">
+            <mods:role>
+              <mods:roleTerm authority="marcrelator" type="code" valueURI="http://id.loc.gov/vocabulary/relators/aut">aut</mods:roleTerm>
+            </mods:role>
+            <mods:namePart type="family">Reichmuth</mods:namePart>
+            <mods:namePart type="given">Leonard</mods:namePart>
+            <mods:displayForm>Reichmuth, Leonard</mods:displayForm>
+          </mods:name>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:dmdSec ID="DMDLOG_0002">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+          <mods:titleInfo>
+            <mods:title>Dedicatio. Dem [...] Herren Carlo Josepho Baron De Reding, Von Biberegg, [...].</mods:title>
+          </mods:titleInfo>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:dmdSec ID="DMDLOG_0003">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+          <mods:titleInfo>
+            <mods:title>Vorred, und nothwendiger Underricht an den Leser.</mods:title>
+          </mods:titleInfo>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:dmdSec ID="DMDLOG_0004">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+          <mods:titleInfo>
+            <mods:title>Gebett, vor folgenden Erinnerungen zu sprechen.</mods:title>
+          </mods:titleInfo>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:dmdSec ID="DMDLOG_0005">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+          <mods:titleInfo>
+            <mods:title>Erste Erinnerung, [...] - Die X. Erinnerung, [...].</mods:title>
+          </mods:titleInfo>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:dmdSec ID="DMDLOG_0006">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+          <mods:titleInfo>
+            <mods:title>Die XI. Erinnerung, [...]. - Die XX. Erinnerung, [...].</mods:title>
+          </mods:titleInfo>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:dmdSec ID="DMDLOG_0007">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+          <mods:titleInfo>
+            <mods:title>Die XXI. Erinnerung, [...]. - Die XXIV. Erinnerung, [...].</mods:title>
+          </mods:titleInfo>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:dmdSec ID="DMDLOG_0008">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+          <mods:titleInfo>
+            <mods:title>Beschluß dieses ersten Theils.</mods:title>
+          </mods:titleInfo>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+  <mets:amdSec ID="AMD">
+    <mets:rightsMD ID="RIGHTS">
+      <mets:mdWrap MDTYPE="OTHER" MIMETYPE="text/xml" OTHERMDTYPE="DVRIGHTS">
+        <mets:xmlData>
+          <dv:rights xmlns:dv="http://dfg-viewer.de/">
+            <dv:owner>Digitalisierungszentrum der Niedersächsischen Staats- und Universitätsbibliothek Göttingen</dv:owner>
+            <dv:ownerLogo>http://gdz.sub.uni-goettingen.de/logo_gdz_dfgv.png</dv:ownerLogo>
+            <dv:ownerSiteURL>http://gdz.sub.uni-goettingen.de</dv:ownerSiteURL>
+            <dv:ownerContact/>
+          </dv:rights>
+        </mets:xmlData>
+      </mets:mdWrap>
+    </mets:rightsMD>
+    <mets:digiprovMD ID="DIGIPROV">
+      <mets:mdWrap MDTYPE="OTHER" MIMETYPE="text/xml" OTHERMDTYPE="DVLINKS">
+        <mets:xmlData>
+          <dv:links xmlns:dv="http://dfg-viewer.de/">
+            <dv:reference>http://opac.sub.uni-goettingen.de/DB=1/PPN?PPN=1023134772</dv:reference>
+            <dv:presentation>http://resolver.sub.uni-goettingen.de/purl?PPN1023134772</dv:presentation>
+          </dv:links>
+        </mets:xmlData>
+      </mets:mdWrap>
+    </mets:digiprovMD>
+  </mets:amdSec>
+  <mets:fileSec>
+    <mets:fileGrp USE="MIN">
+      </mets:fileGrp>
+    <mets:fileGrp USE="DEFAULT">
+      <mets:file ID="FILE_0001_DEFAULT" MIMETYPE="image/jpeg">
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://gdz.sub.uni-goettingen.de/content/PPN1023134829/800/0/00000001.jpg"/>
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="DEFAULT/FILE_0001_DEFAULT.jpg" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FILE_0002_DEFAULT" MIMETYPE="image/jpeg">
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://gdz.sub.uni-goettingen.de/content/PPN1023134829/800/0/00000002.jpg"/>
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="DEFAULT/FILE_0002_DEFAULT.jpg" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FILE_0003_DEFAULT" MIMETYPE="image/jpeg">
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://gdz.sub.uni-goettingen.de/content/PPN1023134829/800/0/00000003.jpg"/>
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="DEFAULT/FILE_0003_DEFAULT.jpg" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FILE_0004_DEFAULT" MIMETYPE="image/jpeg">
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://gdz.sub.uni-goettingen.de/content/PPN1023134829/800/0/00000004.jpg"/>
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="DEFAULT/FILE_0004_DEFAULT.jpg" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FILE_0005_DEFAULT" MIMETYPE="image/jpeg">
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://gdz.sub.uni-goettingen.de/content/PPN1023134829/800/0/00000005.jpg"/>
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="DEFAULT/FILE_0005_DEFAULT.jpg" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FILE_0006_DEFAULT" MIMETYPE="image/jpeg">
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://gdz.sub.uni-goettingen.de/content/PPN1023134829/800/0/00000006.jpg"/>
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="DEFAULT/FILE_0006_DEFAULT.jpg" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FILE_0007_DEFAULT" MIMETYPE="image/jpeg">
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://gdz.sub.uni-goettingen.de/content/PPN1023134829/800/0/00000007.jpg"/>
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="DEFAULT/FILE_0007_DEFAULT.jpg" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+      <mets:file ID="FILE_0008_DEFAULT" MIMETYPE="image/jpeg">
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://gdz.sub.uni-goettingen.de/content/PPN1023134829/800/0/00000008.jpg"/>
+        <mets:FLocat xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="DEFAULT/FILE_0008_DEFAULT.jpg" LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/>
+      </mets:file>
+    </mets:fileGrp>
+    <mets:fileGrp USE="PRESENTATION">
+      </mets:fileGrp>
+    <mets:fileGrp USE="THUMBS">
+      </mets:fileGrp>
+    <mets:fileGrp USE="MAX">
+      </mets:fileGrp>
+  </mets:fileSec>
+  <mets:structMap TYPE="LOGICAL">
+    <mets:div ID="LOG_0002" TYPE="multivolume_work">
+      <mets:mptr xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://gdz.sub.uni-goettingen.de/mets/PPN1023134772.xml"/>
+      <mets:div ADMID="AMD" DMDID="DMDLOG_0001" ID="LOG_0003" TYPE="volume">
+        <mets:div ID="LOG_0004" TYPE="engraved_titlepage"/>
+        <mets:div ID="LOG_0005" TYPE="title_page"/>
+        <mets:div DMDID="DMDLOG_0002" ID="LOG_0006" LABEL="Dedicatio. Dem [...] Herren Carlo Josepho Baron De Reding, Von Biberegg, [...]." TYPE="dedication"/>
+        <mets:div ID="LOG_0007" TYPE="section"/>
+        <mets:div DMDID="DMDLOG_0003" ID="LOG_0008" LABEL="Vorred, und nothwendiger Underricht an den Leser." TYPE="preface"/>
+        <mets:div DMDID="DMDLOG_0004" ID="LOG_0009" LABEL="Gebett, vor folgenden Erinnerungen zu sprechen." TYPE="section">
+          <mets:div DMDID="DMDLOG_0005" ID="LOG_0010" LABEL="Erste Erinnerung, [...] - Die X. Erinnerung, [...]." TYPE="section"/>
+          <mets:div DMDID="DMDLOG_0006" ID="LOG_0011" LABEL="Die XI. Erinnerung, [...]. - Die XX. Erinnerung, [...]." TYPE="section"/>
+          <mets:div DMDID="DMDLOG_0007" ID="LOG_0012" LABEL="Die XXI. Erinnerung, [...]. - Die XXIV. Erinnerung, [...]." TYPE="section"/>
+          <mets:div DMDID="DMDLOG_0008" ID="LOG_0013" LABEL="Beschluß dieses ersten Theils." TYPE="section"/>
+        </mets:div>
+      </mets:div>
+    </mets:div>
+  </mets:structMap>
+  <mets:structMap TYPE="PHYSICAL">
+    <mets:div ID="PHYS_0000" TYPE="physSequence">
+      <mets:div ID="PHYS_0001" ORDER="1" ORDERLABEL=" - " TYPE="page">
+        <mets:fptr FILEID="FILE_0001_DEFAULT"/>
+      </mets:div>
+      <mets:div ID="PHYS_0002" ORDER="2" ORDERLABEL=" - " TYPE="page">
+        <mets:fptr FILEID="FILE_0002_DEFAULT"/>
+      </mets:div>
+      <mets:div ID="PHYS_0003" ORDER="3" ORDERLABEL=" - " TYPE="page">
+        <mets:fptr FILEID="FILE_0003_DEFAULT"/>
+      </mets:div>
+      <mets:div ID="PHYS_0004" ORDER="4" ORDERLABEL=" - " TYPE="page">
+        <mets:fptr FILEID="FILE_0004_DEFAULT"/>
+      </mets:div>
+      <mets:div ID="PHYS_0005" ORDER="5" ORDERLABEL=" - " TYPE="page">
+        <mets:fptr FILEID="FILE_0005_DEFAULT"/>
+      </mets:div>
+      <mets:div ID="PHYS_0006" ORDER="6" ORDERLABEL=" - " TYPE="page">
+        <mets:fptr FILEID="FILE_0006_DEFAULT"/>
+      </mets:div>
+      <mets:div ID="PHYS_0007" ORDER="7" ORDERLABEL=" - " TYPE="page">
+        <mets:fptr FILEID="FILE_0007_DEFAULT"/>
+      </mets:div>
+      <mets:div ID="PHYS_0008" ORDER="8" ORDERLABEL=" - " TYPE="page">
+        <mets:fptr FILEID="FILE_0008_DEFAULT"/>
+      </mets:div>
+    </mets:div>
+  </mets:structMap>
+  <mets:structLink>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0001" xlink:from="LOG_0003"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0002" xlink:from="LOG_0003"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0003" xlink:from="LOG_0003"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0004" xlink:from="LOG_0003"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0005" xlink:from="LOG_0003"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0006" xlink:from="LOG_0003"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0007" xlink:from="LOG_0003"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0008" xlink:from="LOG_0003"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0001" xlink:from="LOG_0004"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0002" xlink:from="LOG_0005"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0003" xlink:from="LOG_0006"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0004" xlink:from="LOG_0006"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0005" xlink:from="LOG_0006"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0006" xlink:from="LOG_0006"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0007" xlink:from="LOG_0006"/>
+    <mets:smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:to="PHYS_0008" xlink:from="LOG_0006"/>
+  </mets:structLink>
+</mets:mets>

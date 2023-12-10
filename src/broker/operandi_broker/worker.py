@@ -87,7 +87,8 @@ class Worker:
             slurm_job_cpus = int(consumed_message["cpus"])
             slurm_job_ram = int(consumed_message["ram"])
             # How many process instances to create for each OCR-D processor
-            nf_process_forks = 2
+            # By default, the amount of cpus, since that gives optimal performance
+            nf_process_forks = slurm_job_cpus
         except Exception as error:
             self.log.error(f"Parsing the consumed message has failed: {error}")
             self.__handle_message_failure(interruption=False)

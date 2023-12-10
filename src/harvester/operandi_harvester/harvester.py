@@ -47,8 +47,8 @@ class Harvester:
         makedirs(self.results_download_dir, exist_ok=True)
         self.default_workflow_id = None
         self.default_nf_workflow: str = join(dirname(__file__), "assets", "default_workflow.nf")
-        self.dummy_ws_zip: str = join(dirname(__file__), "assets", "dummy_ws.ocrd.zip")
-        self.dummy_ws_input_file_grp = "OCR-D-IMG"
+        self.dummy_ws_zip: str = join(dirname(__file__), "assets", "small_ws.ocrd.zip")
+        self.dummy_ws_input_file_grp = "DEFAULT"
 
         self.logger.info(f"Operandi server address: {server_address}")
         self.logger.info(f"Zipped results will be downloaded to dir: {self.results_download_dir}")
