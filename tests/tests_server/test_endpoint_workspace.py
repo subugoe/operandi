@@ -10,7 +10,6 @@ from .helpers_asserts import (
 )
 
 
-# TODO: Turned off since it slows down the tests time
 def test_post_workspace_url(operandi, auth, db_workspaces):
     mets_url = "https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
     # Separate with `,` to add a second file group to be preserved, e.g., `DEFAULT,MAX`

@@ -5,11 +5,11 @@ from .helpers_asserts import (
 )
 
 
-def test_post_workflow_script(operandi, auth, db_workflows, bytes_workflow1):
+def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workflow):
     # Post a new workflow script
     response = operandi.post(
         "/workflow",
-        files={"nextflow_script": bytes_workflow1},
+        files={"nextflow_script": bytes_template_workflow},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -19,12 +19,12 @@ def test_post_workflow_script(operandi, auth, db_workflows, bytes_workflow1):
     assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
 
 
-def test_put_workflow_script(operandi, auth, db_workflows, bytes_workflow1, bytes_workflow2):
+def test_put_workflow_script(operandi, auth, db_workflows, bytes_template_workflow, bytes_default_workflow):
     put_workflow_id = "put_workflow_id"
     # The first put request creates a new workflow
     response = operandi.put(
         f"/workflow/{put_workflow_id}",
-        files={"nextflow_script": bytes_workflow1},
+        files={"nextflow_script": bytes_template_workflow},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -41,7 +41,7 @@ def test_put_workflow_script(operandi, auth, db_workflows, bytes_workflow1, byte
     # The second put request replaces the previously created workflow
     response = operandi.put(
         f"/workflow/{put_workflow_id}",
-        files={"nextflow_script": bytes_workflow2},
+        files={"nextflow_script": bytes_default_workflow},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -71,11 +71,11 @@ def _test_delete_workflow_non_existing():
     pass
 
 
-def test_get_workflow_script(operandi, auth, bytes_workflow1):
+def test_get_workflow_script(operandi, auth, bytes_template_workflow):
     # Post a new workflow script
     response = operandi.post(
         "/workflow",
-        files={"nextflow_script": bytes_workflow1},
+        files={"nextflow_script": bytes_template_workflow},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
