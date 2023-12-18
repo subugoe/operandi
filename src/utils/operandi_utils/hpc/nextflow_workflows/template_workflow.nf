@@ -43,7 +43,7 @@ process split_page_ranges {
         env current_range_pages
     shell:
     '''
-    current_range_pages=$(!{params.singularity_wrapper} ocrd workspace -d !{params.workspace_dir} list-page -D !{params.forks} -C !{range_multiplier})
+    current_range_pages=$(!{params.singularity_wrapper} ocrd workspace -d !{params.workspace_dir} list-page -f comma-separated -D !{params.forks} -C !{range_multiplier})
     echo "Current range is: $current_range_pages"
     '''
 }
