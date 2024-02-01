@@ -22,7 +22,7 @@ class HPCTransfer:
     def __init__(
         self,
         host: str = environ.get("OPERANDI_HPC_HOST_TRANSFER", "transfer-scc.gwdg.de"),
-        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY_TRANSFER", "login.gwdg.de"),
+        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY_TRANSFER", "transfer.gwdg.de"),
         username: str = environ.get("OPERANDI_HPC_USERNAME"),
         key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH")
     ) -> None:
