@@ -115,23 +115,23 @@ run-tests:  run-tests-server run-tests-harvester run-tests-broker run-tests-util
 
 run-tests-broker:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_broker/test_*.py
+	pytest tests/tests_broker/test_*.py -v
 
 run-tests-harvester:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_harvester/test_*.py
+	pytest tests/tests_harvester/test_*.py -v
 
 run-tests-server:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_server/test_*.py
+	pytest tests/tests_server/test_*.py -v
 
 run-tests-utils:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_utils/test_*.py
+	pytest tests/tests_utils/test_*.py -v
 
 run-tests-integration:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/integration_tests/test_*.py
+	pytest tests/integration_tests/test_*.py -v
 
 pyclean:
 	rm -f **/*.pyc
