@@ -8,8 +8,8 @@ on:
     # branches: [ main ]
     paths:
       - .github/**
-      - src
-      - tests
+      - src/**
+      - tests/**
       - .*
       - docker*
       - Makefile
@@ -17,8 +17,8 @@ on:
     # branches: [ main ]
     paths:
       - .github/**
-      - src
-      - tests
+      - src/**
+      - tests/**
       - .*
       - docker*
       - Makefile
