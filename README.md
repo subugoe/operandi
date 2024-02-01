@@ -432,7 +432,7 @@ batch scripts dynamically or pass arguments to the batch scripts dynamically. Op
 There is already a base scratch script which receives some arguments when executed.
 
 The `errorStrategy` and `maxErrors` directives inside the process block could help with the dynamic allocation of 
-resources when a process fails due to lack of enough resources (i.e. memory). Consider this simple example below: 
+resources when a process fails due to lack of enough resources (i.e. memory). Consider the simple example below: 
 ```shell
 process binarization {
   memory { 2.GB * task.attempt }
