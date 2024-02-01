@@ -58,7 +58,7 @@ deps-ubuntu:
 # Install test python deps via pip
 deps-test:
 	$(PIP3) install -U pip
-	$(PIP3) install -r requirements_test.txt
+	$(PIP3) install -r tests/requirements.txt
 
 # (Re)install the tool
 install:
