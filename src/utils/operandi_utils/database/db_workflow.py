@@ -4,10 +4,10 @@ from .models import DBWorkflow
 
 # TODO: This also updates to satisfy the PUT method in the Workflow Manager - fix this
 async def db_create_workflow(
-        workflow_id: str,
-        workflow_dir: str,
-        workflow_script_base: str,
-        workflow_script_path: str
+    workflow_id: str,
+    workflow_dir: str,
+    workflow_script_base: str,
+    workflow_script_path: str
 ) -> DBWorkflow:
     try:
         db_workflow = await db_get_workflow(workflow_id)
@@ -29,10 +29,10 @@ async def db_create_workflow(
 
 @call_sync
 async def sync_db_create_workflow(
-        workflow_id: str,
-        workflow_dir: str,
-        workflow_script_base: str,
-        workflow_script_path: str
+    workflow_id: str,
+    workflow_dir: str,
+    workflow_script_base: str,
+    workflow_script_path: str
 ) -> DBWorkflow:
     return await sync_db_create_workflow(workflow_id, workflow_dir, workflow_script_base, workflow_script_path)
 
@@ -55,15 +55,15 @@ async def db_update_workflow(find_workflow_id: str, **kwargs) -> DBWorkflow:
     for key, value in kwargs.items():
         if key not in model_keys:
             raise ValueError(f"Field not available: {key}")
-        if key == 'workflow_id':
+        if key == "workflow_id":
             db_workflow.workflow_id = value
-        elif key == 'workflow_dir':
+        elif key == "workflow_dir":
             db_workflow.workflow_dir = value
-        elif key == 'workflow_script_base':
+        elif key == "workflow_script_base":
             db_workflow.workflow_script_base = value
-        elif key == 'workflow_script_path':
+        elif key == "workflow_script_path":
             db_workflow.workflow_script_path = value
-        elif key == 'deleted':
+        elif key == "deleted":
             db_workflow.deleted = value
         else:
             raise ValueError(f"Field not updatable: {key}")

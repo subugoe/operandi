@@ -4,15 +4,15 @@ from pydantic import BaseModel, Field
 class UserAction(BaseModel):
     account_type: str = Field(
         ...,  # the field is required, no default set
-        description='The type of this user'
+        description="The type of this user"
     )
     action: str = Field(
-        default='Description of the user action',
-        description='Description of the user action'
+        default="Description of the user action",
+        description="Description of the user action"
     )
     email: str = Field(
         ...,  # the field is required, no default set
-        description='Email linked to this User'
+        description="Email linked to this User"
     )
 
     class Config:

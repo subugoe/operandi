@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_server.authentication import authenticate_user, register_user
+from operandi_server.constants import ACCOUNT_TYPES
 from operandi_server.exceptions import AuthenticationError, RegistrationError
 from operandi_server.models import UserAction
 
@@ -56,12 +57,11 @@ async def user_register(email: str, password: str, account_type: str = "user"):
     Curl equivalent:
     `curl -X POST SERVER_ADDR/user/register email=example@gmail.com password=example_pass account_type=user`
     """
-    account_types = ["user", "administrator", "harvester"]
-    if account_type not in account_types:
+    if account_type not in ACCOUNT_TYPES:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             headers={"WWW-Authenticate": "Basic"},
-            detail=f"Wrong account type. Must be one of: {account_types}"
+            detail=f"Wrong account type. Must be one of: {ACCOUNT_TYPES}"
         )
 
     try:

@@ -5,13 +5,14 @@ from .models import DBWorkspace
 
 # TODO: This also updates to satisfy the PUT method in the Workspace Manager - fix this
 async def db_create_workspace(
-        workspace_id: str,
-        workspace_dir: str,
-        pages_amount: int,
-        bag_info: dict
+    workspace_id: str,
+    workspace_dir: str,
+    pages_amount: int,
+    bag_info: dict,
+    default_mets_basename: str = "mets.xml"
 ) -> DBWorkspace:
     bag_info = dict(bag_info)
-    mets_basename = "mets.xml"
+    mets_basename = default_mets_basename
     workspace_mets_path = join(workspace_dir, mets_basename)
     ocrd_base_version_checksum = None
     ocrd_identifier = bag_info.pop("Ocrd-Identifier")
@@ -51,10 +52,10 @@ async def db_create_workspace(
 
 @call_sync
 async def sync_db_create_workspace(
-        workspace_id: str,
-        workspace_dir: str,
-        pages_amount: int,
-        bag_info: dict
+    workspace_id: str,
+    workspace_dir: str,
+    pages_amount: int,
+    bag_info: dict
 ) -> DBWorkspace:
     return await db_create_workspace(workspace_id, workspace_dir, pages_amount, bag_info)
 
@@ -77,25 +78,25 @@ async def db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorkspace:
     for key, value in kwargs.items():
         if key not in model_keys:
             raise ValueError(f"Field not available: {key}")
-        if key == 'workspace_id':
+        if key == "workspace_id":
             db_workspace.workspace_id = value
-        elif key == 'workspace_dir':
+        elif key == "workspace_dir":
             db_workspace.workspace_dir = value
-        elif key == 'workspace_mets_path':
+        elif key == "workspace_mets_path":
             db_workspace.workspace_mets_path = value
-        elif key == 'pages_amount':
+        elif key == "pages_amount":
             db_workspace.pages_amount = value
-        elif key == 'ocrd_identifier':
+        elif key == "ocrd_identifier":
             db_workspace.ocrd_identifier = value
-        elif key == 'bagit_profile_identifier':
+        elif key == "bagit_profile_identifier":
             db_workspace.bagit_profile_identifier = value
-        elif key == 'ocrd_base_version_checksum':
+        elif key == "ocrd_base_version_checksum":
             db_workspace.ocrd_base_version_checksum = value
-        elif key == 'mets_basename':
+        elif key == "mets_basename":
             db_workspace.ocrd_mets = value
-        elif key == 'bag_info_adds':
+        elif key == "bag_info_adds":
             db_workspace.bag_info_adds = value
-        elif key == 'deleted':
+        elif key == "deleted":
             db_workspace.deleted = value
         else:
             raise ValueError(f"Field not updatable: {key}")

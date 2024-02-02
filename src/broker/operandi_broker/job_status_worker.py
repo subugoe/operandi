@@ -1,5 +1,5 @@
-import json
-import logging
+from json import loads
+from logging import getLogger
 import signal
 from os import getpid, getppid, setsid
 from sys import exit
@@ -20,7 +20,7 @@ from operandi_utils.rabbitmq import get_connection_consumer
 
 class JobStatusWorker:
     def __init__(self, db_url, rabbitmq_url, queue_name, test_sbatch=False):
-        self.log = logging.getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
+        self.log = getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
         self.queue_name = queue_name
         self.log_file_path = f"{get_log_file_path_prefix(module_type='worker')}_{queue_name}.log"
         self.test_sbatch = test_sbatch
@@ -73,7 +73,7 @@ class JobStatusWorker:
         # Since the workflow_message is constructed by the Operandi Server,
         # it should not fail here when parsing under normal circumstances.
         try:
-            consumed_message = json.loads(body)
+            consumed_message = loads(body)
             self.log.info(f"Consumed message: {consumed_message}")
             self.current_message_job_id = consumed_message["job_id"]
         except Exception as error:
@@ -128,7 +128,7 @@ class JobStatusWorker:
                 find_job_id=self.current_message_job_id,
                 job_state=new_workflow_job_status
             )
-            if new_workflow_job_status == 'SUCCESS':
+            if new_workflow_job_status == "SUCCESS":
                 self.hpc_io_transfer.get_and_unpack_slurm_workspace(
                     ocrd_workspace_dir=workspace_job_db.workspace_dir,
                     workflow_job_dir=workflow_job_db.job_dir,

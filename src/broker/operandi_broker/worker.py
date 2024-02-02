@@ -1,5 +1,5 @@
-import json
-import logging
+from json import loads
+from logging import getLogger
 import signal
 from os import getpid, getppid, setsid
 from os.path import join
@@ -23,7 +23,7 @@ from operandi_utils.rabbitmq import get_connection_consumer
 # consume messages, and process messages.
 class Worker:
     def __init__(self, db_url, rabbitmq_url, queue_name, test_sbatch=False):
-        self.log = logging.getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
+        self.log = getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
         self.queue_name = queue_name
         self.log_file_path = f"{get_log_file_path_prefix(module_type='worker')}_{queue_name}.log"
         self.test_sbatch = test_sbatch
@@ -78,7 +78,7 @@ class Worker:
         # Since the workflow_message is constructed by the Operandi Server,
         # it should not fail here when parsing under normal circumstances.
         try:
-            consumed_message = json.loads(body)
+            consumed_message = loads(body)
             self.log.info(f"Consumed message: {consumed_message}")
             self.current_message_ws_id = consumed_message["workspace_id"]
             self.current_message_wf_id = consumed_message["workflow_id"]
@@ -186,17 +186,17 @@ class Worker:
 
     # TODO: This should be further refined, currently it's just everything in one place
     def prepare_and_trigger_slurm_job(
-            self,
-            workflow_job_id: str,
-            workspace_id: str,
-            workspace_dir: str,
-            workspace_base_mets: str,
-            workflow_script_path: str,
-            input_file_grp: str,
-            cpus: int,
-            ram: int,
-            nf_process_forks: int,
-            ws_pages_amount: int
+        self,
+        workflow_job_id: str,
+        workspace_id: str,
+        workspace_dir: str,
+        workspace_base_mets: str,
+        workflow_script_path: str,
+        input_file_grp: str,
+        cpus: int,
+        ram: int,
+        nf_process_forks: int,
+        ws_pages_amount: int
     ) -> str:
 
         if self.test_sbatch:

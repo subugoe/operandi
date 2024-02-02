@@ -1,5 +1,4 @@
 import bagit
-import pathlib
 from tempfile import NamedTemporaryFile
 from typing import List, Union
 from uuid import uuid4
@@ -51,10 +50,10 @@ def extract_bag_info(bag_dest, workspace_dir) -> dict:
 
     # TODO: work is done twice here: spill already extracts the bag-info.txt but throws it away.
     #  maybe workspace_bagger.spill can be changed to deliver the bag-info.txt here
-    with ZipFile(bag_dest, 'r') as zip_fp:
+    with ZipFile(bag_dest, mode='r') as zip_fp:
         bag_info_bytes = zip_fp.read("bag-info.txt")
         with NamedTemporaryFile() as tmp_file:
-            with open(tmp_file.name, 'wb') as f:
+            with open(tmp_file.name, mode="wb") as f:
                 f.write(bag_info_bytes)
             bag_info = bagit._load_tag_file(tmp_file.name)
     return bag_info
@@ -62,10 +61,8 @@ def extract_bag_info(bag_dest, workspace_dir) -> dict:
 
 def validate_bag(bag_dest: str):
     try:
-        valid_report = OcrdZipValidator(
-            Resolver(),
-            bag_dest
-        ).validate(processes=1)
+        # Warning: do not set processes to a higher value than 1, it would crash the Uvicorn internals
+        valid_report = OcrdZipValidator(Resolver(), bag_dest).validate(processes=1)
     except Exception as e:
         raise WorkspaceNotValidException(f"Error during workspace validation: {str(e)}") from e
     if valid_report and not valid_report.is_valid:
@@ -99,18 +96,18 @@ def get_workspace_bag(db_workspace) -> Union[str, None]:
         ocrd_identifier=db_workspace.ocrd_identifier,
         dest=bag_dest,
         ocrd_mets=mets_basename,
-        # This must be 1, crashes for higher values
+        # Warning: do not set processes to a higher value than 1, it would crash the Uvicorn internals
         processes=1
     )
     return bag_dest
 
 
 def create_workspace_bag_from_remote_url(
-        mets_url: str,
-        workspace_id: str,
-        bag_dest: str,
-        mets_basename: str = DEFAULT_METS_BASENAME,
-        preserve_file_grps: List[str] = None
+    mets_url: str,
+    workspace_id: str,
+    bag_dest: str,
+    mets_basename: str = DEFAULT_METS_BASENAME,
+    preserve_file_grps: List[str] = None
 ) -> str:
     if not preserve_file_grps:
         preserve_file_grps = [DEFAULT_FILE_GRP]
@@ -138,7 +135,8 @@ def create_workspace_bag_from_remote_url(
         workspace,
         dest=bag_dest,
         ocrd_identifier=workspace_id,
-        processes=1   # Do not pass higher processes number
+        # Warning: do not set processes to a higher value than 1, it would crash the Uvicorn internals
+        processes=1
     )
     return workspace.directory
 

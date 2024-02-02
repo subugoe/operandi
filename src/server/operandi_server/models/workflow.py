@@ -31,14 +31,16 @@ class WorkflowJobRsrc(Job):
     workspace_rsrc: Optional[WorkspaceRsrc]
 
     @staticmethod
-    def create(job_id: str,
-               job_url: str,
-               workflow_id: str,
-               workflow_url: str,
-               workspace_id: str,
-               workspace_url: str,
-               job_state: JobState,
-               description: str = None):
+    def create(
+        job_id: str,
+        job_url: str,
+        workflow_id: str,
+        workflow_url: str,
+        workspace_id: str,
+        workspace_url: str,
+        job_state: JobState,
+        description: str = None
+    ):
         if not description:
             description = "Workflow-Job"
         workflow_rsrc = WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)

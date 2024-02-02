@@ -26,7 +26,7 @@ class RouterDiscovery:
 
     @staticmethod
     async def discovery(
-            auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> PYDiscovery:
         await user_login(auth)
         response = PYDiscovery(

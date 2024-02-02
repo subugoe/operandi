@@ -27,11 +27,11 @@ class RMQConsumer(RMQConnector):
 
         self.reconnect_delay = 0
 
-    def authenticate_and_connect(self, username: str, password: str) -> None:
+    def authenticate_and_connect(self, username: str, password: str, erase_on_connect: bool = False) -> None:
         credentials = PlainCredentials(
             username=username,
             password=password,
-            erase_on_connect=False  # Delete credentials once connected
+            erase_on_connect=erase_on_connect  # Delete credentials once connected
         )
         self._connection = RMQConnector.open_blocking_connection(
             host=self._host,
@@ -50,14 +50,14 @@ class RMQConsumer(RMQConnector):
         self.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES)
 
     def create_queue(
-            self,
-            queue_name: str,
-            exchange_name: str = DEFAULT_EXCHANGER_NAME,
-            exchange_type: str = DEFAULT_EXCHANGER_TYPE,
-            passive: bool = False,
-            durable: bool = False,
-            auto_delete: bool = False,
-            exclusive: bool = False
+        self,
+        queue_name: str,
+        exchange_name: str = DEFAULT_EXCHANGER_NAME,
+        exchange_type: str = DEFAULT_EXCHANGER_TYPE,
+        passive: bool = False,
+        durable: bool = False,
+        auto_delete: bool = False,
+        exclusive: bool = False
     ) -> None:
         RMQConnector.exchange_declare(
             channel=self._channel,
@@ -84,30 +84,16 @@ class RMQConsumer(RMQConnector):
             routing_key=queue_name
         )
 
-    def get_one_message(
-            self,
-            queue_name: str,
-            auto_ack: bool = False
-    ) -> Union[Any, None]:
+    def get_one_message(self, queue_name: str, auto_ack: bool = False) -> Union[Any, None]:
         message = None
         if self._channel and self._channel.is_open:
-            message = self._channel.basic_get(
-                queue=queue_name,
-                auto_ack=auto_ack
-            )
+            message = self._channel.basic_get(queue=queue_name, auto_ack=auto_ack)
         return message
 
-    def configure_consuming(
-            self,
-            queue_name: str,
-            callback_method: Any
-    ) -> None:
-        self.logger.debug(f'Configuring consuming with queue: {queue_name}')
+    def configure_consuming(self, queue_name: str, callback_method: Any) -> None:
+        self.logger.debug(f"Configuring consuming with queue: {queue_name}")
         self._channel.add_on_cancel_callback(self.__on_consumer_cancelled)
-        self.consumer_tag = self._channel.basic_consume(
-            queue_name,
-            callback_method
-        )
+        self.consumer_tag = self._channel.basic_consume(queue_name, callback_method)
         self.was_consuming = True
         self.consuming = True
 
@@ -121,10 +107,10 @@ class RMQConsumer(RMQConnector):
         return None
 
     def __on_consumer_cancelled(self, frame: Any) -> None:
-        self.logger.warning(f'The consumer was cancelled remotely in frame: {frame}')
+        self.logger.warning(f"The consumer was cancelled remotely in frame: {frame}")
         if self._channel:
             self._channel.close()
 
     def ack_message(self, delivery_tag: int) -> None:
-        self.logger.debug(f'Acknowledging message {delivery_tag}')
+        self.logger.debug(f"Acknowledging message {delivery_tag}")
         self._channel.basic_ack(delivery_tag)

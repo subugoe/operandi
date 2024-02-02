@@ -1,20 +1,20 @@
 from pydantic import BaseModel, Field
-from typing import Any, Dict, Optional
+from typing import Optional
 from typing_extensions import Annotated
 
 
 class Resource(BaseModel):
     resource_id: str = Field(
         ...,  # the field is required, no default set
-        description='ID of this thing'
+        description="ID of this thing"
     )
     resource_url: str = Field(
         ...,  # the field is required, no default set
-        description='URL of this thing'
+        description="URL of this thing"
     )
     description: str = Field(
-        default='Description of the thing',
-        description='Description of the thing'
+        default="Description of the thing",
+        description="Description of the thing"
     )
 
     class Config:

@@ -1,7 +1,7 @@
-import datetime
-import logging
+from datetime import datetime
+from logging import getLogger
 from os import environ
-import uvicorn
+from uvicorn import run
 
 from fastapi import FastAPI, status
 
@@ -32,7 +32,7 @@ class OperandiServer(FastAPI):
         if not local_server_url:
             raise ValueError("Environment variable not set: OPERANDI_SERVER_URL_LOCAL")
 
-        self.log = logging.getLogger("operandi_server.server")
+        self.log = getLogger("operandi_server.server")
         self.live_server_url = live_server_url
         self.local_server_url = local_server_url
 
@@ -68,9 +68,9 @@ class OperandiServer(FastAPI):
             summary="Get information about the server"
         )
 
-    def run(self):
+    def run_server(self):
         host, port = self.local_server_url.split("//")[1].split(":")
-        uvicorn.run(self, host=host, port=int(port))
+        run(self, host=host, port=int(port))
 
     async def startup_event(self):
         self.log.info(f"Operandi local server url: {self.local_server_url}")
@@ -101,7 +101,7 @@ class OperandiServer(FastAPI):
 
     async def home(self):
         message = f"The home page of the {self.title}"
-        _time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        _time = datetime.now().strftime("%Y-%m-%d %H:%M")
         json_message = {
             "message": message,
             "time": _time

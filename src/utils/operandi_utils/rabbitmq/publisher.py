@@ -26,11 +26,11 @@ class RMQPublisher(RMQConnector):
         self.nacked_counter = 0
         self.running = True
 
-    def authenticate_and_connect(self, username: str, password: str) -> None:
+    def authenticate_and_connect(self, username: str, password: str, erase_on_connect: bool = False) -> None:
         credentials = PlainCredentials(
             username=username,
             password=password,
-            erase_on_connect=False  # Delete credentials once connected
+            erase_on_connect=erase_on_connect  # Delete credentials once connected
         )
         self._connection = RMQConnector.open_blocking_connection(
             host=self._host,
@@ -48,14 +48,14 @@ class RMQPublisher(RMQConnector):
         self.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES)
 
     def create_queue(
-            self,
-            queue_name: str,
-            exchange_name: str = DEFAULT_EXCHANGER_NAME,
-            exchange_type: str = DEFAULT_EXCHANGER_TYPE,
-            passive: bool = False,
-            durable: bool = False,
-            auto_delete: bool = False,
-            exclusive: bool = False
+        self,
+        queue_name: str,
+        exchange_name: str = DEFAULT_EXCHANGER_NAME,
+        exchange_type: str = DEFAULT_EXCHANGER_TYPE,
+        passive: bool = False,
+        durable: bool = False,
+        auto_delete: bool = False,
+        exclusive: bool = False
     ) -> None:
         RMQConnector.exchange_declare(
             channel=self._channel,
@@ -83,17 +83,17 @@ class RMQPublisher(RMQConnector):
         )
 
     def publish_to_queue(
-            self,
-            queue_name: str,
-            message: bytes,
-            exchange_name: str = DEFAULT_EXCHANGER_NAME,
-            properties: Optional[BasicProperties] = None
+        self,
+        queue_name: str,
+        message: bytes,
+        exchange_name: str = DEFAULT_EXCHANGER_NAME,
+        properties: Optional[BasicProperties] = None
     ) -> None:
-        if properties is None:
-            headers = {'OCR-D WebApi Header': 'OCR-D WebApi Value'}
+        if not properties:
+            headers = {"OCR-D WebApi Header": "OCR-D WebApi Value"}
             properties = BasicProperties(
-                app_id='webapi-processing-server',
-                content_type='application/json',
+                app_id="webapi-processing-server",
+                content_type="application/json",
                 headers=headers
             )
 

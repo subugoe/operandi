@@ -10,11 +10,12 @@ import sys
 from os import environ
 from os.path import join
 from pathlib import Path
+from .constants import MODULE_TYPES
 
 
 __all__ = [
-    "reconfigure_all_loggers",
-    "get_log_file_path_prefix"
+    "get_log_file_path_prefix",
+    "reconfigure_all_loggers"
 ]
 
 
@@ -55,9 +56,8 @@ def reconfigure_all_loggers(log_level: str, log_file_path: str):
 
 # Returns log path for the modules, if module is worker, returns prefix for logging
 def get_log_file_path_prefix(module_type: str) -> str:
-    modules_types = ["server", "harvester", "broker", "worker"]
-    if module_type not in modules_types:
-        raise ValueError(f"Unknown module type: {module_type}, should be one of {modules_types}")
+    if module_type not in MODULE_TYPES:
+        raise ValueError(f"Unknown module type '{module_type}', should be one of '{MODULE_TYPES}'")
 
     logging_rood_dir: str = environ.get("OPERANDI_LOGS_DIR", None)
     if not logging_rood_dir:

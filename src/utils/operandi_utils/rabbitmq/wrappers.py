@@ -5,7 +5,7 @@ from operandi_utils.rabbitmq.publisher import RMQPublisher
 
 
 def get_connection_consumer(
-        rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL")
+    rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL")
 ) -> RMQConsumer:
     rmq_data = verify_and_parse_mq_uri(rabbitmq_url)
     rmq_consumer = RMQConsumer(
@@ -21,8 +21,8 @@ def get_connection_consumer(
 
 
 def get_connection_publisher(
-        rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
-        enable_acks: bool = True
+    rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
+    enable_acks: bool = True
 ) -> RMQPublisher:
     rmq_data = verify_and_parse_mq_uri(rabbitmq_url)
     rmq_publisher = RMQPublisher(

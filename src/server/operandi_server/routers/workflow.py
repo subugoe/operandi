@@ -112,7 +112,7 @@ async def upload_workflow_script(
     workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=None)
     nf_script_dest = join(workflow_dir, nextflow_script.filename)
     try:
-        await receive_resource(file=nextflow_script, resource_dest=nf_script_dest)
+        await receive_resource(file=nextflow_script, resource_dst=nf_script_dest)
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"Failed to receive the workflow resource, error: {error}")
     await db_create_workflow(
@@ -148,7 +148,7 @@ async def update_workflow_script(
     workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
     nf_script_dest = join(workflow_dir, nextflow_script.filename)
     try:
-        await receive_resource(file=nextflow_script, resource_dest=nf_script_dest)
+        await receive_resource(file=nextflow_script, resource_dst=nf_script_dest)
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"Failed to receive the workflow resource, error: {error}")
     await db_create_workflow(
@@ -206,8 +206,8 @@ async def get_workflow_job_status(
     if accept == "application/vnd.zip":
         tempdir = tempfile.mkdtemp(prefix="ocrd-wf-job-zip-")
         job_archive_path = make_archive(
-            base_name=f'{tempdir}/{job_id}',
-            format='zip',
+            base_name=f"{tempdir}/{job_id}",
+            format="zip",
             root_dir=wf_job_local,
         )
         return FileResponse(job_archive_path)

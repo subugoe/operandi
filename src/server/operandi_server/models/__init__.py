@@ -1,14 +1,14 @@
 __all__ = [
-    'PYDiscovery',
-    'Job',
-    'JobState',
-    'Resource',
-    'SbatchArguments',
-    'UserAction',
-    'WorkflowArguments',
-    'WorkflowRsrc',
-    'WorkflowJobRsrc',
-    'WorkspaceRsrc'
+    "PYDiscovery",
+    "Job",
+    "JobState",
+    "Resource",
+    "SbatchArguments",
+    "UserAction",
+    "WorkflowArguments",
+    "WorkflowRsrc",
+    "WorkflowJobRsrc",
+    "WorkspaceRsrc"
 ]
 
 from .base import Resource, Job, JobState, SbatchArguments, WorkflowArguments

@@ -1,4 +1,5 @@
 import aiofiles
+from io import DEFAULT_BUFFER_SIZE
 from os import environ, listdir, scandir
 from os.path import isdir, isfile, join
 from pathlib import Path
@@ -96,9 +97,9 @@ def get_resource_file(resource_router: str, resource_id: str, file_ext=None) -> 
     raise FileNotFoundError(f"Resource file with ending '{file_ext}' not found in: {resource_dir}")
 
 
-async def receive_resource(file, resource_dest):
-    async with aiofiles.open(resource_dest, "wb") as fpt:
-        content = await file.read(1024)
+async def receive_resource(file, resource_dst, chunk_size: int = DEFAULT_BUFFER_SIZE):
+    async with aiofiles.open(file=resource_dst, mode="wb") as fpt:
+        content = await file.read(chunk_size)
         while content:
             await fpt.write(content)
-            content = await file.read(1024)
+            content = await file.read(chunk_size)

@@ -59,10 +59,10 @@ async def list_workspaces(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> 
 
 @router.get("/workspace/{workspace_id}", response_model=None)
 async def get_workspace(
-        background_tasks: BackgroundTasks,
-        workspace_id: str,
-        accept: str = Header(default="application/json"),
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    background_tasks: BackgroundTasks,
+    workspace_id: str,
+    accept: str = Header(default="application/json"),
+    auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> Union[WorkspaceRsrc, FileResponse]:
     """
     Get an existing workspace specified with `workspace_id`.
@@ -100,10 +100,10 @@ async def get_workspace(
     response_model_exclude_none=True
 )
 async def post_workspace_from_url(
-        mets_url: str,
-        preserve_file_grps: str,
-        mets_basename: str = DEFAULT_METS_BASENAME,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    mets_url: str,
+    preserve_file_grps: str,
+    mets_basename: str = DEFAULT_METS_BASENAME,
+    auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
 
     await user_login(auth)
@@ -171,8 +171,8 @@ async def post_workspace_from_url(
     response_model_exclude_none=True
 )
 async def post_workspace(
-        workspace: UploadFile,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    workspace: UploadFile,
+    auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
     """
     Upload a new ocrd-zip workspace.
@@ -185,7 +185,7 @@ async def post_workspace(
     ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER, resource_id=None)
     bag_dest = f"{ws_dir}.zip"
     try:
-        await receive_resource(file=workspace, resource_dest=bag_dest)
+        await receive_resource(file=workspace, resource_dst=bag_dest)
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"Failed to receive the workflow resource, error: {error}")
     # Remove old workspace dir (if any)
@@ -229,15 +229,16 @@ async def post_workspace(
 
 @router.put("/workspace/{workspace_id}", responses={"201": {"model": WorkspaceRsrc}})
 async def put_workspace(
-        workspace: UploadFile,
-        workspace_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    workspace: UploadFile,
+    workspace_id: str,
+    auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
     """
     Update an existing workspace specified with `workspace_id` or create a new workspace.
 
     Curl equivalent:
-    `curl -X PUT SERVER_ADDR/workspace/{workspace_id} -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
+    `curl -X PUT SERVER_ADDR/workspace/{workspace_id}
+    -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
     """
     await user_login(auth)
     try:
@@ -249,7 +250,7 @@ async def put_workspace(
     ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
     bag_dest = f"{ws_dir}.zip"
     try:
-        await receive_resource(file=workspace, resource_dest=bag_dest)
+        await receive_resource(file=workspace, resource_dst=bag_dest)
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"Failed to receive the workflow resource, error: {error}")
     # Remove old workspace dir (if any)
@@ -293,8 +294,8 @@ async def put_workspace(
 
 @router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
 async def delete_workspace(
-        workspace_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    workspace_id: str,
+    auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
     """
     Delete an existing workspace specified with `workspace_id`

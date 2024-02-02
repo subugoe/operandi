@@ -1,4 +1,4 @@
-import logging
+from logging import getLogger
 from os import environ, makedirs
 from os.path import dirname, exists, join, isfile
 from requests import get, post
@@ -20,12 +20,12 @@ from .constants import (
 
 class Harvester:
     def __init__(
-            self,
-            server_address: str,
-            auth_username: str = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME", None),
-            auth_password: str = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD", None)
+        self,
+        server_address: str,
+        auth_username: str = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME", None),
+        auth_password: str = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD", None)
     ):
-        self.logger = logging.getLogger("operandi_harvester.harvester")
+        self.logger = getLogger("operandi_harvester.harvester")
         self.logger.setLevel(LOG_LEVEL_HARVESTER)
 
         log_file_path = f"{get_log_file_path_prefix(module_type='harvester')}.log"
@@ -163,13 +163,13 @@ class Harvester:
         return workflow_id
 
     def post_workflow_job(
-            self,
-            workflow_id: str,
-            workspace_id: str,
-            input_file_grp: str = "DEFAULT",
-            mets_base: str = "mets.xml",
-            cpus: int = 8,
-            ram: int = 32
+        self,
+        workflow_id: str,
+        workspace_id: str,
+        input_file_grp: str = "DEFAULT",
+        mets_base: str = "mets.xml",
+        cpus: int = 8,
+        ram: int = 32
     ) -> str:
         self.logger.info(f"Posting workflow job with workflow id: {workflow_id} on workspace id: {workspace_id}")
         request_json = {
@@ -210,11 +210,11 @@ class Harvester:
         return workflow_job_status
 
     def poll_workflow_job_state(
-            self,
-            workflow_id: str,
-            job_id: str,
-            tries: int = TRIES_TILL_TIMEOUT,
-            wait_time: int = WAIT_TIME_BETWEEN_POLLS
+        self,
+        workflow_id: str,
+        job_id: str,
+        tries: int = TRIES_TILL_TIMEOUT,
+        wait_time: int = WAIT_TIME_BETWEEN_POLLS
     ) -> bool:
         self.logger.info(f"Starting polling the state of workflow job: {job_id}")
         self.logger.info(f"Amount of polls to be performed: {tries}, every {wait_time} secs.")

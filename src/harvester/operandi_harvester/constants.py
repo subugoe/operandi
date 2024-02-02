@@ -1,6 +1,7 @@
 from pkg_resources import resource_filename
 
 __all__ = [
+    "DEFAULT_OPERANDI_SERVER_ROOT_URL",
     "TRIES_TILL_TIMEOUT",
     "USE_WORKSPACE_FILE_GROUP",
     "VD18_IDS_FILE",
@@ -9,6 +10,8 @@ __all__ = [
     "WAIT_TIME_BETWEEN_SUBMITS",
     "WAIT_TIME_BETWEEN_POLLS",
 ]
+
+DEFAULT_OPERANDI_SERVER_ROOT_URL = "http://localhost:8000"
 
 # These are the VD18 constants
 # The vd18IDs.txt file contains METS IDs.

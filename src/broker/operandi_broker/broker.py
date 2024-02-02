@@ -1,4 +1,4 @@
-import logging
+from logging import getLogger
 from os import environ, fork
 import psutil
 import signal
@@ -36,7 +36,7 @@ class ServiceBroker:
         # Reconfigure all loggers to the same format
         reconfigure_all_loggers(log_level=LOG_LEVEL_BROKER, log_file_path=log_file_path)
 
-        self.log = logging.getLogger("operandi_broker.service_broker")
+        self.log = getLogger("operandi_broker.service_broker")
         self.test_sbatch = test_sbatch
 
         try:
@@ -53,7 +53,7 @@ class ServiceBroker:
         # Value: List of worker pids consuming from the key queue name
         self.queues_and_workers = {}
 
-    def run(self):
+    def run_broker(self):
         # A list of queues for which a worker process should be created
         queues = [
             RABBITMQ_QUEUE_HARVESTER,
@@ -113,30 +113,32 @@ class ServiceBroker:
         except Exception as os_error:
             self.log.error(f"Failed to create a child process, reason: {os_error}")
             return 0
-        if created_pid == 0:
-            try:
-                # Clean unnecessary data
-                # self.queues_and_workers = None
-                if status_checker:
-                    child_worker = JobStatusWorker(
-                        db_url=self.db_url,
-                        rabbitmq_url=self.rabbitmq_url,
-                        queue_name=queue_name,
-                        test_sbatch=self.test_sbatch
-                    )
-                else:
-                    child_worker = Worker(
-                        db_url=self.db_url,
-                        rabbitmq_url=self.rabbitmq_url,
-                        queue_name=queue_name,
-                        test_sbatch=self.test_sbatch
-                    )
-                child_worker.run()
-                exit(0)
-            except Exception as e:
-                self.log.error(f"Worker process failed for queue: {queue_name}, reason: {e}")
-                exit(-1)
-        return created_pid
+
+        if created_pid != 0:
+            return created_pid
+
+        try:
+            # Clean unnecessary data
+            # self.queues_and_workers = None
+            if status_checker:
+                child_worker = JobStatusWorker(
+                    db_url=self.db_url,
+                    rabbitmq_url=self.rabbitmq_url,
+                    queue_name=queue_name,
+                    test_sbatch=self.test_sbatch
+                )
+            else:
+                child_worker = Worker(
+                    db_url=self.db_url,
+                    rabbitmq_url=self.rabbitmq_url,
+                    queue_name=queue_name,
+                    test_sbatch=self.test_sbatch
+                )
+            child_worker.run()
+            exit(0)
+        except Exception as e:
+            self.log.error(f"Worker process failed for queue: {queue_name}, reason: {e}")
+            exit(-1)
 
     def kill_workers(self):
         interrupted_pids = []
@@ -158,7 +160,6 @@ class ServiceBroker:
                 except psutil.AccessDenied as error:
                     self.log.error(f"Access denied to the worker process with pid: {worker_pid}, {error}")
                     continue
-
         sleep(3)
         self.log.info(f"Starting to send SIGKILL to all workers if needed")
         # Check whether workers exited properly

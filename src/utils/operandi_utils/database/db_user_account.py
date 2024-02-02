@@ -3,11 +3,11 @@ from .models import DBUserAccount
 
 
 async def db_create_user_account(
-        email: str,
-        encrypted_pass: str,
-        salt: str,
-        account_type: str,
-        approved_user: bool = False
+    email: str,
+    encrypted_pass: str,
+    salt: str,
+    account_type: str,
+    approved_user: bool = False
 ) -> DBUserAccount:
     user_account = DBUserAccount(
         email=email,
@@ -22,11 +22,11 @@ async def db_create_user_account(
 
 @call_sync
 async def sync_db_create_user_account(
-        email: str,
-        encrypted_pass: str,
-        salt: str,
-        account_type: str,
-        approved_user: bool = False
+    email: str,
+    encrypted_pass: str,
+    salt: str,
+    account_type: str,
+    approved_user: bool = False
 ) -> DBUserAccount:
     return await db_create_user_account(email, encrypted_pass, salt, account_type, approved_user)
 
@@ -49,17 +49,17 @@ async def db_update_user_account(find_email: str, **kwargs) -> DBUserAccount:
     for key, value in kwargs.items():
         if key not in model_keys:
             raise ValueError(f"Field not available: {key}")
-        if key == 'email':
+        if key == "email":
             db_user_account.email = value
-        elif key == 'encrypted_pass':
+        elif key == "encrypted_pass":
             db_user_account.encrypted_pass = value
-        elif key == 'salt':
+        elif key == "salt":
             db_user_account.salt = value
-        elif key == 'account_type':
+        elif key == "account_type":
             db_user_account.account_type = value
-        elif key == 'approved_user':
+        elif key == "approved_user":
             db_user_account.approved_user = value
-        elif key == 'deleted':
+        elif key == "deleted":
             db_user_account.deleted = value
         else:
             raise ValueError(f"Field not updatable: {key}")

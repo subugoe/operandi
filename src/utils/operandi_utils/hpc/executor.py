@@ -1,6 +1,7 @@
 from logging import getLogger
 from os import environ
 from time import sleep
+from .constants import HPC_EXECUTOR_HOST, HPC_EXECUTOR_PROXY_HOST
 from .utils import (
     create_ssh_connection_to_hpc,
     resolve_hpc_user_home_dir,
@@ -14,8 +15,8 @@ from .utils import (
 class HPCExecutor:
     def __init__(
         self,
-        host: str = environ.get("OPERANDI_HPC_HOST", "login-mdc.hpc.gwdg.de"),
-        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY", "login.gwdg.de"),
+        host: str = environ.get("OPERANDI_HPC_HOST", HPC_EXECUTOR_HOST),
+        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY", HPC_EXECUTOR_PROXY_HOST),
         username: str = environ.get("OPERANDI_HPC_USERNAME"),
         key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH")
     ) -> None:
@@ -67,18 +68,18 @@ class HPCExecutor:
         return output, err, return_code
 
     def trigger_slurm_job(
-            self,
-            batch_script_path: str,
-            workflow_job_id: str,
-            nextflow_script_path: str,
-            input_file_grp: str,
-            workspace_id: str,
-            mets_basename: str,
-            job_deadline_time: str,
-            cpus: int,
-            ram: int,
-            nf_process_forks: int,
-            ws_pages_amount: int
+        self,
+        batch_script_path: str,
+        workflow_job_id: str,
+        nextflow_script_path: str,
+        input_file_grp: str,
+        workspace_id: str,
+        mets_basename: str,
+        job_deadline_time: str,
+        cpus: int,
+        ram: int,
+        nf_process_forks: int,
+        ws_pages_amount: int
     ) -> str:
 
         nextflow_script_id = nextflow_script_path.split('/')[-1]

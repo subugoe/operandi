@@ -8,6 +8,7 @@ from tempfile import mkdtemp
 from typing import Tuple
 
 from operandi_utils import make_zip_archive, unpack_zip_archive
+from .constants import HPC_TRANSFER_HOST, HPC_TRANSFER_PROXY_HOST
 from .utils import (
     create_ssh_connection_to_hpc,
     resolve_hpc_user_home_dir,
@@ -21,8 +22,8 @@ from .utils import (
 class HPCTransfer:
     def __init__(
         self,
-        host: str = environ.get("OPERANDI_HPC_HOST_TRANSFER", "transfer-scc.gwdg.de"),
-        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY_TRANSFER", "transfer.gwdg.de"),
+        host: str = environ.get("OPERANDI_HPC_HOST_TRANSFER", HPC_TRANSFER_HOST),
+        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY_TRANSFER", HPC_TRANSFER_PROXY_HOST),
         username: str = environ.get("OPERANDI_HPC_USERNAME"),
         key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH")
     ) -> None:
@@ -65,11 +66,11 @@ class HPCTransfer:
         return hpc_batch_script_path
 
     def create_slurm_workspace_zip(
-            self,
-            ocrd_workspace_dir: str,
-            workflow_job_id: str,
-            nextflow_script_path: str,
-            tempdir_prefix: str = "slurm_workspace-"
+        self,
+        ocrd_workspace_dir: str,
+        workflow_job_id: str,
+        nextflow_script_path: str,
+        tempdir_prefix: str = "slurm_workspace-"
     ) -> str:
         self.log.info(f"Entering pack_slurm_workspace")
         self.log.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
