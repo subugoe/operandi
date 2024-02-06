@@ -34,7 +34,7 @@ async def sync_db_create_workflow(
     workflow_script_base: str,
     workflow_script_path: str
 ) -> DBWorkflow:
-    return await sync_db_create_workflow(workflow_id, workflow_dir, workflow_script_base, workflow_script_path)
+    return await db_create_workflow(workflow_id, workflow_dir, workflow_script_base, workflow_script_path)
 
 
 async def db_get_workflow(workflow_id: str) -> DBWorkflow:

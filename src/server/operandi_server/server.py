@@ -5,13 +5,13 @@ from uvicorn import run
 
 from fastapi import FastAPI, status
 
-from operandi_utils import get_log_file_path_prefix, get_nf_workflows_dir, reconfigure_all_loggers, verify_database_uri
+from operandi_utils import get_log_file_path_prefix, reconfigure_all_loggers, verify_database_uri
 from operandi_utils.constants import LOG_LEVEL_SERVER, OPERANDI_VERSION
 from operandi_utils.database import db_initiate_database
 from operandi_server.authentication import create_user_if_not_available
 from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKFLOWS_ROUTER, SERVER_WORKSPACES_ROUTER
 from operandi_server.files_manager import create_resource_base_dir
-from operandi_server.routers import RouterDiscovery, RouterUser, workflow, workspace
+from operandi_server.routers import RouterDiscovery, RouterUser, RouterWorkflow, workspace
 from operandi_server.utils import safe_init_logging
 
 
@@ -93,9 +93,7 @@ class OperandiServer(FastAPI):
         await self.insert_default_credentials()
 
         # Include the endpoints of the OCR-D WebAPI
-        self.include_webapi_routers()
-
-        await workflow.insert_production_workflows(production_workflows_dir=get_nf_workflows_dir())
+        await self.include_webapi_routers()
 
     async def shutdown_event(self):
         # TODO: Gracefully shutdown and clean things here if needed
@@ -110,10 +108,12 @@ class OperandiServer(FastAPI):
         }
         return json_message
 
-    def include_webapi_routers(self):
+    async def include_webapi_routers(self):
         self.include_router(RouterDiscovery().router)
         self.include_router(RouterUser().router)
-        self.include_router(workflow.router)
+        workflow_router = RouterWorkflow()
+        await workflow_router.insert_production_workflows()
+        self.include_router(workflow_router.router)
         self.include_router(workspace.router)
 
     async def insert_default_credentials(self):

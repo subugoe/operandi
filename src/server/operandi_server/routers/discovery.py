@@ -1,6 +1,7 @@
 """
 module for implementing the discovery section of the api
 """
+from logging import getLogger
 from os import cpu_count
 from psutil import virtual_memory
 from fastapi import APIRouter, Depends, status
@@ -12,6 +13,9 @@ from .user import RouterUser
 
 class RouterDiscovery:
     def __init__(self):
+        self.logger = getLogger("operandi_server.routers.workflow")
+        self.user_authenticator = RouterUser()
+
         self.router = APIRouter(tags=["Discovery"])
         self.router.add_api_route(
             path="/discovery",
@@ -24,11 +28,11 @@ class RouterDiscovery:
             response_model_exclude_none=True
         )
 
-    @staticmethod
     async def discovery(
+        self,
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> PYDiscovery:
-        await RouterUser().user_login(auth)
+        await self.user_authenticator.user_login(auth)
         response = PYDiscovery(
             ram=virtual_memory().total / (1024.0 ** 3),
             cpu_cores=cpu_count(),
