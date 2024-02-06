@@ -1,7 +1,8 @@
 import json
 import logging
 from os.path import join
-from shutil import make_archive
+from pathlib import Path
+from shutil import make_archive, copyfile
 import tempfile
 from typing import List, Union
 from fastapi import (
@@ -46,10 +47,12 @@ rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_HARVESTER)
 rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_USERS)
 rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES)
 
+PRODUCTION_WORKFLOWS = []
+
 
 @router.get("/workflow")
 async def list_workflows(
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> List[WorkflowRsrc]:
     """
     Get a list of existing workflow spaces.
@@ -69,9 +72,9 @@ async def list_workflows(
 
 @router.get(path="/workflow/{workflow_id}", response_model=None)
 async def get_workflow_script(
-        workflow_id: str,
-        accept: str = Header(default="application/json"),
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    workflow_id: str,
+    accept: str = Header(default="application/json"),
+    auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> Union[WorkflowRsrc, FileResponse]:
     """
     Get an existing workflow space script specified with `workflow_id`.
@@ -97,8 +100,8 @@ async def get_workflow_script(
 
 @router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
 async def upload_workflow_script(
-        nextflow_script: UploadFile,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    nextflow_script: UploadFile,
+    auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkflowRsrc:
     """
     Create a new workflow space and upload a Nextflow script inside.
@@ -127,9 +130,9 @@ async def upload_workflow_script(
 
 @router.put(path="/workflow/{workflow_id}", responses={"201": {"model": WorkflowRsrc}})
 async def update_workflow_script(
-        nextflow_script: UploadFile,
-        workflow_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    nextflow_script: UploadFile,
+    workflow_id: str,
+    auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkflowRsrc:
     """
     Update an existing workflow script specified with or `workflow_id` or upload a new workflow script.
@@ -139,6 +142,9 @@ async def update_workflow_script(
     """
 
     await user_login(auth)
+    if workflow_id in PRODUCTION_WORKFLOWS:
+        raise HTTPException(status_code=405, detail=f"Production `workflow_id` cannot be replaced. "
+                                                    f"Tried to delete: {workflow_id}")
     try:
         delete_resource_dir(SERVER_WORKFLOWS_ROUTER, workflow_id)
     except FileNotFoundError:
@@ -314,3 +320,23 @@ async def submit_to_rabbitmq_queue(
         workspace_url=workspace_url,
         job_state=job_state
     )
+
+
+async def insert_production_workflows(production_workflows_dir: Path):
+    for path in production_workflows_dir.iterdir():
+        if not path.is_file():
+            continue
+        if path.suffix != '.nf':
+            continue
+        # path.stem -> file_name
+        # path.name -> file_name.ext
+        workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=path.stem, exists_ok=True)
+        nf_script_dst = join(workflow_dir, path.name)
+        copyfile(src=path, dst=nf_script_dst)
+        await db_create_workflow(
+            workflow_id=workflow_id,
+            workflow_dir=workflow_dir,
+            workflow_script_path=nf_script_dst,
+            workflow_script_base=path.name
+        )
+        PRODUCTION_WORKFLOWS.append(workflow_id)

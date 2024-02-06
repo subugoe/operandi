@@ -32,12 +32,13 @@ def create_resource_base_dir(resource_router: str) -> str:
     return resource_abs_path
 
 
-def create_resource_dir(resource_router: str, resource_id: str = None) -> Tuple[str, str]:
+def create_resource_dir(resource_router: str, resource_id: str = None, exists_ok=False) -> Tuple[str, str]:
     if resource_id is None:
         resource_id = generate_id()
     resource_dir = abs_resource_dir_path(resource_router, resource_id)
     if isdir(resource_dir):
-        raise FileExistsError(f"Failed to create resource dir, already exists: {resource_dir}")
+        if not exists_ok:
+            raise FileExistsError(f"Failed to create resource dir, already exists: {resource_dir}")
     Path(resource_dir).mkdir(mode=0o777, parents=True, exist_ok=True)
     return resource_id, resource_dir
 

@@ -66,6 +66,10 @@ def is_url_responsive(url: str) -> bool:
         return False
 
 
+def get_nf_workflows_dir() -> Path:
+    return Path(dirname(__file__), "hpc", "nextflow_workflows")
+
+
 def receive_file(
     response,
     download_path,

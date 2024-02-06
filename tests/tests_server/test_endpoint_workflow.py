@@ -61,6 +61,23 @@ def test_put_workflow_script(operandi, auth, db_workflows, bytes_template_workfl
         f"Workflow paths should not, but match: {workflow_path1} == {workflow_path2}"
 
 
+def test_put_workflow_not_allowed(operandi, auth, db_workflows, bytes_template_workflow):
+    production_workflow_ids = [
+        "template_workflow",
+        "default_workflow",
+        "odem_workflow"
+    ]
+
+    # Try to replace a production workflow which should raise an error code of 405
+    for workflow_id in production_workflow_ids:
+        response = operandi.put(
+            f"/workflow/{workflow_id}",
+            files={"nextflow_script": bytes_template_workflow},
+            auth=auth
+        )
+        assert_response_status_code(response.status_code, expected_floor=4)
+
+
 # Not implemented/planned in the WebAPI
 def _test_delete_workflow():
     pass

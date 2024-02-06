@@ -5,7 +5,7 @@ from uvicorn import run
 
 from fastapi import FastAPI, status
 
-from operandi_utils import get_log_file_path_prefix, reconfigure_all_loggers, verify_database_uri
+from operandi_utils import get_log_file_path_prefix, get_nf_workflows_dir, reconfigure_all_loggers, verify_database_uri
 from operandi_utils.constants import LOG_LEVEL_SERVER, OPERANDI_VERSION
 from operandi_utils.database import db_initiate_database
 from operandi_server.authentication import create_user_if_not_available
@@ -94,6 +94,8 @@ class OperandiServer(FastAPI):
 
         # Include the endpoints of the OCR-D WebAPI
         self.include_webapi_routers()
+
+        await workflow.insert_production_workflows(production_workflows_dir=get_nf_workflows_dir())
 
     async def shutdown_event(self):
         # TODO: Gracefully shutdown and clean things here if needed
