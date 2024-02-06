@@ -33,7 +33,7 @@ from operandi_server.utils import (
     get_workspace_bag,
     validate_bag
 )
-from .user import user_login
+from .user import RouterUser
 
 
 router = APIRouter(tags=["Workspace"])
@@ -48,7 +48,7 @@ async def list_workspaces(auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> 
     Curl equivalent:
     `curl -X GET SERVER_ADDR/workspace`
     """
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     workspaces = get_all_resources_url(SERVER_WORKSPACES_ROUTER)
     response = []
     for workspace in workspaces:
@@ -73,7 +73,7 @@ async def get_workspace(
     `curl -X GET SERVER_ADDR/workspace/{workspace_id} -H "accept: application/json"`
     `curl -X GET SERVER_ADDR/workspace/{workspace_id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
     """
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     try:
         db_workspace = await db_get_workspace(workspace_id=workspace_id)
         workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
@@ -106,7 +106,7 @@ async def post_workspace_from_url(
     auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ) -> WorkspaceRsrc:
 
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     workspace_id, workspace_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
     bag_dest = f"{workspace_dir}.zip"
 
@@ -181,7 +181,7 @@ async def post_workspace(
     Curl equivalent:
     `curl -X POST SERVER_ADDR/workspace -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
     """
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER, resource_id=None)
     bag_dest = f"{ws_dir}.zip"
     try:
@@ -240,7 +240,7 @@ async def put_workspace(
     `curl -X PUT SERVER_ADDR/workspace/{workspace_id}
     -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
     """
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     try:
         delete_resource_dir(SERVER_WORKSPACES_ROUTER, workspace_id)
     except FileNotFoundError:
@@ -303,7 +303,7 @@ async def delete_workspace(
     Curl equivalent:
     `curl -X DELETE SERVER_ADDR/workspace/{workspace_id}`
     """
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     try:
         db_workspace = await db_get_workspace(workspace_id=workspace_id)
         deleted_workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)

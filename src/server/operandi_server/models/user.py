@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class UserAction(BaseModel):
+class PYUserAction(BaseModel):
     account_type: str = Field(
         ...,  # the field is required, no default set
         description="The type of this user"
@@ -22,4 +22,4 @@ class UserAction(BaseModel):
     def create(account_type: str, action: str, email: str):
         if not action:
             action = "User Action"
-        return UserAction(account_type=account_type, action=action, email=email)
+        return PYUserAction(account_type=account_type, action=action, email=email)

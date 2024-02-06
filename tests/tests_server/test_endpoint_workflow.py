@@ -61,7 +61,7 @@ def test_put_workflow_script(operandi, auth, db_workflows, bytes_template_workfl
         f"Workflow paths should not, but match: {workflow_path1} == {workflow_path2}"
 
 
-def test_put_workflow_not_allowed(operandi, auth, db_workflows, bytes_template_workflow):
+def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow):
     production_workflow_ids = [
         "template_workflow",
         "default_workflow",

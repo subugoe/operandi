@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_server.models import PYDiscovery
-from .user import user_login
+from .user import RouterUser
 
 
 class RouterDiscovery:
@@ -28,7 +28,7 @@ class RouterDiscovery:
     async def discovery(
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> PYDiscovery:
-        await user_login(auth)
+        await RouterUser().user_login(auth)
         response = PYDiscovery(
             ram=virtual_memory().total / (1024.0 ** 3),
             cpu_cores=cpu_count(),

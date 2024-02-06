@@ -33,7 +33,7 @@ from operandi_server.files_manager import (
     receive_resource
 )
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
-from .user import user_login
+from .user import RouterUser
 
 router = APIRouter(tags=["Workflow"])
 logger = logging.getLogger("operandi_server.routers.workflow")
@@ -61,7 +61,7 @@ async def list_workflows(
     Curl equivalent:
     `curl SERVER_ADDR/workflow`
     """
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     workflows = get_all_resources_url(SERVER_WORKFLOWS_ROUTER)
     response = []
     for workflow in workflows:
@@ -85,7 +85,7 @@ async def get_workflow_script(
     `curl -X GET SERVER_ADDR/workflow/{workflow_id} -H "accept: application/json"`
     `curl -X GET SERVER_ADDR/workflow/{workflow_id} -H "accept: text/vnd.ocrd.workflow" -o foo.nf`
     """
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     try:
         db_workflow = await db_get_workflow(workflow_id=workflow_id)
         workflow_script_url = get_resource_url(resource_router=SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
@@ -111,7 +111,7 @@ async def upload_workflow_script(
     `curl -X POST SERVER_ADDR/workflow -F nextflow_script=example.nf`
     """
 
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=None)
     nf_script_dest = join(workflow_dir, nextflow_script.filename)
     try:
@@ -141,7 +141,7 @@ async def update_workflow_script(
     `curl -X PUT SERVER_ADDR/workflow/{workflow_id} -F nextflow_script=example.nf`
     """
 
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     if workflow_id in PRODUCTION_WORKFLOWS:
         raise HTTPException(status_code=405, detail=f"Production `workflow_id` cannot be replaced. "
                                                     f"Tried to delete: {workflow_id}")
@@ -186,7 +186,7 @@ async def get_workflow_job_status(
     Curl equivalent:
     `curl -X GET SERVER_ADDR/workflow/{workflow_id}/{job_id}`
     """
-    await user_login(auth)
+    await RouterUser().user_login(auth)
     # Create the job status message to be sent to the RabbitMQ queue
     job_status_message = {"job_id": f"{job_id}"}
     logger.info(f"Encoding the job status RabbitMQ message: {job_status_message}")
@@ -238,7 +238,7 @@ async def submit_to_rabbitmq_queue(
     auth: HTTPBasicCredentials = Depends(HTTPBasic())
 ):
     try:
-        user_action = await user_login(auth)
+        user_action = await RouterUser().user_login(auth)
         user_account_type = user_action.account_type
     except Exception as error:
         logger.error(f"Authentication error: {error}")
