@@ -10,7 +10,7 @@ from .helpers_asserts import (
 )
 
 
-def _test_post_workspace_url(operandi, auth, db_workspaces):
+def test_post_workspace_url(operandi, auth, db_workspaces):
     mets_url = "https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
     # Separate with `,` to add a second file group to be preserved, e.g., `DEFAULT,MAX`
     preserve_file_grps = "DEFAULT"

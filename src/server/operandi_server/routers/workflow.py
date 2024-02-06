@@ -169,10 +169,7 @@ class RouterWorkflow:
             )
             self.production_workflows.append(workflow_id)
 
-    async def list_workflows(
-        self,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
-    ) -> List[WorkflowRsrc]:
+    async def list_workflows(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
         """
         Curl equivalent:
         `curl SERVER_ADDR/workflow`

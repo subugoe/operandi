@@ -13,7 +13,7 @@ from .user import RouterUser
 
 class RouterDiscovery:
     def __init__(self):
-        self.logger = getLogger("operandi_server.routers.workflow")
+        self.logger = getLogger("operandi_server.routers.discovery")
         self.user_authenticator = RouterUser()
 
         self.router = APIRouter(tags=["Discovery"])
