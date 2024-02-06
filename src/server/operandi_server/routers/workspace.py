@@ -1,6 +1,7 @@
 from logging import getLogger
-from os import remove, unlink
+from os import unlink
 from os.path import join
+from pathlib import Path
 from shutil import rmtree
 from typing import List, Union
 from fastapi import (
@@ -111,6 +112,39 @@ class RouterWorkspace:
             response_model_exclude_none=True
         )
 
+    def _validate_bag_with_error_handling(self, bag_dst: str) -> None:
+        message = "Failed to validate workspace bag"
+        try:
+            validate_bag(bag_dst)
+        except WorkspaceNotValidException as error:
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+        except Exception as error:
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+
+    def _extract_bag_info_with_error_handling(self, bag_dst: str, ws_dir: str) -> dict:
+        try:
+            bag_info = extract_bag_info(bag_dst, ws_dir)
+        except Exception as error:
+            message = "Failed to extract workspace bag info"
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+        return bag_info
+
+    def _extract_pages_with_error_handling(self, bag_info: dict, ws_dir: str) -> int:
+        mets_basename = DEFAULT_METS_BASENAME
+        if "Ocrd-Mets" in bag_info:
+            mets_basename = bag_info.get("Ocrd-Mets")
+        try:
+            physical_pages = get_ocrd_workspace_physical_pages(mets_path=join(ws_dir, mets_basename))
+            pages_amount = len(physical_pages)
+        except Exception as error:
+            message = "Failed to extract pages amount"
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+        return pages_amount
+
     async def list_workspaces(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkspaceRsrc]:
         """
         Curl equivalent:
@@ -155,11 +189,9 @@ class RouterWorkspace:
         except Exception as error:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
-        # Remove the produced bag after sending it in the response
         background_tasks.add_task(unlink, bag_path)
         return FileResponse(bag_path)
 
-    # TODO: Remove duplicate parts of the 2 methods below
     async def upload_workspace_from_url(
         self,
         mets_url: str,
@@ -180,7 +212,7 @@ class RouterWorkspace:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
         try:
-            ws_dir = create_workspace_bag_from_remote_url(
+            ws_temp_dir = create_workspace_bag_from_remote_url(
                 mets_url=mets_url,
                 workspace_id=workspace_id,
                 bag_dest=bag_dest,
@@ -192,40 +224,12 @@ class RouterWorkspace:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
-        message = "Failed to validate workspace bag"
-        try:
-            validate_bag(bag_dest)
-        except WorkspaceNotValidException as error:
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-        except Exception as error:
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
-
-        # Remove old workspace dir (if any)
-        rmtree(workspace_dir, ignore_errors=True)
-
-        try:
-            bag_info = extract_bag_info(bag_dest, workspace_dir)
-        except Exception as error:
-            message = "Failed to extract workspace bag info"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-        # Remove the temporary directory
-        rmtree(ws_dir, ignore_errors=True)
-        # Remove the created zip bag
-        remove(bag_dest)
-
-        mets_basename = DEFAULT_METS_BASENAME
-        if "Ocrd-Mets" in bag_info:
-            mets_basename = bag_info.get("Ocrd-Mets")
-        try:
-            physical_pages = get_ocrd_workspace_physical_pages(mets_path=join(workspace_dir, mets_basename))
-            pages_amount = len(physical_pages)
-        except Exception as error:
-            message = "Failed to extract pages amount"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+        rmtree(ws_temp_dir, ignore_errors=True)  # Remove the temp dir
+        rmtree(workspace_dir, ignore_errors=True)  # Remove old workspace dir (if any)
+        self._validate_bag_with_error_handling(bag_dst=bag_dest)
+        bag_info = self._extract_bag_info_with_error_handling(bag_dst=bag_dest, ws_dir=workspace_dir)
+        Path(bag_dest).unlink()  # Remove the created zip bag
+        pages_amount = self._extract_pages_with_error_handling(bag_info, workspace_dir)
         await db_create_workspace(
             workspace_id=workspace_id,
             workspace_dir=workspace_dir,
@@ -257,38 +261,12 @@ class RouterWorkspace:
             message = "Failed to receive the workspace resource"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-        # Remove old workspace dir (if any)
-        rmtree(ws_dir, ignore_errors=True)
 
-        message = "Failed to validate workspace bag"
-        try:
-            validate_bag(bag_dest)
-        except WorkspaceNotValidException as error:
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-        except Exception as error:
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
-
-        try:
-            bag_info = extract_bag_info(bag_dest, ws_dir)
-        except Exception as error:
-            message = "Failed to extract workspace bag info"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-        # Remove the created zip bag
-        remove(bag_dest)
-
-        mets_basename = DEFAULT_METS_BASENAME
-        if "Ocrd-Mets" in bag_info:
-            mets_basename = bag_info.get("Ocrd-Mets")
-        try:
-            physical_pages = get_ocrd_workspace_physical_pages(mets_path=join(ws_dir, mets_basename))
-            pages_amount = len(physical_pages)
-        except Exception as error:
-            message = "Failed to extract pages amount"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+        rmtree(ws_dir, ignore_errors=True)  # Remove old workspace dir (if any)
+        self._validate_bag_with_error_handling(bag_dst=bag_dest)
+        bag_info = self._extract_bag_info_with_error_handling(bag_dst=bag_dest, ws_dir=ws_dir)
+        Path(bag_dest).unlink()  # Remove the created zip bag
+        pages_amount = self._extract_pages_with_error_handling(bag_info, ws_dir)
         await db_create_workspace(
             workspace_id=ws_id,
             workspace_dir=ws_dir,
@@ -319,7 +297,6 @@ class RouterWorkspace:
         except FileNotFoundError:
             # Nothing to be deleted
             pass
-
         ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
         bag_dest = f"{ws_dir}.zip"
         try:
@@ -328,37 +305,12 @@ class RouterWorkspace:
             message = "Failed to receive the workspace resource"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-        # Remove old workspace dir (if any)
-        rmtree(ws_dir, ignore_errors=True)
 
-        message = "Failed to validate workspace bag"
-        try:
-            validate_bag(bag_dest)
-        except WorkspaceNotValidException as error:
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-        except Exception as error:
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
-
-        try:
-            bag_info = extract_bag_info(bag_dest, ws_dir)
-        except Exception as error:
-            message = "Failed to extract workspace bag info"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-        remove(bag_dest)
-
-        mets_basename = DEFAULT_METS_BASENAME
-        if "Ocrd-Mets" in bag_info:
-            mets_basename = bag_info.get("Ocrd-Mets")
-        try:
-            physical_pages = get_ocrd_workspace_physical_pages(mets_path=join(ws_dir, mets_basename))
-            pages_amount = len(physical_pages)
-        except Exception as error:
-            message = "Failed to extract pages amount"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+        rmtree(ws_dir, ignore_errors=True)  # Remove old workspace dir (if any)
+        self._validate_bag_with_error_handling(bag_dst=bag_dest)
+        bag_info = self._extract_bag_info_with_error_handling(bag_dst=bag_dest, ws_dir=ws_dir)
+        Path(bag_dest).unlink()
+        pages_amount = self._extract_pages_with_error_handling(bag_info, ws_dir)
         await db_create_workspace(
             workspace_id=ws_id,
             workspace_dir=ws_dir,
