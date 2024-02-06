@@ -355,7 +355,7 @@ class RouterWorkflow:
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
         try:
-            user_action = await RouterUser().user_login(auth)
+            user_action = await self.user_authenticator.user_login(auth)
             user_account_type = user_action.account_type
         except Exception as error:
             message = f"Invalid login credentials or unapproved account."
