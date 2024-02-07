@@ -10,5 +10,5 @@ __all__ = [
 HPC_EXECUTOR_HOST = "gwdu101.hpc.gwdg.de"
 HPC_EXECUTOR_PROXY_HOST = "login.gwdg.de"
 HPC_TRANSFER_HOST = "transfer-scc.gwdg.de"
-# "transfer.gwdg.de"
-HPC_TRANSFER_PROXY_HOST = "login.gwdg.de"
+"login.gwdg.de"
+HPC_TRANSFER_PROXY_HOST = "transfer.gwdg.de"
