@@ -241,7 +241,7 @@ class Harvester:
         download_path = join(download_dir, f"{workspace_id}.ocrd.zip")
         response = get(
             url=f"{self.server_address}/workspace/{workspace_id}",
-            headers={"accept": "application/vnd.ocrd+zip"},
+            # headers={"accept": "application/vnd.ocrd+zip"},
             auth=self.auth
         )
         receive_file(response=response, download_path=download_path)
@@ -252,8 +252,8 @@ class Harvester:
         self.logger.info(f"Getting workflow job zip of: {job_id}")
         download_path = join(download_dir, f"{job_id}.zip")
         response = get(
-            url=f"{self.server_address}/workflow/{workflow_id}/{job_id}",
-            headers={'accept': 'application/vnd.zip'},
+            url=f"{self.server_address}/workflow/{workflow_id}/{job_id}/log",
+            # headers={"accept": "application/vnd.zip"},
             auth=self.auth
         )
         receive_file(response=response, download_path=download_path)
