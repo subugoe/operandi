@@ -102,7 +102,7 @@ def test_get_workflow_script(operandi, auth, bytes_template_workflow):
     # Get the same workflow script
     response = operandi.get(
         f"/workflow/{workflow_id}",
-        headers={"accept": "text/vnd.ocrd.workflow"},
+        # headers={"accept": "text/vnd.ocrd.workflow"},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -115,7 +115,7 @@ def test_get_workflow_non_existing(operandi, auth):
     non_workflow_id = "non_existing_workflow_id"
     response = operandi.get(
         f"/workflow/{non_workflow_id}",
-        headers={"accept": "text/vnd.ocrd.workflow"},
+        # headers={"accept": "text/vnd.ocrd.workflow"},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=4)

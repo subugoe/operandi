@@ -81,8 +81,8 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_work
     #  the data is transferred from HPC to Operandi Server
     sleep(10)
     response = operandi.get(
-        url=f"/workflow/{workflow_id}/{workflow_job_id}",
-        headers={"accept": "application/vnd.zip"},
+        url=f"/workflow/{workflow_id}/{workflow_job_id}/log",
+        # headers={"accept": "application/vnd.zip"},
         auth=auth_harvester
     )
     zip_local_path = join(environ.get("OPERANDI_SERVER_BASE_DIR"), f"{workflow_job_id}.zip")

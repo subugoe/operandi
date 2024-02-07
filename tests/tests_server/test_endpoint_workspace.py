@@ -134,7 +134,7 @@ def test_get_workspace(operandi, auth, bytes_ws_different_mets):
     workspace_id = response.json()['resource_id']
     response = operandi.get(
         f"/workspace/{workspace_id}",
-        headers={"accept": "application/vnd.ocrd+zip"},
+        # headers={"accept": "application/vnd.ocrd+zip"},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -158,7 +158,7 @@ def test_get_workspace_non_existing(operandi, auth):
     non_workspace_id = "non_existing_workspace_id"
     response = operandi.get(
         f"/workspace/{non_workspace_id}",
-        headers={"accept": "application/vnd.ocrd+zip"},
+        # headers={"accept": "application/vnd.ocrd+zip"},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=4)
