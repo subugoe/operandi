@@ -5,55 +5,37 @@ from pathlib import Path
 from shutil import rmtree, copytree
 from stat import S_ISDIR
 from tempfile import mkdtemp
-from typing import Tuple
+from typing import List, Tuple
 
 from operandi_utils import make_zip_archive, unpack_zip_archive
-from .constants import HPC_TRANSFER_HOST, HPC_TRANSFER_PROXY_HOST
-from .utils import (
-    create_ssh_connection_to_hpc,
-    resolve_hpc_user_home_dir,
-    resolve_hpc_user_scratch_dir,
-    resolve_hpc_project_root_dir,
-    resolve_hpc_batch_scripts_dir,
-    resolve_hpc_slurm_workspaces_dir,
-)
+from .connector import HPCConnector
+from .constants import HPC_TRANSFER_HOSTS, HPC_TRANSFER_PROXY_HOSTS
 
 
-class HPCTransfer:
+class HPCTransfer(HPCConnector):
     def __init__(
         self,
-        host: str = environ.get("OPERANDI_HPC_HOST_TRANSFER", HPC_TRANSFER_HOST),
-        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY_TRANSFER", HPC_TRANSFER_PROXY_HOST),
-        username: str = environ.get("OPERANDI_HPC_USERNAME"),
-        key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH")
+        transfer_hosts: List[str] = HPC_TRANSFER_HOSTS,
+        proxy_hosts: List[str] = HPC_TRANSFER_PROXY_HOSTS,
+        username: str = environ.get("OPERANDI_HPC_USERNAME", None),
+        key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH", None),
+        project_name: str = environ.get("OPERANDI_HPC_PROJECT_NAME", None)
     ) -> None:
         if not username:
             raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
         if not key_path:
             raise ValueError("Environment variable not set: OPERANDI_HPC_SSH_KEYPATH")
-
-        self.log = getLogger("operandi_utils.hpc.transfer")
-        self.log.info(f"Trying to connect to HPC host: {host}, "
-                      f"via proxy: {proxy_host}, "
-                      f"with username: {username}, "
-                      f"using the key path: {key_path}")
-
-        self.user_home_dir = resolve_hpc_user_home_dir(username)
-        self.user_scratch_dir = resolve_hpc_user_scratch_dir(username)
-        project_name = environ.get("OPERANDI_HPC_PROJECT_NAME")
-        self.project_root_dir = resolve_hpc_project_root_dir(username, project_name)
-        self.batch_scripts_dir = resolve_hpc_batch_scripts_dir(username, project_name)
-        self.slurm_workspaces_dir = resolve_hpc_slurm_workspaces_dir(username, project_name)
-
-        # TODO: Handle the exceptions properly
-        self.__ssh_paramiko = create_ssh_connection_to_hpc(
-            host=host,
-            proxy_host=proxy_host,
+        if not project_name:
+            raise ValueError("Environment variable not set: OPERANDI_HPC_PROJECT_NAME")
+        super().__init__(
+            hpc_hosts=transfer_hosts,
+            proxy_hosts=proxy_hosts,
+            project_name=environ.get("OPERANDI_HPC_PROJECT_NAME", None),
+            log=getLogger("operandi_utils.hpc.transfer"),
             username=username,
-            key_path=key_path
+            key_path=Path(key_path),
+            key_pass=None
         )
-        self.log.info(f"Trying to open SFTP session")
-        self.sftp = self.__ssh_paramiko.open_sftp()
 
     def put_batch_script(self, batch_script_id: str) -> str:
         local_batch_script_path = join(dirname(__file__), "batch_scripts", batch_script_id)
@@ -104,7 +86,7 @@ class HPCTransfer:
         self.log.info(f"Zip archive created from src: {temp_workflow_job_dir}, to dst: {dst_zip_path}")
         return dst_zip_path
 
-    def put_slurm_workspace(self, local_src_slurm_zip: str, workflow_job_id: str):
+    def put_slurm_workspace(self, local_src_slurm_zip: str, workflow_job_id: str) -> str:
         self.log.info(f"Workflow job id to be used: {workflow_job_id}")
         hpc_dst_slurm_zip = join(self.slurm_workspaces_dir, f"{workflow_job_id}.zip")
         self.put_file(local_src=local_src_slurm_zip, remote_dst=hpc_dst_slurm_zip)
@@ -142,11 +124,7 @@ class HPCTransfer:
         self.log.info(f"Leaving pack_and_put_slurm_workspace")
         return local_src_slurm_zip, hpc_dst
 
-    def get_and_unpack_slurm_workspace(
-        self,
-        ocrd_workspace_dir: str,
-        workflow_job_dir: str,
-    ):
+    def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: str, workflow_job_dir: str):
         self.log.info(f"Entering get_and_unpack_slurm_workspace")
         self.log.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
         self.log.info(f"workflow_job_dir: {workflow_job_dir}")
@@ -231,23 +209,25 @@ class HPCTransfer:
         self.log.info(f"Leaving get_and_unpack_slurm_workspace")
 
     def mkdir_p(self, remotepath, mode=0o766):
+        self.recreate_sftp_if_required()
         if remotepath == '/':
-            self.sftp.chdir('/')  # absolute path so change directory to root
+            self.sftp_client.chdir('/')  # absolute path so change directory to root
             return False
         if remotepath == '':
             return False  # top-level relative directory must exist
         try:
-            self.sftp.chdir(remotepath)  # subdirectory exists
+            self.sftp_client.chdir(remotepath)  # subdirectory exists
         except IOError as error:
             dir_name, base_name = split(remotepath.rstrip('/'))
             self.mkdir_p(dir_name)  # make parent directories
-            self.sftp.mkdir(path=base_name, mode=mode)  # subdirectory missing, so created it
-            self.sftp.chdir(base_name)
+            self.sftp_client.mkdir(path=base_name, mode=mode)  # subdirectory missing, so created it
+            self.sftp_client.chdir(base_name)
             return True
 
     def get_file(self, remote_src, local_dst):
+        self.recreate_sftp_if_required()
         makedirs(name=Path(local_dst).parent.absolute(), exist_ok=True)
-        self.sftp.get(remotepath=remote_src, localpath=local_dst)
+        self.sftp_client.get(remotepath=remote_src, localpath=local_dst)
 
     def get_dir(self, remote_src, local_dst, mode=0o766):
         """
@@ -255,18 +235,20 @@ class HPCTransfer:
         The remote source directory needs to exist.
         All subdirectories in source are created under destination.
         """
+        self.recreate_sftp_if_required()
         makedirs(name=local_dst, mode=mode, exist_ok=True)
-        for item in self.sftp.listdir(remote_src):
+        for item in self.sftp_client.listdir(remote_src):
             item_src = join(remote_src, item)
             item_dst = join(local_dst, item)
-            if S_ISDIR(self.sftp.lstat(item_src).st_mode):
+            if S_ISDIR(self.sftp_client.lstat(item_src).st_mode):
                 self.get_dir(remote_src=item_src, local_dst=item_dst, mode=mode)
             else:
                 self.get_file(remote_src=item_src, local_dst=item_dst)
 
     def put_file(self, local_src, remote_dst):
+        self.recreate_sftp_if_required()
         self.mkdir_p(remotepath=str(Path(remote_dst).parent.absolute()))
-        self.sftp.put(localpath=local_src, remotepath=remote_dst)
+        self.sftp_client.put(localpath=local_src, remotepath=remote_dst)
 
     def put_dir(self, local_src, remote_dst, mode=0o766):
         """
@@ -274,6 +256,7 @@ class HPCTransfer:
         The remote destination directory needs to exist.
         All subdirectories in source are created under destination.
         """
+        self.recreate_sftp_if_required()
         self.mkdir_p(remotepath=remote_dst, mode=mode)
         for item in listdir(local_src):
             item_src = join(local_src, item)
@@ -281,5 +264,5 @@ class HPCTransfer:
             if isdir(item_src):
                 self.put_dir(local_src=item_src, remote_dst=item_dst, mode=mode)
             else:
-                self.sftp.chdir(remote_dst)
+                self.sftp_client.chdir(remote_dst)
                 self.put_file(local_src=item_src, remote_dst=item_dst)

@@ -1,14 +1,12 @@
 __all__ = [
-    "HPC_EXECUTOR_HOST",
-    "HPC_EXECUTOR_PROXY_HOST",
-    "HPC_TRANSFER_HOST",
-    "HPC_TRANSFER_PROXY_HOST"
+    "HPC_EXECUTOR_HOSTS",
+    "HPC_EXECUTOR_PROXY_HOSTS",
+    "HPC_TRANSFER_HOSTS",
+    "HPC_TRANSFER_PROXY_HOSTS"
 ]
 
-# TODO: Pass multiple hosts. When a host timeouts, another host should be tried
-# "login-mdc.hpc.gwdg.de"
-HPC_EXECUTOR_HOST = "gwdu101.hpc.gwdg.de"
-HPC_EXECUTOR_PROXY_HOST = "login.gwdg.de"
-HPC_TRANSFER_HOST = "transfer-scc.gwdg.de"
-"login.gwdg.de"
-HPC_TRANSFER_PROXY_HOST = "transfer.gwdg.de"
+# "gwdu103.hpc.gwdg.de" - bad host entry, has no access to /scratch1, but to /scratch2
+HPC_EXECUTOR_HOSTS = ["gwdu102.hpc.gwdg.de", "gwdu101.hpc.gwdg.de", "login-mdc.hpc.gwdg.de"]
+HPC_EXECUTOR_PROXY_HOSTS = ["login.gwdg.de"]
+HPC_TRANSFER_HOSTS = ["transfer-scc.gwdg.de", "transfer-mdc.hpc.gwdg.de"]
+HPC_TRANSFER_PROXY_HOSTS = ["transfer.gwdg.de", "login.gwdg.de"]

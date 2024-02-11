@@ -1,56 +1,43 @@
 from logging import getLogger
 from os import environ
+from pathlib import Path
 from time import sleep
-from .constants import HPC_EXECUTOR_HOST, HPC_EXECUTOR_PROXY_HOST
-from .utils import (
-    create_ssh_connection_to_hpc,
-    resolve_hpc_user_home_dir,
-    resolve_hpc_user_scratch_dir,
-    resolve_hpc_project_root_dir,
-    resolve_hpc_batch_scripts_dir,
-    resolve_hpc_slurm_workspaces_dir,
-)
+from typing import List
+from .connector import HPCConnector
+from .constants import HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS
 
 
-class HPCExecutor:
+class HPCExecutor(HPCConnector):
     def __init__(
         self,
-        host: str = environ.get("OPERANDI_HPC_HOST", HPC_EXECUTOR_HOST),
-        proxy_host: str = environ.get("OPERANDI_HPC_HOST_PROXY", HPC_EXECUTOR_PROXY_HOST),
-        username: str = environ.get("OPERANDI_HPC_USERNAME"),
-        key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH")
+        executor_hosts: List[str] = HPC_EXECUTOR_HOSTS,
+        proxy_hosts: List[str] = HPC_EXECUTOR_PROXY_HOSTS,
+        username: str = environ.get("OPERANDI_HPC_USERNAME", None),
+        key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH", None),
+        project_name: str = environ.get("OPERANDI_HPC_PROJECT_NAME", None)
     ) -> None:
         if not username:
             raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
         if not key_path:
             raise ValueError("Environment variable not set: OPERANDI_HPC_SSH_KEYPATH")
-
-        self.log = getLogger("operandi_utils.hpc.executor")
-        self.log.info(f"Trying to connect to HPC host: {host}, "
-                      f"via proxy: {proxy_host}, "
-                      f"with username: {username}, "
-                      f"using the key path: {key_path}")
-
-        self.user_home_dir = resolve_hpc_user_home_dir(username)
-        self.user_scratch_dir = resolve_hpc_user_scratch_dir(username)
-        project_name = environ.get("OPERANDI_HPC_PROJECT_NAME")
-        self.project_root_dir = resolve_hpc_project_root_dir(username, project_name)
-        self.batch_scripts_dir = resolve_hpc_batch_scripts_dir(username, project_name)
-        self.slurm_workspaces_dir = resolve_hpc_slurm_workspaces_dir(username, project_name)
-
-        # TODO: Handle the exceptions properly
-        self.__ssh_paramiko = create_ssh_connection_to_hpc(
-            host=host,
-            proxy_host=proxy_host,
+        if not project_name:
+            raise ValueError("Environment variable not set: OPERANDI_HPC_PROJECT_NAME")
+        super().__init__(
+            hpc_hosts=executor_hosts,
+            proxy_hosts=proxy_hosts,
+            project_name=project_name,
+            log=getLogger("operandi_utils.hpc.executor"),
             username=username,
-            key_path=key_path
+            key_path=Path(key_path),
+            key_pass=None
         )
 
     # TODO: Handle the output and return_code instead of just returning them
     # Execute blocking commands
     # Waiting for an output and return_code
     def execute_blocking(self, command, timeout=None, environment=None):
-        stdin, stdout, stderr = self.__ssh_paramiko.exec_command(
+        self.reconnect_if_required()
+        stdin, stdout, stderr = self.ssh_hpc_client.exec_command(
             command=command,
             timeout=timeout,
             environment=environment
