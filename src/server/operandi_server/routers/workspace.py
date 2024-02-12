@@ -56,7 +56,7 @@ class RouterWorkspace:
             endpoint=self.download_workspace,
             methods=["GET"],
             status_code=status.HTTP_200_OK,
-            summary="Get a list of existing workspaces.",
+            summary="Download an existing workspace zip identified with `workspace_id`.",
             response_model=None,
             response_model_exclude_unset=True,
             response_model_exclude_none=True
