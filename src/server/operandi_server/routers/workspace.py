@@ -190,7 +190,11 @@ class RouterWorkspace:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
         background_tasks.add_task(unlink, bag_path)
-        return FileResponse(bag_path)
+        return FileResponse(
+            path=bag_path,
+            filename=f"{workspace_id}.ocrd.zip",
+            media_type="application/ocrd+zip"
+        )
 
     async def upload_workspace_from_url(
         self,

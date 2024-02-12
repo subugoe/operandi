@@ -202,7 +202,11 @@ class RouterWorkflow:
             message = f"Non-existing local entry workflow id:{workflow_id}"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
-        return FileResponse(path=db_workflow.workflow_script_path, filename=db_workflow.workflow_script_base)
+        return FileResponse(
+            path=db_workflow.workflow_script_path,
+            filename=f"{workflow_id}.nf",
+            media_type="application/nextflow-file"
+        )
 
     async def upload_workflow_script(
         self,
@@ -341,7 +345,11 @@ class RouterWorkflow:
             format="zip",
             root_dir=wf_job_local,
         )
-        return FileResponse(job_archive_path)
+        return FileResponse(
+            path=job_archive_path,
+            filename=f"{job_id}.zip",
+            media_type="application/zip"
+        )
 
     # TODO: Refine this one big method and the exceptions
     async def submit_to_rabbitmq_queue(
