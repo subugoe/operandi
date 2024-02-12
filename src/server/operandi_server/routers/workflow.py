@@ -329,7 +329,7 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
         job_state = wf_job_db.job_state
-        if job_state != "SUCCESS" or job_state != "FAILED":
+        if job_state != "SUCCESS" and job_state != "FAILED":
             message = f"Cannot download logs of a job unless it succeeds or fails: {job_id}"
             self.logger.exception(message)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
