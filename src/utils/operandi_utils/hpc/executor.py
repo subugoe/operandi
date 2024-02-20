@@ -73,6 +73,14 @@ class HPCExecutor(HPCConnector):
         command = "bash -lc"
         command += " 'sbatch"
 
+        if ws_pages_amount < nf_process_forks:
+            self.log.warning(
+                "The amount of workspace pages is less than the amount of requested Nextflow process forks. "
+                f"The pages amount: {ws_pages_amount}, forks requested: {nf_process_forks}. "
+                f"Setting the forks value to the value of amount of pages."
+            )
+            nf_process_forks = ws_pages_amount
+
         # SBATCH arguments passed to the batch script
         command += f" --partition medium"
         command += f" --time={job_deadline_time}"
