@@ -107,7 +107,7 @@ class HPCConnector:
             passphrase=self.proxy_key_pass,
             timeout=self.connection_timeout
         )
-        self.ssh_proxy_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
+        # self.ssh_proxy_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
         self.last_used_proxy_host = host
         self.log.debug(f"Successfully connected to the proxy server")
         return self.ssh_proxy_client
@@ -128,7 +128,7 @@ class HPCConnector:
             dest_addr=(dst_host, dst_port),
             timeout=self.channel_timeout
         )
-        self.proxy_tunnel.get_transport().set_keepalive(self.channel_keep_alive_interval)
+        # self.proxy_tunnel.get_transport().set_keepalive(self.channel_keep_alive_interval)
         self.last_used_hpc_host = dst_host
         self.log.debug(f"Successfully configured a proxy tunnel")
         return self.proxy_tunnel
@@ -149,14 +149,14 @@ class HPCConnector:
             sock=proxy_tunnel,
             timeout=self.connection_timeout
         )
-        self.ssh_hpc_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
+        # self.ssh_hpc_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
         self.last_used_hpc_host = host
         self.log.debug(f"Successfully connected to the hpc frontend server")
         return self.ssh_hpc_client
 
     def create_sftp_client(self) -> SFTPClient:
         self.sftp_client = self.ssh_hpc_client.open_sftp()
-        self.sftp_client.get_channel().get_transport().set_keepalive(self.channel_keep_alive_interval)
+        # self.sftp_client.get_channel().get_transport().set_keepalive(self.channel_keep_alive_interval)
         return self.sftp_client
 
     @staticmethod
