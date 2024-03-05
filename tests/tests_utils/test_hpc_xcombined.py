@@ -64,7 +64,7 @@ def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow)
         mets_basename="mets.xml",
         job_deadline_time="1:00:00",
         cpus=2,
-        ram=8,
+        ram=16,
         nf_process_forks=2,
         ws_pages_amount=8
     )
