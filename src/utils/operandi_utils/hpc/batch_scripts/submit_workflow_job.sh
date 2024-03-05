@@ -68,10 +68,11 @@ check_existence_of_paths () {
 
   if [ ! -d "${SCRATCH_BASE}" ]; then
     mkdir -p "${SCRATCH_BASE}"
-    if [ ! -d "${SCRATCH_BASE}" ]; then
-      echo "Required scratch base dir was not created: ${SCRATCH_BASE}"
-      exit 1
-    fi
+  fi
+
+  if [ ! -d "${SCRATCH_BASE}" ]; then
+    echo "Required scratch base dir was not created: ${SCRATCH_BASE}"
+    exit 1
   fi
 }
 
@@ -79,20 +80,20 @@ unzip_workflow_job_dir () {
   if [ ! -f "${WORKFLOW_JOB_DIR}.zip" ]; then
     echo "Required scratch slurm workspace zip is not available: ${WORKFLOW_JOB_DIR}.zip"
     exit 1
-  else
-    echo "Unzipping ${WORKFLOW_JOB_DIR}.zip to: ${WORKFLOW_JOB_DIR}"
-    unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}" > "${SCRATCH_BASE}/workflow_job_unzipping.log"
-    echo "Removing zip: ${WORKFLOW_JOB_DIR}.zip"
-    mv "${SCRATCH_BASE}/workflow_job_unzipping.log" "${WORKFLOW_JOB_DIR}/workflow_job_unzipping.log"
-    rm "${WORKFLOW_JOB_DIR}.zip"
   fi
+
+  echo "Unzipping ${WORKFLOW_JOB_DIR}.zip to: ${WORKFLOW_JOB_DIR}"
+  unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}" > "${SCRATCH_BASE}/workflow_job_unzipping.log"
+  echo "Removing zip: ${WORKFLOW_JOB_DIR}.zip"
+  mv "${SCRATCH_BASE}/workflow_job_unzipping.log" "${WORKFLOW_JOB_DIR}/workflow_job_unzipping.log"
+  rm "${WORKFLOW_JOB_DIR}.zip"
 
   if [ ! -d "${WORKFLOW_JOB_DIR}" ]; then
     echo "Required scratch slurm workflow dir not available: ${WORKFLOW_JOB_DIR}"
     exit 1
-  else
-    cd "${WORKFLOW_JOB_DIR}" || exit 1
   fi
+
+  cd "${WORKFLOW_JOB_DIR}" || exit 1
 }
 
 start_mets_server () {
