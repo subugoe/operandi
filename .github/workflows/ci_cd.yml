@@ -123,11 +123,6 @@ jobs:
       - name: wait starting of RabbitMQ and MongoDB
         run: sleep 25
 
-      - name: run utils tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/tests_utils/test_*.py
-
       - name: run broker tests
         run: |
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
@@ -142,6 +137,11 @@ jobs:
         run: |
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
           pytest tests/tests_harvester/test_*.py
+
+      - name: run utils tests
+        run: |
+          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
+          pytest tests/tests_utils/test_*.py
 
       - name: run integration tests
         run: |
