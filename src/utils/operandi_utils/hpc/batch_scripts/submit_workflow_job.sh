@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 #SBATCH --constraint scratch
 
 # Parameters are as follows:
@@ -140,6 +140,12 @@ execute_nextflow_workflow () {
   --cpus "${CPUS}" \
   --ram "${RAM}" \
   --forks "${FORKS}"
+
+  # Useful for handling all kinds of exit status codes in the future
+  case $? in
+    0) echo "The nextflow workflow execution has finished successfully" ;;
+    *) echo "The nextflow workflow execution has failed" >&2 exit 1 ;;
+  esac
 }
 
 zip_results () {
