@@ -17,6 +17,7 @@
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
 OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
+BIND_OCRD_MODELS="${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}"
 
 SCRATCH_BASE=$1
 WORKFLOW_JOB_ID=$2
@@ -30,9 +31,14 @@ FORKS=$9
 PAGES=${10}
 
 WORKFLOW_JOB_DIR="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
-WORKSPACE_DIR="${WORKFLOW_JOB_DIR}/${WORKSPACE_ID}"
 NF_SCRIPT_PATH="${WORKFLOW_JOB_DIR}/${NEXTFLOW_SCRIPT_ID}"
+WORKSPACE_DIR="${WORKFLOW_JOB_DIR}/${WORKSPACE_ID}"
+WORKSPACE_DIR_IN_DOCKER="/ws_data"
+BIND_WORKSPACE_DIR="${WORKSPACE_DIR}:${WORKSPACE_DIR_IN_DOCKER}"
+METS_FILE_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_BASENAME}"
 METS_SOCKET_BASENAME="mets_server.sock"
+METS_SOCKET_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_SOCKET_BASENAME}"
+
 
 hostname
 slurm_resources
@@ -45,89 +51,118 @@ module load nextflow
 # To submit separate jobs for each process in the NF script
 # export NXF_EXECUTOR=slurm
 
-# The SIF file of the OCR-D All docker image must be previously created
-if [ ! -f "${SIF_PATH}" ]; then
-  echo "Required ocrd_all_image sif file not found at: ${SIF_PATH}"
-  exit 1
-fi
 
-# Models directory must be previously filled with OCR-D models
-if [ ! -d "${OCRD_MODELS_DIR}" ]; then
-  echo "Ocrd models directory not found at: ${OCRD_MODELS_DIR}"
-  exit 1
-fi
+# Define functions to be used
+check_existence_of_paths () {
+  # The SIF file of the OCR-D All docker image must be previously created
+  if [ ! -f "${SIF_PATH}" ]; then
+    echo "Required ocrd_all_image sif file not found at: ${SIF_PATH}"
+    exit 1
+  fi
 
-if [ ! -d "${SCRATCH_BASE}" ]; then
-  mkdir -p "${SCRATCH_BASE}"
+  # Models directory must be previously filled with OCR-D models
+  if [ ! -d "${OCRD_MODELS_DIR}" ]; then
+    echo "Ocrd models directory not found at: ${OCRD_MODELS_DIR}"
+    exit 1
+  fi
+
+  if [ ! -d "${SCRATCH_BASE}" ]; then
+    mkdir -p "${SCRATCH_BASE}"
+  fi
+
   if [ ! -d "${SCRATCH_BASE}" ]; then
     echo "Required scratch base dir was not created: ${SCRATCH_BASE}"
     exit 1
   fi
-fi
+}
 
-if [ ! -f "${WORKFLOW_JOB_DIR}.zip" ]; then
-  echo "Required scratch slurm workspace zip is not available: ${WORKFLOW_JOB_DIR}.zip"
-  exit 1
-else
+unzip_workflow_job_dir () {
+  if [ ! -f "${WORKFLOW_JOB_DIR}.zip" ]; then
+    echo "Required scratch slurm workspace zip is not available: ${WORKFLOW_JOB_DIR}.zip"
+    exit 1
+  fi
+
   echo "Unzipping ${WORKFLOW_JOB_DIR}.zip to: ${WORKFLOW_JOB_DIR}"
   unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}" > "${SCRATCH_BASE}/workflow_job_unzipping.log"
   echo "Removing zip: ${WORKFLOW_JOB_DIR}.zip"
   mv "${SCRATCH_BASE}/workflow_job_unzipping.log" "${WORKFLOW_JOB_DIR}/workflow_job_unzipping.log"
   rm "${WORKFLOW_JOB_DIR}.zip"
-fi
 
-if [ ! -d "${WORKFLOW_JOB_DIR}" ]; then
-  echo "Required scratch slurm workflow dir not available: ${WORKFLOW_JOB_DIR}"
-  exit 1
-else
+  if [ ! -d "${WORKFLOW_JOB_DIR}" ]; then
+    echo "Required scratch slurm workflow dir not available: ${WORKFLOW_JOB_DIR}"
+    exit 1
+  fi
+
   cd "${WORKFLOW_JOB_DIR}" || exit 1
-fi
+}
 
-# TODO: Would be better to start the mets server as an instance, but this is still broken
-# singularity instance start \
-#   --bind "${WORKSPACE_DIR}:/ws_data" \
-#   "${SIF_PATH}" \
-#   instance_mets_server \
-#  ocrd workspace -U "/ws_data/${METS_SOCKET_BASENAME}" -d "/ws_data" server start
+start_mets_server () {
+  # TODO: Would be better to start the mets server as an instance, but this is still broken
+  # singularity instance start \
+  #   --bind "${BIND_WORKSPACE_DIR}" \
+  #   "${SIF_PATH}" \
+  #   instance_mets_server \
+  #  ocrd workspace -U "${METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start
 
-# Start the mets server for the specific workspace in the background
-singularity exec \
-  --bind "${WORKSPACE_DIR}:/ws_data" \
-  "${SIF_PATH}" \
-  ocrd workspace -U "/ws_data/${METS_SOCKET_BASENAME}" -d "/ws_data" server start \
-  > "${WORKSPACE_DIR}/mets_server.log" 2>&1 &
+  # Start the mets server for the specific workspace in the background
+  singularity exec \
+    --bind "${BIND_WORKSPACE_DIR}" \
+    "${SIF_PATH}" \
+    ocrd workspace -U "${METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start \
+    > "${WORKSPACE_DIR}/mets_server.log" 2>&1 &
+}
 
-sleep 3
+stop_mets_server () {
+  # Not supported in the HPC (the version there is <7.40)
+  # curl -X DELETE --unix-socket "${WORKSPACE_DIR}/${METS_SOCKET_BASENAME}" "http://localhost/"
 
-# Execute the Nextflow script
-nextflow run "${NF_SCRIPT_PATH}" \
--ansi-log false \
--with-report \
---input_file_group "${IN_FILE_GRP}" \
---mets "/ws_data/${METS_BASENAME}" \
---mets_socket "/ws_data/${METS_SOCKET_BASENAME}" \
---workspace_dir "/ws_data" \
---pages "${PAGES}" \
---singularity_wrapper "singularity exec --bind ${WORKSPACE_DIR}:/ws_data --bind ${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER} --env OCRD_METS_CACHING=true ${SIF_PATH}" \
---cpus "${CPUS}" \
---ram "${RAM}" \
---forks "${FORKS}"
+  # TODO Stop the instance here
+  # singularity instance stop instance_mets_server
 
-# Not supported in the HPC (the version there is <7.40)
-# curl -X DELETE --unix-socket "${WORKSPACE_DIR}/${METS_SOCKET_BASENAME}" "http://localhost/"
+  # Stop the mets server started above
+  singularity exec \
+    --bind "${BIND_WORKSPACE_DIR}" \
+    "${SIF_PATH}" \
+    ocrd workspace -U "${METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server stop
+}
 
-# TODO Stop the instance here
-# singularity instance stop instance_mets_server
+execute_nextflow_workflow () {
+  local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=true ${SIF_PATH}"
+  # Execute the Nextflow script
+  nextflow run "${NF_SCRIPT_PATH}" \
+  -ansi-log false \
+  -with-report \
+  --input_file_group "${IN_FILE_GRP}" \
+  --mets "${METS_FILE_PATH}" \
+  --mets_socket "${METS_SOCKET_PATH}" \
+  --workspace_dir "${WORKSPACE_DIR_IN_DOCKER}" \
+  --pages "${PAGES}" \
+  --singularity_wrapper "${SINGULARITY_CMD}" \
+  --cpus "${CPUS}" \
+  --ram "${RAM}" \
+  --forks "${FORKS}"
 
-# Stop the mets server started above
-singularity exec \
-  --bind "${WORKSPACE_DIR}:/ws_data" \
-  "${SIF_PATH}" \
-  ocrd workspace -U "/ws_data/${METS_SOCKET_BASENAME}" -d "/ws_data" server stop
+  # Useful for handling all kinds of exit status codes in the future
+  case $? in
+    0) echo "The nextflow workflow execution has finished successfully" ;;
+    *) echo "The nextflow workflow execution has failed" >&2 exit 1 ;;
+  esac
+}
 
-# Delete symlinks created for the Nextflow workers
-find "${WORKFLOW_JOB_DIR}" -type l -delete
-# Create a zip of the ocrd workspace dir
-cd "${WORKSPACE_DIR}" && zip -r "${WORKSPACE_ID}.zip" "." -x "*.sock" > "workspace_zipping.log"
-# Create a zip of the Nextflow run results by excluding the ocrd workspace dir
-cd "${WORKFLOW_JOB_DIR}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**" > "workflow_job_zipping.log"
+zip_results () {
+  # Delete symlinks created for the Nextflow workers
+  find "${WORKFLOW_JOB_DIR}" -type l -delete
+  # Create a zip of the ocrd workspace dir
+  cd "${WORKSPACE_DIR}" && zip -r "${WORKSPACE_ID}.zip" "." -x "*.sock" > "workspace_zipping.log"
+  # Create a zip of the Nextflow run results by excluding the ocrd workspace dir
+  cd "${WORKFLOW_JOB_DIR}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**" > "workflow_job_zipping.log"
+}
+
+# Main loop for workflow job execution
+check_existence_of_paths
+unzip_workflow_job_dir
+start_mets_server
+sleep 5
+execute_nextflow_workflow
+stop_mets_server
+zip_results

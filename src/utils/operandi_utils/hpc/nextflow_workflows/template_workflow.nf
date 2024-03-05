@@ -11,9 +11,10 @@ params.pages = "null"
 params.singularity_wrapper = "null"
 params.cpus = "null"
 params.ram = "null"
-// by default single instance of each OCR-D processor
-params.forks = 2
-params.pages_per_range = params.pages / params.forks
+params.forks = params.cpus
+// Do not pass these parameters from the caller unless you know what you are doing
+params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intValue()
+params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())
 
 log.info """\
          O P E R A N D I - H P C - T E M P L A T E   P I P E L I N E
@@ -27,7 +28,8 @@ log.info """\
          cpus                : ${params.cpus}
          ram                 : ${params.ram}
          forks               : ${params.forks}
-         pages_per_range     : ${params.pages_per_range}
+         cpus_per_fork       : ${params.cpus_per_fork}
+         ram_per_fork        : ${params.ram_per_fork}
          """
          .stripIndent()
 
@@ -50,24 +52,24 @@ process split_page_ranges {
 
 process ocrd_cis_ocropy_binarize {
     maxForks params.forks
-    cpus params.cpus
-    memory params.ram
+    cpus params.cpus_per_fork
+    memory params.ram_per_fork
     debug true
 
     input:
         val page_range
-        path mets_file
         val input_group
         val output_group
     script:
+
     """
-    ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${mets_file} --page-id ${page_range} -I ${input_group} -O ${output_group}
+    ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group}
     """
 }
 
 workflow {
     main:
-        ch_range_multipliers = Channel.of(0..params.forks-1)
+        ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
         split_page_ranges(ch_range_multipliers)
-        ocrd_cis_ocropy_binarize(split_page_ranges.out[0], params.mets, params.input_file_group, "OCR-D-BIN")
+        ocrd_cis_ocropy_binarize(split_page_ranges.out, params.input_file_group, "OCR-D-BIN")
 }
