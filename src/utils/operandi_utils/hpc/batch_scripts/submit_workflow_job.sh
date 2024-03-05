@@ -125,8 +125,8 @@ stop_mets_server () {
     ocrd workspace -U "${METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server stop
 }
 
-SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=true ${SIF_PATH}"
 execute_nextflow_workflow () {
+  local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=true ${SIF_PATH}"
   # Execute the Nextflow script
   nextflow run "${NF_SCRIPT_PATH}" \
   -ansi-log false \
