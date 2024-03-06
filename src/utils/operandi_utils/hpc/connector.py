@@ -163,11 +163,7 @@ class HPCConnector:
     def is_transport_responsive(transport: Transport) -> bool:
         if not transport:
             return False
-        if not transport.is_authenticated():
-            return False
         if not transport.is_active():
-            return False
-        if not transport.is_alive():
             return False
         try:
             # Sometimes is_active() returns false-positives, hence the extra check
