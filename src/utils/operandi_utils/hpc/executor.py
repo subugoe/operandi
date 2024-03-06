@@ -102,22 +102,14 @@ class HPCExecutor(HPCConnector):
         command += f" {ws_pages_amount}"
         command += "'"
 
-        slurm_job_id = "UNASSIGNED"
-        try_times = 3
-        while try_times > 0:
-            try:
-                self.log.info(f"About to execute a blocking command: {command}")
-                output, err, return_code = self.execute_blocking(command)
-                self.log.info(f"Command output: {output}")
-                self.log.info(f"Command err: {err}")
-                self.log.info(f"Command return code: {return_code}")
-                slurm_job_id = output[0].strip('\n').split(' ')[-1]
-                self.log.info(f"Slurm job id: {slurm_job_id}")
-                assert int(slurm_job_id)
-                break
-            except Exception:
-                try_times = try_times - 1
-                continue
+        self.log.info(f"About to execute a blocking command: {command}")
+        output, err, return_code = self.execute_blocking(command)
+        self.log.info(f"Command output: {output}")
+        self.log.info(f"Command err: {err}")
+        self.log.info(f"Command return code: {return_code}")
+        slurm_job_id = output[0].strip('\n').split(' ')[-1]
+        self.log.info(f"Slurm job id: {slurm_job_id}")
+        assert int(slurm_job_id)
         return slurm_job_id
 
     def check_slurm_job_state(self, slurm_job_id: str, tries: int = 3, wait_time: int = 2) -> str:
