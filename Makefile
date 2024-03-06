@@ -131,7 +131,7 @@ run-tests-server:
 
 run-tests-integration:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/integration_tests/test_*.py -v
+	pytest tests/integration_tests/test_*.py -s -v
 
 pyclean:
 	rm -f **/*.pyc
