@@ -38,7 +38,6 @@ class HPCTransfer(HPCConnector):
         )
 
     def put_batch_script(self, batch_script_id: str) -> str:
-        self.recreate_sftp_if_required()
         local_batch_script_path = join(dirname(__file__), "batch_scripts", batch_script_id)
         hpc_batch_script_path = join(self.batch_scripts_dir, batch_script_id)
         self.put_file(
@@ -88,7 +87,6 @@ class HPCTransfer(HPCConnector):
         return dst_zip_path
 
     def put_slurm_workspace(self, local_src_slurm_zip: str, workflow_job_id: str) -> str:
-        self.recreate_sftp_if_required()
         self.log.info(f"Workflow job id to be used: {workflow_job_id}")
         hpc_dst_slurm_zip = join(self.slurm_workspaces_dir, f"{workflow_job_id}.zip")
         self.put_file(local_src=local_src_slurm_zip, remote_dst=hpc_dst_slurm_zip)
@@ -127,7 +125,6 @@ class HPCTransfer(HPCConnector):
         return local_src_slurm_zip, hpc_dst
 
     def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: str, workflow_job_dir: str):
-        self.recreate_sftp_if_required()
         self.log.info(f"Entering get_and_unpack_slurm_workspace")
         self.log.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
         self.log.info(f"workflow_job_dir: {workflow_job_dir}")
