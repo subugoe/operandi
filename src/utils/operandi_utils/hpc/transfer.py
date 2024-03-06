@@ -209,6 +209,7 @@ class HPCTransfer(HPCConnector):
         self.log.info(f"Leaving get_and_unpack_slurm_workspace")
 
     def mkdir_p(self, remotepath, mode=0o766):
+        self.recreate_sftp_if_required()
         if remotepath == '/':
             self.sftp_client.chdir('/')  # absolute path so change directory to root
             return False
@@ -224,6 +225,7 @@ class HPCTransfer(HPCConnector):
             return True
 
     def get_file(self, remote_src, local_dst):
+        self.recreate_sftp_if_required()
         makedirs(name=Path(local_dst).parent.absolute(), exist_ok=True)
         self.sftp_client.get(remotepath=remote_src, localpath=local_dst)
 
@@ -233,6 +235,7 @@ class HPCTransfer(HPCConnector):
         The remote source directory needs to exist.
         All subdirectories in source are created under destination.
         """
+        self.recreate_sftp_if_required()
         makedirs(name=local_dst, mode=mode, exist_ok=True)
         for item in self.sftp_client.listdir(remote_src):
             item_src = join(remote_src, item)
@@ -243,6 +246,7 @@ class HPCTransfer(HPCConnector):
                 self.get_file(remote_src=item_src, local_dst=item_dst)
 
     def put_file(self, local_src, remote_dst):
+        self.recreate_sftp_if_required()
         self.mkdir_p(remotepath=str(Path(remote_dst).parent.absolute()))
         self.sftp_client.put(localpath=local_src, remotepath=remote_dst)
 
@@ -252,6 +256,7 @@ class HPCTransfer(HPCConnector):
         The remote destination directory needs to exist.
         All subdirectories in source are created under destination.
         """
+        self.recreate_sftp_if_required()
         self.mkdir_p(remotepath=remote_dst, mode=mode)
         for item in listdir(local_src):
             item_src = join(local_src, item)
