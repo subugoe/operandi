@@ -206,6 +206,11 @@ class Worker:
             # The deadline of the regular jobs - 48 hours
             job_deadline_time = "48:00:00"
 
+        # Recreate the transfer connection for each workflow job submission
+        # This is required due to all kind of nasty connection fails - timeouts,
+        # paramiko transport not reporting properly, etc.
+        self.hpc_io_transfer = HPCTransfer()
+        self.log.info("HPC transfer connection renewed successfully.")
         hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(batch_script_id="submit_workflow_job.sh")
 
         try:
