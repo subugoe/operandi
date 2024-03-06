@@ -207,13 +207,13 @@ class HPCConnector:
             hpc_host = self.last_used_hpc_host
         if not proxy_host:
             proxy_host = self.last_used_proxy_host
-        if not self.is_ssh_connection_still_responsive(self.ssh_proxy_client):
+        # if not self.is_ssh_connection_still_responsive(self.ssh_proxy_client):
             self.log.warning("The connection to proxy server is not responsive, trying to open a new connection")
             self.ssh_proxy_client = self.connect_to_proxy_server(host=proxy_host, port=proxy_port)
-        if not self.is_proxy_tunnel_still_responsive():
+        # if not self.is_proxy_tunnel_still_responsive():
             self.log.warning("The proxy tunnel is not responsive, trying to establish a new proxy tunnel")
             self.proxy_tunnel = self.establish_proxy_tunnel(dst_host=hpc_host, dst_port=hpc_port)
-        if not self.is_ssh_connection_still_responsive(self.ssh_hpc_client):
+        # if not self.is_ssh_connection_still_responsive(self.ssh_hpc_client):
             self.log.warning("The connection to hpc frontend server is not responsive, trying to open a new connection")
             self.ssh_hpc_client = self.connect_to_hpc_frontend_server(proxy_host, proxy_port, self.proxy_tunnel)
 
