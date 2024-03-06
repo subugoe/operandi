@@ -163,11 +163,16 @@ class HPCConnector:
     def is_transport_responsive(transport: Transport) -> bool:
         if not transport:
             return False
+        if not transport.is_authenticated():
+            return False
         if not transport.is_active():
+            return False
+        if not transport.is_alive():
             return False
         try:
             # Sometimes is_active() returns false-positives, hence the extra check
             transport.send_ignore()
+            # Nevertheless this still returns false-positives...!!!
             return True
         except EOFError:
             return False
@@ -207,6 +212,8 @@ class HPCConnector:
             hpc_host = self.last_used_hpc_host
         if not proxy_host:
             proxy_host = self.last_used_proxy_host
+
+        # Always reconnect.
         # if not self.is_ssh_connection_still_responsive(self.ssh_proxy_client):
             self.log.warning("The connection to proxy server is not responsive, trying to open a new connection")
             self.ssh_proxy_client = self.connect_to_proxy_server(host=proxy_host, port=proxy_port)
