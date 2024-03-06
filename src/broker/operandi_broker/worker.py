@@ -55,8 +55,8 @@ class Worker:
             sync_db_initiate_database(self.db_url)
             self.hpc_executor = HPCExecutor()
             self.log.info("HPC executor connection successful.")
-            self.hpc_io_transfer = HPCTransfer()
-            self.log.info("HPC transfer connection successful.")
+            # self.hpc_io_transfer = HPCTransfer()
+            # self.log.info("HPC transfer connection successful.")
 
             self.rmq_consumer = get_connection_consumer(rabbitmq_url=self.rmq_url)
             self.log.info(f"RMQConsumer connected")
