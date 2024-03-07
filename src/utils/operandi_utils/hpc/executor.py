@@ -4,7 +4,7 @@ from pathlib import Path
 from time import sleep
 from typing import List
 from .connector import HPCConnector
-from .constants import HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS, SBATCH_EXE_PATH
+from .constants import HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS
 
 
 class HPCExecutor(HPCConnector):
@@ -71,7 +71,7 @@ class HPCExecutor(HPCConnector):
 
         nextflow_script_id = nextflow_script_path.split('/')[-1]
         command = "bash -lc"
-        command += f" '{SBATCH_EXE_PATH}"
+        command += f" 'sbatch"
 
         if ws_pages_amount < nf_process_forks:
             self.log.warning(
