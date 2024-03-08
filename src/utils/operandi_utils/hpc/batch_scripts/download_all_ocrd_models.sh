@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task 16
 #SBATCH --mem 64G
 #SBATCH --time 240
-#SBATCH --output ./download_all_ocrd_models_job-%J.txt
+#SBATCH --output /scratch1/users/mmustaf/download_all_ocrd_models_job-%J.txt
 
 module purge
 module load singularity
@@ -28,7 +28,9 @@ fi
 
 # Download all available ocrd models
 singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download '*'
-# Download models for ocrd-tesserocr-recognize which are not downloaded with the previous call
+# Download models for ocrd-tesserocr-recognize which are not downloaded with the '*' glob
 singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download ocrd-tesserocr-recognize '*'
+# Download models for ocrd-kraken-recognize which are not downloaded with the '*' glob
 singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download ocrd-kraken-recognize '*'
+# Download models for ocrd-calamari-recognize which are not downloaded with the '*' glob
 singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download ocrd-calamari-recognize '*'

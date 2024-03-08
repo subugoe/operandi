@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task 32
 #SBATCH --mem 64G
 #SBATCH --time 240
-#SBATCH --output ./create_sif_job-%J.txt
+#SBATCH --output /scratch1/users/mmustaf/create_sif_job-%J.txt
 
 module purge
 module load singularity
@@ -13,7 +13,7 @@ hostname
 slurm_resources
 
 SINGULARITY_CACHE_DIR="/scratch1/users/${USER}"
-SIF_NAME="ocrd_all_maximum_image.sif"
+SIF_NAME="ocrd_all_maximum_image_new.sif"
 OCRD_ALL_MAXIMUM_IMAGE="docker://ocrd/all:latest"
 
 if [ ! -d "${SINGULARITY_CACHE_DIR}" ]; then
@@ -21,4 +21,5 @@ if [ ! -d "${SINGULARITY_CACHE_DIR}" ]; then
 fi
 
 cd "${SINGULARITY_CACHE_DIR}" || exit
-singularity build "${SIF_NAME}" "${OCRD_ALL_MAXIMUM_IMAGE}"
+singularity build --disable-cache "${SIF_NAME}" "${OCRD_ALL_MAXIMUM_IMAGE}"
+singularity exec "${SIF_PATH}" ocrd --version
