@@ -13,7 +13,7 @@ hostname
 slurm_resources
 
 SINGULARITY_CACHE_DIR="/scratch1/users/${USER}"
-SIF_NAME="ocrd_all_maximum_image_new.sif"
+SIF_NAME="ocrd_all_maximum_image.sif"
 OCRD_ALL_MAXIMUM_IMAGE="docker://ocrd/all:latest"
 
 if [ ! -d "${SINGULARITY_CACHE_DIR}" ]; then
