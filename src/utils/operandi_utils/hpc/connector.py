@@ -117,7 +117,7 @@ class HPCConnector:
         dst_host: str,
         dst_port: int = 22,
         src_host: str = 'localhost',
-        src_port: int = 22,
+        src_port: int = 4022,
         channel_kind: str = 'direct-tcpip',
     ) -> Channel:
         proxy_transport = self.ssh_proxy_client.get_transport()
