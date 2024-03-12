@@ -248,10 +248,7 @@ class HPCConnector:
                     self.ssh_hpc_client = None
                     self.last_used_hpc_host = None
                     try:
-                        self.reconnect_if_required(
-                            hpc_host=hpc_host, hpc_port=22,
-                            proxy_host=proxy_host, proxy_port=22
-                        )
+                        self.reconnect_if_required(hpc_host=hpc_host, proxy_host=proxy_host)
                         return  # all connections were successful
                     except Exception as error:
                         self.log.error(f"""
