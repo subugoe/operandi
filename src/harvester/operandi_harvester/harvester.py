@@ -6,7 +6,7 @@ from requests.auth import HTTPBasicAuth
 from time import sleep
 
 from operandi_utils import get_log_file_path_prefix, is_url_responsive, reconfigure_all_loggers, receive_file
-from operandi_utils.constants import LOG_LEVEL_HARVESTER
+from operandi_utils.constants import LOG_LEVEL_HARVESTER, StateJob
 from .constants import (
     TRIES_TILL_TIMEOUT,
     USE_WORKSPACE_FILE_GROUP,
@@ -230,9 +230,9 @@ class Harvester:
                 return False
 
             self.logger.info(f"Response workflow job state: {workflow_job_state}")
-            if workflow_job_state == "SUCCESS":
+            if workflow_job_state == StateJob.SUCCESS:
                 return True
-            if workflow_job_state == "FAILED":
+            if workflow_job_state == StateJob.FAILED:
                 return False
             tries_left -= 1
 

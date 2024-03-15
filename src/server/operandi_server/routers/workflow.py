@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_utils import get_nf_workflows_dir
+from operandi_utils import get_nf_workflows_dir, StateJob
 from operandi_utils.database import (
     db_create_workflow,
     db_create_workflow_job,
@@ -329,7 +329,7 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
         job_state = wf_job_db.job_state
-        if job_state != "SUCCESS" and job_state != "FAILED":
+        if job_state != StateJob.SUCCESS and job_state != StateJob.FAILED:
             message = f"Cannot download logs of a job unless it succeeds or fails: {job_id}"
             self.logger.exception(message)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
@@ -384,7 +384,7 @@ class RouterWorkflow:
             # Create job request parameters
             self.logger.info("Creating workflow job space")
             job_id, job_dir = create_resource_dir(SERVER_WORKFLOW_JOBS_ROUTER)
-            job_state = "QUEUED"
+            job_state = StateJob.QUEUED
 
             # Build urls to be sent as a response
             self.logger.info("Building urls to be sent as a response")

@@ -2,6 +2,7 @@ from os import environ
 from os.path import join
 from time import sleep
 
+from operandi_utils.constants import StateJob
 from operandi_utils.rabbitmq import RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_JOB_STATUSES
 from tests.tests_server.helpers_asserts import assert_response_status_code
 
@@ -66,16 +67,16 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_work
         )
         assert_response_status_code(response.status_code, expected_floor=2)
         job_status = response.json()["job_state"]
-        if job_status == "SUCCESS":
+        if job_status == StateJob.SUCCESS:
             break
 
         # TODO: Fix may be needed here
         # When failed loop 5 more times.
         # Sometimes the FAILED changes to SUCCESS
-        if job_status == "FAILED" and tries > 5:
+        if job_status == StateJob.FAILED and tries > 5:
             tries = 5
 
-    assert job_status == "SUCCESS"
+    assert job_status == StateJob.SUCCESS
 
     # TODO: Fix this, wait for 10 secs till
     #  the data is transferred from HPC to Operandi Server

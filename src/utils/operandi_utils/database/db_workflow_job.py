@@ -1,11 +1,12 @@
 from operandi_utils import call_sync
+from operandi_utils.constants import StateJob
 from .models import DBWorkflowJob
 
 
 async def db_create_workflow_job(
     job_id: str,
     job_dir: str,
-    job_state: str,
+    job_state: StateJob,
     workflow_id: str,
     workspace_id: str
 ) -> DBWorkflowJob:
@@ -23,12 +24,12 @@ async def db_create_workflow_job(
 @call_sync
 async def sync_db_create_workflow_job(
     job_id: str,
-    workflow_id: str,
-    workspace_id: str,
     job_dir: str,
-    job_state: str
+    job_state: StateJob,
+    workflow_id: str,
+    workspace_id: str
 ) -> DBWorkflowJob:
-    return await db_create_workflow_job(job_id, workflow_id, workspace_id, job_dir, job_state)
+    return await db_create_workflow_job(job_id, job_dir, job_state, workflow_id, workspace_id)
 
 
 async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:

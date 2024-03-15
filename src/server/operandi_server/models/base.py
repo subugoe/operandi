@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from typing_extensions import Annotated
+
+from operandi_utils import StateJob
 
 
 class Resource(BaseModel):
@@ -21,16 +22,12 @@ class Resource(BaseModel):
         allow_population_by_field_name = True
 
 
-class JobState(BaseModel):
-    __root__: Annotated[str, Field(pattern=r'^(QUEUED|RUNNING|FAILED|SUCCESS)')]
-
-
 class Job(Resource):
     # Local variables:
     # resource_id: (str) - inherited from Resource
     # resource_url: (str) - inherited from Resource
     # description: (str) - inherited from Resource
-    job_state: Optional[JobState] = None
+    job_state: Optional[StateJob] = StateJob.UNSET
 
     class Config:
         allow_population_by_field_name = True

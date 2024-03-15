@@ -4,15 +4,19 @@ __all__ = [
     "is_url_responsive",
     "get_log_file_path_prefix",
     "get_nf_workflows_dir",
-    "receive_file",
     "make_zip_archive",
-    "unpack_zip_archive",
+    "receive_file",
     "reconfigure_all_loggers",
     "send_bag_to_ola_hd",
+    "StateJob",
+    "StateJobSlurm",
+    "StateWorkspace",
+    "unpack_zip_archive",
     "verify_and_parse_mq_uri",
     "verify_database_uri"
 ]
 
+from operandi_utils.constants import StateJob, StateJobSlurm, StateWorkspace
 from operandi_utils.logging import reconfigure_all_loggers, get_log_file_path_prefix
 from operandi_utils.utils import (
     call_sync,

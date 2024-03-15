@@ -1,4 +1,4 @@
-from operandi_utils import call_sync
+from operandi_utils import call_sync, StateJobSlurm
 from .models import DBHPCSlurmJob
 
 
@@ -7,7 +7,7 @@ async def db_create_hpc_slurm_job(
     hpc_slurm_job_id: str,
     hpc_batch_script_path: str,
     hpc_slurm_workspace_path: str,
-    hpc_slurm_job_state: str = None
+    hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET
 ) -> DBHPCSlurmJob:
     db_hpc_slurm_job = DBHPCSlurmJob(
         workflow_job_id=workflow_job_id,
@@ -26,7 +26,7 @@ async def sync_db_create_hpc_slurm_job(
     hpc_slurm_job_id: str,
     hpc_batch_script_path: str,
     hpc_slurm_workspace_path: str,
-    hpc_slurm_job_state: str = None
+    hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET
 ) -> DBHPCSlurmJob:
     return await db_create_hpc_slurm_job(
         workflow_job_id,

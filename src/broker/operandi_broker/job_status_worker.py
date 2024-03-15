@@ -5,7 +5,7 @@ from os import getpid, getppid, setsid
 from sys import exit
 
 from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
-from operandi_utils.constants import LOG_LEVEL_WORKER
+from operandi_utils.constants import LOG_LEVEL_WORKER, StateJob
 from operandi_utils.database import (
     sync_db_initiate_database,
     sync_db_get_hpc_slurm_job,
@@ -115,9 +115,7 @@ class JobStatusWorker:
         # Take the latest workflow job state
         old_workflow_job_status = workflow_job_db.job_state
         # Convert the slurm job state to operandi workflow job state
-        new_workflow_job_status = self.convert_slurm_to_operandi_state(
-            slurm_job_state=new_slurm_job_state
-        )
+        new_workflow_job_status = StateJob.convert_from_slurm_job(slurm_job_state=new_slurm_job_state)
 
         # If there has been a change of operandi workflow state, update it
         if old_workflow_job_status != new_workflow_job_status:
@@ -178,23 +176,3 @@ class JobStatusWorker:
         self.rmq_consumer = None
         self.log.info("Exiting gracefully.")
         exit(0)
-
-    @staticmethod
-    def convert_slurm_to_operandi_state(slurm_job_state: str) -> str:
-        # TODO: This duplication is the same as in executor.py
-        #  Refactor it when things are working
-        slurm_fail_states = ["BOOT_FAIL", "CANCELLED", "DEADLINE", "FAILED", "NODE_FAIL",
-                             "OUT_OF_MEMORY", "PREEMPTED", "REVOKED", "TIMEOUT"]
-        slurm_success_states = ["COMPLETED"]
-        slurm_waiting_states = ["RUNNING", "PENDING", "COMPLETING", "REQUEUED", "RESIZING", "SUSPENDED"]
-
-        # Take the latest workflow job state
-        workflow_job_status = None
-        if slurm_job_state in slurm_success_states:
-            workflow_job_status = "SUCCESS"
-        elif slurm_job_state in slurm_waiting_states:
-            workflow_job_status = "RUNNING"
-        elif slurm_job_state in slurm_fail_states:
-            workflow_job_status = "FAILED"
-
-        return workflow_job_status

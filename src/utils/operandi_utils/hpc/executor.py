@@ -3,6 +3,7 @@ from os import environ
 from pathlib import Path
 from time import sleep
 from typing import List
+from operandi_utils.constants import StateJobSlurm
 from .connector import HPCConnector
 from .constants import HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS
 
@@ -138,12 +139,6 @@ class HPCExecutor(HPCConnector):
 
     def poll_till_end_slurm_job_state(self, slurm_job_id: str, interval: int = 5, timeout: int = 300) -> bool:
         self.log.info(f"Polling slurm job status till end")
-        # TODO: Create a separate SlurmJob class
-        slurm_fail_states = ["BOOT_FAIL", "CANCELLED", "DEADLINE", "FAILED", "NODE_FAIL",
-                             "OUT_OF_MEMORY", "PREEMPTED", "REVOKED", "TIMEOUT"]
-        slurm_success_states = ["COMPLETED"]
-        slurm_waiting_states = ["RUNNING", "PENDING", "COMPLETING", "REQUEUED", "RESIZING", "SUSPENDED"]
-
         tries_left = timeout/interval
         self.log.info(f"Tries to be performed: {tries_left}")
         while tries_left:
@@ -155,16 +150,14 @@ class HPCExecutor(HPCConnector):
             if not slurm_job_state:
                 self.log.info(f"Slurm job state is not available yet")
                 continue
-            if slurm_job_state in slurm_success_states:
-                self.log.info(f"Slurm job state is in: {slurm_success_states}")
-                self.log.info(f"Returning True")
+            if StateJobSlurm.is_state_success(slurm_job_state):
+                self.log.info(f"Slurm job state is in: {StateJobSlurm.success_states()}")
                 return True
-            if slurm_job_state in slurm_waiting_states:
-                self.log.info(f"Slurm job state is in: {slurm_waiting_states}")
+            if StateJobSlurm.is_state_waiting(slurm_job_state):
+                self.log.info(f"Slurm job state is in: {StateJobSlurm.waiting_states()}")
                 continue
-            if slurm_job_state in slurm_fail_states:
-                self.log.info(f"Slurm job state is in: {slurm_fail_states}")
-                self.log.info(f"Returning False")
+            if StateJobSlurm.is_state_fail(slurm_job_state):
+                self.log.info(f"Slurm job state is in: {StateJobSlurm.failing_states()}")
                 return False
             # Sometimes the slurm state is still
             # not initialized inside the HPC environment.
@@ -173,5 +166,4 @@ class HPCExecutor(HPCConnector):
 
         # Timeout reached
         self.log.info("Polling slurm job status timeout reached")
-        self.log.info(f"Returning False")
         return False

@@ -1,6 +1,6 @@
 from typing import Optional
-
-from .base import Job, JobState, Resource
+from operandi_utils import StateJob
+from .base import Job, Resource
 from .workspace import WorkspaceRsrc
 
 
@@ -38,7 +38,7 @@ class WorkflowJobRsrc(Job):
         workflow_url: str,
         workspace_id: str,
         workspace_url: str,
-        job_state: JobState,
+        job_state: StateJob = StateJob.UNSET,
         description: str = None
     ):
         if not description:

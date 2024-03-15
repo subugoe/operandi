@@ -1,6 +1,8 @@
 from typing import Optional
 from beanie import Document
 
+from operandi_utils.constants import StateJob, StateJobSlurm
+
 
 class DBHPCSlurmJob(Document):
     """
@@ -17,7 +19,7 @@ class DBHPCSlurmJob(Document):
     """
     workflow_job_id: str
     hpc_slurm_job_id: str
-    hpc_slurm_job_state: Optional[str]
+    hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET
     hpc_batch_script_path: Optional[str]
     hpc_slurm_workspace_path: Optional[str]
     deleted: bool = False
@@ -91,9 +93,9 @@ class DBWorkflowJob(Document):
     """
     job_id: str
     job_dir: str
-    job_state: str
     workflow_id: str
     workspace_id: str
+    job_state: StateJob = StateJob.UNSET
     workflow_dir: Optional[str]
     workspace_dir: Optional[str]
     hpc_slurm_job_id: Optional[str]

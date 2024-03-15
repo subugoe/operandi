@@ -2,10 +2,7 @@ from datetime import datetime
 from os import environ
 from os.path import join
 from shutil import copytree
-from operandi_server.constants import (
-    SERVER_WORKFLOW_JOBS_ROUTER,
-    SERVER_WORKSPACES_ROUTER
-)
+from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 from tests.helpers_utils import to_asset_path
 
