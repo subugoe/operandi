@@ -1,7 +1,7 @@
 from typing import Optional
 from beanie import Document
 
-from operandi_utils.constants import StateJob, StateJobSlurm
+from operandi_utils.constants import StateJob, StateJobSlurm, StateWorkspace
 
 
 class DBHPCSlurmJob(Document):
@@ -124,6 +124,7 @@ class DBWorkspace(Document):
     workspace_dir: str
     workspace_mets_path: str
     pages_amount: int
+    state: StateWorkspace = StateWorkspace.UNSET
     ocrd_identifier: Optional[str]
     bagit_profile_identifier: Optional[str]
     ocrd_base_version_checksum: Optional[str]

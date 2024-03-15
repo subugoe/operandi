@@ -54,6 +54,8 @@ class StateJob(str, Enum):
     QUEUED = "QUEUED"
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
+    TRANSFERRING_TO_HPC = "TRANSFERRING_TO_HPC"
+    TRANSFERRING_FROM_HPC = "TRANSFERRING_FROM_HPC"
     UNSET = "UNSET"
 
     @staticmethod
@@ -126,4 +128,9 @@ class StateJobSlurm(str, Enum):
 
 
 class StateWorkspace(str, Enum):
-    pass
+    RUNNING = "RUNNING"
+    QUEUED = "QUEUED"
+    READY = "READY"
+    TRANSFERRING_TO_HPC = "TRANSFERRING_TO_HPC"
+    TRANSFERRING_FROM_HPC = "TRANSFERRING_FROM_HPC"
+    UNSET = "UNSET"

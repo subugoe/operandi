@@ -6,14 +6,14 @@ from os.path import join
 from sys import exit
 
 from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
-from operandi_utils.constants import LOG_LEVEL_WORKER
+from operandi_utils.constants import LOG_LEVEL_WORKER, StateJob, StateWorkspace
 from operandi_utils.database import (
     sync_db_initiate_database,
     sync_db_get_workflow,
-    sync_db_get_workflow_job,
     sync_db_get_workspace,
     sync_db_create_hpc_slurm_job,
-    sync_db_update_workflow_job
+    sync_db_update_workflow_job,
+    sync_db_update_workspace
 )
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from operandi_utils.rabbitmq import get_connection_consumer
@@ -128,15 +128,20 @@ class Worker:
                 nf_process_forks=nf_process_forks,
                 ws_pages_amount=ws_pages_amount
             )
+            self.log.info(f"The HPC slurm job was successfully submitted")
         except Exception as error:
             self.log.error(f"Triggering a slurm job in the HPC has failed: {error}")
             self.__handle_message_failure(interruption=False)
             return
 
-        self.log.info(f"The HPC slurm job was successfully submitted")
-        job_state = "RUNNING"
+        job_state = StateJob.RUNNING
         self.log.info(f"Setting new job state `{job_state}` of job_id: {self.current_message_job_id}")
         sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=job_state)
+
+        ws_state = StateWorkspace.RUNNING
+        self.log.info(f"Setting new workspace state `{ws_state}` of workspace_id: {self.current_message_ws_id}")
+        sync_db_update_workspace(find_workspace_id=self.current_message_ws_id, state=ws_state)
+
         self.has_consumed_message = False
         self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -144,10 +149,7 @@ class Worker:
     def __handle_message_failure(self, interruption: bool = False):
         job_state = "FAILED"
         self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
-        sync_db_update_workflow_job(
-            find_job_id=self.current_message_job_id,
-            job_state=job_state
-        )
+        sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=job_state)
         self.has_consumed_message = False
 
         if interruption:
@@ -211,9 +213,14 @@ class Worker:
         # paramiko transport not reporting properly, etc.
         self.hpc_io_transfer = HPCTransfer()
         self.log.info("HPC transfer connection renewed successfully.")
+        self.hpc_executor = HPCExecutor()
+        self.log.info("HPC executor connection renewed successfully.")
+
         hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(batch_script_id="submit_workflow_job.sh")
 
         try:
+            sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_TO_HPC)
+            sync_db_update_workflow_job(find_job_id=workflow_job_id, job_state=StateJob.TRANSFERRING_TO_HPC)
             self.hpc_io_transfer.pack_and_put_slurm_workspace(
                 ocrd_workspace_dir=workspace_dir,
                 workflow_job_id=workflow_job_id,

@@ -1,5 +1,6 @@
 from os.path import join
 from operandi_utils import call_sync
+from operandi_utils.constants import StateWorkspace
 from .models import DBWorkspace
 
 
@@ -9,6 +10,7 @@ async def db_create_workspace(
     workspace_dir: str,
     pages_amount: int,
     bag_info: dict,
+    state: StateWorkspace = StateWorkspace.UNSET,
     default_mets_basename: str = "mets.xml"
 ) -> DBWorkspace:
     bag_info = dict(bag_info)
@@ -31,6 +33,7 @@ async def db_create_workspace(
             workspace_dir=workspace_dir,
             workspace_mets_path=workspace_mets_path,
             pages_amount=pages_amount,
+            state=state,
             mets_basename=mets_basename,
             ocrd_identifier=ocrd_identifier,
             bagit_profile_identifier=bagit_profile_identifier,
@@ -55,9 +58,10 @@ async def sync_db_create_workspace(
     workspace_id: str,
     workspace_dir: str,
     pages_amount: int,
-    bag_info: dict
+    bag_info: dict,
+    state: StateWorkspace = StateWorkspace.UNSET
 ) -> DBWorkspace:
-    return await db_create_workspace(workspace_id, workspace_dir, pages_amount, bag_info)
+    return await db_create_workspace(workspace_id, workspace_dir, pages_amount, bag_info, state)
 
 
 async def db_get_workspace(workspace_id: str) -> DBWorkspace:
@@ -86,6 +90,8 @@ async def db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorkspace:
             db_workspace.workspace_mets_path = value
         elif key == "pages_amount":
             db_workspace.pages_amount = value
+        elif key == "state":
+            db_workspace.state = value
         elif key == "ocrd_identifier":
             db_workspace.ocrd_identifier = value
         elif key == "bagit_profile_identifier":

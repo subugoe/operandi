@@ -15,6 +15,7 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from operandi_utils.constants import StateWorkspace
 from operandi_utils.database import db_create_workspace, db_get_workspace, db_update_workspace
 from operandi_server.constants import SERVER_WORKSPACES_ROUTER, DEFAULT_METS_BASENAME
 from operandi_server.exceptions import WorkspaceNotValidException
@@ -155,7 +156,8 @@ class RouterWorkspace:
         response = []
         for workspace in workspaces:
             ws_id, ws_url = workspace
-            response.append(WorkspaceRsrc.create(workspace_id=ws_id, workspace_url=ws_url))
+            db_workspace = await db_get_workspace(workspace_id=ws_id)
+            response.append(WorkspaceRsrc.create(workspace_id=ws_id, workspace_url=ws_url, state=db_workspace.state))
         return response
 
     async def download_workspace(
@@ -179,6 +181,11 @@ class RouterWorkspace:
             message = f"Non-existing local entry workspace id:{workspace_id}"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+        if db_workspace.state != StateWorkspace.READY:
+            message = f"The workspace is not ready yet, current state: {db_workspace.state}"
+            self.logger.error(f"{message}")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
 
         message = f"No bag was produced for workspace id: {workspace_id}"
         try:
@@ -234,17 +241,20 @@ class RouterWorkspace:
         bag_info = self._extract_bag_info_with_error_handling(bag_dst=bag_dest, ws_dir=workspace_dir)
         Path(bag_dest).unlink()  # Remove the created zip bag
         pages_amount = self._extract_pages_with_error_handling(bag_info, workspace_dir)
+        ws_state = StateWorkspace.READY
         await db_create_workspace(
             workspace_id=workspace_id,
             workspace_dir=workspace_dir,
             pages_amount=pages_amount,
-            bag_info=bag_info
+            bag_info=bag_info,
+            state=ws_state
         )
         workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, workspace_id)
         return WorkspaceRsrc.create(
             workspace_id=workspace_id,
             workspace_url=workspace_url,
-            description="Workspace from Mets URL"
+            description="Workspace from Mets URL",
+            state=ws_state
         )
 
     async def upload_workspace(
@@ -271,17 +281,20 @@ class RouterWorkspace:
         bag_info = self._extract_bag_info_with_error_handling(bag_dst=bag_dest, ws_dir=ws_dir)
         Path(bag_dest).unlink()  # Remove the created zip bag
         pages_amount = self._extract_pages_with_error_handling(bag_info, ws_dir)
+        ws_state = StateWorkspace.READY
         await db_create_workspace(
             workspace_id=ws_id,
             workspace_dir=ws_dir,
             pages_amount=pages_amount,
-            bag_info=bag_info
+            bag_info=bag_info,
+            state=ws_state
         )
         ws_url = get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id)
         return WorkspaceRsrc.create(
             workspace_id=ws_id,
             workspace_url=ws_url,
-            description="Workspace from ocrd zip"
+            description="Workspace from ocrd zip",
+            state=ws_state
         )
 
     async def put_workspace(
@@ -296,6 +309,22 @@ class RouterWorkspace:
         -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
         """
         await self.user_authenticator.user_login(auth)
+        try:
+            db_workspace = await db_get_workspace(workspace_id=workspace_id)
+            if db_workspace:
+                if db_workspace.deleted:
+                    message = f"Workspace has been already deleted: {workspace_id}"
+                    self.logger.warning(f"{message}")
+                    raise HTTPException(status_code=status.HTTP_410_GONE, detail=message)
+
+                if db_workspace.state != StateWorkspace.READY:
+                    message = f"The workspace is not ready yet, current state: {db_workspace.state}"
+                    self.logger.error(f"{message}")
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+        except RuntimeError:
+            # Non-existing, ignore
+            pass
+
         try:
             delete_resource_dir(SERVER_WORKSPACES_ROUTER, workspace_id)
         except FileNotFoundError:
@@ -315,17 +344,20 @@ class RouterWorkspace:
         bag_info = self._extract_bag_info_with_error_handling(bag_dst=bag_dest, ws_dir=ws_dir)
         Path(bag_dest).unlink()
         pages_amount = self._extract_pages_with_error_handling(bag_info, ws_dir)
+        ws_state = StateWorkspace.READY
         await db_create_workspace(
             workspace_id=ws_id,
             workspace_dir=ws_dir,
             pages_amount=pages_amount,
-            bag_info=bag_info
+            bag_info=bag_info,
+            state=ws_state
         )
         ws_url = get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id)
         return WorkspaceRsrc.create(
             workspace_id=ws_id,
             workspace_url=ws_url,
-            description="Workspace from ocrd zip"
+            description="Workspace from ocrd zip",
+            state=ws_state
         )
 
     async def delete_workspace(
@@ -340,19 +372,30 @@ class RouterWorkspace:
         await self.user_authenticator.user_login(auth)
         try:
             db_workspace = await db_get_workspace(workspace_id=workspace_id)
-            deleted_workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
-            delete_resource_dir(SERVER_WORKSPACES_ROUTER, workspace_id)
         except RuntimeError as error:
             message = f"Non-existing DB entry for workspace_id: {workspace_id}"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
-        except FileNotFoundError as error:
-            message = f"Non-existing local entry workspace_id: {workspace_id}"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
         if db_workspace.deleted:
             message = f"Workspace has been already deleted: {workspace_id}"
             self.logger.warning(f"{message}")
             raise HTTPException(status_code=status.HTTP_410_GONE, detail=message)
+
+        if db_workspace.state != StateWorkspace.READY:
+            message = f"The workspace is not ready yet, current state: {db_workspace.state}"
+            self.logger.error(f"{message}")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+
+        try:
+            deleted_workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
+            delete_resource_dir(SERVER_WORKSPACES_ROUTER, workspace_id)
+        except FileNotFoundError as error:
+            message = f"Non-existing local entry workspace_id: {workspace_id}"
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
         await db_update_workspace(find_workspace_id=workspace_id, deleted=True)
-        return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=deleted_workspace_url)
+        return WorkspaceRsrc.create(
+            workspace_id=workspace_id, workspace_url=deleted_workspace_url, state=db_workspace.state
+        )

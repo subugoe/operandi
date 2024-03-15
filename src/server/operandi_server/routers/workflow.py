@@ -9,12 +9,15 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_utils import get_nf_workflows_dir, StateJob
+from operandi_utils import get_nf_workflows_dir
+from operandi_utils.constants import StateJob, StateWorkspace
 from operandi_utils.database import (
     db_create_workflow,
     db_create_workflow_job,
     db_get_workflow,
-    db_get_workflow_job
+    db_get_workflow_job,
+    db_get_workspace,
+    db_update_workspace
 )
 from operandi_utils.rabbitmq import (
     get_connection_publisher,
@@ -122,6 +125,7 @@ class RouterWorkflow:
             2) RUNNING - The workflow job is currently running.
             3) FAILED - The workflow job has failed.
             4) SUCCESS - The workflow job has finished successfully.
+            5) UNSET - The workflow job state was not set yet.
             """,
             response_model=WorkflowJobRsrc,
             response_model_exclude_unset=True,
@@ -332,7 +336,7 @@ class RouterWorkflow:
         if job_state != StateJob.SUCCESS and job_state != StateJob.FAILED:
             message = f"Cannot download logs of a job unless it succeeds or fails: {job_id}"
             self.logger.exception(message)
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
         try:
             wf_job_local = get_resource_local(SERVER_WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
         except FileNotFoundError as error:
@@ -381,6 +385,17 @@ class RouterWorkflow:
             workspace_id = workflow_args.workspace_id
             input_file_grp = workflow_args.input_file_grp
 
+            try:
+                db_workspace = await db_get_workspace(workspace_id=workspace_id)
+                if db_workspace.state != StateWorkspace.READY:
+                    message = f"The workspace is not ready yet, current state: {db_workspace.state}"
+                    self.logger.error(f"{message}")
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+            except RuntimeError as error:
+                message = f"Non-existing DB entry for workspace id:{workspace_id}"
+                self.logger.error(f"{message}, error: {error}")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
             # Create job request parameters
             self.logger.info("Creating workflow job space")
             job_id, job_dir = create_resource_dir(SERVER_WORKFLOW_JOBS_ROUTER)
@@ -391,6 +406,9 @@ class RouterWorkflow:
             workspace_url = get_resource_url(resource_router=SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
             workflow_url = get_resource_url(resource_router=SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
             job_url = get_resource_url(resource_router=SERVER_WORKFLOW_JOBS_ROUTER, resource_id=job_id)
+
+            ws_state = StateWorkspace.QUEUED
+            await db_update_workspace(find_workspace_id=workspace_id, state=ws_state)
 
             # Save to the workflow job to the database
             self.logger.info("Saving the workflow job to the database")
@@ -439,5 +457,6 @@ class RouterWorkflow:
             workflow_url=workflow_url,
             workspace_id=workspace_id,
             workspace_url=workspace_url,
+            ws_state=ws_state,
             job_state=job_state
         )

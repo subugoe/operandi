@@ -1,5 +1,5 @@
 from typing import Optional
-from operandi_utils import StateJob
+from operandi_utils.constants import StateJob, StateWorkspace
 from .base import Job, Resource
 from .workspace import WorkspaceRsrc
 
@@ -38,13 +38,14 @@ class WorkflowJobRsrc(Job):
         workflow_url: str,
         workspace_id: str,
         workspace_url: str,
+        ws_state: StateWorkspace = StateWorkspace.UNSET,
         job_state: StateJob = StateJob.UNSET,
         description: str = None
     ):
         if not description:
             description = "Workflow-Job"
         workflow_rsrc = WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
-        workspace_rsrc = WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=workspace_url)
+        workspace_rsrc = WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=workspace_url, state=ws_state)
 
         return WorkflowJobRsrc(
             resource_id=job_id,
