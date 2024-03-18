@@ -239,7 +239,7 @@ class HPCConnector:
             self.log.warning("The SFTP client is not responsive, trying to create a new SFTP client")
             self.create_sftp_client()
 
-    def create_ssh_connection_to_hpc_by_iteration(self, try_times: int = 1) -> None:
+    def create_ssh_connection_to_hpc_by_iteration(self, try_times: int = 3) -> None:
         while try_times > 0:
             for proxy_host in self.proxy_hosts:
                 self.ssh_proxy_client = None
