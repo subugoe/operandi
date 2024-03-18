@@ -208,13 +208,27 @@ class Worker:
             # The deadline of the regular jobs - 48 hours
             job_deadline_time = "48:00:00"
 
+        if self.hpc_executor:
+            if self.hpc_executor.ssh_hpc_client:
+                self.hpc_executor.ssh_hpc_client.close()
+            if self.hpc_executor.ssh_proxy_client:
+                self.hpc_executor.ssh_proxy_client.close()
+
+        if self.hpc_io_transfer:
+            if self.hpc_io_transfer.sftp_client:
+                self.hpc_io_transfer.sftp_client.close()
+            if self.hpc_io_transfer.ssh_hpc_client:
+                self.hpc_io_transfer.ssh_hpc_client.close()
+            if self.hpc_io_transfer.ssh_proxy_client:
+                self.hpc_io_transfer.ssh_proxy_client.close()
+
         # Recreate the transfer connection for each workflow job submission
         # This is required due to all kind of nasty connection fails - timeouts,
         # paramiko transport not reporting properly, etc.
-        self.hpc_io_transfer = HPCTransfer()
-        self.log.info("HPC transfer connection renewed successfully.")
         self.hpc_executor = HPCExecutor()
         self.log.info("HPC executor connection renewed successfully.")
+        self.hpc_io_transfer = HPCTransfer()
+        self.log.info("HPC transfer connection renewed successfully.")
 
         hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(batch_script_id="submit_workflow_job.sh")
 
