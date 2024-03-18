@@ -121,7 +121,7 @@ class HPCConnector:
         channel_kind: str = 'direct-tcpip',
     ) -> Channel:
         proxy_transport = self.ssh_proxy_client.get_transport()
-        self.log.debug(f"Configuring a tunnel to destination: {dst_host}:{dst_port}")
+        self.log.debug(f"Configuring a tunnel to destination {dst_host}:{dst_port} from {src_host}:{src_port}")
         self.proxy_tunnel = proxy_transport.open_channel(
             kind=channel_kind,
             src_addr=(src_host, src_port),
