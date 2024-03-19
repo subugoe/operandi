@@ -1,0 +1,131 @@
+version: '3.8'
+
+networks:
+  operandi_test_network:
+    name: ${DOCKER_OPERANDI_NETWORK_NAME}
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: ${DOCKER_OPERANDI_NETWORK_MTU}
+
+services:
+  operandi-mongodb:
+    image: "mongo"
+    container_name: operandi_test_mongodb
+    networks:
+      - ${DOCKER_OPERANDI_NETWORK_NAME}
+    hostname: ${MONGODB_HOST}
+    ports:
+      - ${MONGODB_PORT}:27017
+    volumes:
+      - "/operandi-mongodb-test:/data/db"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  operandi-rabbitmq:
+    image: "rabbitmq:3.12-management"
+    container_name: operandi_test_rabbitmq
+    networks:
+      - ${DOCKER_OPERANDI_NETWORK_NAME}
+    hostname: ${RABBITMQ_HOST}
+    ports:
+      - ${RABBITMQ_PORT}:5672
+      - ${RABBITMQ_PORT_UI}:15672
+      - ${RABBITMQ_PORT_CLI}:25672
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+      - RABBITMQ_FEATURE_FLAGS=${RABBITMQ_FEATURE_FLAGS}
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  operandi-server:
+    image: operandi_base
+    container_name: operandi_test_server
+    networks:
+      - ${DOCKER_OPERANDI_NETWORK_NAME}
+    build:
+      dockerfile: ./Dockerfile
+    depends_on:
+      operandi-rabbitmq:
+        condition: service_healthy
+      operandi-mongodb:
+        condition: service_healthy
+    ports:
+      - ${OPERANDI_SERVER_PORT}:8000
+    environment:
+      MONGODB_NAME: ${MONGODB_NAME}
+      MONGODB_URL: ${MONGODB_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      OPERANDI_HARVESTER_DEFAULT_USERNAME: ${OPERANDI_HARVESTER_DEFAULT_USERNAME}
+      OPERANDI_HARVESTER_DEFAULT_PASSWORD: ${OPERANDI_HARVESTER_DEFAULT_PASSWORD}
+      OPERANDI_LOGS_DIR: /operandi-logs
+      OPERANDI_SERVER_BASE_DIR: /operandi-data
+      OPERANDI_SERVER_DEFAULT_USERNAME: ${OPERANDI_SERVER_DEFAULT_USERNAME}
+      OPERANDI_SERVER_DEFAULT_PASSWORD: ${OPERANDI_SERVER_DEFAULT_PASSWORD}
+      OPERANDI_SERVER_URL_LIVE: ${OPERANDI_SERVER_URL}
+      OPERANDI_SERVER_URL_LOCAL: http://0.0.0.0:8000
+    healthcheck:
+      test: curl -f http://0.0.0.0:8000/
+      interval: 1s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - ${OPERANDI_LOGS_DIR}:/operandi-logs
+      - ${OPERANDI_SERVER_BASE_DIR}:/operandi-data
+    command: operandi-server start
+
+  operandi-broker:
+    image: operandi_base
+    container_name: operandi_test_broker
+    networks:
+      - ${DOCKER_OPERANDI_NETWORK_NAME}
+    depends_on:
+      operandi-rabbitmq:
+        condition: service_healthy
+      operandi-mongodb:
+        condition: service_healthy
+    environment:
+      MONGODB_NAME: ${MONGODB_NAME}
+      MONGODB_URL: ${MONGODB_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      OPERANDI_HPC_PROJECT_NAME: ${OPERANDI_HPC_PROJECT_NAME}
+      OPERANDI_HPC_USERNAME: ${OPERANDI_HPC_USERNAME}
+      OPERANDI_HPC_SSH_KEYPATH: /home/root/.ssh/gwdg_hpc_key
+      OPERANDI_LOGS_DIR: /operandi-logs
+      OPERANDI_SERVER_BASE_DIR: /operandi-data
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${OPERANDI_LOGS_DIR}:/operandi-logs
+      - ${OPERANDI_SERVER_BASE_DIR}:/operandi-data
+      - ${OPERANDI_HPC_SSH_KEYPATH}:/home/root/.ssh/gwdg_hpc_key
+    command: operandi-broker start
+
+  operandi-run-tests:
+    image: operandi_tests
+    container_name: operandi_tests_container
+    networks:
+      - ${DOCKER_OPERANDI_NETWORK_NAME}
+    build:
+      dockerfile: ./Dockerfile
+    depends_on:
+      operandi-server:
+        condition: service_healthy
+    environment:
+      MONGODB_NAME: ${MONGODB_NAME}
+      MONGODB_URL: ${MONGODB_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      OPERANDI_SERVER_URL: ${OPERANDI_SERVER_URL}
+      OPERANDI_LOGS_DIR: /operandi-logs
+      OPERANDI_SERVER_BASE_DIR: /operandi-data
+    volumes:
+      - ${OPERANDI_LOGS_DIR}:/operandi-logs
+      - ${OPERANDI_SERVER_BASE_DIR}:/operandi-data

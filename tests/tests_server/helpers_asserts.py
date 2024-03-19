@@ -40,9 +40,3 @@ def assert_local_dir_workspace(workspace_id: str):
 def assert_local_dir_workspace_not(workspace_id: str):
     workspace_dir = __resolve_local_resource_path(SERVER_WORKSPACES_ROUTER, workspace_id)
     assert_exists_not(workspace_dir)
-
-
-def assert_response_status_code(status_code, expected_floor):
-    status_floor = status_code // 100
-    assert expected_floor == status_floor, \
-        f"Response status code expected:{expected_floor}xx, got: {status_code}"

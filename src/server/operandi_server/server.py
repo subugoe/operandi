@@ -18,15 +18,15 @@ from operandi_server.utils import safe_init_logging
 class OperandiServer(FastAPI):
     def __init__(
         self,
-        db_url: str = environ.get("OPERANDI_DB_URL"),
-        rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
+        db_url: str = environ.get("MONGODB_URL"),
+        rabbitmq_url: str = environ.get("RABBITMQ_URL"),
         live_server_url: str = environ.get("OPERANDI_SERVER_URL_LIVE"),
         local_server_url: str = environ.get("OPERANDI_SERVER_URL_LOCAL")
     ):
         if not db_url:
-            raise ValueError("Environment variable not set: OPERANDI_DB_URL")
+            raise ValueError("Environment variable not set: MONGODB_URL")
         if not rabbitmq_url:
-            raise ValueError("Environment variable not set: OPERANDI_RABBITMQ_URL")
+            raise ValueError("Environment variable not set: RABBITMQ_URL")
         if not live_server_url:
             raise ValueError("Environment variable not set: OPERANDI_SERVER_URL_LIVE")
         if not local_server_url:

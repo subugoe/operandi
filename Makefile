@@ -133,6 +133,18 @@ run-tests-integration:
 	export $(shell sed 's/=.*//' ./tests/.env)
 	pytest tests/integration_tests/test_*.py -s -v
 
+DOCKER_COMPOSE = docker compose
+INTEGRATION_TEST_IN_DOCKER = docker exec operandi_tests_container
+run-tests-integration-local:
+	$(DOCKER_COMPOSE) --file docker-compose-tests.yml --env-file tests/.env up -d
+	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
+	$(DOCKER_COMPOSE) --file docker-compose-tests.yml --env-file tests/.env down --remove-orphans
+
+run-tests-integration-cicd:
+	$(DOCKER_COMPOSE) --file docker-compose-tests.yml --env-file tests/.env up -d
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
+	$(DOCKER_COMPOSE) --file docker-compose-tests.yml --env-file tests/.env down --remove-orphans
+
 pyclean:
 	rm -f **/*.pyc
 	find . -name '__pycache__' -exec rm -rf '{}' \;

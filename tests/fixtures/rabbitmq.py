@@ -11,9 +11,9 @@ from operandi_utils.rabbitmq import (
 )
 
 
-@fixture(scope="package", name='rabbitmq_defaults')
+@fixture(scope="package", name="rabbitmq_defaults")
 def fixture_configure_exchange_and_queue():
-    rmq_data = verify_and_parse_mq_uri(environ.get("OPERANDI_RABBITMQ_URL"))
+    rmq_data = verify_and_parse_mq_uri(environ.get("RABBITMQ_URL"))
     rmq_username = rmq_data["username"]
     rmq_password = rmq_data["password"]
     rmq_host = rmq_data["host"]
@@ -40,13 +40,13 @@ def fixture_configure_exchange_and_queue():
     RMQConnector.queue_purge(channel=test_channel, queue_name=RABBITMQ_QUEUE_DEFAULT)
 
 
-@fixture(scope="package", name='rabbitmq_publisher')
+@fixture(scope="package", name="rabbitmq_publisher")
 def fixture_rabbitmq_publisher(rabbitmq_defaults):
     publisher = get_connection_publisher(enable_acks=True)
     yield publisher
 
 
-@fixture(scope="package", name='rabbitmq_consumer')
+@fixture(scope="package", name="rabbitmq_consumer")
 def fixture_rabbitmq_consumer(rabbitmq_defaults):
     consumer = get_connection_consumer()
     yield consumer

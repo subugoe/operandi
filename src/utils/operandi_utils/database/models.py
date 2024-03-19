@@ -112,6 +112,9 @@ class DBWorkspace(Document):
     Information to handle workspaces and from bag-info.txt are stored here.
 
     Attributes:
+        workspace_id                The id that identifies this workspace record
+        workspace_dir               The workspace dir - the parent dir of the mets file
+        workspace_mets_path         The full path of the mets file
         pages_amount                The amount of the physical pages, used for creating page ranges
         ocrd_identifier             Ocrd-Identifier (mandatory)
         bagit_profile_identifier    BagIt-Profile-Identifier (mandatory)

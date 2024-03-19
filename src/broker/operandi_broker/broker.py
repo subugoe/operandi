@@ -23,14 +23,14 @@ from .job_status_worker import JobStatusWorker
 class ServiceBroker:
     def __init__(
         self,
-        db_url: str = environ.get("OPERANDI_DB_URL"),
-        rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
+        db_url: str = environ.get("MONGODB_URL"),
+        rabbitmq_url: str = environ.get("RABBITMQ_URL"),
         test_sbatch: bool = False
     ):
         if not db_url:
-            raise ValueError("Environment variable not set: OPERANDI_DB_URL")
+            raise ValueError("Environment variable not set: MONGODB_URL")
         if not rabbitmq_url:
-            raise ValueError("Environment variable not set: OPERANDI_RABBITMQ_URL")
+            raise ValueError("Environment variable not set: RABBITMQ_URL")
 
         log_file_path = f"{get_log_file_path_prefix(module_type='broker')}.log"
         # Reconfigure all loggers to the same format

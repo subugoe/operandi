@@ -19,14 +19,14 @@ def fixture_odem_workflow():
 
 @fixture(scope="package", name="bytes_template_workflow")
 def fixture_bytes_template_workflow(template_workflow):
-    return open(template_workflow, 'rb')
+    return open(template_workflow, "rb")
 
 
 @fixture(scope="package", name="bytes_default_workflow")
 def fixture_bytes_default_workflow(default_workflow):
-    return open(default_workflow, 'rb')
+    return open(default_workflow, "rb")
 
 
 @fixture(scope="package", name="bytes_odem_workflow")
 def fixture_bytes_odem_workflow(odem_workflow):
-    return open(odem_workflow, 'rb')
+    return open(odem_workflow, "rb")

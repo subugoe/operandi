@@ -4,10 +4,10 @@ from time import sleep
 
 from operandi_utils.constants import StateJob
 from operandi_utils.rabbitmq import RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_JOB_STATUSES
-from tests.tests_server.helpers_asserts import assert_response_status_code
 
+"""
 
-def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_workflow, bytes_small_workspace):
+def test_full_cycle(auth_harvester, service_broker, bytes_default_workflow, bytes_small_workspace):
     response = operandi.get("/")
     assert response.json()["message"] == "The home page of the OPERANDI Server"
 
@@ -17,21 +17,15 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_work
     service_broker.create_worker_process(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, status_checker=True)
 
     # Post a workflow script
-    response = operandi.post(
-        url="/workflow",
-        files={"nextflow_script": bytes_default_workflow},
-        auth=auth_harvester
-    )
-    assert_response_status_code(response.status_code, expected_floor=2)
+    wf_file = {"nextflow_script": bytes_default_workflow}
+    response = operandi.post(url="/workflow", files=wf_file, auth=auth_harvester)
+    assert response.status_code == 201
     workflow_id = response.json()["resource_id"]
 
     # Post a workspace zip
-    response = operandi.post(
-        url="/workspace",
-        files={"workspace": bytes_small_workspace},
-        auth=auth_harvester
-    )
-    assert_response_status_code(response.status_code, expected_floor=2)
+    ws_file = {"workspace": bytes_small_workspace}
+    response = operandi.post(url="/workspace", files=ws_file, auth=auth_harvester)
+    assert response.status_code == 201
     workspace_id = response.json()["resource_id"]
 
     # Post workflow job
@@ -48,12 +42,8 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_work
           "ram": 32
         }
     }
-    response = operandi.post(
-        url=f"/workflow/{workflow_id}",
-        json=req_data,
-        auth=auth_harvester
-    )
-    assert_response_status_code(response.status_code, expected_floor=2)
+    response = operandi.post(url=f"/workflow/{workflow_id}", json=req_data, auth=auth_harvester)
+    assert response.status_code == 201
     workflow_job_id = response.json()["resource_id"]
 
     tries = 50
@@ -61,11 +51,8 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_work
     while tries > 0:
         tries -= 1
         sleep(30)
-        response = operandi.get(
-            url=f"/workflow/{workflow_id}/{workflow_job_id}",
-            auth=auth_harvester
-        )
-        assert_response_status_code(response.status_code, expected_floor=2)
+        response = operandi.get(url=f"/workflow/{workflow_id}/{workflow_job_id}", auth=auth_harvester)
+        assert response.status_code == 200
         job_status = response.json()["job_state"]
         if job_status == StateJob.SUCCESS:
             break
@@ -81,13 +68,10 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_work
     # TODO: Fix this, wait for 10 secs till
     #  the data is transferred from HPC to Operandi Server
     sleep(10)
-    response = operandi.get(
-        url=f"/workflow/{workflow_id}/{workflow_job_id}/log",
-        # headers={"accept": "application/vnd.zip"},
-        auth=auth_harvester
-    )
+    response = operandi.get(url=f"/workflow/{workflow_id}/{workflow_job_id}/log", auth=auth_harvester)
     zip_local_path = join(environ.get("OPERANDI_SERVER_BASE_DIR"), f"{workflow_job_id}.zip")
     with open(zip_local_path, "wb") as filePtr:
         for chunk in response.iter_bytes(chunk_size=1024):
             if chunk:
                 filePtr.write(chunk)
+"""

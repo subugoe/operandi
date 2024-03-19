@@ -18,13 +18,13 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 @cli.command("start")
 @option(
     "-q", "--queue",
-    default=environ.get("OPERANDI_RABBITMQ_URL"),
+    default=environ.get("RABBITMQ_URL"),
     help="The URL of the RabbitMQ Server, format: amqp://username:password@host:port/vhost",
     type=QueueServerParamType()
 )
 @option(
     "-d", "--database",
-    default=environ.get("OPERANDI_DB_URL"),
+    default=environ.get("MONGODB_URL"),
     help="The URL of the MongoDB, format: mongodb://host:port",
     type=DatabaseParamType()
 )

@@ -14,8 +14,7 @@ from .models import (
 
 
 async def db_initiate_database(
-    db_url: str = environ.get("OPERANDI_DB_URL"),
-    db_name: str = environ.get("OPERANDI_DB_NAME")
+    db_url: str = environ.get("MONGODB_URL"), db_name: str = environ.get("MONGODB_NAME")
 ):
     logger = getLogger("operandi_utils.database.base")
     logger.info(f"MongoDB URL: {db_url}")
@@ -37,7 +36,6 @@ async def db_initiate_database(
 
 @call_sync
 async def sync_db_initiate_database(
-    db_url: str = environ.get("OPERANDI_DB_URL"),
-    db_name: str = environ.get("OPERANDI_DB_NAME")
+    db_url: str = environ.get("MONGODB_URL"), db_name: str = environ.get("MONGODB_NAME")
 ):
     await db_initiate_database(db_url, db_name)
