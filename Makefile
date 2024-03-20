@@ -111,39 +111,42 @@ start-harvester-dummy:
 	export $(shell sed 's/=.*//' ./.env)
 	operandi-harvester start-dummy --address http://localhost
 
-run-tests: run-tests-utils run-tests-broker run-tests-server run-tests-harvester run-tests-integration
+DOCKER_COMPOSE = docker compose
+start-services-test:
+	$(DOCKER_COMPOSE) --file docker-compose.yml --env-file tests/.env up -d
+stop-services-test:
+	$(DOCKER_COMPOSE) --file docker-compose.yml --env-file tests/.env down --remove-orphans
 
-run-tests-utils:
-	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_utils/test_*.py -v
+INTEGRATION_TEST_IN_DOCKER = docker exec operandi_tests_container
+run-tests-db:
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_1_db' -v
+
+run-tests-rabbitmq:
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_2_rabbitmq' -v
+
+run-tests-hpc:
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_3_hpc' -v
 
 run-tests-broker:
-	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_broker/test_*.py -v
-
-run-tests-harvester:
-	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_harvester/test_*.py -v
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_4_broker' -v
 
 run-tests-server:
-	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_server/test_*.py -v
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_5_server' -v
 
-run-tests-integration:
-	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/integration_tests/test_*.py -s -v
+run-tests-harvester:
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_6_harvester' -v
 
-DOCKER_COMPOSE = docker compose
-INTEGRATION_TEST_IN_DOCKER = docker exec operandi_tests_container
-run-tests-integration-local:
-	$(DOCKER_COMPOSE) --file docker-compose-tests.yml --env-file tests/.env up -d
-	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
-	$(DOCKER_COMPOSE) --file docker-compose-tests.yml --env-file tests/.env down --remove-orphans
+run-integration-tests: run-tests-db run-tests-rabbitmq run-tests-hpc run-tests-broker run-tests-server run-tests-harvester
 
-run-tests-integration-cicd:
-	$(DOCKER_COMPOSE) --file docker-compose-tests.yml --env-file tests/.env up -d
-	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v
-	$(DOCKER_COMPOSE) --file docker-compose-tests.yml --env-file tests/.env down --remove-orphans
+run-all-tests:
+	start-services-test
+	run-integration-tests
+	stop-services-test:
+
+run-all-tests-cicd:
+	start-services-test
+	-run-integration-tests
+	stop-services-test
 
 pyclean:
 	rm -f **/*.pyc

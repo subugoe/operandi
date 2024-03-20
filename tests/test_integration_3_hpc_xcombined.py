@@ -4,7 +4,7 @@ from os.path import join
 from shutil import copytree
 from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
-from tests.helpers_utils import to_asset_path
+from tests.helpers.utils import to_asset_path
 
 current_time = datetime.now().strftime("%Y%m%d_%H%M")
 ID_WORKFLOW_JOB = f"test_wf_job_{current_time}"

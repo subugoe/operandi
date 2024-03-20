@@ -1,5 +1,5 @@
 from pytest import fixture
-from tests.helpers_utils import to_asset_path
+from tests.helpers.utils import to_asset_path
 
 
 @fixture(scope="package", name="path_dummy_workspace")

@@ -1,12 +1,19 @@
+from os import environ
+from requests import (
+    get as requests_get,
+    post as requests_post,
+    put as requests_put
+)
 from operandi_utils.database import sync_db_get_workflow
-from tests.helpers_asserts import assert_exists_wf_db_resource
-from .helpers_asserts import assert_local_dir_workflow
+from tests.helpers.asserts import assert_exists_wf_db_resource, assert_local_dir_workflow
 
-"""
-def test_post_workflow_script(operandi, auth, bytes_template_workflow):
+OPERANDI_SERVER_URL = environ.get("OPERANDI_SERVER_URL")
+
+
+def test_post_workflow_script(auth, bytes_template_workflow):
     # Post a new workflow script
     nf_file = {"nextflow_script": bytes_template_workflow}
-    response = operandi.post("/workflow", files=nf_file, auth=auth)
+    response = requests_post(url=f"{OPERANDI_SERVER_URL}/workflow", files=nf_file, auth=auth)
     assert response.status_code == 201
     wf_id = response.json()["resource_id"]
 
@@ -15,11 +22,11 @@ def test_post_workflow_script(operandi, auth, bytes_template_workflow):
     assert_local_dir_workflow(wf_id)
 
 
-def test_put_workflow_script(operandi, auth, bytes_template_workflow, bytes_default_workflow):
+def test_put_workflow_script(auth, bytes_template_workflow, bytes_default_workflow):
     put_wf_id = "put_workflow_id"
     # The first put request creates a new workflow
     nf_file = {"nextflow_script": bytes_template_workflow},
-    response = operandi.put(f"/workflow/{put_wf_id}", files=nf_file, auth=auth)
+    response = requests_put(url=f"{OPERANDI_SERVER_URL}/workflow/{put_wf_id}", files=nf_file, auth=auth)
     assert response.status_code == 201
     wf_id = response.json()["resource_id"]
     assert_local_dir_workflow(wf_id)
@@ -33,7 +40,7 @@ def test_put_workflow_script(operandi, auth, bytes_template_workflow, bytes_defa
 
     # The second put request replaces the previously created workflow
     nf_file = {"nextflow_script": bytes_default_workflow}
-    response = operandi.put(f"/workflow/{put_wf_id}", files=nf_file, auth=auth)
+    response = requests_put(url=f"{OPERANDI_SERVER_URL}/workflow/{put_wf_id}", files=nf_file, auth=auth)
     assert response.status_code == 201
     wf_id = response.json()["resource_id"]
     wf_db = sync_db_get_workflow(workflow_id=wf_id)
@@ -51,13 +58,13 @@ def test_put_workflow_script(operandi, auth, bytes_template_workflow, bytes_defa
         f"Workflow paths should not, but match: {workflow_path1} == {workflow_path2}"
 
 
-def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow):
+def test_put_workflow_not_allowed(auth, bytes_template_workflow):
     production_workflow_ids = ["template_workflow", "default_workflow", "odem_workflow"]
 
     # Try to replace a production workflow which should raise an error code of 405
     nf_file = {"nextflow_script": bytes_template_workflow}
     for workflow_id in production_workflow_ids:
-        response = operandi.put(f"/workflow/{workflow_id}", files=nf_file, auth=auth)
+        response = requests_put(url=f"{OPERANDI_SERVER_URL}/workflow/{workflow_id}", files=nf_file, auth=auth)
         assert response.status_code == 405
 
 
@@ -71,24 +78,24 @@ def _test_delete_workflow_non_existing():
     pass
 
 
-def test_get_workflow_script(operandi, auth, bytes_template_workflow):
+def test_get_workflow_script(auth, bytes_template_workflow):
     # Post a new workflow script
     nf_file = {"nextflow_script": bytes_template_workflow}
-    response = operandi.post("/workflow", files=nf_file, auth=auth)
+    response = requests_post(url=f"{OPERANDI_SERVER_URL}/workflow", files=nf_file, auth=auth)
     assert response.status_code == 201
     wf_id = response.json()["resource_id"]
     assert_local_dir_workflow(wf_id)
 
     # Get the same workflow script
-    response = operandi.get(f"/workflow/{wf_id}", auth=auth)
+    response = requests_get(url=f"{OPERANDI_SERVER_URL}/workflow/{wf_id}", auth=auth)
     assert response.status_code == 200
     print(response.headers)
     assert response.headers.get("content-disposition").find(".nf") > -1, "filename should have the '.nf' extension"
 
 
-def test_get_workflow_non_existing(operandi, auth):
+def test_get_workflow_non_existing(auth):
     non_wf_id = "non_existing_workflow_id"
-    response = operandi.get(f"/workflow/{non_wf_id}", auth=auth)
+    response = requests_post(url=f"{OPERANDI_SERVER_URL}/workflow/{non_wf_id}", auth=auth)
     assert response.status_code == 404
 
 
@@ -100,4 +107,3 @@ def _test_run_operandi_workflow():
 # This is already implemented as a part of the harvester full cycle test
 def _test_running_workflow_job_status():
     pass
-"""

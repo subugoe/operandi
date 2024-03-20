@@ -1,23 +1,11 @@
 from os.path import join
 from pytest import raises
 from src.utils.operandi_utils.database import (
-    sync_db_create_hpc_slurm_job,
-    sync_db_create_workflow,
-    sync_db_create_workflow_job,
     sync_db_create_workspace,
-    sync_db_create_user_account,
-    sync_db_get_hpc_slurm_job,
-    sync_db_get_workflow,
-    sync_db_get_workflow_job,
     sync_db_get_workspace,
-    sync_db_get_user_account,
-    sync_db_update_hpc_slurm_job,
-    sync_db_update_workflow,
-    sync_db_update_workflow_job,
-    sync_db_update_workspace,
-    sync_db_update_user_account
+    sync_db_update_workspace
 )
-from tests.helpers_utils import to_asset_path
+from tests.helpers.utils import to_asset_path
 
 
 def test_db_workspace_create():

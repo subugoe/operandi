@@ -114,39 +114,11 @@ jobs:
           echo "$SSH_KEY_HPC" > /home/runner/.ssh/key_hpc
           chmod 600 /home/runner/.ssh/key_hpc
 
-      - name: start RabbitMQ Server
-        run: docker compose -f ./docker-compose.yml --env-file ${{ env.ENV_FILE }} up -d operandi-rabbitmq
-
-      - name: start MongoDB
-        run: docker compose -f ./docker-compose.yml --env-file ${{ env.ENV_FILE }} up -d operandi-mongodb
-
-      - name: wait starting of RabbitMQ and MongoDB
-        run: sleep 45
-
-      - name: run utils tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/tests_utils/test_*.py
-
-      - name: run broker tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/tests_broker/test_*.py
-
-      - name: run server tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/tests_server/test_*.py
-
-      - name: run harvester tests
-        run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/tests_harvester/test_*.py
-
       - name: run integration tests
         run: |
-          export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest tests/integration_tests/test_*.py -s -v
+          make start-services-test
+          make run-integration-tests
+          make stop-services-test
 
   build-and-push-docker-images:
     name: Push ${{matrix.services.module}} to image registry
@@ -157,8 +129,8 @@ jobs:
       fail-fast: true
       matrix:
         services: [
-          { module: "broker", dockerfile: "Dockerfile_broker" },
-          { module: "server", dockerfile: "Dockerfile_server" }
+          { module: "broker", dockerfile: "Dockerfile" },
+          { module: "server", dockerfile: "Dockerfile" }
         ]
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os }}

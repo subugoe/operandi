@@ -1,7 +1,7 @@
 version: '3.8'
 
 networks:
-  operandi_test_network:
+  operandi_network:
     name: ${DOCKER_OPERANDI_NETWORK_NAME}
     driver: bridge
     driver_opts:

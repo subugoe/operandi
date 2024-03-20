@@ -3,7 +3,7 @@ from os import environ
 from os.path import join
 from time import sleep
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
-from tests.helpers_utils import to_asset_path
+from tests.helpers.utils import to_asset_path
 
 
 def test_hpc_connector_transfer_file(hpc_data_transfer):
