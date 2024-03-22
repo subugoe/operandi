@@ -113,8 +113,8 @@ start_mets_server () {
   #   instance_mets_server \
   #  ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start
 
-  if [ "$1" ] ; then
-    # Start the mets server for the specific workspace in the background
+  if [ "$1" == "true" ] ; then
+    echo "Starting the mets server for the specific workspace in the background"
     singularity exec \
       --bind "${BIND_WORKSPACE_DIR}" \
       "${SIF_PATH}" \
@@ -131,8 +131,8 @@ stop_mets_server () {
   # TODO Stop the instance here
   # singularity instance stop instance_mets_server
 
-  if [ "$1" ] ; then
-    # Stop the mets server started above
+  if [ "$1" == "true" ] ; then
+    echo "Stopping the mets server"
     singularity exec \
       --bind "${BIND_WORKSPACE_DIR}" \
       "${SIF_PATH}" \
@@ -142,8 +142,8 @@ stop_mets_server () {
 
 execute_nextflow_workflow () {
   local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=true ${SIF_PATH}"
-  if [ "$1" ] ; then
-    # Execute the Nextflow script with mets server
+  if [ "$1" == "true" ] ; then
+    echo "Executing the nextflow workflow with mets server"
     nextflow run "${NF_SCRIPT_PATH}" \
     -ansi-log false \
     -with-report \
@@ -157,7 +157,7 @@ execute_nextflow_workflow () {
     --ram "${RAM}" \
     --forks "${FORKS}"
   else
-    # Execute the Nextflow script without mets server
+    echo "Executing the nextflow workflow without mets server"
     nextflow run "${NF_SCRIPT_PATH}" \
     -ansi-log false \
     -with-report \
