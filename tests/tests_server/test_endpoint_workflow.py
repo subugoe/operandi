@@ -5,11 +5,11 @@ from .helpers_asserts import (
 )
 
 
-def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workflow):
+def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workflow_with_ms):
     # Post a new workflow script
     response = operandi.post(
         "/workflow",
-        files={"nextflow_script": bytes_template_workflow},
+        files={"nextflow_script": bytes_template_workflow_with_ms},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -19,12 +19,14 @@ def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workf
     assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
 
 
-def test_put_workflow_script(operandi, auth, db_workflows, bytes_template_workflow, bytes_default_workflow):
+def test_put_workflow_script(
+    operandi, auth, db_workflows, bytes_template_workflow_with_ms, bytes_default_workflow_with_ms
+):
     put_workflow_id = "put_workflow_id"
     # The first put request creates a new workflow
     response = operandi.put(
         f"/workflow/{put_workflow_id}",
-        files={"nextflow_script": bytes_template_workflow},
+        files={"nextflow_script": bytes_template_workflow_with_ms},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -41,7 +43,7 @@ def test_put_workflow_script(operandi, auth, db_workflows, bytes_template_workfl
     # The second put request replaces the previously created workflow
     response = operandi.put(
         f"/workflow/{put_workflow_id}",
-        files={"nextflow_script": bytes_default_workflow},
+        files={"nextflow_script": bytes_default_workflow_with_ms},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -61,18 +63,21 @@ def test_put_workflow_script(operandi, auth, db_workflows, bytes_template_workfl
         f"Workflow paths should not, but match: {workflow_path1} == {workflow_path2}"
 
 
-def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow):
+def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow_with_ms):
     production_workflow_ids = [
         "template_workflow",
         "default_workflow",
-        "odem_workflow"
+        "odem_workflow",
+        "template_workflow_with_MS",
+        "default_workflow_with_MS",
+        "odem_workflow_with_MS"
     ]
 
     # Try to replace a production workflow which should raise an error code of 405
     for workflow_id in production_workflow_ids:
         response = operandi.put(
             f"/workflow/{workflow_id}",
-            files={"nextflow_script": bytes_template_workflow},
+            files={"nextflow_script": bytes_template_workflow_with_ms},
             auth=auth
         )
         assert_response_status_code(response.status_code, expected_floor=4)
@@ -88,11 +93,11 @@ def _test_delete_workflow_non_existing():
     pass
 
 
-def test_get_workflow_script(operandi, auth, bytes_template_workflow):
+def test_get_workflow_script(operandi, auth, bytes_template_workflow_with_ms):
     # Post a new workflow script
     response = operandi.post(
         "/workflow",
-        files={"nextflow_script": bytes_template_workflow},
+        files={"nextflow_script": bytes_template_workflow_with_ms},
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
