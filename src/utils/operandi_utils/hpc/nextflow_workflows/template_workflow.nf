@@ -40,7 +40,7 @@ process split_page_ranges {
     input:
         val range_multiplier
     output:
-        val "${params.workspace_dir}/mets_${range_multiplier}.xml}"
+        val "${params.workspace_dir}/mets_${range_multiplier}.xml"
         env current_range_pages
     shell:
     '''
