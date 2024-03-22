@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 #SBATCH --constraint scratch
 
 # Parameters are as follows:
@@ -41,9 +42,15 @@ BIND_METS_FILE_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_BASENAME}"
 METS_SOCKET_BASENAME="mets_server.sock"
 BIND_METS_SOCKET_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_SOCKET_BASENAME}"
 
-
 hostname
 slurm_resources
+
+echo "ocrd all SIF path: $SIF_PATH"
+echo "Workspace dir: $WORKSPACE_DIR"
+echo "Nextflow script path: $NF_SCRIPT_PATH"
+echo "Use mets server: $USE_METS_SERVER"
+echo "Used file group: $IN_FILE_GRP"
+echo "Pages: $PAGES"
 
 module purge
 module load singularity
