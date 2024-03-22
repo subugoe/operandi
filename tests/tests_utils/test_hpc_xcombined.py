@@ -4,7 +4,6 @@ from os.path import join
 from shutil import copytree
 from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
-from tests.helpers_utils import to_asset_path
 
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
 BATCH_SCRIPT_ID = "submit_workflow_job.sh"
@@ -16,11 +15,10 @@ ID_WORKFLOW_JOB = f"test_wf_job_{current_time}"
 ID_WORKSPACE = f"test_ws_{current_time}"
 
 
-def test_hpc_connector_put_batch_script(hpc_data_transfer):
+def test_hpc_connector_put_batch_script(hpc_data_transfer, path_batch_script_submit_workflow_job):
     hpc_batch_script_path = join(hpc_data_transfer.batch_scripts_dir, BATCH_SCRIPT_ID)
     hpc_data_transfer.put_file(
-        local_src=to_asset_path(resource_type="batch_scripts", name=BATCH_SCRIPT_ID),
-        remote_dst=hpc_batch_script_path
+        local_src=path_batch_script_submit_workflow_job, remote_dst=hpc_batch_script_path
     )
 
 

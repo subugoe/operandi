@@ -5,6 +5,7 @@ from shutil import rmtree
 
 pytest_plugins = [
     "tests.fixtures.authentication",
+    "tests.fixtures.batch_scripts",
     "tests.fixtures.database",
     "tests.fixtures.workflow",
     "tests.fixtures.workspace"
