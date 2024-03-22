@@ -40,15 +40,16 @@ process split_page_ranges {
     input:
         val range_multiplier
     output:
-        val "${params.workspace_dir}/mets_${range_multiplier}.xml"
+        env mets_file_chunk
         env current_range_pages
-    shell:
-    '''
-    current_range_pages=$(!{params.singularity_wrapper} ocrd workspace -d !{params.workspace_dir} list-page -f comma-separated -D !{params.forks} -C !{range_multiplier})
-    echo "Current range is: $current_range_pages"
-    // Create a duplicate mets file and set the name according to the range multiplier
-    cp !{params.mets} !{params.workspace_dir}/mets_!{range_multiplier}.xml
-    '''
+    script:
+    """
+    current_range_pages=\$(${params.singularity_wrapper} ocrd workspace -d ${params.workspace_dir} list-page -f comma-separated -D ${params.forks} -C ${range_multiplier})
+    echo "Current range is: \$current_range_pages"
+    mets_file_chunk=\$(echo ${params.workspace_dir}/mets_${range_multiplier}.xml)
+    echo "Mets file chunk path: \$mets_file_chunk"
+    cp ${params.mets} \$mets_file_chunk
+    """
 }
 
 process ocrd_cis_ocropy_binarize {
