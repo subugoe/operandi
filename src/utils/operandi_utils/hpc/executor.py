@@ -67,7 +67,8 @@ class HPCExecutor(HPCConnector):
         cpus: int,
         ram: int,
         nf_process_forks: int,
-        ws_pages_amount: int
+        ws_pages_amount: int,
+        use_mets_server: bool = False
     ) -> str:
 
         nextflow_script_id = nextflow_script_path.split('/')[-1]
@@ -101,6 +102,8 @@ class HPCExecutor(HPCConnector):
         command += f" {ram}"
         command += f" {nf_process_forks}"
         command += f" {ws_pages_amount}"
+        use_mets_server_bash_flag = "true" if use_mets_server else "false"
+        command += f" {use_mets_server_bash_flag}"
         command += "'"
 
         self.log.info(f"About to execute a blocking command: {command}")
