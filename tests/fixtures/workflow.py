@@ -1,35 +1,37 @@
 from pytest import fixture
 from tests.helpers_utils import to_asset_path
 
+WORKFLOWS_ROUTER_DIR = "workflows"
+
 
 @fixture(scope="package", name="template_workflow")
 def fixture_template_workflow():
-    yield to_asset_path("workflows", "test_template_workflow.nf")
+    yield to_asset_path(WORKFLOWS_ROUTER_DIR, "test_template_workflow.nf")
 
 
 @fixture(scope="package", name="default_workflow")
 def fixture_default_workflow():
-    yield to_asset_path("workflows", "test_default_workflow.nf")
+    yield to_asset_path(WORKFLOWS_ROUTER_DIR, "test_default_workflow.nf")
 
 
 @fixture(scope="package", name="odem_workflow")
 def fixture_odem_workflow():
-    yield to_asset_path("workflows", "test_odem_workflow.nf")
+    yield to_asset_path(WORKFLOWS_ROUTER_DIR, "test_odem_workflow.nf")
 
 
 @fixture(scope="package", name="template_workflow_with_ms")
 def fixture_template_workflow_with_ms():
-    yield to_asset_path("workflows", "test_template_workflow_with_MS.nf")
+    yield to_asset_path(WORKFLOWS_ROUTER_DIR, "test_template_workflow_with_MS.nf")
 
 
 @fixture(scope="package", name="default_workflow_with_ms")
 def fixture_default_workflow_with_ms():
-    yield to_asset_path("workflows", "test_default_workflow_with_MS.nf")
+    yield to_asset_path(WORKFLOWS_ROUTER_DIR, "test_default_workflow_with_MS.nf")
 
 
 @fixture(scope="package", name="odem_workflow_with_ms")
 def fixture_odem_workflow_with_ms():
-    yield to_asset_path("workflows", "test_odem_workflow_with_MS.nf")
+    yield to_asset_path(WORKFLOWS_ROUTER_DIR, "test_odem_workflow_with_MS.nf")
 
 
 @fixture(scope="package", name="bytes_template_workflow")
