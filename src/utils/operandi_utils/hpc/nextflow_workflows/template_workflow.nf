@@ -81,7 +81,7 @@ process merging_mets {
     script:
     """
     ${params.singularity_wrapper} ocrd workspace --mets ${params.mets} merge --force --no-copy-files ${mets_file_chunk} --page-id ${page_range}
-    // rm ${mets_file_chunk}
+    rm ${mets_file_chunk}
     """
 }
 
