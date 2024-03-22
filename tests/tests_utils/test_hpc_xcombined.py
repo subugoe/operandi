@@ -24,10 +24,12 @@ def test_hpc_connector_put_batch_script(hpc_data_transfer):
     )
 
 
-def test_pack_and_put_slurm_workspace_with_ms(hpc_data_transfer, template_workflow_with_ms):
+def test_pack_and_put_slurm_workspace_with_ms(
+    hpc_data_transfer, path_small_workspace_data_dir, template_workflow_with_ms
+):
     # Move the test asset to actual workspaces location
     local_workspace_dir = copytree(
-        src=join(to_asset_path(resource_type="workspaces", name="small_ws"), "data"),
+        src=path_small_workspace_data_dir,
         dst=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE_WITH_MS)
     )
     assert_exists_dir(local_workspace_dir)
@@ -49,10 +51,12 @@ def test_pack_and_put_slurm_workspace_with_ms(hpc_data_transfer, template_workfl
     # assert_exists_remote_file(hpc_dst_slurm_zip)
 
 
-def test_pack_and_put_slurm_workspace(hpc_data_transfer, template_workflow_with_ms):
+def test_pack_and_put_slurm_workspace(
+    hpc_data_transfer, path_small_workspace_data_dir, template_workflow_with_ms
+):
     # Move the test asset to actual workspaces location
     local_workspace_dir = copytree(
-        src=join(to_asset_path(resource_type="workspaces", name="small_ws"), "data"),
+        src=path_small_workspace_data_dir,
         dst=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE)
     )
     assert_exists_dir(local_workspace_dir)
@@ -75,8 +79,7 @@ def test_pack_and_put_slurm_workspace(hpc_data_transfer, template_workflow_with_
 
 
 def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_workflow_with_ms):
-    batch_script_id = "submit_workflow_job.sh"
-    hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, batch_script_id)
+    hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SCRIPT_ID)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path,
         workflow_job_id=ID_WORKFLOW_JOB_WITH_MS,
@@ -100,8 +103,7 @@ def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_w
 
 
 def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow):
-    batch_script_id = "submit_workflow_job.sh"
-    hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, batch_script_id)
+    hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SCRIPT_ID)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path,
         workflow_job_id=ID_WORKFLOW_JOB,
