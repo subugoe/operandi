@@ -49,9 +49,7 @@ def test_pack_and_put_slurm_workspace_with_ms(
     # assert_exists_remote_file(hpc_dst_slurm_zip)
 
 
-def test_pack_and_put_slurm_workspace(
-    hpc_data_transfer, path_small_workspace_data_dir, template_workflow_with_ms
-):
+def test_pack_and_put_slurm_workspace(hpc_data_transfer, path_small_workspace_data_dir, template_workflow):
     # Move the test asset to actual workspaces location
     local_workspace_dir = copytree(
         src=path_small_workspace_data_dir,
@@ -62,7 +60,7 @@ def test_pack_and_put_slurm_workspace(
     local_slurm_workspace_zip_path = hpc_data_transfer.create_slurm_workspace_zip(
         ocrd_workspace_dir=local_workspace_dir,
         workflow_job_id=ID_WORKFLOW_JOB,
-        nextflow_script_path=template_workflow_with_ms,
+        nextflow_script_path=template_workflow,
         tempdir_prefix="test_slurm_workspace-"
     )
     assert_exists_file(local_slurm_workspace_zip_path)
