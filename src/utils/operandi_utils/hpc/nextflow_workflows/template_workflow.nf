@@ -48,7 +48,7 @@ process split_page_ranges {
     echo "Current range is: \$current_range_pages"
     mets_file_chunk=\$(echo ${params.workspace_dir}/mets_${range_multiplier}.xml)
     echo "Mets file chunk path: \$mets_file_chunk"
-    cp ${params.mets} \$mets_file_chunk
+    \$(${params.singularity_wrapper} cp -p ${params.mets} \$mets_file_chunk)
     """
 }
 
@@ -59,16 +59,16 @@ process ocrd_cis_ocropy_binarize {
     debug true
 
     input:
-        path mets_file_chunk
+        val mets_file_chunk
         val page_range
         val input_group
         val output_group
     output:
-        path mets_file_chunk
+        val mets_file_chunk
         val page_range
     script:
     """
-    ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -m ${mets_file_chunk} --page-id ${page_range} -I ${input_group} -O ${output_group}
+    ${params.singularity_wrapper} ocrd-cis-ocropy-binarize -w ${params.workspace_dir} -m ${mets_file_chunk} --page-id ${page_range} -I ${input_group} -O ${output_group}
     """
 }
 
@@ -77,12 +77,12 @@ process merging_mets {
     maxForks 1
 
     input:
-        path mets_file_chunk
+        val mets_file_chunk
         val page_range
     script:
     """
-    ${params.singularity_wrapper} ocrd workspace --mets ${params.mets} merge --force --no-copy-files ${mets_file_chunk} --page-id ${page_range}
-    rm ${mets_file_chunk}
+    ${params.singularity_wrapper} ocrd workspace -d ${params.workspace_dir} merge --force --no-copy-files ${mets_file_chunk} --page-id ${page_range}
+    ${params.singularity_wrapper} rm ${mets_file_chunk}
     """
 }
 
