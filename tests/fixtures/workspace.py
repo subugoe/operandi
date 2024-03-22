@@ -4,6 +4,16 @@ from tests.helpers_utils import to_asset_path
 WORKSPACES_ROUTER_DIR = "workspaces"
 
 
+@fixture(scope="package", name="path_dummy_workspace_data_dir")
+def fixture_path_dummy_workspace_data_dir():
+    yield to_asset_path(WORKSPACES_ROUTER_DIR, "dummy_ws/data")
+
+
+@fixture(scope="package", name="path_small_workspace_data_dir")
+def fixture_path_small_workspace_data_dir():
+    yield to_asset_path(WORKSPACES_ROUTER_DIR, "small_ws/data")
+
+
 @fixture(scope="package", name="path_dummy_workspace")
 def fixture_path_dummy_workspace():
     yield to_asset_path(WORKSPACES_ROUTER_DIR, "dummy_ws.ocrd.zip")
