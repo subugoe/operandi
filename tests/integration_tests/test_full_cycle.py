@@ -56,7 +56,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_work
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_job_id = response.json()["resource_id"]
 
-    tries = 50
+    tries = 70
     job_status = None
     while tries > 0:
         tries -= 1
@@ -80,7 +80,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_work
 
     # TODO: Fix this, wait for 10 secs till
     #  the data is transferred from HPC to Operandi Server
-    sleep(10)
+    sleep(45)
     response = operandi.get(
         url=f"/workflow/{workflow_id}/{workflow_job_id}/log",
         # headers={"accept": "application/vnd.zip"},
