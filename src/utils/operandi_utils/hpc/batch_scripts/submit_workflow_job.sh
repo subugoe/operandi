@@ -141,7 +141,7 @@ stop_mets_server () {
 }
 
 execute_nextflow_workflow () {
-  local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=true ${SIF_PATH}"
+  local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=false ${SIF_PATH}"
   if [ "$1" == "true" ] ; then
     echo "Executing the nextflow workflow with mets server"
     nextflow run "${NF_SCRIPT_PATH}" \
