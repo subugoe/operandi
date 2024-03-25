@@ -126,22 +126,22 @@ jobs:
       - name: run utils tests
         run: |
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest -p no:cacheprovider tests/tests_utils/test_*.py -s -v
+          pytest -p no:cacheprovider tests/tests_utils/test_*.py -v
 
       - name: run broker tests
         run: |
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest -p no:cacheprovider tests/tests_broker/test_*.py -s -v
+          pytest -p no:cacheprovider tests/tests_broker/test_*.py -v
 
       - name: run server tests
         run: |
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest -p no:cacheprovider tests/tests_server/test_*.py -s -v
+          pytest -p no:cacheprovider tests/tests_server/test_*.py -v
 
       - name: run harvester tests
         run: |
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest -p no:cacheprovider tests/tests_harvester/test_*.py -s -v
+          pytest -p no:cacheprovider tests/tests_harvester/test_*.py -v
 
       - name: run integration tests
         run: |
