@@ -2,6 +2,7 @@ from datetime import datetime
 from os import environ
 from os.path import join
 from shutil import copytree
+from time import sleep
 from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 
@@ -15,6 +16,30 @@ ID_WORKFLOW_JOB = f"test_wf_job_{current_time}"
 ID_WORKSPACE = f"test_ws_{current_time}"
 
 
+def helper_pack_and_put_slurm_workspace(
+    hpc_data_transfer, workflow_job_id: str, workspace_id: str, path_workflow: str, path_workspace_dir: str
+):
+    # Move the test asset to actual workspaces location
+    dst_path = join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, workspace_id)
+    local_workspace_dir = copytree(src=path_workspace_dir, dst=dst_path)
+    assert_exists_dir(local_workspace_dir)
+
+    local_slurm_workspace_zip_path = hpc_data_transfer.create_slurm_workspace_zip(
+        ocrd_workspace_dir=local_workspace_dir,
+        workflow_job_id=workflow_job_id,
+        nextflow_script_path=path_workflow,
+        tempdir_prefix="test_slurm_workspace-"
+    )
+    assert_exists_file(local_slurm_workspace_zip_path)
+
+    hpc_dst_slurm_zip = hpc_data_transfer.put_slurm_workspace(
+        local_src_slurm_zip=local_slurm_workspace_zip_path, workflow_job_id=workflow_job_id
+    )
+
+    # TODO: implement this
+    # assert_exists_remote_file(hpc_dst_slurm_zip)
+
+
 def test_hpc_connector_put_batch_script(hpc_data_transfer, path_batch_script_submit_workflow_job):
     hpc_batch_script_path = join(hpc_data_transfer.batch_scripts_dir, BATCH_SCRIPT_ID)
     hpc_data_transfer.put_file(
@@ -23,55 +48,25 @@ def test_hpc_connector_put_batch_script(hpc_data_transfer, path_batch_script_sub
 
 
 def test_pack_and_put_slurm_workspace(hpc_data_transfer, path_small_workspace_data_dir, template_workflow):
-    # Move the test asset to actual workspaces location
-    local_workspace_dir = copytree(
-        src=path_small_workspace_data_dir,
-        dst=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE)
-    )
-    assert_exists_dir(local_workspace_dir)
-
-    local_slurm_workspace_zip_path = hpc_data_transfer.create_slurm_workspace_zip(
-        ocrd_workspace_dir=local_workspace_dir,
+    helper_pack_and_put_slurm_workspace(
+        hpc_data_transfer=hpc_data_transfer,
         workflow_job_id=ID_WORKFLOW_JOB,
-        nextflow_script_path=template_workflow,
-        tempdir_prefix="test_slurm_workspace-"
+        workspace_id=ID_WORKSPACE,
+        path_workflow=template_workflow,
+        path_workspace_dir=path_small_workspace_data_dir
     )
-    assert_exists_file(local_slurm_workspace_zip_path)
-
-    hpc_dst_slurm_zip = hpc_data_transfer.put_slurm_workspace(
-        local_src_slurm_zip=local_slurm_workspace_zip_path,
-        workflow_job_id=ID_WORKFLOW_JOB
-    )
-
-    # TODO: implement this
-    # assert_exists_remote_file(hpc_dst_slurm_zip)
 
 
 def test_pack_and_put_slurm_workspace_with_ms(
     hpc_data_transfer, path_small_workspace_data_dir, template_workflow_with_ms
 ):
-    # Move the test asset to actual workspaces location
-    local_workspace_dir = copytree(
-        src=path_small_workspace_data_dir,
-        dst=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE_WITH_MS)
-    )
-    assert_exists_dir(local_workspace_dir)
-
-    local_slurm_workspace_zip_path = hpc_data_transfer.create_slurm_workspace_zip(
-        ocrd_workspace_dir=local_workspace_dir,
+    helper_pack_and_put_slurm_workspace(
+        hpc_data_transfer=hpc_data_transfer,
         workflow_job_id=ID_WORKFLOW_JOB_WITH_MS,
-        nextflow_script_path=template_workflow_with_ms,
-        tempdir_prefix="test_slurm_workspace-"
+        workspace_id=ID_WORKSPACE_WITH_MS,
+        path_workflow=template_workflow_with_ms,
+        path_workspace_dir=path_small_workspace_data_dir
     )
-    assert_exists_file(local_slurm_workspace_zip_path)
-
-    hpc_dst_slurm_zip = hpc_data_transfer.put_slurm_workspace(
-        local_src_slurm_zip=local_slurm_workspace_zip_path,
-        workflow_job_id=ID_WORKFLOW_JOB_WITH_MS
-    )
-
-    # TODO: implement this
-    # assert_exists_remote_file(hpc_dst_slurm_zip)
 
 
 def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow):
@@ -123,7 +118,8 @@ def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_w
 
 
 def test_get_and_unpack_slurm_workspace(hpc_data_transfer):
-    # TODO: Use a method that resolves with ID
+    # Wait some time till the zip is created in the HPC
+    sleep(15)
     hpc_data_transfer.get_and_unpack_slurm_workspace(
         ocrd_workspace_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE),
         workflow_job_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB)
@@ -131,7 +127,8 @@ def test_get_and_unpack_slurm_workspace(hpc_data_transfer):
 
 
 def test_get_and_unpack_slurm_workspace_with_ms(hpc_data_transfer):
-    # TODO: Use a method that resolves with ID
+    # Wait some time till the zip is created in the HPC
+    sleep(15)
     hpc_data_transfer.get_and_unpack_slurm_workspace(
         ocrd_workspace_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE_WITH_MS),
         workflow_job_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB_WITH_MS)
