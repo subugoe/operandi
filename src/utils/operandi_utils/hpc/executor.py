@@ -134,7 +134,7 @@ class HPCExecutor(HPCConnector):
             if output:
                 # Split the last line and get the second element,
                 # i.e., the state element in the requested output format
-                slurm_job_state = output[-1].split()[1]
+                slurm_job_state = output[-2].split()[1]
             if slurm_job_state:
                 break
             tries -= 1
