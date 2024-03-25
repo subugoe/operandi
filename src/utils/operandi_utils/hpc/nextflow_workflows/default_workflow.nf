@@ -15,9 +15,6 @@ params.forks = params.cpus
 params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intValue()
 params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())
 
-// ocrd processor common repeating parameters passed to each processor
-params.
-
 log.info """\
     OPERANDI - HPC - Default Workflow
     ===========================================
