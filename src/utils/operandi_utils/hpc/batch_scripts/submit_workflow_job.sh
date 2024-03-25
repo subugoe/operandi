@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 #SBATCH --constraint scratch
 
 # Parameters are as follows:
@@ -29,19 +30,27 @@ CPUS=$7
 RAM=$8
 FORKS=$9
 PAGES=${10}
+# true/false flag to switch between using and not using a mets server
+USE_METS_SERVER=${11}
 
 WORKFLOW_JOB_DIR="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 NF_SCRIPT_PATH="${WORKFLOW_JOB_DIR}/${NEXTFLOW_SCRIPT_ID}"
 WORKSPACE_DIR="${WORKFLOW_JOB_DIR}/${WORKSPACE_ID}"
 WORKSPACE_DIR_IN_DOCKER="/ws_data"
 BIND_WORKSPACE_DIR="${WORKSPACE_DIR}:${WORKSPACE_DIR_IN_DOCKER}"
-METS_FILE_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_BASENAME}"
+BIND_METS_FILE_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_BASENAME}"
 METS_SOCKET_BASENAME="mets_server.sock"
-METS_SOCKET_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_SOCKET_BASENAME}"
-
+BIND_METS_SOCKET_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_SOCKET_BASENAME}"
 
 hostname
 slurm_resources
+
+echo "ocrd all SIF path: $SIF_PATH"
+echo "Workspace dir: $WORKSPACE_DIR"
+echo "Nextflow script path: $NF_SCRIPT_PATH"
+echo "Use mets server: $USE_METS_SERVER"
+echo "Used file group: $IN_FILE_GRP"
+echo "Pages: $PAGES"
 
 module purge
 module load singularity
@@ -102,14 +111,17 @@ start_mets_server () {
   #   --bind "${BIND_WORKSPACE_DIR}" \
   #   "${SIF_PATH}" \
   #   instance_mets_server \
-  #  ocrd workspace -U "${METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start
+  #  ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start
 
-  # Start the mets server for the specific workspace in the background
-  singularity exec \
-    --bind "${BIND_WORKSPACE_DIR}" \
-    "${SIF_PATH}" \
-    ocrd workspace -U "${METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start \
-    > "${WORKSPACE_DIR}/mets_server.log" 2>&1 &
+  if [ "$1" == "true" ] ; then
+    echo "Starting the mets server for the specific workspace in the background"
+    singularity exec \
+      --bind "${BIND_WORKSPACE_DIR}" \
+      "${SIF_PATH}" \
+      ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start \
+      > "${WORKSPACE_DIR}/mets_server.log" 2>&1 &
+  fi
+  sleep 5
 }
 
 stop_mets_server () {
@@ -119,28 +131,45 @@ stop_mets_server () {
   # TODO Stop the instance here
   # singularity instance stop instance_mets_server
 
-  # Stop the mets server started above
-  singularity exec \
-    --bind "${BIND_WORKSPACE_DIR}" \
-    "${SIF_PATH}" \
-    ocrd workspace -U "${METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server stop
+  if [ "$1" == "true" ] ; then
+    echo "Stopping the mets server"
+    singularity exec \
+      --bind "${BIND_WORKSPACE_DIR}" \
+      "${SIF_PATH}" \
+      ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server stop
+  fi
 }
 
 execute_nextflow_workflow () {
-  local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=true ${SIF_PATH}"
-  # Execute the Nextflow script
-  nextflow run "${NF_SCRIPT_PATH}" \
-  -ansi-log false \
-  -with-report \
-  --input_file_group "${IN_FILE_GRP}" \
-  --mets "${METS_FILE_PATH}" \
-  --mets_socket "${METS_SOCKET_PATH}" \
-  --workspace_dir "${WORKSPACE_DIR_IN_DOCKER}" \
-  --pages "${PAGES}" \
-  --singularity_wrapper "${SINGULARITY_CMD}" \
-  --cpus "${CPUS}" \
-  --ram "${RAM}" \
-  --forks "${FORKS}"
+  local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=false ${SIF_PATH}"
+  if [ "$1" == "true" ] ; then
+    echo "Executing the nextflow workflow with mets server"
+    nextflow run "${NF_SCRIPT_PATH}" \
+    -ansi-log false \
+    -with-report \
+    --input_file_group "${IN_FILE_GRP}" \
+    --mets "${BIND_METS_FILE_PATH}" \
+    --mets_socket "${BIND_METS_SOCKET_PATH}" \
+    --workspace_dir "${WORKSPACE_DIR_IN_DOCKER}" \
+    --pages "${PAGES}" \
+    --singularity_wrapper "${SINGULARITY_CMD}" \
+    --cpus "${CPUS}" \
+    --ram "${RAM}" \
+    --forks "${FORKS}"
+  else
+    echo "Executing the nextflow workflow without mets server"
+    nextflow run "${NF_SCRIPT_PATH}" \
+    -ansi-log false \
+    -with-report \
+    --input_file_group "${IN_FILE_GRP}" \
+    --mets "${BIND_METS_FILE_PATH}" \
+    --workspace_dir "${WORKSPACE_DIR_IN_DOCKER}" \
+    --pages "${PAGES}" \
+    --singularity_wrapper "${SINGULARITY_CMD}" \
+    --cpus "${CPUS}" \
+    --ram "${RAM}" \
+    --forks "${FORKS}"
+  fi
 
   # Useful for handling all kinds of exit status codes in the future
   case $? in
@@ -161,8 +190,7 @@ zip_results () {
 # Main loop for workflow job execution
 check_existence_of_paths
 unzip_workflow_job_dir
-start_mets_server
-sleep 5
-execute_nextflow_workflow
-stop_mets_server
+start_mets_server "$USE_METS_SERVER"
+execute_nextflow_workflow "$USE_METS_SERVER"
+stop_mets_server "$USE_METS_SERVER"
 zip_results

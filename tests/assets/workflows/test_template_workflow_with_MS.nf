@@ -1,0 +1,1 @@
+../../../src/utils/operandi_utils/hpc/nextflow_workflows/template_workflow_with_MS.nf

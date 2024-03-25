@@ -27,7 +27,9 @@ class HPCConnector:
         channel_timeout: float = 180,
         connection_keep_alive_interval: int = 30,
         connection_timeout: float = 180,
-        all_connections_try_times: int = 1
+        all_connections_try_times: int = 1,
+        tunel_host: str = 'localhost',
+        tunel_port: int = 0
     ) -> None:
         self.log = log
         self.username = username
@@ -83,7 +85,9 @@ class HPCConnector:
             Slurm workspaces root dir: {self.slurm_workspaces_dir}\n
             """)
 
-        self.create_ssh_connection_to_hpc_by_iteration(try_times=all_connections_try_times)
+        self.create_ssh_connection_to_hpc_by_iteration(
+            try_times=all_connections_try_times, tunel_host=tunel_host, tunel_port=tunel_port
+        )
 
     @staticmethod
     def verify_pkey_file_existence(key_path: Path):
@@ -117,7 +121,7 @@ class HPCConnector:
         dst_host: str,
         dst_port: int = 22,
         src_host: str = 'localhost',
-        src_port: int = 4022,
+        src_port: int = 0,
         channel_kind: str = 'direct-tcpip',
     ) -> Channel:
         proxy_transport = self.ssh_proxy_client.get_transport()
@@ -203,7 +207,9 @@ class HPCConnector:
         hpc_host: str = None,
         hpc_port: int = 22,
         proxy_host: str = None,
-        proxy_port: int = 22
+        proxy_port: int = 22,
+        tunel_host: str = 'localhost',
+        tunel_port: int = 0
     ) -> None:
         if not hpc_host:
             hpc_host = self.last_used_hpc_host
@@ -215,7 +221,9 @@ class HPCConnector:
             self.ssh_proxy_client = self.connect_to_proxy_server(host=proxy_host, port=proxy_port)
         if not self.is_proxy_tunnel_still_responsive():
             self.log.warning("The proxy tunnel is not responsive, trying to establish a new proxy tunnel")
-            self.proxy_tunnel = self.establish_proxy_tunnel(dst_host=hpc_host, dst_port=hpc_port)
+            self.proxy_tunnel = self.establish_proxy_tunnel(
+                dst_host=hpc_host, dst_port=hpc_port, src_host=tunel_host, src_port=tunel_port
+            )
         if not self.is_ssh_connection_still_responsive(self.ssh_hpc_client):
             self.log.warning("The connection to hpc frontend server is not responsive, trying to open a new connection")
             self.ssh_hpc_client = self.connect_to_hpc_frontend_server(proxy_host, proxy_port, self.proxy_tunnel)
@@ -225,7 +233,9 @@ class HPCConnector:
         hpc_host: str = None,
         hpc_port: int = 22,
         proxy_host: str = None,
-        proxy_port: int = 22
+        proxy_port: int = 22,
+        tunel_host: str = 'localhost',
+        tunel_port: int = 0
     ) -> None:
         if not hpc_host:
             hpc_host = self.last_used_hpc_host
@@ -233,13 +243,16 @@ class HPCConnector:
             proxy_host = self.last_used_proxy_host
         self.reconnect_if_required(
             hpc_host=hpc_host, hpc_port=hpc_port,
-            proxy_host=proxy_host, proxy_port=proxy_port
+            proxy_host=proxy_host, proxy_port=proxy_port,
+            tunel_host=tunel_host, tunel_port=tunel_port
         )
         if not self.is_sftp_still_responsive():
             self.log.warning("The SFTP client is not responsive, trying to create a new SFTP client")
             self.create_sftp_client()
 
-    def create_ssh_connection_to_hpc_by_iteration(self, try_times: int = 3) -> None:
+    def create_ssh_connection_to_hpc_by_iteration(
+        self, try_times: int = 3, tunel_host: str = 'localhost', tunel_port: int = 0
+    ) -> None:
         while try_times > 0:
             for proxy_host in self.proxy_hosts:
                 self.ssh_proxy_client = None
@@ -248,7 +261,11 @@ class HPCConnector:
                     self.ssh_hpc_client = None
                     self.last_used_hpc_host = None
                     try:
-                        self.reconnect_if_required(hpc_host=hpc_host, proxy_host=proxy_host)
+                        self.reconnect_if_required(
+                            hpc_host=hpc_host, hpc_port=22,
+                            proxy_host=proxy_host, proxy_port=22,
+                            tunel_host=tunel_host, tunel_port=tunel_port
+                        )
                         return  # all connections were successful
                     except Exception as error:
                         self.log.error(f"""

@@ -15,7 +15,9 @@ class HPCExecutor(HPCConnector):
         proxy_hosts: List[str] = HPC_EXECUTOR_PROXY_HOSTS,
         username: str = environ.get("OPERANDI_HPC_USERNAME", None),
         key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH", None),
-        project_name: str = environ.get("OPERANDI_HPC_PROJECT_NAME", None)
+        project_name: str = environ.get("OPERANDI_HPC_PROJECT_NAME", None),
+        tunel_host: str = 'localhost',
+        tunel_port: int = 0
     ) -> None:
         if not username:
             raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
@@ -30,7 +32,9 @@ class HPCExecutor(HPCConnector):
             log=getLogger("operandi_utils.hpc.executor"),
             username=username,
             key_path=Path(key_path),
-            key_pass=None
+            key_pass=None,
+            tunel_host=tunel_host,
+            tunel_port=tunel_port
         )
 
     # TODO: Handle the output and return_code instead of just returning them
@@ -67,7 +71,8 @@ class HPCExecutor(HPCConnector):
         cpus: int,
         ram: int,
         nf_process_forks: int,
-        ws_pages_amount: int
+        ws_pages_amount: int,
+        use_mets_server: bool = False
     ) -> str:
 
         nextflow_script_id = nextflow_script_path.split('/')[-1]
@@ -101,6 +106,8 @@ class HPCExecutor(HPCConnector):
         command += f" {ram}"
         command += f" {nf_process_forks}"
         command += f" {ws_pages_amount}"
+        use_mets_server_bash_flag = "true" if use_mets_server else "false"
+        command += f" {use_mets_server_bash_flag}"
         command += "'"
 
         self.log.info(f"About to execute a blocking command: {command}")

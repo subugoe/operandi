@@ -19,7 +19,9 @@ class HPCTransfer(HPCConnector):
         proxy_hosts: List[str] = HPC_TRANSFER_PROXY_HOSTS,
         username: str = environ.get("OPERANDI_HPC_USERNAME", None),
         key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH", None),
-        project_name: str = environ.get("OPERANDI_HPC_PROJECT_NAME", None)
+        project_name: str = environ.get("OPERANDI_HPC_PROJECT_NAME", None),
+        tunel_host: str = 'localhost',
+        tunel_port: int = 0
     ) -> None:
         if not username:
             raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
@@ -34,7 +36,9 @@ class HPCTransfer(HPCConnector):
             log=getLogger("operandi_utils.hpc.transfer"),
             username=username,
             key_path=Path(key_path),
-            key_pass=None
+            key_pass=None,
+            tunel_host=tunel_host,
+            tunel_port=tunel_port
         )
 
     def put_batch_script(self, batch_script_id: str) -> str:
