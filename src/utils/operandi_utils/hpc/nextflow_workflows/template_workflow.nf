@@ -16,7 +16,7 @@ params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intV
 params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())
 
 log.info """\
-    OPERANDI - HPC - Template Workflow with Mets Server
+    OPERANDI - HPC - Template Workflow
     ===========================================
     input_file_group    : ${params.input_file_group}
     mets                : ${params.mets}
