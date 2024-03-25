@@ -132,7 +132,7 @@ process ocrd_skimage_denoise {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-skimage-denoise -w ${params.workspace_dir} -m ${mets_file_chunk} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
+    ${params.singularity_wrapper} ocrd-skimage-denoise -w ${params.workspace_dir} -m ${mets_file_chunk} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
     """
 }
 
