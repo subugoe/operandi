@@ -92,9 +92,9 @@ unzip_workflow_job_dir () {
   fi
 
   echo "Unzipping ${WORKFLOW_JOB_DIR}.zip to: ${WORKFLOW_JOB_DIR}"
-  unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}" > "${SCRATCH_BASE}/workflow_job_unzipping.log"
+  unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}" > "${SCRATCH_BASE}/${WORKSPACE_ID}_unzipping.log"
   echo "Removing zip: ${WORKFLOW_JOB_DIR}.zip"
-  mv "${SCRATCH_BASE}/workflow_job_unzipping.log" "${WORKFLOW_JOB_DIR}/workflow_job_unzipping.log"
+  mv "${SCRATCH_BASE}/${WORKSPACE_ID}_unzipping.log" "${WORKFLOW_JOB_DIR}/workflow_job_unzipping.log"
   rm "${WORKFLOW_JOB_DIR}.zip"
 
   if [ ! -d "${WORKFLOW_JOB_DIR}" ]; then
