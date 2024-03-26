@@ -126,7 +126,7 @@ class JobStatusWorker:
             self.log.info(f"Consumed message: {consumed_message}")
             self.current_message_job_id = consumed_message["job_id"]
         except Exception as error:
-            self.log.error(f"Parsing the consumed message has failed: {error}")
+            self.log.warning(f"Parsing the consumed message has failed: {error}")
             self.__handle_message_failure(interruption=False)
             return
 
@@ -136,17 +136,22 @@ class JobStatusWorker:
             workspace_db = sync_db_get_workspace(workflow_job_db.workspace_id)
             hpc_slurm_job_db = sync_db_get_hpc_slurm_job(self.current_message_job_id)
         except RuntimeError as error:
-            self.log.error(f"Database run-time error has occurred: {error}")
+            self.log.warning(f"Database run-time error has occurred: {error}")
             self.__handle_message_failure(interruption=False)
             return
         except Exception as error:
-            self.log.error(f"Database related error has occurred: {error}")
+            self.log.warning(f"Database related error has occurred: {error}")
             self.__handle_message_failure(interruption=False)
             return
 
-        self.__handle_hpc_and_workflow_states(
-            hpc_slurm_job_db=hpc_slurm_job_db, workflow_job_db=workflow_job_db, workspace_db=workspace_db
-        )
+        try:
+            self.__handle_hpc_and_workflow_states(
+                hpc_slurm_job_db=hpc_slurm_job_db, workflow_job_db=workflow_job_db, workspace_db=workspace_db
+            )
+        except ValueError as error:
+            self.log.warning(f"{error}")
+            self.__handle_message_failure(interruption=False)
+            return
 
         self.has_consumed_message = False
         self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
