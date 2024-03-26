@@ -120,7 +120,7 @@ class HPCExecutor(HPCConnector):
         assert int(slurm_job_id)
         return slurm_job_id
 
-    def check_slurm_job_state(self, slurm_job_id: str, tries: int = 3, wait_time: int = 2) -> str:
+    def check_slurm_job_state(self, slurm_job_id: str, tries: int = 10, wait_time: int = 2) -> str:
         command = "bash -lc"
         command += f" 'sacct -j {slurm_job_id} --format=jobid,state,exitcode'"
         slurm_job_state = None
@@ -135,6 +135,9 @@ class HPCExecutor(HPCConnector):
                 # Split the last line and get the second element,
                 # i.e., the state element in the requested output format
                 slurm_job_state = output[-2].split()[1]
+                # TODO: dirty fast fix, improve this
+                if slurm_job_state == '----------':
+                    continue
             if slurm_job_state:
                 break
             tries -= 1
