@@ -53,10 +53,10 @@ class Worker:
             signal.signal(signal.SIGTERM, self.signal_handler)
 
             sync_db_initiate_database(self.db_url)
-            # self.hpc_executor = HPCExecutor(tunel_host='localhost', tunel_port=4022)
-            # self.log.info("HPC executor connection successful.")
-            # self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=4023)
-            # self.log.info("HPC transfer connection successful.")
+            self.hpc_executor = HPCExecutor(tunel_host='localhost', tunel_port=4022)
+            self.log.info("HPC executor connection successful.")
+            self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=4023)
+            self.log.info("HPC transfer connection successful.")
 
             self.rmq_consumer = get_connection_consumer(rabbitmq_url=self.rmq_url)
             self.log.info(f"RMQConsumer connected")
@@ -211,10 +211,10 @@ class Worker:
         # Recreate the transfer connection for each workflow job submission
         # This is required due to all kind of nasty connection fails - timeouts,
         # paramiko transport not reporting properly, etc.
-        self.hpc_executor = HPCExecutor(tunel_host='localhost', tunel_port=4022)
-        self.log.info("HPC executor connection renewed successfully.")
-        self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=4023)
-        self.log.info("HPC transfer connection renewed successfully.")
+        # self.hpc_executor = HPCExecutor(tunel_host='localhost', tunel_port=4022)
+        # self.log.info("HPC executor connection renewed successfully.")
+        # self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=4023)
+        # self.log.info("HPC transfer connection renewed successfully.")
 
         hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(batch_script_id="submit_workflow_job.sh")
 
