@@ -20,7 +20,6 @@ log.info """\
     ===========================================
     input_file_group    : ${params.input_file_group}
     mets                : ${params.mets}
-    mets_socket         : ${params.mets_socket}
     workspace_dir       : ${params.workspace_dir}
     pages               : ${params.pages}
     singularity_wrapper : ${params.singularity_wrapper}
