@@ -53,9 +53,9 @@ class Worker:
             signal.signal(signal.SIGTERM, self.signal_handler)
 
             sync_db_initiate_database(self.db_url)
-            self.hpc_executor = HPCExecutor(tunel_host='localhost', tunel_port=4022)
+            self.hpc_executor = HPCExecutor(tunel_host='localhost', tunel_port=44022)
             self.log.info("HPC executor connection successful.")
-            self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=4023)
+            self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=44023)
             self.log.info("HPC transfer connection successful.")
 
             self.rmq_consumer = get_connection_consumer(rabbitmq_url=self.rmq_url)
