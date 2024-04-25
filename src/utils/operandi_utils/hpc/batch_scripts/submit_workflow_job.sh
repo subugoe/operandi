@@ -1,6 +1,7 @@
 #!/bin/bash
-set -e
 #SBATCH --constraint scratch
+
+set -e
 
 # Parameters are as follows:
 # S0 - This batch script
@@ -51,6 +52,8 @@ echo "Nextflow script path: $NF_SCRIPT_PATH"
 echo "Use mets server: $USE_METS_SERVER"
 echo "Used file group: $IN_FILE_GRP"
 echo "Pages: $PAGES"
+singularity exec "$SIF_PATH" ocrd --version
+
 
 module purge
 module load singularity
