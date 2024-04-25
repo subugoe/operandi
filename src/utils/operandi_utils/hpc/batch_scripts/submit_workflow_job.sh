@@ -46,6 +46,11 @@ BIND_METS_SOCKET_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_SOCKET_BASENAME}"
 hostname
 slurm_resources
 
+module purge
+module load singularity
+module load nextflow
+# module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
+
 echo "ocrd all SIF path: $SIF_PATH"
 echo "Workspace dir: $WORKSPACE_DIR"
 echo "Nextflow script path: $NF_SCRIPT_PATH"
@@ -54,11 +59,6 @@ echo "Used file group: $IN_FILE_GRP"
 echo "Pages: $PAGES"
 singularity exec "$SIF_PATH" ocrd --version
 
-
-module purge
-module load singularity
-module load nextflow
-# module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
 
 # To submit separate jobs for each process in the NF script
 # export NXF_EXECUTOR=slurm
