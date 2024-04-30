@@ -120,7 +120,7 @@ class RouterWorkflow:
             status_code=status.HTTP_200_OK,
             summary="""
             Get the state of a job identified with `workflow_id` and `job_id`.
-            One of the following job states are returned:
+            One of the following job states is returned:
             1) QUEUED - The workflow job is queued for execution.
             2) RUNNING - The workflow job is currently running.
             3) FAILED - The workflow job has failed.
@@ -295,6 +295,14 @@ class RouterWorkflow:
             message = f"No workflow job found for id: {job_id}"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+        try:
+            db_workspace = await db_get_workspace(workspace_id=wf_job_db.workspace_id)
+        except RuntimeError as error:
+            message = f"Non-existing DB entry for workspace id:{wf_job_db.workspace_id}"
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
         job_state = wf_job_db.job_state
         try:
             wf_job_url = get_resource_url(SERVER_WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
@@ -311,6 +319,7 @@ class RouterWorkflow:
             workflow_url=workflow_url,
             workspace_id=wf_job_db.workspace_id,
             workspace_url=workspace_url,
+            ws_state=db_workspace.state,
             job_state=job_state
         )
 
