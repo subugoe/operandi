@@ -50,6 +50,7 @@ OLA_HD_PASSWORD = "JW24G.xR"
 OPERANDI_VERSION = get_distribution("operandi_utils").version
 
 
+# TODO: Still unused due to the need of changing all existing DB entries. Adapt it.
 class AccountTypes(str, Enum):
     ADMIN = "ADMIN"
     HARVESTER = "HARVESTER"

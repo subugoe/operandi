@@ -398,20 +398,20 @@ class RouterWorkflow:
             encoded_workflow_message = dumps(workflow_processing_message)
 
             # Send the message to a queue based on the user_id
-            if user_account_type == "HARVESTER":
+            if user_account_type == "harvester":
                 self.logger.info(f"Pushing to the RabbitMQ queue for the harvester: {RABBITMQ_QUEUE_HARVESTER}")
                 self.rmq_publisher.publish_to_queue(
                     queue_name=RABBITMQ_QUEUE_HARVESTER,
                     message=encoded_workflow_message
                 )
-            elif user_account_type == "ADMIN" or user_account_type == "USER":
+            elif user_account_type == "administrator" or user_account_type == "user":
                 self.logger.info(f"Pushing to the RabbitMQ queue for the users: {RABBITMQ_QUEUE_USERS}")
                 self.rmq_publisher.publish_to_queue(
                     queue_name=RABBITMQ_QUEUE_USERS,
                     message=encoded_workflow_message
                 )
             else:
-                account_types = ["USER", "HARVESTER", "ADMIN"]
+                account_types = ["user", "harvester", "admin"]
                 message = f"The user account type is not valid: {user_account_type}. Must be one of: {account_types}"
                 self.logger.error(f"{message}")
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
