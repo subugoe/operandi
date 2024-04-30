@@ -1,6 +1,8 @@
 from logging import Logger
-from os.path import exists, isfile, join
+from os.path import exists, isfile
 from paramiko import AutoAddPolicy, SSHClient
+
+from .constants import HPC_DIR_BATCH_SCRIPTS, HPC_DIR_SLURM_WORKSPACES, HPC_PATH_HOME_USERS, HPC_PATH_SCRATCH1_USERS
 
 
 def check_keyfile_existence(hpc_key_path: str):
@@ -86,20 +88,24 @@ def create_proxy_jump(
 
 
 def resolve_hpc_user_home_dir(username: str) -> str:
-    return f"/home/users/{username}"
+    return f"{HPC_PATH_HOME_USERS}/{username}"
 
 
 def resolve_hpc_user_scratch_dir(username: str) -> str:
-    return f"/scratch1/users/{username}"
+    return f"{HPC_PATH_SCRATCH1_USERS}/{username}"
 
 
 def resolve_hpc_project_root_dir(username: str, project_root_dir: str) -> str:
-    return join(resolve_hpc_user_scratch_dir(username), project_root_dir)
+    return f"{resolve_hpc_user_scratch_dir(username)}/{project_root_dir}"
 
 
-def resolve_hpc_batch_scripts_dir(username: str, project_root_dir: str) -> str:
-    return join(resolve_hpc_project_root_dir(username, project_root_dir), "batch_scripts")
+def resolve_hpc_batch_scripts_dir(
+    username: str, project_root_dir: str, batch_scripts_dir: str = HPC_DIR_BATCH_SCRIPTS
+) -> str:
+    return f"{resolve_hpc_project_root_dir(username, project_root_dir)}/{batch_scripts_dir}"
 
 
-def resolve_hpc_slurm_workspaces_dir(username: str, project_root_dir: str) -> str:
-    return join(resolve_hpc_project_root_dir(username, project_root_dir), "slurm_workspaces")
+def resolve_hpc_slurm_workspaces_dir(
+    username: str, project_root_dir: str, slurm_workspaces_dir: str = HPC_DIR_SLURM_WORKSPACES
+) -> str:
+    return f"{resolve_hpc_project_root_dir(username, project_root_dir)}/{slurm_workspaces_dir}"

@@ -1,6 +1,10 @@
 __all__ = [
+    "HPC_DIR_BATCH_SCRIPTS",
+    "HPC_DIR_SLURM_WORKSPACES",
     "HPC_EXECUTOR_HOSTS",
     "HPC_EXECUTOR_PROXY_HOSTS",
+    "HPC_PATH_HOME_USERS",
+    "HPC_PATH_SCRATCH1_USERS",
     "HPC_TRANSFER_HOSTS",
     "HPC_TRANSFER_PROXY_HOSTS"
 ]
@@ -10,3 +14,7 @@ HPC_EXECUTOR_HOSTS = ["login-mdc.hpc.gwdg.de", "gwdu101.hpc.gwdg.de", "gwdu102.h
 HPC_EXECUTOR_PROXY_HOSTS = ["login.gwdg.de"]
 HPC_TRANSFER_HOSTS = ["transfer-scc.gwdg.de", "transfer-mdc.hpc.gwdg.de"]
 HPC_TRANSFER_PROXY_HOSTS = ["transfer.gwdg.de", "login.gwdg.de"]
+HPC_PATH_HOME_USERS = "/home/users"
+HPC_PATH_SCRATCH1_USERS = "/scratch1/users"
+HPC_DIR_BATCH_SCRIPTS = "batch_scripts"
+HPC_DIR_SLURM_WORKSPACES = "slurm_workspaces"
