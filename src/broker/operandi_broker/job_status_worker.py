@@ -108,6 +108,10 @@ class JobStatusWorker:
                 self.__download_results_from_hpc(
                     job_id=job_id, job_dir=job_dir, workspace_id=workspace_id, workspace_dir=workspace_dir
                 )
+            if new_job_state == StateJob.FAILED:
+                ws_state = StateWorkspace.READY
+                self.log.info(f"Setting new workspace state `{ws_state}` of workspace_id: {workspace_id}")
+                sync_db_update_workspace(find_workspace_id=workspace_id, state=ws_state)
 
         self.log.info(f"Latest slurm job state: {new_slurm_job_state}")
         self.log.info(f"Latest workflow job state: {new_job_state}")
