@@ -93,7 +93,7 @@ class JobStatusWorker:
 
         # If there has been a change of slurm job state, update it
         if old_slurm_job_state != new_slurm_job_state:
-            self.log.debug(
+            self.log.info(
                 f"Slurm job: {hpc_slurm_job_id}, old state: {old_slurm_job_state}, new state: {new_slurm_job_state}"
             )
             sync_db_update_hpc_slurm_job(find_workflow_job_id=job_id, hpc_slurm_job_state=new_slurm_job_state)
@@ -103,7 +103,7 @@ class JobStatusWorker:
 
         # If there has been a change of operandi workflow state, update it
         if old_job_state != new_job_state:
-            self.log.debug(f"Workflow job id: {job_id}, old state: {old_job_state}, new state: {new_job_state}")
+            self.log.info(f"Workflow job id: {job_id}, old state: {old_job_state}, new state: {new_job_state}")
             if new_job_state == StateJob.SUCCESS:
                 self.__download_results_from_hpc(
                     job_id=job_id, job_dir=job_dir, workspace_id=workspace_id, workspace_dir=workspace_dir
@@ -158,21 +158,21 @@ class JobStatusWorker:
             return
 
         self.has_consumed_message = False
-        self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
+        self.log.info(f"Acking delivery tag: {self.current_message_delivery_tag}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def __handle_message_failure(self, interruption: bool = False):
         self.has_consumed_message = False
 
         if interruption:
-            # self.log.debug(f"Nacking delivery tag: {self.current_message_delivery_tag}")
+            # self.log.info(f"Nacking delivery tag: {self.current_message_delivery_tag}")
             # self.rmq_consumer._channel.basic_nack(delivery_tag=self.current_message_delivery_tag)
             # TODO: Sending ACK for now because it is hard to clean up without a mets workspace backup mechanism
-            self.log.debug(f"Interruption Acking delivery tag: {self.current_message_delivery_tag}")
+            self.log.info(f"Interruption Acking delivery tag: {self.current_message_delivery_tag}")
             self.rmq_consumer._channel.basic_ack(delivery_tag=self.current_message_delivery_tag)
             return
 
-        self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
+        self.log.info(f"Acking delivery tag: {self.current_message_delivery_tag}")
         self.rmq_consumer._channel.basic_ack(delivery_tag=self.current_message_delivery_tag)
 
         # Reset the current message related parameters

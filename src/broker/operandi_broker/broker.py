@@ -93,20 +93,20 @@ class ServiceBroker:
     def create_worker_process(self, queue_name, status_checker=False) -> None:
         # If the entry for queue_name does not exist, create id
         if queue_name not in self.queues_and_workers:
-            self.log.debug(f"Initializing workers list for queue: {queue_name}")
+            self.log.info(f"Initializing workers list for queue: {queue_name}")
             # Initialize the worker pids list for the queue
             self.queues_and_workers[queue_name] = []
 
         child_pid = self.__create_child_process(queue_name=queue_name, status_checker=status_checker)
         # If creation of the child process was successful
         if child_pid:
-            self.log.debug(f"Assigning a new worker process with pid: {child_pid}, to queue: {queue_name}")
+            self.log.info(f"Assigning a new worker process with pid: {child_pid}, to queue: {queue_name}")
             # append the pid to the workers list of the queue_name
             (self.queues_and_workers[queue_name]).append(child_pid)
 
     # Forks a child process
     def __create_child_process(self, queue_name, status_checker=False) -> int:
-        self.log.debug(f"Trying to create a new worker process for queue: {queue_name}")
+        self.log.info(f"Trying to create a new worker process for queue: {queue_name}")
         try:
             # TODO: Try to utilize Popen() instead of fork()
             created_pid = fork()
@@ -145,15 +145,15 @@ class ServiceBroker:
         self.log.info(f"Starting to send SIGINT to all workers")
         # Send SIGINT to all workers
         for queue_name in self.queues_and_workers:
-            self.log.debug(f"Sending SIGINT to workers of queue: {queue_name}")
+            self.log.info(f"Sending SIGINT to workers of queue: {queue_name}")
             for worker_pid in self.queues_and_workers[queue_name]:
-                self.log.debug(f"Sending SIGINT to worker pid: {worker_pid}")
+                self.log.info(f"Sending SIGINT to worker pid: {worker_pid}")
                 try:
                     process = psutil.Process(pid=worker_pid)
                     process.send_signal(signal.SIGINT)
                     interrupted_pids.append(worker_pid)
                 except psutil.ZombieProcess as error:
-                    self.log.debug(f"Worker process has become a zombie: {worker_pid}, {error}")
+                    self.log.info(f"Worker process has become a zombie: {worker_pid}, {error}")
                 except psutil.NoSuchProcess as error:
                     self.log.error(f"No such worker process with pid: {worker_pid}, {error}")
                     continue
@@ -166,9 +166,9 @@ class ServiceBroker:
         for pid in interrupted_pids:
             try:
                 process = psutil.Process(pid=pid)
-                self.log.debug(f"Sending SIGKILL to worker pid: {pid}")
+                self.log.info(f"Sending SIGKILL to worker pid: {pid}")
                 process.send_signal(signal.SIGKILL)
             except psutil.ZombieProcess:
-                self.log.debug(f"Worker process became zombie: {pid}")
+                self.log.info(f"Worker process became zombie: {pid}")
             except psutil.NoSuchProcess:
-                self.log.debug(f"Worker process is not existing: {pid}")
+                self.log.info(f"Worker process is not existing: {pid}")

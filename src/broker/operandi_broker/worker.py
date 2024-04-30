@@ -143,7 +143,7 @@ class Worker:
         sync_db_update_workspace(find_workspace_id=self.current_message_ws_id, state=ws_state)
 
         self.has_consumed_message = False
-        self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
+        self.log.info(f"Acking delivery tag: {self.current_message_delivery_tag}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def __handle_message_failure(self, interruption: bool = False, set_ws_ready: bool = False):
@@ -158,14 +158,14 @@ class Worker:
             sync_db_update_workspace(find_workspace_id=self.current_message_ws_id, state=ws_state)
 
         if interruption:
-            # self.log.debug(f"Nacking delivery tag: {self.current_message_delivery_tag}")
+            # self.log.info(f"Nacking delivery tag: {self.current_message_delivery_tag}")
             # self.rmq_consumer._channel.basic_nack(delivery_tag=self.current_message_delivery_tag)
             # TODO: Sending ACK for now because it is hard to clean up without a mets workspace backup mechanism
-            self.log.debug(f"Interruption Acking delivery tag: {self.current_message_delivery_tag}")
+            self.log.info(f"Interruption Acking delivery tag: {self.current_message_delivery_tag}")
             self.rmq_consumer._channel.basic_ack(delivery_tag=self.current_message_delivery_tag)
             return
 
-        self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
+        self.log.info(f"Acking delivery tag: {self.current_message_delivery_tag}")
         self.rmq_consumer._channel.basic_ack(delivery_tag=self.current_message_delivery_tag)
 
         # Reset the current message related parameters

@@ -98,11 +98,11 @@ class HPCConnector:
 
     def connect_to_proxy_server(self, host: str, port: int = 22) -> SSHClient:
         self.ssh_proxy_client = SSHClient()
-        self.log.debug(f"Setting missing host key policy for the proxy client")
+        self.log.info(f"Setting missing host key policy for the proxy client")
         self.ssh_proxy_client.set_missing_host_key_policy(AutoAddPolicy())
-        self.log.debug(f"Retrieving proxy server private key file from path: {self.proxy_key_path}")
+        self.log.info(f"Retrieving proxy server private key file from path: {self.proxy_key_path}")
         proxy_pkey = RSAKey.from_private_key_file(str(self.proxy_key_path), self.proxy_key_pass)
-        self.log.debug(f"Connecting to proxy server {host}:{port} with username: {self.username}")
+        self.log.info(f"Connecting to proxy server {host}:{port} with username: {self.username}")
         self.ssh_proxy_client.connect(
             hostname=host,
             port=port,
@@ -113,7 +113,7 @@ class HPCConnector:
         )
         # self.ssh_proxy_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
         self.last_used_proxy_host = host
-        self.log.debug(f"Successfully connected to the proxy server")
+        self.log.info(f"Successfully connected to the proxy server")
         return self.ssh_proxy_client
 
     def establish_proxy_tunnel(
@@ -125,7 +125,7 @@ class HPCConnector:
         channel_kind: str = 'direct-tcpip',
     ) -> Channel:
         proxy_transport = self.ssh_proxy_client.get_transport()
-        self.log.debug(f"Configuring a tunnel to destination {dst_host}:{dst_port} from {src_host}:{src_port}")
+        self.log.info(f"Configuring a tunnel to destination {dst_host}:{dst_port} from {src_host}:{src_port}")
         self.proxy_tunnel = proxy_transport.open_channel(
             kind=channel_kind,
             src_addr=(src_host, src_port),
@@ -134,16 +134,16 @@ class HPCConnector:
         )
         # self.proxy_tunnel.get_transport().set_keepalive(self.channel_keep_alive_interval)
         self.last_used_hpc_host = dst_host
-        self.log.debug(f"Successfully configured a proxy tunnel")
+        self.log.info(f"Successfully configured a proxy tunnel")
         return self.proxy_tunnel
 
     def connect_to_hpc_frontend_server(self, host: str, port: int = 22, proxy_tunnel: Channel = None) -> SSHClient:
         self.ssh_hpc_client = SSHClient()
-        self.log.debug(f"Setting missing host key policy for the hpc frontend client")
+        self.log.info(f"Setting missing host key policy for the hpc frontend client")
         self.ssh_hpc_client.set_missing_host_key_policy(AutoAddPolicy())
-        self.log.debug(f"Retrieving hpc frontend server private key file from path: {self.hpc_key_path}")
+        self.log.info(f"Retrieving hpc frontend server private key file from path: {self.hpc_key_path}")
         hpc_pkey = RSAKey.from_private_key_file(str(self.hpc_key_path), self.hpc_key_pass)
-        self.log.debug(f"Connecting to hpc frontend server {host}:{port} with username: {self.username}")
+        self.log.info(f"Connecting to hpc frontend server {host}:{port} with username: {self.username}")
         self.ssh_hpc_client.connect(
             hostname=host,
             port=port,
@@ -155,7 +155,7 @@ class HPCConnector:
         )
         # self.ssh_hpc_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
         self.last_used_hpc_host = host
-        self.log.debug(f"Successfully connected to the hpc frontend server")
+        self.log.info(f"Successfully connected to the hpc frontend server")
         return self.ssh_hpc_client
 
     def create_sftp_client(self) -> SFTPClient:
@@ -179,21 +179,21 @@ class HPCConnector:
             return False
 
     def is_ssh_connection_still_responsive(self, ssh_client: SSHClient) -> bool:
-        self.log.debug("Checking SSH connection responsiveness")
+        self.log.info("Checking SSH connection responsiveness")
         if not ssh_client:
             return False
         transport = ssh_client.get_transport()
         return self.is_transport_responsive(transport)
 
     def is_proxy_tunnel_still_responsive(self) -> bool:
-        self.log.debug("Checking proxy tunel responsiveness")
+        self.log.info("Checking proxy tunel responsiveness")
         if not self.proxy_tunnel:
             return False
         transport = self.proxy_tunnel.get_transport()
         return self.is_transport_responsive(transport)
 
     def is_sftp_still_responsive(self) -> bool:
-        self.log.debug("Checking SFTP connection responsiveness")
+        self.log.info("Checking SFTP connection responsiveness")
         if not self.sftp_client:
             return False
         channel = self.sftp_client.get_channel()

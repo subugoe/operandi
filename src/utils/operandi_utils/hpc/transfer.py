@@ -44,10 +44,7 @@ class HPCTransfer(HPCConnector):
     def put_batch_script(self, batch_script_id: str) -> str:
         local_batch_script_path = join(dirname(__file__), "batch_scripts", batch_script_id)
         hpc_batch_script_path = join(self.batch_scripts_dir, batch_script_id)
-        self.put_file(
-            local_src=local_batch_script_path,
-            remote_dst=hpc_batch_script_path
-        )
+        self.put_file(local_src=local_batch_script_path, remote_dst=hpc_batch_script_path)
         self.log.info(f"Put file from local src: {local_batch_script_path}, to dst: {hpc_batch_script_path}")
         return hpc_batch_script_path
 
