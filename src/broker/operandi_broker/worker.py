@@ -107,11 +107,11 @@ class Worker:
                 mets_basename = "mets.xml"
         except RuntimeError as error:
             self.log.error(f"Database run-time error has occurred: {error}")
-            self.__handle_message_failure(interruption=False)
+            self.__handle_message_failure(interruption=False, set_ws_ready=True)
             return
         except Exception as error:
             self.log.error(f"Database related error has occurred: {error}")
-            self.__handle_message_failure(interruption=False)
+            self.__handle_message_failure(interruption=False, set_ws_ready=True)
             return
 
         # Trigger a slurm job in the HPC
@@ -131,7 +131,7 @@ class Worker:
             self.log.info(f"The HPC slurm job was successfully submitted")
         except Exception as error:
             self.log.error(f"Triggering a slurm job in the HPC has failed: {error}")
-            self.__handle_message_failure(interruption=False)
+            self.__handle_message_failure(interruption=False, set_ws_ready=True)
             return
 
         job_state = StateJob.RUNNING
@@ -146,11 +146,16 @@ class Worker:
         self.log.debug(f"Acking delivery tag: {self.current_message_delivery_tag}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    def __handle_message_failure(self, interruption: bool = False):
+    def __handle_message_failure(self, interruption: bool = False, set_ws_ready: bool = False):
         job_state = "FAILED"
         self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
         sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=job_state)
         self.has_consumed_message = False
+
+        if set_ws_ready:
+            ws_state = StateWorkspace.READY
+            self.log.info(f"Setting new workspace state `{ws_state}` of workspace_id: {self.current_message_ws_id}")
+            sync_db_update_workspace(find_workspace_id=self.current_message_ws_id, state=ws_state)
 
         if interruption:
             # self.log.debug(f"Nacking delivery tag: {self.current_message_delivery_tag}")
