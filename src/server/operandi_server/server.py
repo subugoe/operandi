@@ -6,7 +6,7 @@ from uvicorn import run
 from fastapi import FastAPI, status
 
 from operandi_utils import get_log_file_path_prefix, reconfigure_all_loggers, verify_database_uri
-from operandi_utils.constants import LOG_LEVEL_SERVER, OPERANDI_VERSION
+from operandi_utils.constants import AccountTypes, LOG_LEVEL_SERVER, OPERANDI_VERSION
 from operandi_utils.database import db_initiate_database
 from operandi_server.authentication import create_user_if_not_available
 from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKFLOWS_ROUTER, SERVER_WORKSPACES_ROUTER
@@ -90,7 +90,7 @@ class OperandiServer(FastAPI):
         await db_initiate_database(self.db_url)
 
         # Insert the default server and harvester credentials to the DB
-        await self.insert_default_credentials()
+        await self.insert_default_accounts()
 
         # Include the endpoints of the OCR-D WebAPI
         await self.include_webapi_routers()
@@ -116,28 +116,24 @@ class OperandiServer(FastAPI):
         self.include_router(workflow_router.router)
         self.include_router(RouterWorkspace().router)
 
-    async def insert_default_credentials(self):
+    async def insert_default_accounts(self):
         default_admin_user = environ.get("OPERANDI_SERVER_DEFAULT_USERNAME", None)
         default_admin_pass = environ.get("OPERANDI_SERVER_DEFAULT_PASSWORD", None)
         default_harvester_user = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME", None)
         default_harvester_pass = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD", None)
 
-        self.log.info(f"Configuring default server auth")
+        self.log.info(f"Configuring default server admin account")
         if default_admin_user and default_admin_pass:
             await create_user_if_not_available(
-                username=default_admin_user,
-                password=default_admin_pass,
-                account_type="administrator",
-                approved_user=True
+                username=default_admin_user, password=default_admin_pass,
+                account_type=AccountTypes.ADMIN, approved_user=True
             )
-            self.log.info(f"Configured default server auth")
+            self.log.info(f"Configured default server admin account")
 
-        self.log.info(f"Configuring default harvester auth")
+        self.log.info(f"Configuring default harvester account")
         if default_harvester_user and default_harvester_pass:
             await create_user_if_not_available(
-                username=default_harvester_user,
-                password=default_harvester_pass,
-                account_type="harvester",
-                approved_user=True
+                username=default_harvester_user, password=default_harvester_pass,
+                account_type=AccountTypes.HARVESTER, approved_user=True
             )
-            self.log.info(f"Configured default harvester auth")
+            self.log.info(f"Configured default harvester account")

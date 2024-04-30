@@ -4,14 +4,7 @@ from os.path import join
 from pathlib import Path
 from shutil import rmtree
 from typing import List, Union
-from fastapi import (
-    APIRouter,
-    BackgroundTasks,
-    Depends,
-    HTTPException,
-    status,
-    UploadFile,
-)
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
@@ -20,20 +13,12 @@ from operandi_utils.database import db_create_workspace, db_get_workspace, db_up
 from operandi_server.constants import SERVER_WORKSPACES_ROUTER, DEFAULT_METS_BASENAME
 from operandi_server.exceptions import WorkspaceNotValidException
 from operandi_server.files_manager import (
-    create_resource_dir,
-    delete_resource_dir,
-    get_all_resources_url,
-    get_resource_url,
-    receive_resource
-)
+    create_resource_dir, delete_resource_dir, get_all_resources_url, get_resource_url, receive_resource)
 from operandi_server.models import WorkspaceRsrc
 from operandi_server.utils import (
-    create_workspace_bag_from_remote_url,
-    extract_bag_info,
-    get_ocrd_workspace_physical_pages,
-    get_workspace_bag,
-    validate_bag
-)
+    create_workspace_bag_from_remote_url, extract_bag_info, get_ocrd_workspace_physical_pages, get_workspace_bag,
+    validate_bag)
+from .constants import ServerApiTags
 from .user import RouterUser
 
 
@@ -41,76 +26,42 @@ class RouterWorkspace:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.workspace")
         self.user_authenticator = RouterUser()
-        self.router = APIRouter(tags=["Workspace"])
+        self.router = APIRouter(tags=[ServerApiTags.WORKSPACE])
         self.router.add_api_route(
             path="/workspace",
-            endpoint=self.list_workspaces,
-            methods=["GET"],
-            status_code=status.HTTP_200_OK,
+            endpoint=self.list_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get a list of existing workspaces.",
-            response_model=List[WorkspaceRsrc],
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workspace/{workspace_id}",
-            endpoint=self.download_workspace,
-            methods=["GET"],
-            status_code=status.HTTP_200_OK,
+            endpoint=self.download_workspace, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download an existing workspace zip identified with `workspace_id`.",
-            response_model=None,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            response_model=None, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/import_external_workspace",
-            endpoint=self.upload_workspace_from_url,
-            methods=["POST"],
-            status_code=status.HTTP_201_CREATED,
-            summary="""
-            Import workspace from mets url.
-            Returns a `resource_id` associated with the uploaded workspace.
-            """,
-            response_model=WorkspaceRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            endpoint=self.upload_workspace_from_url, methods=["POST"], status_code=status.HTTP_201_CREATED,
+            summary="Import workspace from mets url. Returns a `resource_id` associated with the uploaded workspace.",
+            response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workspace",
-            endpoint=self.upload_workspace,
-            methods=["POST"],
-            status_code=status.HTTP_201_CREATED,
-            summary="""
-            Import workspace as an ocrd zip.
-            Returns a `resource_id` associated with the uploaded workspace.
-            """,
-            response_model=WorkspaceRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            endpoint=self.upload_workspace, methods=["POST"], status_code=status.HTTP_201_CREATED,
+            summary="Import workspace as an ocrd zip. Returns a `resource_id` associated with the uploaded workspace.",
+            response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workspace/{workspace_id}",
-            endpoint=self.upload_workspace,
-            methods=["PUT"],
-            status_code=status.HTTP_201_CREATED,
-            summary="""
-            Update an existing workspace specified with `workspace_id` or create a new workspace.
-            """,
-            response_model=WorkspaceRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            endpoint=self.upload_workspace, methods=["PUT"], status_code=status.HTTP_201_CREATED,
+            summary="Update an existing workspace specified with `workspace_id` or create a new workspace.",
+            response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workspace/{workspace_id}",
-            endpoint=self.delete_workspace,
-            methods=["DELETE"],
-            status_code=status.HTTP_200_OK,
-            summary="""
-            Delete an existing workspace identified with `workspace_id`.
-            """,
-            response_model=WorkspaceRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            endpoint=self.delete_workspace, methods=["DELETE"], status_code=status.HTTP_200_OK,
+            summary="Delete an existing workspace identified with `workspace_id`.",
+            response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
     def _validate_bag_with_error_handling(self, bag_dst: str) -> None:

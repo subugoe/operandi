@@ -1,4 +1,5 @@
 from operandi_utils import call_sync
+from ..constants import AccountTypes
 from .models import DBUserAccount
 
 
@@ -6,7 +7,7 @@ async def db_create_user_account(
     email: str,
     encrypted_pass: str,
     salt: str,
-    account_type: str,
+    account_type: AccountTypes = AccountTypes.UNSET,
     approved_user: bool = False
 ) -> DBUserAccount:
     user_account = DBUserAccount(
@@ -25,7 +26,7 @@ async def sync_db_create_user_account(
     email: str,
     encrypted_pass: str,
     salt: str,
-    account_type: str,
+    account_type: AccountTypes = AccountTypes.UNSET,
     approved_user: bool = False
 ) -> DBUserAccount:
     return await db_create_user_account(email, encrypted_pass, salt, account_type, approved_user)

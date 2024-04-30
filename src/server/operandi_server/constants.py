@@ -1,13 +1,10 @@
 __all__ = [
-    "ACCOUNT_TYPES",
     "DEFAULT_FILE_GRP",
     "DEFAULT_METS_BASENAME",
     "SERVER_WORKFLOW_JOBS_ROUTER",
     "SERVER_WORKFLOWS_ROUTER",
     "SERVER_WORKSPACES_ROUTER"
 ]
-
-ACCOUNT_TYPES = ["user", "administrator", "harvester"]
 
 DEFAULT_FILE_GRP: str = "DEFAULT"
 DEFAULT_METS_BASENAME: str = "mets.xml"

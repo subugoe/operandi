@@ -1,7 +1,7 @@
 from typing import Optional
 from beanie import Document
 
-from operandi_utils.constants import StateJob, StateJobSlurm, StateWorkspace
+from operandi_utils.constants import AccountTypes, StateJob, StateJobSlurm, StateWorkspace
 
 
 class DBHPCSlurmJob(Document):
@@ -45,7 +45,7 @@ class DBUserAccount(Document):
     email: str
     encrypted_pass: str
     salt: str
-    account_type: str
+    account_type: AccountTypes = AccountTypes.UNSET
     approved_user: bool = False
     deleted: bool = False
 

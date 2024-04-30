@@ -9,6 +9,7 @@ except ImportError:
     from importlib_metadata import distribution as get_distribution
 
 __all__ = [
+    "AccountTypes",
     "LOG_FORMAT",
     "LOG_LEVEL_BROKER",
     "LOG_LEVEL_HARVESTER",
@@ -47,6 +48,13 @@ OLA_HD_USER = "admin"
 OLA_HD_PASSWORD = "JW24G.xR"
 
 OPERANDI_VERSION = get_distribution("operandi_utils").version
+
+
+class AccountTypes(str, Enum):
+    ADMIN = "admin"
+    HARVESTER = "harvester"
+    USER = "user"
+    UNSET = "unset"
 
 
 class StateJob(str, Enum):

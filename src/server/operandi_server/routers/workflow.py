@@ -10,31 +10,18 @@ from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils import get_nf_workflows_dir
-from operandi_utils.constants import StateJob, StateWorkspace
+from operandi_utils.constants import AccountTypes, StateJob, StateWorkspace
 from operandi_utils.database import (
-    db_create_workflow,
-    db_create_workflow_job,
-    db_get_workflow,
-    db_get_workflow_job,
-    db_get_workspace,
-    db_update_workspace
-)
+    db_create_workflow, db_create_workflow_job, db_get_workflow, db_get_workflow_job, db_get_workspace,
+    db_update_workspace)
 from operandi_utils.rabbitmq import (
-    get_connection_publisher,
-    RABBITMQ_QUEUE_JOB_STATUSES,
-    RABBITMQ_QUEUE_HARVESTER,
-    RABBITMQ_QUEUE_USERS
-)
+    get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
 from operandi_server.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
 from operandi_server.files_manager import (
-    create_resource_dir,
-    delete_resource_dir,
-    get_all_resources_url,
-    get_resource_local,
-    get_resource_url,
-    receive_resource
-)
+    create_resource_dir, delete_resource_dir, get_all_resources_url, get_resource_local, get_resource_url,
+    receive_resource)
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
+from .constants import ServerApiTags
 from .user import RouterUser
 
 
@@ -55,35 +42,22 @@ class RouterWorkflow:
         self.rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_USERS)
         self.rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES)
 
-        self.router = APIRouter(tags=["Workflow"])
+        self.router = APIRouter(tags=[ServerApiTags.WORKFLOW])
         self.router.add_api_route(
-            path="/workflow",
-            endpoint=self.list_workflows,
-            methods=["GET"],
-            status_code=status.HTTP_200_OK,
+            path=f"/workflow",
+            endpoint=self.list_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get a list of existing nextflow workflows.",
-            response_model=List[WorkflowRsrc],
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            response_model=List[WorkflowRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workflow",
-            endpoint=self.upload_workflow_script,
-            methods=["POST"],
-            status_code=status.HTTP_201_CREATED,
-            summary="""
-            Upload a nextflow workflow script.
-            Returns a `resource_id` associated with the uploaded script.
-            """,
-            response_model=WorkflowRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            endpoint=self.upload_workflow_script, methods=["POST"], status_code=status.HTTP_201_CREATED,
+            summary="Upload a nextflow workflow script. Returns a `resource_id` associated with the uploaded script.",
+            response_model=WorkflowRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workflow/{workflow_id}",
-            endpoint=self.download_workflow_script,
-            methods=["GET"],
-            status_code=status.HTTP_200_OK,
+            endpoint=self.download_workflow_script, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download an existing nextflow workflow script identified with `workflow_id`.",
             response_model=None,
             response_model_exclude_unset=False,
@@ -91,33 +65,19 @@ class RouterWorkflow:
         )
         self.router.add_api_route(
             path="/workflow/{workflow_id}",
-            endpoint=self.update_workflow_script,
-            methods=["PUT"],
-            status_code=status.HTTP_201_CREATED,
-            summary="""
-            Update an existing workflow script identified with or `workflow_id` or upload a new workflow script.
-            """,
-            response_model=WorkflowRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            endpoint=self.update_workflow_script, methods=["PUT"], status_code=status.HTTP_201_CREATED,
+            summary="Update an existing workflow script identified with or `workflow_id` or upload a new script.",
+            response_model=WorkflowRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workflow/{workflow_id}",
-            endpoint=self.submit_to_rabbitmq_queue,
-            methods=["POST"],
-            status_code=status.HTTP_201_CREATED,
-            summary="""
-            Run a workflow job with the specified `workflow_id` and arguments in the request body.
-            """,
-            response_model=WorkflowJobRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            endpoint=self.submit_to_rabbitmq_queue, methods=["POST"], status_code=status.HTTP_201_CREATED,
+            summary="Run a workflow job with the specified `workflow_id` and arguments in the request body.",
+            response_model=WorkflowJobRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workflow/{workflow_id}/{job_id}",
-            endpoint=self.get_workflow_job_status,
-            methods=["GET"],
-            status_code=status.HTTP_200_OK,
+            endpoint=self.get_workflow_job_status, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="""
             Get the state of a job identified with `workflow_id` and `job_id`.
             One of the following job states is returned:
@@ -127,19 +87,13 @@ class RouterWorkflow:
             4) SUCCESS - The workflow job has finished successfully.
             5) UNSET - The workflow job state was not set yet.
             """,
-            response_model=WorkflowJobRsrc,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
+            response_model=WorkflowJobRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workflow/{workflow_id}/{job_id}/logs",
-            endpoint=self.download_workflow_job_logs,
-            methods=["GET"],
-            status_code=status.HTTP_200_OK,
+            endpoint=self.download_workflow_job_logs, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download the logs zip of a job identified with `workflow_id` and `job_id`.",
-            response_model=None,
-            response_model_exclude_unset=False,
-            response_model_exclude_none=False
+            response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
 
     async def _push_status_request_to_rabbitmq(self, job_id: str):
@@ -383,6 +337,7 @@ class RouterWorkflow:
                 headers={"WWW-Authenticate": "Basic"},
                 detail=message
             )
+
         try:
             # Extract sbatch arguments
             self.logger.info("Extracting sbatch request arguments")
@@ -443,18 +398,22 @@ class RouterWorkflow:
             encoded_workflow_message = dumps(workflow_processing_message)
 
             # Send the message to a queue based on the user_id
-            if user_account_type == "harvester":
+            if user_account_type == AccountTypes.HARVESTER:
                 self.logger.info(f"Pushing to the RabbitMQ queue for the harvester: {RABBITMQ_QUEUE_HARVESTER}")
                 self.rmq_publisher.publish_to_queue(
                     queue_name=RABBITMQ_QUEUE_HARVESTER,
                     message=encoded_workflow_message
                 )
-            else:
+            elif user_account_type == AccountTypes.ADMIN or user_account_type == AccountTypes.USER:
                 self.logger.info(f"Pushing to the RabbitMQ queue for the users: {RABBITMQ_QUEUE_USERS}")
                 self.rmq_publisher.publish_to_queue(
                     queue_name=RABBITMQ_QUEUE_USERS,
                     message=encoded_workflow_message
                 )
+            else:
+                message = f"The user account type is not valid: {user_account_type}"
+                self.logger.error(f"{message}")
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
         except Exception as error:
             message = "Internal Server Error"
             self.logger.error(f"{message}, error: {error}")
