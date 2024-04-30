@@ -51,10 +51,10 @@ OPERANDI_VERSION = get_distribution("operandi_utils").version
 
 
 class AccountTypes(str, Enum):
-    ADMIN = "admin"
-    HARVESTER = "harvester"
-    USER = "user"
-    UNSET = "unset"
+    ADMIN = "ADMIN"
+    HARVESTER = "HARVESTER"
+    USER = "USER"
+    UNSET = "UNSET"
 
 
 class StateJob(str, Enum):

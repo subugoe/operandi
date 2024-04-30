@@ -45,7 +45,7 @@ class DBUserAccount(Document):
     email: str
     encrypted_pass: str
     salt: str
-    account_type: AccountTypes = AccountTypes.UNSET
+    account_type: str = "UNSET"
     approved_user: bool = False
     deleted: bool = False
 

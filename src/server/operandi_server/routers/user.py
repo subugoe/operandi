@@ -47,7 +47,7 @@ class RouterUser:
 
         return PYUserAction(account_type=account_type, action="Successfully logged!", email=email)
 
-    async def user_register(self, email: str, password: str, account_type: str = "user") -> PYUserAction:
+    async def user_register(self, email: str, password: str, account_type: str = "USER") -> PYUserAction:
         """
         Used for registration.
         There are 3 account types:
@@ -61,10 +61,9 @@ class RouterUser:
         Curl equivalent:
         `curl -X POST SERVER_ADDR/user/register email=example@gmail.com password=example_pass account_type=user`
         """
-
-        # for a TransactionTypes Enum
-        if not isinstance(account_type, AccountTypes):
-            message = f"Wrong account type. Must be one of: {AccountTypes}"
+        account_types = ["USER", "HARVESTER", "ADMIN"]
+        if account_type not in account_types:
+            message = f"Wrong account type. Must be one of: {account_types}"
             self.logger.error(f"{message}")
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers={"WWW-Authenticate": "Basic"}, detail=message)
