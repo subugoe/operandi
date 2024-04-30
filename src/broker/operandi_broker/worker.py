@@ -147,7 +147,7 @@ class Worker:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def __handle_message_failure(self, interruption: bool = False, set_ws_ready: bool = False):
-        job_state = "FAILED"
+        job_state = StateJob.FAILED
         self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
         sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=job_state)
         self.has_consumed_message = False
