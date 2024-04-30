@@ -16,6 +16,7 @@ from operandi_utils.database import (
     sync_db_update_workspace
 )
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
+from operandi_utils.hpc.constants import HPC_JOB_DEADLINE_TIME_REGULAR, HPC_JOB_DEADLINE_TIME_TEST
 from operandi_utils.rabbitmq import get_connection_consumer
 
 
@@ -148,7 +149,7 @@ class Worker:
 
     def __handle_message_failure(self, interruption: bool = False, set_ws_ready: bool = False):
         job_state = StateJob.FAILED
-        self.log.info(f"Setting new state[{job_state}] of job_id: {self.current_message_job_id}")
+        self.log.info(f"Setting new state `{job_state}` of job_id: {self.current_message_job_id}")
         sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=job_state)
         self.has_consumed_message = False
 
@@ -179,7 +180,7 @@ class Worker:
     # The arguments to this method are passed by the caller from the OS
     def signal_handler(self, sig, frame):
         signal_name = signal.Signals(sig).name
-        self.log.info(f"{signal_name} received from parent process[{getppid()}].")
+        self.log.info(f"{signal_name} received from parent process `{getppid()}`.")
         if self.has_consumed_message:
             self.log.info(f"Handling the message failure due to interruption: {signal_name}")
             self.__handle_message_failure(interruption=True)
@@ -208,10 +209,10 @@ class Worker:
 
         if self.test_sbatch:
             # The deadline of the test job - 1 hour
-            job_deadline_time = "1:00:00"
+            job_deadline_time = HPC_JOB_DEADLINE_TIME_TEST
         else:
             # The deadline of the regular jobs - 48 hours
-            job_deadline_time = "48:00:00"
+            job_deadline_time = HPC_JOB_DEADLINE_TIME_REGULAR
 
         # Recreate the transfer connection for each workflow job submission
         # This is required due to all kind of nasty connection fails - timeouts,

@@ -4,6 +4,7 @@ from os.path import join
 from shutil import copytree
 from time import sleep
 from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
+from operandi_utils.hpc.constants import HPC_JOB_DEADLINE_TIME_TEST
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
@@ -78,7 +79,7 @@ def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow)
         input_file_grp="DEFAULT",
         workspace_id=ID_WORKSPACE,
         mets_basename="mets.xml",
-        job_deadline_time="1:00:00",
+        job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
         cpus=2,
         ram=16,
         nf_process_forks=2,
@@ -102,7 +103,7 @@ def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_w
         input_file_grp="DEFAULT",
         workspace_id=ID_WORKSPACE_WITH_MS,
         mets_basename="mets.xml",
-        job_deadline_time="1:00:00",
+        job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
         cpus=3,
         ram=16,
         nf_process_forks=2,

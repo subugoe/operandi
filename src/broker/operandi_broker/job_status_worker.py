@@ -184,7 +184,7 @@ class JobStatusWorker:
     # The arguments to this method are passed by the caller from the OS
     def signal_handler(self, sig, frame):
         signal_name = signal.Signals(sig).name
-        self.log.info(f"{signal_name} received from parent process[{getppid()}].")
+        self.log.info(f"{signal_name} received from parent process `{getppid()}`.")
         if self.has_consumed_message:
             self.log.info(f"Handling the message failure due to interruption: {signal_name}")
             self.__handle_message_failure(interruption=True)
