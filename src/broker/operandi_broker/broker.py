@@ -25,7 +25,8 @@ class ServiceBroker:
         self,
         db_url: str = environ.get("OPERANDI_DB_URL"),
         rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
-        test_sbatch: bool = False
+        test_sbatch: bool = False,
+        worker_starting_port: int = 44000
     ):
         if not db_url:
             raise ValueError("Environment variable not set: OPERANDI_DB_URL")
@@ -52,20 +53,28 @@ class ServiceBroker:
         # Keys: Each key is a unique queue name
         # Value: List of worker pids consuming from the key queue name
         self.queues_and_workers = {}
+        self.worker_starting_port = worker_starting_port
 
     def run_broker(self):
         # A list of queues for which a worker process should be created
-        queues = [
-            RABBITMQ_QUEUE_HARVESTER,
-            RABBITMQ_QUEUE_USERS
-        ]
+        queues = [RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS]
+        tunel_port = self.worker_starting_port
         try:
             for queue_name in queues:
                 self.log.info(f"Creating a worker processes to consume from queue: {queue_name}")
-                self.create_worker_process(queue_name=queue_name, status_checker=False)
+                self.create_worker_process(
+                    queue_name=queue_name, status_checker=False,
+                    tunnel_port_executor=tunel_port, tunnel_port_transfer=tunel_port+1
+                )
+                tunel_port += 2
+
             self.log.info(
                 f"Creating a status checker worker processes to consume from queue: {RABBITMQ_QUEUE_JOB_STATUSES}")
-            self.create_worker_process(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, status_checker=True)
+            self.create_worker_process(
+                queue_name=RABBITMQ_QUEUE_JOB_STATUSES, status_checker=True,
+                tunnel_port_executor=tunel_port, tunnel_port_transfer=tunel_port+1
+            )
+            tunel_port += 2
         except Exception as error:
             self.log.error(f"Error while creating worker processes: {error}")
 
@@ -90,14 +99,19 @@ class ServiceBroker:
             self.log.error(f"Unexpected error: {error}")
 
     # Creates a separate worker process and append its pid if successful
-    def create_worker_process(self, queue_name, status_checker=False) -> None:
+    def create_worker_process(
+            self, queue_name, tunnel_port_executor, tunnel_port_transfer, status_checker=False
+    ) -> None:
         # If the entry for queue_name does not exist, create id
         if queue_name not in self.queues_and_workers:
             self.log.info(f"Initializing workers list for queue: {queue_name}")
             # Initialize the worker pids list for the queue
             self.queues_and_workers[queue_name] = []
 
-        child_pid = self.__create_child_process(queue_name=queue_name, status_checker=status_checker)
+        child_pid = self.__create_child_process(
+            queue_name=queue_name, status_checker=status_checker,
+            tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer
+        )
         # If creation of the child process was successful
         if child_pid:
             self.log.info(f"Assigning a new worker process with pid: {child_pid}, to queue: {queue_name}")
@@ -105,7 +119,9 @@ class ServiceBroker:
             (self.queues_and_workers[queue_name]).append(child_pid)
 
     # Forks a child process
-    def __create_child_process(self, queue_name, status_checker=False) -> int:
+    def __create_child_process(
+            self, queue_name, tunnel_port_executor, tunnel_port_transfer, status_checker=False
+    ) -> int:
         self.log.info(f"Trying to create a new worker process for queue: {queue_name}")
         try:
             # TODO: Try to utilize Popen() instead of fork()
@@ -122,16 +138,14 @@ class ServiceBroker:
             # self.queues_and_workers = None
             if status_checker:
                 child_worker = JobStatusWorker(
-                    db_url=self.db_url,
-                    rabbitmq_url=self.rabbitmq_url,
-                    queue_name=queue_name,
+                    db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
+                    tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer,
                     test_sbatch=self.test_sbatch
                 )
             else:
                 child_worker = Worker(
-                    db_url=self.db_url,
-                    rabbitmq_url=self.rabbitmq_url,
-                    queue_name=queue_name,
+                    db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
+                    tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer,
                     test_sbatch=self.test_sbatch
                 )
             child_worker.run()
