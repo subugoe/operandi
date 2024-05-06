@@ -55,9 +55,9 @@ class JobStatusWorker:
             signal.signal(signal.SIGTERM, self.signal_handler)
 
             sync_db_initiate_database(self.db_url)
-            self.hpc_executor = HPCExecutor(tunel_host='localhost', tunel_port=self.tunnel_port_executor)
+            self.hpc_executor = HPCExecutor(tunnel_host='localhost', tunnel_port=self.tunnel_port_executor)
             self.log.info("HPC executor connection successful.")
-            self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=self.tunnel_port_transfer)
+            self.hpc_io_transfer = HPCTransfer(tunnel_host='localhost', tunnel_port=self.tunnel_port_transfer)
             self.log.info("HPC transfer connection successful.")
 
             self.rmq_consumer = get_connection_consumer(rabbitmq_url=self.rmq_url)

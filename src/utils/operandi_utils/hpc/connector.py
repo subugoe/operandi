@@ -28,8 +28,8 @@ class HPCConnector:
         connection_keep_alive_interval: int = 30,
         connection_timeout: float = 180,
         all_connections_try_times: int = 1,
-        tunel_host: str = 'localhost',
-        tunel_port: int = 0
+        tunnel_host: str = 'localhost',
+        tunnel_port: int = 0
     ) -> None:
         self.log = log
         self.username = username
@@ -85,8 +85,11 @@ class HPCConnector:
             Slurm workspaces root dir: {self.slurm_workspaces_dir}\n
             """)
 
+        self.tunnel_host = tunnel_host
+        self.tunnel_port = tunnel_port
+
         self.create_ssh_connection_to_hpc_by_iteration(
-            try_times=all_connections_try_times, tunel_host=tunel_host, tunel_port=tunel_port
+            try_times=all_connections_try_times, tunnel_host=tunnel_host, tunnel_port=tunnel_port
         )
 
     @staticmethod
@@ -104,11 +107,8 @@ class HPCConnector:
         proxy_pkey = RSAKey.from_private_key_file(str(self.proxy_key_path), self.proxy_key_pass)
         self.log.info(f"Connecting to proxy server {host}:{port} with username: {self.username}")
         self.ssh_proxy_client.connect(
-            hostname=host,
-            port=port,
-            username=self.username,
-            pkey=proxy_pkey,
-            passphrase=self.proxy_key_pass,
+            hostname=host, port=port, username=self.username,
+            pkey=proxy_pkey, passphrase=self.proxy_key_pass,
             timeout=self.connection_timeout
         )
         # self.ssh_proxy_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
@@ -117,11 +117,7 @@ class HPCConnector:
         return self.ssh_proxy_client
 
     def establish_proxy_tunnel(
-        self,
-        dst_host: str,
-        dst_port: int = 22,
-        src_host: str = 'localhost',
-        src_port: int = 0,
+        self, dst_host: str, dst_port: int = 22, src_host: str = 'localhost', src_port: int = 0,
         channel_kind: str = 'direct-tcpip',
     ) -> Channel:
         proxy_transport = self.ssh_proxy_client.get_transport()
@@ -145,13 +141,9 @@ class HPCConnector:
         hpc_pkey = RSAKey.from_private_key_file(str(self.hpc_key_path), self.hpc_key_pass)
         self.log.info(f"Connecting to hpc frontend server {host}:{port} with username: {self.username}")
         self.ssh_hpc_client.connect(
-            hostname=host,
-            port=port,
-            username=self.username,
-            pkey=hpc_pkey,
-            passphrase=self.hpc_key_pass,
-            sock=proxy_tunnel,
-            timeout=self.connection_timeout
+            hostname=host, port=port, username=self.username,
+            pkey=hpc_pkey, passphrase=self.hpc_key_pass,
+            sock=proxy_tunnel, timeout=self.connection_timeout
         )
         # self.ssh_hpc_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
         self.last_used_hpc_host = host
@@ -203,13 +195,8 @@ class HPCConnector:
         return self.is_transport_responsive(transport)
 
     def reconnect_if_required(
-        self,
-        hpc_host: str = None,
-        hpc_port: int = 22,
-        proxy_host: str = None,
-        proxy_port: int = 22,
-        tunel_host: str = 'localhost',
-        tunel_port: int = 0
+        self, hpc_host: str = None, hpc_port: int = 22, proxy_host: str = None, proxy_port: int = 22,
+        tunnel_host: str = 'localhost', tunnel_port: int = 0
     ) -> None:
         if not hpc_host:
             hpc_host = self.last_used_hpc_host
@@ -222,20 +209,15 @@ class HPCConnector:
         if not self.is_proxy_tunnel_still_responsive():
             self.log.warning("The proxy tunnel is not responsive, trying to establish a new proxy tunnel")
             self.proxy_tunnel = self.establish_proxy_tunnel(
-                dst_host=hpc_host, dst_port=hpc_port, src_host=tunel_host, src_port=tunel_port
+                dst_host=hpc_host, dst_port=hpc_port, src_host=tunnel_host, src_port=tunnel_port
             )
         if not self.is_ssh_connection_still_responsive(self.ssh_hpc_client):
             self.log.warning("The connection to hpc frontend server is not responsive, trying to open a new connection")
             self.ssh_hpc_client = self.connect_to_hpc_frontend_server(proxy_host, proxy_port, self.proxy_tunnel)
 
     def recreate_sftp_if_required(
-        self,
-        hpc_host: str = None,
-        hpc_port: int = 22,
-        proxy_host: str = None,
-        proxy_port: int = 22,
-        tunel_host: str = 'localhost',
-        tunel_port: int = 0
+        self, hpc_host: str = None, hpc_port: int = 22, proxy_host: str = None, proxy_port: int = 22,
+        tunnel_host: str = 'localhost', tunnel_port: int = 0
     ) -> None:
         if not hpc_host:
             hpc_host = self.last_used_hpc_host
@@ -244,14 +226,14 @@ class HPCConnector:
         self.reconnect_if_required(
             hpc_host=hpc_host, hpc_port=hpc_port,
             proxy_host=proxy_host, proxy_port=proxy_port,
-            tunel_host=tunel_host, tunel_port=tunel_port
+            tunnel_host=tunnel_host, tunnel_port=tunnel_port
         )
         if not self.is_sftp_still_responsive():
             self.log.warning("The SFTP client is not responsive, trying to create a new SFTP client")
             self.create_sftp_client()
 
     def create_ssh_connection_to_hpc_by_iteration(
-        self, try_times: int = 3, tunel_host: str = 'localhost', tunel_port: int = 0
+        self, try_times: int = 30, tunnel_host: str = 'localhost', tunnel_port: int = 0
     ) -> None:
         while try_times > 0:
             for proxy_host in self.proxy_hosts:
@@ -264,7 +246,7 @@ class HPCConnector:
                         self.reconnect_if_required(
                             hpc_host=hpc_host, hpc_port=22,
                             proxy_host=proxy_host, proxy_port=22,
-                            tunel_host=tunel_host, tunel_port=tunel_port
+                            tunnel_host=tunnel_host, tunnel_port=tunnel_port
                         )
                         return  # all connections were successful
                     except Exception as error:

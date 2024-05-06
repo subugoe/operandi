@@ -20,8 +20,8 @@ class HPCTransfer(HPCConnector):
         username: str = environ.get("OPERANDI_HPC_USERNAME", None),
         key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH", None),
         project_name: str = environ.get("OPERANDI_HPC_PROJECT_NAME", None),
-        tunel_host: str = 'localhost',
-        tunel_port: int = 0
+        tunnel_host: str = 'localhost',
+        tunnel_port: int = 0
     ) -> None:
         if not username:
             raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
@@ -37,8 +37,8 @@ class HPCTransfer(HPCConnector):
             username=username,
             key_path=Path(key_path),
             key_pass=None,
-            tunel_host=tunel_host,
-            tunel_port=tunel_port
+            tunnel_host=tunnel_host,
+            tunnel_port=tunnel_port
         )
 
     def put_batch_script(self, batch_script_id: str) -> str:
