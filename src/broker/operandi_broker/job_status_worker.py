@@ -23,7 +23,7 @@ from operandi_utils.rabbitmq import get_connection_consumer
 
 
 class JobStatusWorker:
-    def __init__(self, db_url, rabbitmq_url, queue_name, test_sbatch=False):
+    def __init__(self, db_url, rabbitmq_url, queue_name, tunnel_port_executor, tunnel_port_transfer, test_sbatch=False):
         self.log = getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
         self.queue_name = queue_name
         self.log_file_path = f"{get_log_file_path_prefix(module_type='worker')}_{queue_name}.log"
@@ -40,6 +40,9 @@ class JobStatusWorker:
         self.current_message_job_id = None
         self.has_consumed_message = False
 
+        self.tunel_port_executor = tunnel_port_executor
+        self.tunel_port_transfer = tunnel_port_transfer
+
     def run(self):
         try:
             # Source: https://unix.stackexchange.com/questions/18166/what-are-session-leaders-in-ps
@@ -52,9 +55,9 @@ class JobStatusWorker:
             signal.signal(signal.SIGTERM, self.signal_handler)
 
             sync_db_initiate_database(self.db_url)
-            self.hpc_executor = HPCExecutor(tunel_host='localhost', tunel_port=44024)
+            self.hpc_executor = HPCExecutor(tunel_host='localhost', tunel_port=self.tunel_port_executor)
             self.log.info("HPC executor connection successful.")
-            self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=44025)
+            self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=self.tunel_port_transfer)
             self.log.info("HPC transfer connection successful.")
 
             self.rmq_consumer = get_connection_consumer(rabbitmq_url=self.rmq_url)
