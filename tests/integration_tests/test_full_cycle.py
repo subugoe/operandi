@@ -11,17 +11,15 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_work
     response = operandi.get("/")
     assert response.json()["message"] == "The home page of the OPERANDI Server"
 
-    worker_starting_port = 44000
     # Create a background worker for the harvester queue
     service_broker.create_worker_process(
         queue_name=RABBITMQ_QUEUE_HARVESTER, status_checker=False,
-        tunnel_port_executor=worker_starting_port, tunnel_port_transfer=worker_starting_port+1
+        tunnel_port_executor=22, tunnel_port_transfer=22
     )
-    worker_starting_port += 2
     # Create a background worker for the job statuses queue
     service_broker.create_worker_process(
         queue_name=RABBITMQ_QUEUE_JOB_STATUSES, status_checker=True,
-        tunnel_port_executor=worker_starting_port, tunnel_port_transfer=worker_starting_port+1
+        tunnel_port_executor=22, tunnel_port_transfer=22
     )
 
     # Post a workflow script

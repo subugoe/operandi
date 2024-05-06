@@ -25,8 +25,7 @@ class ServiceBroker:
         self,
         db_url: str = environ.get("OPERANDI_DB_URL"),
         rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
-        test_sbatch: bool = False,
-        worker_starting_port: int = 44000
+        test_sbatch: bool = False
     ):
         if not db_url:
             raise ValueError("Environment variable not set: OPERANDI_DB_URL")
@@ -53,28 +52,23 @@ class ServiceBroker:
         # Keys: Each key is a unique queue name
         # Value: List of worker pids consuming from the key queue name
         self.queues_and_workers = {}
-        self.worker_starting_port = worker_starting_port
 
     def run_broker(self):
         # A list of queues for which a worker process should be created
         queues = [RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS]
-        tunnel_port = self.worker_starting_port
         try:
             for queue_name in queues:
                 self.log.info(f"Creating a worker processes to consume from queue: {queue_name}")
                 self.create_worker_process(
                     queue_name=queue_name, status_checker=False,
-                    tunnel_port_executor=tunnel_port, tunnel_port_transfer=tunnel_port+1
+                    tunnel_port_executor=22, tunnel_port_transfer=22
                 )
-                tunnel_port += 2
-
             self.log.info(
                 f"Creating a status checker worker processes to consume from queue: {RABBITMQ_QUEUE_JOB_STATUSES}")
             self.create_worker_process(
                 queue_name=RABBITMQ_QUEUE_JOB_STATUSES, status_checker=True,
-                tunnel_port_executor=tunnel_port, tunnel_port_transfer=tunnel_port+1
+                tunnel_port_executor=22, tunnel_port_transfer=22
             )
-            tunnel_port += 2
         except Exception as error:
             self.log.error(f"Error while creating worker processes: {error}")
 
