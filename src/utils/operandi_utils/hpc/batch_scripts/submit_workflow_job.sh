@@ -44,7 +44,7 @@ METS_SOCKET_BASENAME="mets_server.sock"
 BIND_METS_SOCKET_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_SOCKET_BASENAME}"
 
 hostname
-slurm_resources
+/opt/slurm/etc/scripts/misc/slurm_resources
 
 module purge
 module load singularity

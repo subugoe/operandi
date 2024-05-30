@@ -10,7 +10,7 @@ module purge
 module load singularity
 
 hostname
-slurm_resources
+/opt/slurm/etc/scripts/misc/slurm_resources
 
 SINGULARITY_CACHE_DIR="/scratch1/users/${USER}"
 SIF_NAME="ocrd_all_maximum_image.sif"

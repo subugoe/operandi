@@ -10,7 +10,7 @@ module purge
 module load singularity
 
 hostname
-slurm_resources
+/opt/slurm/etc/scripts/misc/slurm_resources
 
 # This sif file is generated with another batch script
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"

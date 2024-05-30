@@ -8,7 +8,7 @@ set -e
 #STABCH --mem 16G
 
 hostname
-slurm_resources
+/opt/slurm/etc/scripts/misc/slurm_resources
 
 module purge
 module load singularity
