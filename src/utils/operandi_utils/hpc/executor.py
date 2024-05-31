@@ -137,6 +137,7 @@ class HPCExecutor(HPCConnector):
                 slurm_job_state = output[-2].split()[1]
                 # TODO: dirty fast fix, improve this
                 if slurm_job_state == '----------':
+                    slurm_job_state = None
                     continue
             if slurm_job_state:
                 break
