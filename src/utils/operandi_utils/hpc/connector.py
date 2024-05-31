@@ -25,10 +25,7 @@ class HPCConnector:
         project_name: str,
         log: Logger = getLogger("operandi_utils.hpc.connector"),
         channel_keep_alive_interval: int = 30,
-        channel_timeout: float = 180,
         connection_keep_alive_interval: int = 30,
-        connection_timeout: float = 180,
-        all_connections_try_times: int = 1,
         tunnel_host: str = 'localhost',
         tunnel_port: int = 0
     ) -> None:
@@ -44,9 +41,7 @@ class HPCConnector:
         self.hpc_key_pass = key_pass
 
         self.connection_keep_alive_interval = connection_keep_alive_interval
-        self.connection_timeout = connection_timeout
         self.channel_keep_alive_interval = channel_keep_alive_interval
-        self.channel_timeout = channel_timeout
 
         # A list of hpc hosts - tries to connect to all until one is successful
         self.hpc_hosts = hpc_hosts
@@ -88,10 +83,7 @@ class HPCConnector:
 
         self.tunnel_host = tunnel_host
         self.tunnel_port = tunnel_port
-
-        self.create_ssh_connection_to_hpc_by_iteration(
-            try_times=all_connections_try_times, tunnel_host=tunnel_host, tunnel_port=tunnel_port
-        )
+        self.create_ssh_connection_to_hpc_by_iteration(tunnel_host=tunnel_host, tunnel_port=tunnel_port)
 
     @staticmethod
     def verify_pkey_file_existence(key_path: Path):
@@ -109,8 +101,7 @@ class HPCConnector:
         self.log.info(f"Connecting to proxy server {host}:{port} with username: {self.username}")
         self.ssh_proxy_client.connect(
             hostname=host, port=port, username=self.username,
-            pkey=proxy_pkey, passphrase=self.proxy_key_pass,
-            timeout=self.connection_timeout
+            pkey=proxy_pkey, passphrase=self.proxy_key_pass
         )
         # self.ssh_proxy_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
         self.last_used_proxy_host = host
@@ -126,8 +117,7 @@ class HPCConnector:
         self.proxy_tunnel = proxy_transport.open_channel(
             kind=channel_kind,
             src_addr=(src_host, src_port),
-            dest_addr=(dst_host, dst_port),
-            timeout=self.channel_timeout
+            dest_addr=(dst_host, dst_port)
         )
         # self.proxy_tunnel.get_transport().set_keepalive(self.channel_keep_alive_interval)
         self.last_used_hpc_host = dst_host
@@ -144,7 +134,7 @@ class HPCConnector:
         self.ssh_hpc_client.connect(
             hostname=host, port=port, username=self.username,
             pkey=hpc_pkey, passphrase=self.hpc_key_pass,
-            sock=proxy_tunnel, timeout=self.connection_timeout
+            sock=proxy_tunnel
         )
         # self.ssh_hpc_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
         self.last_used_hpc_host = host
