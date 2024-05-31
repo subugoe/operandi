@@ -8,7 +8,7 @@ from .helpers_asserts import (
 def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workflow_with_ms):
     # Post a new workflow script
     response = operandi.post(
-        "/workflow",
+        url="/workflow",
         files={"nextflow_script": bytes_template_workflow_with_ms},
         auth=auth
     )
@@ -25,7 +25,7 @@ def test_put_workflow_script(
     put_workflow_id = "put_workflow_id"
     # The first put request creates a new workflow
     response = operandi.put(
-        f"/workflow/{put_workflow_id}",
+        url=f"/workflow/{put_workflow_id}",
         files={"nextflow_script": bytes_template_workflow_with_ms},
         auth=auth
     )
@@ -42,7 +42,7 @@ def test_put_workflow_script(
 
     # The second put request replaces the previously created workflow
     response = operandi.put(
-        f"/workflow/{put_workflow_id}",
+        url=f"/workflow/{put_workflow_id}",
         files={"nextflow_script": bytes_default_workflow_with_ms},
         auth=auth
     )
@@ -76,7 +76,7 @@ def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow_with_m
     # Try to replace a production workflow which should raise an error code of 405
     for workflow_id in production_workflow_ids:
         response = operandi.put(
-            f"/workflow/{workflow_id}",
+            url=f"/workflow/{workflow_id}",
             files={"nextflow_script": bytes_template_workflow_with_ms},
             auth=auth
         )
@@ -96,7 +96,7 @@ def _test_delete_workflow_non_existing():
 def test_get_workflow_script(operandi, auth, bytes_template_workflow_with_ms):
     # Post a new workflow script
     response = operandi.post(
-        "/workflow",
+        url="/workflow",
         files={"nextflow_script": bytes_template_workflow_with_ms},
         auth=auth
     )
@@ -106,7 +106,7 @@ def test_get_workflow_script(operandi, auth, bytes_template_workflow_with_ms):
 
     # Get the same workflow script
     response = operandi.get(
-        f"/workflow/{workflow_id}",
+        url=f"/workflow/{workflow_id}",
         # headers={"accept": "text/vnd.ocrd.workflow"},
         auth=auth
     )
@@ -119,7 +119,7 @@ def test_get_workflow_script(operandi, auth, bytes_template_workflow_with_ms):
 def test_get_workflow_non_existing(operandi, auth):
     non_workflow_id = "non_existing_workflow_id"
     response = operandi.get(
-        f"/workflow/{non_workflow_id}",
+        url=f"/workflow/{non_workflow_id}",
         # headers={"accept": "text/vnd.ocrd.workflow"},
         auth=auth
     )

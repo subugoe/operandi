@@ -27,7 +27,7 @@ def test_post_workspace_url(operandi, auth, db_workspaces):
 
 def test_post_workspace_zip(operandi, auth, db_workspaces, bytes_dummy_workspace):
     response = operandi.post(
-        "/workspace",
+        url="/workspace",
         files={"workspace": bytes_dummy_workspace},
         auth=auth
     )
@@ -40,7 +40,7 @@ def test_post_workspace_zip(operandi, auth, db_workspaces, bytes_dummy_workspace
 
 def test_post_workspace_zip_different_mets(operandi, auth, db_workspaces, bytes_ws_different_mets):
     response = operandi.post(
-        "/workspace",
+        url="/workspace",
         files={"workspace": bytes_ws_different_mets},
         auth=auth
     )
@@ -55,7 +55,7 @@ def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_dummy_workspace,
     put_workspace_id = "put_workspace_id"
     # The first put request creates a new workspace
     response = operandi.put(
-        f"/workspace/{put_workspace_id}",
+        url=f"/workspace/{put_workspace_id}",
         files={"workspace": bytes_dummy_workspace},
         auth=auth
     )
@@ -70,7 +70,7 @@ def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_dummy_workspace,
 
     # The second put request replaces the previously created workspace
     response = operandi.put(
-        f"/workspace/{put_workspace_id}",
+        url=f"/workspace/{put_workspace_id}",
         files={"workspace": bytes_ws_different_mets},
         auth=auth
     )
@@ -102,7 +102,7 @@ def test_delete_workspace(operandi, auth, db_workspaces, bytes_ws_different_mets
     # Delete the previously posted workspace
     delete_workspace_id = posted_workspace_id
     response = operandi.delete(
-        f"/workspace/{delete_workspace_id}",
+        url=f"/workspace/{delete_workspace_id}",
         auth=auth
     )
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -113,7 +113,7 @@ def test_delete_workspace(operandi, auth, db_workspaces, bytes_ws_different_mets
 
 def test_delete_workspace_non_existing(operandi, auth, bytes_ws_different_mets):
     response = operandi.post(
-        "/workspace",
+        url="/workspace",
         files={"workspace": bytes_ws_different_mets},
         auth=auth
     )
@@ -127,13 +127,13 @@ def test_delete_workspace_non_existing(operandi, auth, bytes_ws_different_mets):
 
 def test_get_workspace(operandi, auth, bytes_ws_different_mets):
     response = operandi.post(
-        "/workspace",
+        url="/workspace",
         files={"workspace": bytes_ws_different_mets},
         auth=auth
     )
     workspace_id = response.json()['resource_id']
     response = operandi.get(
-        f"/workspace/{workspace_id}",
+        url=f"/workspace/{workspace_id}",
         # headers={"accept": "application/vnd.ocrd+zip"},
         auth=auth
     )
@@ -157,7 +157,7 @@ def test_get_workspace(operandi, auth, bytes_ws_different_mets):
 def test_get_workspace_non_existing(operandi, auth):
     non_workspace_id = "non_existing_workspace_id"
     response = operandi.get(
-        f"/workspace/{non_workspace_id}",
+        url=f"/workspace/{non_workspace_id}",
         # headers={"accept": "application/vnd.ocrd+zip"},
         auth=auth
     )
