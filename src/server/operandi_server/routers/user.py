@@ -51,9 +51,9 @@ class RouterUser:
         """
         Used for registration.
         There are 3 account types:
-        1) Administrator
-        2) User
-        3) Harvester
+        1) ADMIN
+        2) USER
+        3) HARVESTER
 
         Please contact the Operandi team to get your account verified.
         Otherwise, the account will be non-functional.

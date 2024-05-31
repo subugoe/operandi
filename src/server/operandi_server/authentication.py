@@ -7,9 +7,7 @@ from operandi_utils.database import db_create_user_account, db_get_user_account
 from operandi_server.exceptions import AuthenticationError, RegistrationError
 
 
-async def create_user_if_not_available(
-    username: str, password: str, account_type: str, approved_user: bool = False
-):
+async def create_user_if_not_available(username: str, password: str, account_type: str, approved_user: bool = False):
     # If the account is not available in the DB, create it
     try:
         await authenticate_user(username, password)
@@ -40,9 +38,7 @@ async def authenticate_user(email: str, password: str) -> str:
     return db_user.account_type
 
 
-async def register_user(
-    email: str, password: str, account_type: str, approved_user: bool = False
-):
+async def register_user(email: str, password: str, account_type: str, approved_user: bool = False):
     salt, encrypted_password = encrypt_password(password)
     try:
         db_user = await db_get_user_account(email)
