@@ -4,6 +4,7 @@ from paramiko import AutoAddPolicy, Channel, RSAKey, SFTPClient, SSHClient, Tran
 from pathlib import Path
 from typing import List, Union
 
+from .constants import HPC_SSH_CONNECTION_TRY_TIMES
 from .utils import (
     resolve_hpc_user_home_dir,
     resolve_hpc_user_scratch_dir,
@@ -233,7 +234,7 @@ class HPCConnector:
             self.create_sftp_client()
 
     def create_ssh_connection_to_hpc_by_iteration(
-        self, try_times: int = 30, tunnel_host: str = 'localhost', tunnel_port: int = 0
+        self, try_times: int = HPC_SSH_CONNECTION_TRY_TIMES, tunnel_host: str = 'localhost', tunnel_port: int = 0
     ) -> None:
         while try_times > 0:
             for proxy_host in self.proxy_hosts:
