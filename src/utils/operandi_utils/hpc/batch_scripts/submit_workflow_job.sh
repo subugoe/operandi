@@ -17,9 +17,11 @@ set -e
 # $10 - Amount of pages in the workspace
 
 SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
+SIF_PATH_IN_NODE="${TMP_LOCAL}/ocrd_all_maximum_image.sif"
 OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
+OCRD_MODELS_DIR_IN_NODE="${TMP_LOCAL}/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
-BIND_OCRD_MODELS="${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}"
+BIND_OCRD_MODELS="${OCRD_MODELS_DIR_IN_NODE}:${OCRD_MODELS_DIR_IN_DOCKER}"
 
 SCRATCH_BASE=$1
 WORKFLOW_JOB_ID=$2
@@ -52,13 +54,12 @@ module load nextflow
 # module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
 
 echo "ocrd all SIF path: $SIF_PATH"
+echo "ocrd all SIF path node local: $SIF_PATH_IN_NODE"
 echo "Workspace dir: $WORKSPACE_DIR"
 echo "Nextflow script path: $NF_SCRIPT_PATH"
 echo "Use mets server: $USE_METS_SERVER"
 echo "Used file group: $IN_FILE_GRP"
 echo "Pages: $PAGES"
-singularity exec "$SIF_PATH" ocrd --version
-
 
 # To submit separate jobs for each process in the NF script
 # export NXF_EXECUTOR=slurm
@@ -88,6 +89,26 @@ check_existence_of_paths () {
   fi
 }
 
+transfer_requirements_to_node_storage() {
+  cp "${SIF_PATH}" "${SIF_PATH_IN_NODE}"
+  # Check if transfer successful
+  if [ ! -f "${SIF_PATH_IN_NODE}" ]; then
+    echo "Required ocrd_all_image sif file not found at node local storage: ${SIF_PATH_IN_NODE}"
+    exit 1
+  else
+    echo "Successfully transferred SIF to node local storage"
+    singularity exec "$SIF_PATH_IN_NODE" ocrd --version
+  fi
+
+  cp -R "${OCRD_MODELS_DIR}" "${OCRD_MODELS_DIR_IN_NODE}"
+  if [ ! -d "${OCRD_MODELS_DIR_IN_NODE}" ]; then
+    echo "Ocrd models directory not found at node local storage: ${OCRD_MODELS_DIR_IN_NODE}"
+    exit 1
+  else
+    echo "Successfully transferred ocrd models to node local storage"
+  fi
+}
+
 unzip_workflow_job_dir () {
   if [ ! -f "${WORKFLOW_JOB_DIR}.zip" ]; then
     echo "Required scratch slurm workspace zip is not available: ${WORKFLOW_JOB_DIR}.zip"
@@ -112,7 +133,7 @@ start_mets_server () {
   # TODO: Would be better to start the mets server as an instance, but this is still broken
   # singularity instance start \
   #   --bind "${BIND_WORKSPACE_DIR}" \
-  #   "${SIF_PATH}" \
+  #   "${SIF_PATH_IN_NODE}" \
   #   instance_mets_server \
   #  ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start
 
@@ -120,7 +141,7 @@ start_mets_server () {
     echo "Starting the mets server for the specific workspace in the background"
     singularity exec \
       --bind "${BIND_WORKSPACE_DIR}" \
-      "${SIF_PATH}" \
+      "${SIF_PATH_IN_NODE}" \
       ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start \
       > "${WORKSPACE_DIR}/mets_server.log" 2>&1 &
   fi
@@ -138,13 +159,13 @@ stop_mets_server () {
     echo "Stopping the mets server"
     singularity exec \
       --bind "${BIND_WORKSPACE_DIR}" \
-      "${SIF_PATH}" \
+      "${SIF_PATH_IN_NODE}" \
       ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server stop
   fi
 }
 
 execute_nextflow_workflow () {
-  local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=false ${SIF_PATH}"
+  local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=false ${SIF_PATH_IN_NODE}"
   if [ "$1" == "true" ] ; then
     echo "Executing the nextflow workflow with mets server"
     nextflow run "${NF_SCRIPT_PATH}" \
@@ -192,6 +213,7 @@ zip_results () {
 
 # Main loop for workflow job execution
 check_existence_of_paths
+transfer_requirements_to_node_storage
 unzip_workflow_job_dir
 start_mets_server "$USE_METS_SERVER"
 execute_nextflow_workflow "$USE_METS_SERVER"
