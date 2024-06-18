@@ -32,7 +32,6 @@ class InterceptHandler(logging.Handler):
         while frame.f_code.co_filename == logging.__file__:
             frame = frame.f_back
             depth += 1
-
         loguru.logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
@@ -45,26 +44,22 @@ def reconfigure_all_loggers(log_level: str, log_file_path: str):
     for name in logging.root.manager.loggerDict.keys():
         logging.getLogger(name).handlers = []
         logging.getLogger(name).propagate = True
-
-    loguru.logger.configure(
-        handlers=[
-            {"sink": sys.stdout},
-            {"sink": log_file_path, "serialize": False}
-        ]
-    )
+    handlers = [
+        {"sink": sys.stdout},
+        {"sink": log_file_path, "serialize": False}
+    ]
+    loguru.logger.configure(handlers=handlers)
 
 
 # Returns log path for the modules, if module is worker, returns prefix for logging
 def get_log_file_path_prefix(module_type: str) -> str:
     if module_type not in MODULE_TYPES:
         raise ValueError(f"Unknown module type '{module_type}', should be one of '{MODULE_TYPES}'")
-
     logging_rood_dir: str = environ.get("OPERANDI_LOGS_DIR", None)
     if not logging_rood_dir:
         raise ValueError("Environment variable not set: OPERANDI_LOGS_DIR")
     Path(logging_rood_dir).mkdir(mode=0o777, parents=True, exist_ok=True)
     # Path(logging_rood_dir).chmod(mode=0o777)
-
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
     log_file_path_prefix = join(logging_rood_dir, f"{module_type}_{current_time}")
     return log_file_path_prefix

@@ -5,18 +5,9 @@ from operandi_utils import StateJob
 
 
 class Resource(BaseModel):
-    resource_id: str = Field(
-        ...,  # the field is required, no default set
-        description="ID of this thing"
-    )
-    resource_url: str = Field(
-        ...,  # the field is required, no default set
-        description="URL of this thing"
-    )
-    description: str = Field(
-        default="Description of the thing",
-        description="Description of the thing"
-    )
+    resource_id: str = Field(..., description="ID of this thing")
+    resource_url: str = Field(..., description="URL of this thing")
+    description: str = Field(default="Description of the thing", description="Description of the thing")
 
     class Config:
         allow_population_by_field_name = True

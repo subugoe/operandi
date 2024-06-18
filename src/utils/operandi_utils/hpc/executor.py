@@ -43,10 +43,7 @@ class HPCExecutor(HPCConnector):
     def execute_blocking(self, command, timeout=None, environment=None):
         self.reconnect_if_required()
         stdin, stdout, stderr = self.ssh_hpc_client.exec_command(
-            command=command,
-            timeout=timeout,
-            environment=environment
-        )
+            command=command, timeout=timeout, environment=environment)
 
         # TODO: Not satisfied with this but fast conversion from
         #  SSHLibrary to Paramiko is needed for testing
@@ -83,8 +80,7 @@ class HPCExecutor(HPCConnector):
             self.log.warning(
                 "The amount of workspace pages is less than the amount of requested Nextflow process forks. "
                 f"The pages amount: {ws_pages_amount}, forks requested: {nf_process_forks}. "
-                f"Setting the forks value to the value of amount of pages."
-            )
+                f"Setting the forks value to the value of amount of pages.")
             nf_process_forks = ws_pages_amount
 
         # SBATCH arguments passed to the batch script

@@ -14,8 +14,4 @@ class WorkspaceRsrc(Resource):
         if not description:
             description = "Workspace"
         return WorkspaceRsrc(
-            resource_id=workspace_id,
-            resource_url=workspace_url,
-            description=description,
-            state=state
-        )
+            resource_id=workspace_id, resource_url=workspace_url, description=description, state=state)

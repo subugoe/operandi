@@ -8,33 +8,20 @@ from time import sleep
 from operandi_utils import get_log_file_path_prefix, is_url_responsive, reconfigure_all_loggers, receive_file
 from operandi_utils.constants import LOG_LEVEL_HARVESTER, StateJob
 from .constants import (
-    TRIES_TILL_TIMEOUT,
-    USE_WORKSPACE_FILE_GROUP,
-    VD18_IDS_FILE,
-    VD18_METS_EXT,
-    VD18_URL,
-    WAIT_TIME_BETWEEN_SUBMITS,
-    WAIT_TIME_BETWEEN_POLLS
-)
+    TRIES_TILL_TIMEOUT, USE_WORKSPACE_FILE_GROUP, VD18_IDS_FILE, VD18_METS_EXT, VD18_URL, WAIT_TIME_BETWEEN_SUBMITS,
+    WAIT_TIME_BETWEEN_POLLS)
 
 
 class Harvester:
     def __init__(
-        self,
-        server_address: str,
-        auth_username: str = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME", None),
+        self, server_address: str, auth_username: str = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME", None),
         auth_password: str = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD", None)
     ):
         self.logger = getLogger("operandi_harvester.harvester")
         self.logger.setLevel(LOG_LEVEL_HARVESTER)
-
         log_file_path = f"{get_log_file_path_prefix(module_type='harvester')}.log"
-
         # Reconfigure all loggers to the same format
-        reconfigure_all_loggers(
-            log_level=LOG_LEVEL_HARVESTER,
-            log_file_path=log_file_path
-        )
+        reconfigure_all_loggers(log_level=LOG_LEVEL_HARVESTER, log_file_path=log_file_path)
 
         if not auth_username or not auth_password:
             raise ValueError("Environment variables not set: harvester credentials")
@@ -62,15 +49,18 @@ class Harvester:
         # The authentication used for interactions with the Operandi Server
         self.auth = HTTPBasicAuth(auth_username, auth_password)
 
+    def _parse_response_field(self, response, field_key: str) -> str:
+        response_json = response.json()
+        self.logger.debug(response_json)
+        resource_id = response_json.get(field_key, None)
+        return resource_id
+
     def harvest_once_dummy(self):
         self.logger.info("Harvesting one dummy cycle to get OCR-D results")
         workflow_id = self.post_workflow_nf_script(nf_script_path=self.default_nf_workflow)
         workspace_id = self.post_workspace_zip(ocrd_zip_path=self.dummy_ws_zip)
         job_id = self.post_workflow_job(
-            workflow_id=workflow_id,
-            workspace_id=workspace_id,
-            input_file_grp=self.dummy_ws_input_file_grp
-        )
+            workflow_id=workflow_id, workspace_id=workspace_id, input_file_grp=self.dummy_ws_input_file_grp)
         has_finished = self.poll_workflow_job_state(workflow_id=workflow_id, job_id=job_id)
         if not has_finished:
             raise ValueError("The workflow job state polling failed or reached a timeout")
@@ -111,10 +101,7 @@ class Harvester:
 
         workspace_id = self.post_workspace_url(mets_url=mets_url)
         job_id = self.post_workflow_job(
-            workflow_id=self.default_workflow_id,
-            workspace_id=workspace_id,
-            input_file_grp=USE_WORKSPACE_FILE_GROUP
-        )
+            workflow_id=self.default_workflow_id, workspace_id=workspace_id, input_file_grp=USE_WORKSPACE_FILE_GROUP)
         has_finished = self.poll_workflow_job_state(workflow_id=workflow_id, job_id=job_id)
         if not has_finished:
             raise ValueError("The workflow job state polling failed or reached a timeout")
@@ -123,12 +110,9 @@ class Harvester:
         if not is_url_responsive(mets_url):
             raise ValueError(f"Workspace mets url is not responsive: {mets_url}")
         self.logger.info(f"Posting workspace mets url: {mets_url}")
-        response = post(
-            url=f"{self.server_address}/import_external_workspace?mets_url={mets_url}&preserve_file_grps={file_grp}",
-            auth=self.auth
-        )
-        self.logger.debug(response.json())
-        workspace_id = response.json().get('resource_id', None)
+        req_url = f"{self.server_address}/import_external_workspace?mets_url={mets_url}&preserve_file_grps={file_grp}"
+        response = post(url=req_url, auth=self.auth)
+        workspace_id = self._parse_response_field(response=response, field_key="resource_id")
         if not workspace_id:
             raise ValueError(f"Failed to parse workspace id from response")
         self.logger.info(f"Response workspace id: {workspace_id}")
@@ -136,13 +120,10 @@ class Harvester:
 
     def post_workspace_zip(self, ocrd_zip_path: str):
         self.logger.info(f"Posting workspace ocrd zip: {ocrd_zip_path}")
-        response = post(
-            url=f"{self.server_address}/workspace",
-            files={"workspace": open(f"{ocrd_zip_path}", "rb")},
-            auth=self.auth
-        )
-        self.logger.debug(response.json())
-        workspace_id = response.json().get("resource_id", None)
+        req_url = f"{self.server_address}/workspace"
+        files = {"workspace": open(f"{ocrd_zip_path}", "rb")}
+        response = post(url=req_url, files=files, auth=self.auth)
+        workspace_id = self._parse_response_field(response=response, field_key="resource_id")
         if not workspace_id:
             raise ValueError(f"Failed to parse workspace id from response")
         self.logger.info(f"Response workspace id: {workspace_id}")
@@ -150,48 +131,27 @@ class Harvester:
 
     def post_workflow_nf_script(self, nf_script_path: str) -> str:
         self.logger.info(f"Posting nextflow script file: {nf_script_path}")
-        response = post(
-            url=f"{self.server_address}/workflow",
-            files={"nextflow_script": open(f"{nf_script_path}", "rb")},
-            auth=self.auth
-        )
-        self.logger.debug(response.json())
-        workflow_id = response.json().get("resource_id", None)
+        req_url = f"{self.server_address}/workflow"
+        files = {"nextflow_script": open(f"{nf_script_path}", "rb")}
+        response = post(url=req_url, files=files, auth=self.auth)
+        workflow_id = self._parse_response_field(response=response, field_key="resource_id")
         if not workflow_id:
             raise ValueError(f"Failed to parse workflow id from response")
         self.logger.info(f"Response workflow id: {workflow_id}")
         return workflow_id
 
     def post_workflow_job(
-        self,
-        workflow_id: str,
-        workspace_id: str,
-        input_file_grp: str = "DEFAULT",
-        mets_base: str = "mets.xml",
-        cpus: int = 8,
-        ram: int = 32
+        self, workflow_id: str, workspace_id: str, input_file_grp: str = "DEFAULT", mets_base: str = "mets.xml",
+        cpus: int = 8, ram: int = 32
     ) -> str:
         self.logger.info(f"Posting workflow job with workflow id: {workflow_id} on workspace id: {workspace_id}")
-        request_json = {
-            "workflow_id": workflow_id,
-            "workflow_args": {
-                "workspace_id": workspace_id,
-                "input_file_grp": input_file_grp,
-                "mets_name": mets_base
-            },
-            "sbatch_args": {
-                "cpus": cpus,
-                "ram": ram
-            }
-        }
+        workflow_args = {"workspace_id": workspace_id, "input_file_grp": input_file_grp, "mets_name": mets_base}
+        sbatch_args = {"cpus": cpus, "ram": ram}
+        request_json = {"workflow_id": workflow_id, "workflow_args": workflow_args, "sbatch_args": sbatch_args}
         self.logger.debug(request_json)
-        response = post(
-            url=f"{self.server_address}/workflow/{workflow_id}",
-            json=request_json,
-            auth=self.auth
-        )
-        self.logger.debug(response.json())
-        workflow_job_id = response.json().get("resource_id", None)
+        req_url = f"{self.server_address}/workflow/{workflow_id}"
+        response = post(url=req_url, json=request_json, auth=self.auth)
+        workflow_job_id = self._parse_response_field(response=response, field_key="resource_id")
         if not workflow_job_id:
             raise ValueError(f"Failed to parse workflow job id from response")
         self.logger.info(f"Response workflow job id: {workflow_job_id}")
@@ -199,22 +159,15 @@ class Harvester:
 
     def get_workflow_job_state(self, workflow_id: str, job_id: str) -> str:
         self.logger.info(f"Checking state of workflow job id: {job_id}")
-        response = get(
-            url=f"{self.server_address}/workflow/{workflow_id}/{job_id}",
-            auth=self.auth
-        )
-        self.logger.debug(response.json())
-        workflow_job_status = response.json().get("job_state", None)
+        req_url = f"{self.server_address}/workflow/{workflow_id}/{job_id}"
+        response = get(url=req_url, auth=self.auth)
+        workflow_job_status = self._parse_response_field(response=response, field_key="job_state")
         if not workflow_job_status:
             raise ValueError(f"Failed to parse workflow job state from response")
         return workflow_job_status
 
     def poll_workflow_job_state(
-        self,
-        workflow_id: str,
-        job_id: str,
-        tries: int = TRIES_TILL_TIMEOUT,
-        wait_time: int = WAIT_TIME_BETWEEN_POLLS
+        self, workflow_id: str, job_id: str, tries: int = TRIES_TILL_TIMEOUT, wait_time: int = WAIT_TIME_BETWEEN_POLLS
     ) -> bool:
         self.logger.info(f"Starting polling the state of workflow job: {job_id}")
         self.logger.info(f"Amount of polls to be performed: {tries}, every {wait_time} secs.")
@@ -222,13 +175,11 @@ class Harvester:
         while tries_left > 0:
             self.logger.info(f"Checking the job state after {wait_time} seconds")
             sleep(wait_time)
-
             try:
                 workflow_job_state = self.get_workflow_job_state(workflow_id=workflow_id, job_id=job_id)
             except Exception as error:
                 self.logger.exception(f"Checking workflow job state has failed: {error}")
                 return False
-
             self.logger.info(f"Response workflow job state: {workflow_job_state}")
             if workflow_job_state == StateJob.SUCCESS:
                 return True
@@ -239,11 +190,9 @@ class Harvester:
     def get_workspace_zip(self, workspace_id: str, download_dir: str) -> str:
         self.logger.info(f"Getting workspace zip of: {workspace_id}")
         download_path = join(download_dir, f"{workspace_id}.ocrd.zip")
-        response = get(
-            url=f"{self.server_address}/workspace/{workspace_id}",
-            # headers={"accept": "application/vnd.ocrd+zip"},
-            auth=self.auth
-        )
+        req_url = f"{self.server_address}/workspace/{workspace_id}"
+        # headers={"accept": "application/vnd.ocrd+zip"},
+        response = get(url=req_url, auth=self.auth)
         receive_file(response=response, download_path=download_path)
         self.logger.info(f"Downloaded workspace ocrd zip to: {download_path}")
         return download_path
@@ -251,11 +200,9 @@ class Harvester:
     def get_workflow_job_zip(self, workflow_id: str, job_id: str, download_dir: str) -> str:
         self.logger.info(f"Getting workflow job zip of: {job_id}")
         download_path = join(download_dir, f"{job_id}.zip")
-        response = get(
-            url=f"{self.server_address}/workflow/{workflow_id}/{job_id}/log",
-            # headers={"accept": "application/vnd.zip"},
-            auth=self.auth
-        )
+        req_url = f"{self.server_address}/workflow/{workflow_id}/{job_id}/log"
+        # headers={"accept": "application/vnd.zip"},
+        response = get(url=req_url, auth=self.auth)
         receive_file(response=response, download_path=download_path)
         self.logger.info(f"Downloaded workflow job zip to: {download_path}")
         return download_path

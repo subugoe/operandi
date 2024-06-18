@@ -4,30 +4,17 @@ from .models import DBUserAccount
 
 
 async def db_create_user_account(
-    email: str,
-    encrypted_pass: str,
-    salt: str,
-    account_type: str = "USER",
-    approved_user: bool = False
+    email: str, encrypted_pass: str, salt: str, account_type: str = "USER", approved_user: bool = False
 ) -> DBUserAccount:
     user_account = DBUserAccount(
-        email=email,
-        encrypted_pass=encrypted_pass,
-        salt=salt,
-        account_type=account_type,
-        approved_user=approved_user
-    )
+        email=email, encrypted_pass=encrypted_pass, salt=salt, account_type=account_type, approved_user=approved_user)
     await user_account.save()
     return user_account
 
 
 @call_sync
 async def sync_db_create_user_account(
-    email: str,
-    encrypted_pass: str,
-    salt: str,
-    account_type: str = "USER",
-    approved_user: bool = False
+    email: str, encrypted_pass: str, salt: str, account_type: str = "USER", approved_user: bool = False
 ) -> DBUserAccount:
     return await db_create_user_account(email, encrypted_pass, salt, account_type, approved_user)
 

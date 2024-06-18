@@ -7,17 +7,9 @@ from sys import exit
 from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
 from operandi_utils.constants import LOG_LEVEL_WORKER, StateJob, StateWorkspace
 from operandi_utils.database import (
-    DBHPCSlurmJob,
-    DBWorkflowJob,
-    DBWorkspace,
-    sync_db_initiate_database,
-    sync_db_get_hpc_slurm_job,
-    sync_db_get_workflow_job,
-    sync_db_get_workspace,
-    sync_db_update_hpc_slurm_job,
-    sync_db_update_workflow_job,
-    sync_db_update_workspace
-)
+    DBHPCSlurmJob, DBWorkflowJob, DBWorkspace,
+    sync_db_initiate_database, sync_db_get_hpc_slurm_job, sync_db_get_workflow_job, sync_db_get_workspace,
+    sync_db_update_hpc_slurm_job, sync_db_update_workflow_job, sync_db_update_workspace)
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from operandi_utils.rabbitmq import get_connection_consumer
 
@@ -97,8 +89,7 @@ class JobStatusWorker:
         # If there has been a change of slurm job state, update it
         if old_slurm_job_state != new_slurm_job_state:
             self.log.info(
-                f"Slurm job: {hpc_slurm_job_id}, old state: {old_slurm_job_state}, new state: {new_slurm_job_state}"
-            )
+                f"Slurm job: {hpc_slurm_job_id}, old state: {old_slurm_job_state}, new state: {new_slurm_job_state}")
             sync_db_update_hpc_slurm_job(find_workflow_job_id=job_id, hpc_slurm_job_state=new_slurm_job_state)
 
         # Convert the slurm job state to operandi workflow job state
@@ -109,8 +100,7 @@ class JobStatusWorker:
             self.log.info(f"Workflow job id: {job_id}, old state: {old_job_state}, new state: {new_job_state}")
             if new_job_state == StateJob.SUCCESS:
                 self.__download_results_from_hpc(
-                    job_id=job_id, job_dir=job_dir, workspace_id=workspace_id, workspace_dir=workspace_dir
-                )
+                    job_id=job_id, job_dir=job_dir, workspace_id=workspace_id, workspace_dir=workspace_dir)
             if new_job_state == StateJob.FAILED:
                 ws_state = StateWorkspace.READY
                 self.log.info(f"Setting new workspace state `{ws_state}` of workspace_id: {workspace_id}")
@@ -139,9 +129,9 @@ class JobStatusWorker:
 
         # Handle database related reads and set the workflow job status to RUNNING
         try:
-            workflow_job_db = sync_db_get_workflow_job(self.current_message_job_id)
-            workspace_db = sync_db_get_workspace(workflow_job_db.workspace_id)
-            hpc_slurm_job_db = sync_db_get_hpc_slurm_job(self.current_message_job_id)
+            db_workflow_job = sync_db_get_workflow_job(self.current_message_job_id)
+            db_workspace = sync_db_get_workspace(db_workflow_job.workspace_id)
+            db_hpc_slurm_job = sync_db_get_hpc_slurm_job(self.current_message_job_id)
         except RuntimeError as error:
             self.log.warning(f"Database run-time error has occurred: {error}")
             self.__handle_message_failure(interruption=False)
@@ -153,8 +143,7 @@ class JobStatusWorker:
 
         try:
             self.__handle_hpc_and_workflow_states(
-                hpc_slurm_job_db=hpc_slurm_job_db, workflow_job_db=workflow_job_db, workspace_db=workspace_db
-            )
+                hpc_slurm_job_db=db_hpc_slurm_job, workflow_job_db=db_workflow_job, workspace_db=db_workspace)
         except ValueError as error:
             self.log.warning(f"{error}")
             self.__handle_message_failure(interruption=False)

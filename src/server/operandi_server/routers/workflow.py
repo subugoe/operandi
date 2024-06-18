@@ -113,18 +113,12 @@ class RouterWorkflow:
             # path.stem -> file_name
             # path.name -> file_name.ext
             workflow_id, workflow_dir = create_resource_dir(
-                SERVER_WORKFLOWS_ROUTER,
-                resource_id=path.stem,
-                exists_ok=True
-            )
+                SERVER_WORKFLOWS_ROUTER, resource_id=path.stem, exists_ok=True)
             nf_script_dst = join(workflow_dir, path.name)
             copyfile(src=path, dst=nf_script_dst)
             await db_create_workflow(
-                workflow_id=workflow_id,
-                workflow_dir=workflow_dir,
-                workflow_script_path=nf_script_dst,
-                workflow_script_base=path.name
-            )
+                workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dst,
+                workflow_script_base=path.name)
             self.production_workflows.append(workflow_id)
 
     async def list_workflows(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
@@ -141,9 +135,7 @@ class RouterWorkflow:
         return response
 
     async def download_workflow_script(
-        self,
-        workflow_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, workflow_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> FileResponse:
         """
         Curl equivalent:
@@ -152,6 +144,7 @@ class RouterWorkflow:
         await self.user_authenticator.user_login(auth)
         try:
             db_workflow = await db_get_workflow(workflow_id=workflow_id)
+            nf_path = db_workflow.workflow_script_path
         except RuntimeError as error:
             message = f"Non-existing DB entry for workflow id:{workflow_id}"
             self.logger.error(f"{message}, error: {error}")
@@ -160,16 +153,10 @@ class RouterWorkflow:
             message = f"Non-existing local entry workflow id:{workflow_id}"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
-        return FileResponse(
-            path=db_workflow.workflow_script_path,
-            filename=f"{workflow_id}.nf",
-            media_type="application/nextflow-file"
-        )
+        return FileResponse(path=nf_path, filename=f"{workflow_id}.nf", media_type="application/nextflow-file")
 
     async def upload_workflow_script(
-        self,
-        nextflow_script: UploadFile,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, nextflow_script: UploadFile, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkflowRsrc:
         """
         Curl equivalent:
@@ -185,19 +172,13 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         await db_create_workflow(
-            workflow_id=workflow_id,
-            workflow_dir=workflow_dir,
-            workflow_script_path=nf_script_dest,
-            workflow_script_base=nextflow_script.filename
-        )
+            workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
+            workflow_script_base=nextflow_script.filename)
         workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
         return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
 
     async def update_workflow_script(
-        self,
-        nextflow_script: UploadFile,
-        workflow_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, nextflow_script: UploadFile, workflow_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkflowRsrc:
         """
         Curl equivalent:
@@ -223,19 +204,13 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         await db_create_workflow(
-            workflow_id=workflow_id,
-            workflow_dir=workflow_dir,
-            workflow_script_path=nf_script_dst,
-            workflow_script_base=nextflow_script.filename
-        )
+            workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dst,
+            workflow_script_base=nextflow_script.filename)
         workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
         return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
 
     async def get_workflow_job_status(
-        self,
-        workflow_id: str,
-        job_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, workflow_id: str, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkflowJobRsrc:
         """
         Curl equivalent:
@@ -257,7 +232,6 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
 
-        job_state = wf_job_db.job_state
         try:
             wf_job_url = get_resource_url(SERVER_WORKFLOW_JOBS_ROUTER, resource_id=wf_job_db.job_id)
             workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, resource_id=wf_job_db.workflow_id)
@@ -267,21 +241,13 @@ class RouterWorkflow:
             self.logger.exception(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return WorkflowJobRsrc.create(
-            job_id=job_id,
-            job_url=wf_job_url,
-            workflow_id=workflow_id,
-            workflow_url=workflow_url,
-            workspace_id=wf_job_db.workspace_id,
-            workspace_url=workspace_url,
-            ws_state=db_workspace.state,
-            job_state=job_state
+            job_id=job_id, job_url=wf_job_url, workflow_id=workflow_id, workflow_url=workflow_url,
+            workspace_id=wf_job_db.workspace_id, workspace_url=workspace_url, ws_state=db_workspace.state,
+            job_state=wf_job_db.job_state
         )
 
     async def download_workflow_job_logs(
-        self,
-        workflow_id: str,
-        job_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, workflow_id: str, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> FileResponse:
         """
         Curl equivalent:
@@ -307,23 +273,12 @@ class RouterWorkflow:
             self.logger.exception(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
         tempdir = mkdtemp(prefix="ocrd-wf-job-zip-")
-        job_archive_path = make_archive(
-            base_name=f"{tempdir}/{job_id}",
-            format="zip",
-            root_dir=wf_job_local,
-        )
-        return FileResponse(
-            path=job_archive_path,
-            filename=f"{job_id}.zip",
-            media_type="application/zip"
-        )
+        job_archive_path = make_archive(base_name=f"{tempdir}/{job_id}", format="zip", root_dir=wf_job_local)
+        return FileResponse(path=job_archive_path, filename=f"{job_id}.zip", media_type="application/zip")
 
     # TODO: Refine this one big method and the exceptions
     async def submit_to_rabbitmq_queue(
-        self,
-        workflow_id: str,
-        workflow_args: WorkflowArguments,
-        sbatch_args: SbatchArguments,
+        self, workflow_id: str, workflow_args: WorkflowArguments, sbatch_args: SbatchArguments,
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
         try:
@@ -332,11 +287,8 @@ class RouterWorkflow:
         except Exception as error:
             message = f"Invalid login credentials or unapproved account."
             self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                headers={"WWW-Authenticate": "Basic"},
-                detail=message
-            )
+            headers = {"WWW-Authenticate": "Basic"}
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=headers, detail=message)
 
         try:
             # Extract sbatch arguments
@@ -377,12 +329,7 @@ class RouterWorkflow:
             # Save to the workflow job to the database
             self.logger.info("Saving the workflow job to the database")
             await db_create_workflow_job(
-                job_id=job_id,
-                job_dir=job_dir,
-                job_state=job_state,
-                workspace_id=workspace_id,
-                workflow_id=workflow_id
-            )
+                job_id=job_id, job_dir=job_dir, job_state=job_state, workspace_id=workspace_id, workflow_id=workflow_id)
 
             # Create the message to be sent to the RabbitMQ queue
             self.logger.info("Creating a workflow job RabbitMQ message")
@@ -401,15 +348,11 @@ class RouterWorkflow:
             if user_account_type == "HARVESTER":
                 self.logger.info(f"Pushing to the RabbitMQ queue for the harvester: {RABBITMQ_QUEUE_HARVESTER}")
                 self.rmq_publisher.publish_to_queue(
-                    queue_name=RABBITMQ_QUEUE_HARVESTER,
-                    message=encoded_workflow_message
-                )
+                    queue_name=RABBITMQ_QUEUE_HARVESTER, message=encoded_workflow_message)
             elif user_account_type == "ADMIN" or user_account_type == "USER":
                 self.logger.info(f"Pushing to the RabbitMQ queue for the users: {RABBITMQ_QUEUE_USERS}")
                 self.rmq_publisher.publish_to_queue(
-                    queue_name=RABBITMQ_QUEUE_USERS,
-                    message=encoded_workflow_message
-                )
+                    queue_name=RABBITMQ_QUEUE_USERS, message=encoded_workflow_message)
             else:
                 account_types = ["USER", "HARVESTER", "ADMIN"]
                 message = f"The user account type is not valid: {user_account_type}. Must be one of: {account_types}"
@@ -420,12 +363,7 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
         return WorkflowJobRsrc.create(
-            job_id=job_id,
-            job_url=job_url,
-            workflow_id=workflow_id,
-            workflow_url=workflow_url,
-            workspace_id=workspace_id,
-            workspace_url=workspace_url,
-            ws_state=ws_state,
+            job_id=job_id, job_url=job_url, workflow_id=workflow_id, workflow_url=workflow_url,
+            workspace_id=workspace_id, workspace_url=workspace_url, ws_state=ws_state,
             job_state=job_state
         )

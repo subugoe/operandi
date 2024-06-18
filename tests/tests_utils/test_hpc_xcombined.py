@@ -26,16 +26,12 @@ def helper_pack_and_put_slurm_workspace(
     assert_exists_dir(local_workspace_dir)
 
     local_slurm_workspace_zip_path = hpc_data_transfer.create_slurm_workspace_zip(
-        ocrd_workspace_dir=local_workspace_dir,
-        workflow_job_id=workflow_job_id,
-        nextflow_script_path=path_workflow,
-        tempdir_prefix="test_slurm_workspace-"
-    )
+        ocrd_workspace_dir=local_workspace_dir, workflow_job_id=workflow_job_id, nextflow_script_path=path_workflow,
+        tempdir_prefix="test_slurm_workspace-")
     assert_exists_file(local_slurm_workspace_zip_path)
 
     hpc_dst_slurm_zip = hpc_data_transfer.put_slurm_workspace(
-        local_src_slurm_zip=local_slurm_workspace_zip_path, workflow_job_id=workflow_job_id
-    )
+        local_src_slurm_zip=local_slurm_workspace_zip_path, workflow_job_id=workflow_job_id)
 
     # TODO: implement this
     # assert_exists_remote_file(hpc_dst_slurm_zip)
@@ -43,78 +39,44 @@ def helper_pack_and_put_slurm_workspace(
 
 def test_hpc_connector_put_batch_script(hpc_data_transfer, path_batch_script_submit_workflow_job):
     hpc_batch_script_path = join(hpc_data_transfer.batch_scripts_dir, BATCH_SCRIPT_ID)
-    hpc_data_transfer.put_file(
-        local_src=path_batch_script_submit_workflow_job, remote_dst=hpc_batch_script_path
-    )
+    hpc_data_transfer.put_file(local_src=path_batch_script_submit_workflow_job, remote_dst=hpc_batch_script_path)
 
 
 def test_pack_and_put_slurm_workspace(hpc_data_transfer, path_small_workspace_data_dir, template_workflow):
     helper_pack_and_put_slurm_workspace(
-        hpc_data_transfer=hpc_data_transfer,
-        workflow_job_id=ID_WORKFLOW_JOB,
-        workspace_id=ID_WORKSPACE,
-        path_workflow=template_workflow,
-        path_workspace_dir=path_small_workspace_data_dir
-    )
+        hpc_data_transfer=hpc_data_transfer, workflow_job_id=ID_WORKFLOW_JOB, workspace_id=ID_WORKSPACE,
+        path_workflow=template_workflow, path_workspace_dir=path_small_workspace_data_dir)
 
 
 def test_pack_and_put_slurm_workspace_with_ms(
     hpc_data_transfer, path_small_workspace_data_dir, template_workflow_with_ms
 ):
     helper_pack_and_put_slurm_workspace(
-        hpc_data_transfer=hpc_data_transfer,
-        workflow_job_id=ID_WORKFLOW_JOB_WITH_MS,
-        workspace_id=ID_WORKSPACE_WITH_MS,
-        path_workflow=template_workflow_with_ms,
-        path_workspace_dir=path_small_workspace_data_dir
-    )
+        hpc_data_transfer=hpc_data_transfer, workflow_job_id=ID_WORKFLOW_JOB_WITH_MS, workspace_id=ID_WORKSPACE_WITH_MS,
+        path_workflow=template_workflow_with_ms, path_workspace_dir=path_small_workspace_data_dir)
 
 
 def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow):
     hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SCRIPT_ID)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
-        batch_script_path=hpc_batch_script_path,
-        workflow_job_id=ID_WORKFLOW_JOB,
-        nextflow_script_path=template_workflow,
-        input_file_grp="DEFAULT",
-        workspace_id=ID_WORKSPACE,
-        mets_basename="mets.xml",
-        job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
-        cpus=2,
-        ram=16,
-        nf_process_forks=2,
-        ws_pages_amount=8,
-        use_mets_server=False
-    )
+        batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB,
+        nextflow_script_path=template_workflow, input_file_grp="DEFAULT", workspace_id=ID_WORKSPACE,
+        mets_basename="mets.xml", job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
+        cpus=2, ram=16, nf_process_forks=2, ws_pages_amount=8, use_mets_server=False)
     finished_successfully = hpc_command_executor.poll_till_end_slurm_job_state(
-        slurm_job_id=slurm_job_id,
-        interval=5,
-        timeout=300
-    )
+        slurm_job_id=slurm_job_id, interval=5, timeout=300)
     assert finished_successfully
 
 
 def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_workflow_with_ms):
     hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SCRIPT_ID)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
-        batch_script_path=hpc_batch_script_path,
-        workflow_job_id=ID_WORKFLOW_JOB_WITH_MS,
-        nextflow_script_path=template_workflow_with_ms,
-        input_file_grp="DEFAULT",
-        workspace_id=ID_WORKSPACE_WITH_MS,
-        mets_basename="mets.xml",
-        job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
-        cpus=3,
-        ram=16,
-        nf_process_forks=2,
-        ws_pages_amount=8,
-        use_mets_server=True
-    )
+        batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB_WITH_MS,
+        nextflow_script_path=template_workflow_with_ms, input_file_grp="DEFAULT", workspace_id=ID_WORKSPACE_WITH_MS,
+        mets_basename="mets.xml", job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
+        cpus=3, ram=16, nf_process_forks=2, ws_pages_amount=8, use_mets_server=True)
     finished_successfully = hpc_command_executor.poll_till_end_slurm_job_state(
-        slurm_job_id=slurm_job_id,
-        interval=5,
-        timeout=300
-    )
+        slurm_job_id=slurm_job_id, interval=5, timeout=300)
     assert finished_successfully
 
 

@@ -87,40 +87,24 @@ def get_workspace_bag(db_workspace) -> Union[str, None]:
     if not mets_basename:
         mets_basename = DEFAULT_METS_BASENAME
     resolver = Resolver()
+    # Warning: do not set processes to a higher value than 1, it would crash the Uvicorn internals
     WorkspaceBagger(resolver).bag(
-        Workspace(
-            resolver,
-            directory=db_workspace.workspace_dir,
-            mets_basename=mets_basename
-        ),
-        ocrd_identifier=db_workspace.ocrd_identifier,
-        dest=bag_dest,
-        ocrd_mets=mets_basename,
-        # Warning: do not set processes to a higher value than 1, it would crash the Uvicorn internals
-        processes=1
-    )
+        Workspace(resolver, directory=db_workspace.workspace_dir, mets_basename=mets_basename),
+        ocrd_identifier=db_workspace.ocrd_identifier, dest=bag_dest, ocrd_mets=mets_basename, processes=1)
     return bag_dest
 
 
 def create_workspace_bag_from_remote_url(
-    mets_url: str,
-    workspace_id: str,
-    bag_dest: str,
-    mets_basename: str = DEFAULT_METS_BASENAME,
+    mets_url: str, workspace_id: str, bag_dest: str, mets_basename: str = DEFAULT_METS_BASENAME,
     preserve_file_grps: List[str] = None
 ) -> str:
     if not preserve_file_grps:
         preserve_file_grps = [DEFAULT_FILE_GRP]
-
     resolver = Resolver()
     # Create an OCR-D Workspace from a remote mets URL
     # without downloading the files referenced in the mets file
     workspace = resolver.workspace_from_url(
-        mets_url=mets_url,
-        clobber_mets=False,
-        mets_basename=mets_basename,
-        download=False
-    )
+        mets_url=mets_url, clobber_mets=False, mets_basename=mets_basename, download=False)
 
     remove_groups = [x for x in workspace.mets.file_groups if x not in preserve_file_grps]
     for group in remove_groups:
@@ -132,12 +116,8 @@ def create_workspace_bag_from_remote_url(
 
     # Resolves and downloads all file groups and files in the mets file
     WorkspaceBagger(resolver).bag(
-        workspace,
-        dest=bag_dest,
-        ocrd_identifier=workspace_id,
         # Warning: do not set processes to a higher value than 1, it would crash the Uvicorn internals
-        processes=1
-    )
+        workspace, dest=bag_dest, ocrd_identifier=workspace_id, processes=1)
     return workspace.directory
 
 

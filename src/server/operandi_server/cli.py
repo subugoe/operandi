@@ -39,9 +39,5 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 )
 def start_server(local_url: str, live_url: str, queue: str, database: str):
     operandi_server = OperandiServer(
-        local_server_url=local_url,
-        live_server_url=live_url,
-        db_url=database,
-        rabbitmq_url=queue
-    )
+        local_server_url=local_url, live_server_url=live_url, db_url=database, rabbitmq_url=queue)
     operandi_server.run_server()

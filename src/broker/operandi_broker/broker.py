@@ -5,26 +5,17 @@ import signal
 from time import sleep
 
 from operandi_utils import (
-    get_log_file_path_prefix,
-    reconfigure_all_loggers,
-    verify_database_uri,
-    verify_and_parse_mq_uri
-)
+    get_log_file_path_prefix, reconfigure_all_loggers, verify_database_uri, verify_and_parse_mq_uri)
 from operandi_utils.constants import LOG_LEVEL_BROKER
 from operandi_utils.rabbitmq.constants import (
-    RABBITMQ_QUEUE_HARVESTER,
-    RABBITMQ_QUEUE_USERS,
-    RABBITMQ_QUEUE_JOB_STATUSES
-)
+    RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS, RABBITMQ_QUEUE_JOB_STATUSES)
 from .worker import Worker
 from .job_status_worker import JobStatusWorker
 
 
 class ServiceBroker:
     def __init__(
-        self,
-        db_url: str = environ.get("OPERANDI_DB_URL"),
-        rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
+        self, db_url: str = environ.get("OPERANDI_DB_URL"), rabbitmq_url: str = environ.get("OPERANDI_RABBITMQ_URL"),
         test_sbatch: bool = False
     ):
         if not db_url:
@@ -56,19 +47,15 @@ class ServiceBroker:
     def run_broker(self):
         # A list of queues for which a worker process should be created
         queues = [RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS]
+        status_queue = RABBITMQ_QUEUE_JOB_STATUSES
         try:
             for queue_name in queues:
-                self.log.info(f"Creating a worker processes to consume from queue: {queue_name}")
+                self.log.info(f"Creating a worker process to consume from queue: {queue_name}")
                 self.create_worker_process(
-                    queue_name=queue_name, status_checker=False,
-                    tunnel_port_executor=22, tunnel_port_transfer=22
-                )
-            self.log.info(
-                f"Creating a status checker worker processes to consume from queue: {RABBITMQ_QUEUE_JOB_STATUSES}")
+                    queue_name=queue_name, status_checker=False, tunnel_port_executor=22, tunnel_port_transfer=22)
+            self.log.info(f"Creating a status worker process to consume from queue: {status_queue}")
             self.create_worker_process(
-                queue_name=RABBITMQ_QUEUE_JOB_STATUSES, status_checker=True,
-                tunnel_port_executor=22, tunnel_port_transfer=22
-            )
+                queue_name=status_queue, status_checker=True, tunnel_port_executor=22, tunnel_port_transfer=22)
         except Exception as error:
             self.log.error(f"Error while creating worker processes: {error}")
 
@@ -94,18 +81,16 @@ class ServiceBroker:
 
     # Creates a separate worker process and append its pid if successful
     def create_worker_process(
-            self, queue_name, tunnel_port_executor, tunnel_port_transfer, status_checker=False
+        self, queue_name, tunnel_port_executor: int = 22, tunnel_port_transfer: int = 22, status_checker=False
     ) -> None:
         # If the entry for queue_name does not exist, create id
         if queue_name not in self.queues_and_workers:
             self.log.info(f"Initializing workers list for queue: {queue_name}")
             # Initialize the worker pids list for the queue
             self.queues_and_workers[queue_name] = []
-
         child_pid = self.__create_child_process(
-            queue_name=queue_name, status_checker=status_checker,
-            tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer
-        )
+            queue_name=queue_name, status_checker=status_checker, tunnel_port_executor=tunnel_port_executor,
+            tunnel_port_transfer=tunnel_port_transfer)
         # If creation of the child process was successful
         if child_pid:
             self.log.info(f"Assigning a new worker process with pid: {child_pid}, to queue: {queue_name}")
@@ -114,7 +99,7 @@ class ServiceBroker:
 
     # Forks a child process
     def __create_child_process(
-            self, queue_name, tunnel_port_executor, tunnel_port_transfer, status_checker=False
+        self, queue_name, tunnel_port_executor: int = 22, tunnel_port_transfer: int = 22, status_checker=False
     ) -> int:
         self.log.info(f"Trying to create a new worker process for queue: {queue_name}")
         try:
@@ -123,10 +108,8 @@ class ServiceBroker:
         except Exception as os_error:
             self.log.error(f"Failed to create a child process, reason: {os_error}")
             return 0
-
         if created_pid != 0:
             return created_pid
-
         try:
             # Clean unnecessary data
             # self.queues_and_workers = None
@@ -134,19 +117,28 @@ class ServiceBroker:
                 child_worker = JobStatusWorker(
                     db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
                     tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer,
-                    test_sbatch=self.test_sbatch
-                )
+                    test_sbatch=self.test_sbatch)
             else:
                 child_worker = Worker(
                     db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
                     tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer,
-                    test_sbatch=self.test_sbatch
-                )
+                    test_sbatch=self.test_sbatch)
             child_worker.run()
             exit(0)
         except Exception as e:
             self.log.error(f"Worker process failed for queue: {queue_name}, reason: {e}")
             exit(-1)
+
+    def _send_signal_to_worker(self, worker_pid: int, signal_type: signal):
+        try:
+            process = psutil.Process(pid=worker_pid)
+            process.send_signal(signal_type)
+        except psutil.ZombieProcess as error:
+            self.log.info(f"Worker process has become a zombie: {worker_pid}, {error}")
+        except psutil.NoSuchProcess as error:
+            self.log.error(f"No such worker process with pid: {worker_pid}, {error}")
+        except psutil.AccessDenied as error:
+            self.log.error(f"Access denied to the worker process with pid: {worker_pid}, {error}")
 
     def kill_workers(self):
         interrupted_pids = []
@@ -155,28 +147,10 @@ class ServiceBroker:
         for queue_name in self.queues_and_workers:
             self.log.info(f"Sending SIGINT to workers of queue: {queue_name}")
             for worker_pid in self.queues_and_workers[queue_name]:
-                self.log.info(f"Sending SIGINT to worker pid: {worker_pid}")
-                try:
-                    process = psutil.Process(pid=worker_pid)
-                    process.send_signal(signal.SIGINT)
-                    interrupted_pids.append(worker_pid)
-                except psutil.ZombieProcess as error:
-                    self.log.info(f"Worker process has become a zombie: {worker_pid}, {error}")
-                except psutil.NoSuchProcess as error:
-                    self.log.error(f"No such worker process with pid: {worker_pid}, {error}")
-                    continue
-                except psutil.AccessDenied as error:
-                    self.log.error(f"Access denied to the worker process with pid: {worker_pid}, {error}")
-                    continue
+                self._send_signal_to_worker(worker_pid=worker_pid, signal_type=signal.SIGINT)
+                interrupted_pids.append(worker_pid)
         sleep(3)
-        self.log.info(f"Starting to send SIGKILL to all workers if needed")
+        self.log.info(f"Sending SIGKILL (if needed) to previously interrupted workers")
         # Check whether workers exited properly
         for pid in interrupted_pids:
-            try:
-                process = psutil.Process(pid=pid)
-                self.log.info(f"Sending SIGKILL to worker pid: {pid}")
-                process.send_signal(signal.SIGKILL)
-            except psutil.ZombieProcess:
-                self.log.info(f"Worker process became zombie: {pid}")
-            except psutil.NoSuchProcess:
-                self.log.info(f"Worker process is not existing: {pid}")
+            self._send_signal_to_worker(worker_pid=pid, signal_type=signal.SIGKILL)

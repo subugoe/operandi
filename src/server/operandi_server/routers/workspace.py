@@ -64,16 +64,15 @@ class RouterWorkspace:
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
-    def _validate_bag_with_error_handling(self, bag_dst: str) -> None:
-        message = "Failed to validate workspace bag"
-        try:
-            validate_bag(bag_dst)
-        except WorkspaceNotValidException as error:
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-        except Exception as error:
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+    def _check_workspace_ready_state_with_error_handling(self, workspace_id: str, db_workspace) -> None:
+        if db_workspace.deleted:
+            message = f"Workspace has already been deleted: {workspace_id}"
+            self.logger.warning(f"{message}")
+            raise HTTPException(status_code=status.HTTP_410_GONE, detail=message)
+        if db_workspace.state != StateWorkspace.READY:
+            message = f"The workspace is not ready yet, current state: {db_workspace.state}"
+            self.logger.error(f"{message}")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
 
     def _extract_bag_info_with_error_handling(self, bag_dst: str, ws_dir: str) -> dict:
         try:
@@ -97,6 +96,17 @@ class RouterWorkspace:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
         return pages_amount
 
+    def _validate_bag_with_error_handling(self, bag_dst: str) -> None:
+        message = "Failed to validate workspace bag"
+        try:
+            validate_bag(bag_dst)
+        except WorkspaceNotValidException as error:
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+        except Exception as error:
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+
     async def list_workspaces(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkspaceRsrc]:
         """
         Curl equivalent:
@@ -112,10 +122,7 @@ class RouterWorkspace:
         return response
 
     async def download_workspace(
-        self,
-        background_tasks: BackgroundTasks,
-        workspace_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, background_tasks: BackgroundTasks, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> Union[WorkspaceRsrc, FileResponse]:
         """
         Curl equivalent:
@@ -133,10 +140,7 @@ class RouterWorkspace:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
 
-        if db_workspace.state != StateWorkspace.READY:
-            message = f"The workspace is not ready yet, current state: {db_workspace.state}"
-            self.logger.error(f"{message}")
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+        self._check_workspace_ready_state_with_error_handling(workspace_id=workspace_id, db_workspace=db_workspace)
 
         message = f"No bag was produced for workspace id: {workspace_id}"
         try:
@@ -148,17 +152,10 @@ class RouterWorkspace:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
         background_tasks.add_task(unlink, bag_path)
-        return FileResponse(
-            path=bag_path,
-            filename=f"{workspace_id}.ocrd.zip",
-            media_type="application/ocrd+zip"
-        )
+        return FileResponse(path=bag_path, filename=f"{workspace_id}.ocrd.zip", media_type="application/ocrd+zip")
 
     async def upload_workspace_from_url(
-        self,
-        mets_url: str,
-        preserve_file_grps: str,
-        mets_basename: str = DEFAULT_METS_BASENAME,
+        self, mets_url: str, preserve_file_grps: str, mets_basename: str = DEFAULT_METS_BASENAME,
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkspaceRsrc:
         await self.user_authenticator.user_login(auth)
@@ -175,12 +172,8 @@ class RouterWorkspace:
 
         try:
             ws_temp_dir = create_workspace_bag_from_remote_url(
-                mets_url=mets_url,
-                workspace_id=workspace_id,
-                bag_dest=bag_dest,
-                mets_basename=mets_basename,
-                preserve_file_grps=file_grps_to_preserver
-            )
+                mets_url=mets_url, workspace_id=workspace_id, bag_dest=bag_dest, mets_basename=mets_basename,
+                preserve_file_grps=file_grps_to_preserver)
         except Exception as error:
             message = "Failed to create workspace bag from remote url"
             self.logger.error(f"{message}, error: {error}")
@@ -194,24 +187,15 @@ class RouterWorkspace:
         pages_amount = self._extract_pages_with_error_handling(bag_info, workspace_dir)
         ws_state = StateWorkspace.READY
         await db_create_workspace(
-            workspace_id=workspace_id,
-            workspace_dir=workspace_dir,
-            pages_amount=pages_amount,
-            bag_info=bag_info,
-            state=ws_state
-        )
+            workspace_id=workspace_id, workspace_dir=workspace_dir, pages_amount=pages_amount, bag_info=bag_info,
+            state=ws_state)
         workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, workspace_id)
         return WorkspaceRsrc.create(
-            workspace_id=workspace_id,
-            workspace_url=workspace_url,
-            description="Workspace from Mets URL",
-            state=ws_state
-        )
+            workspace_id=workspace_id, workspace_url=workspace_url, description="Workspace from Mets URL",
+            state=ws_state)
 
     async def upload_workspace(
-        self,
-        workspace: UploadFile,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, workspace: UploadFile, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkspaceRsrc:
         """
         Curl equivalent:
@@ -234,25 +218,13 @@ class RouterWorkspace:
         pages_amount = self._extract_pages_with_error_handling(bag_info, ws_dir)
         ws_state = StateWorkspace.READY
         await db_create_workspace(
-            workspace_id=ws_id,
-            workspace_dir=ws_dir,
-            pages_amount=pages_amount,
-            bag_info=bag_info,
-            state=ws_state
-        )
+            workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, bag_info=bag_info, state=ws_state)
         ws_url = get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id)
         return WorkspaceRsrc.create(
-            workspace_id=ws_id,
-            workspace_url=ws_url,
-            description="Workspace from ocrd zip",
-            state=ws_state
-        )
+            workspace_id=ws_id, workspace_url=ws_url, description="Workspace from ocrd zip", state=ws_state)
 
     async def put_workspace(
-        self,
-        workspace: UploadFile,
-        workspace_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, workspace: UploadFile, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkspaceRsrc:
         """
         Curl equivalent:
@@ -263,15 +235,8 @@ class RouterWorkspace:
         try:
             db_workspace = await db_get_workspace(workspace_id=workspace_id)
             if db_workspace:
-                if db_workspace.deleted:
-                    message = f"Workspace has been already deleted: {workspace_id}"
-                    self.logger.warning(f"{message}")
-                    raise HTTPException(status_code=status.HTTP_410_GONE, detail=message)
-
-                if db_workspace.state != StateWorkspace.READY:
-                    message = f"The workspace is not ready yet, current state: {db_workspace.state}"
-                    self.logger.error(f"{message}")
-                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+                self._check_workspace_ready_state_with_error_handling(
+                    workspace_id=workspace_id, db_workspace=db_workspace)
         except RuntimeError:
             # Non-existing, ignore
             pass
@@ -297,24 +262,13 @@ class RouterWorkspace:
         pages_amount = self._extract_pages_with_error_handling(bag_info, ws_dir)
         ws_state = StateWorkspace.READY
         await db_create_workspace(
-            workspace_id=ws_id,
-            workspace_dir=ws_dir,
-            pages_amount=pages_amount,
-            bag_info=bag_info,
-            state=ws_state
-        )
+            workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, bag_info=bag_info, state=ws_state)
         ws_url = get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id)
         return WorkspaceRsrc.create(
-            workspace_id=ws_id,
-            workspace_url=ws_url,
-            description="Workspace from ocrd zip",
-            state=ws_state
-        )
+            workspace_id=ws_id, workspace_url=ws_url, description="Workspace from ocrd zip", state=ws_state)
 
     async def delete_workspace(
-        self,
-        workspace_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkspaceRsrc:
         """
         Curl equivalent:
@@ -328,15 +282,7 @@ class RouterWorkspace:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
 
-        if db_workspace.deleted:
-            message = f"Workspace has been already deleted: {workspace_id}"
-            self.logger.warning(f"{message}")
-            raise HTTPException(status_code=status.HTTP_410_GONE, detail=message)
-
-        if db_workspace.state != StateWorkspace.READY:
-            message = f"The workspace is not ready yet, current state: {db_workspace.state}"
-            self.logger.error(f"{message}")
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+        self._check_workspace_ready_state_with_error_handling(workspace_id=workspace_id, db_workspace=db_workspace)
 
         try:
             deleted_workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
@@ -348,5 +294,4 @@ class RouterWorkspace:
 
         await db_update_workspace(find_workspace_id=workspace_id, deleted=True)
         return WorkspaceRsrc.create(
-            workspace_id=workspace_id, workspace_url=deleted_workspace_url, state=db_workspace.state
-        )
+            workspace_id=workspace_id, workspace_url=deleted_workspace_url, state=db_workspace.state)

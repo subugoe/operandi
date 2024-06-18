@@ -3,38 +3,23 @@ from .models import DBHPCSlurmJob
 
 
 async def db_create_hpc_slurm_job(
-    workflow_job_id: str,
-    hpc_slurm_job_id: str,
-    hpc_batch_script_path: str,
-    hpc_slurm_workspace_path: str,
+    workflow_job_id: str, hpc_slurm_job_id: str, hpc_batch_script_path: str, hpc_slurm_workspace_path: str,
     hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET
 ) -> DBHPCSlurmJob:
     db_hpc_slurm_job = DBHPCSlurmJob(
-        workflow_job_id=workflow_job_id,
-        hpc_slurm_job_id=hpc_slurm_job_id,
-        hpc_batch_script_path=hpc_batch_script_path,
-        hpc_slurm_workspace_path=hpc_slurm_workspace_path,
-        hpc_slurm_job_state=hpc_slurm_job_state
-    )
+        workflow_job_id=workflow_job_id, hpc_slurm_job_id=hpc_slurm_job_id, hpc_batch_script_path=hpc_batch_script_path,
+        hpc_slurm_workspace_path=hpc_slurm_workspace_path, hpc_slurm_job_state=hpc_slurm_job_state)
     await db_hpc_slurm_job.save()
     return db_hpc_slurm_job
 
 
 @call_sync
 async def sync_db_create_hpc_slurm_job(
-    workflow_job_id: str,
-    hpc_slurm_job_id: str,
-    hpc_batch_script_path: str,
-    hpc_slurm_workspace_path: str,
+    workflow_job_id: str, hpc_slurm_job_id: str, hpc_batch_script_path: str, hpc_slurm_workspace_path: str,
     hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET
 ) -> DBHPCSlurmJob:
     return await db_create_hpc_slurm_job(
-        workflow_job_id,
-        hpc_slurm_job_id,
-        hpc_batch_script_path,
-        hpc_slurm_workspace_path,
-        hpc_slurm_job_state
-    )
+        workflow_job_id, hpc_slurm_job_id, hpc_batch_script_path, hpc_slurm_workspace_path, hpc_slurm_job_state)
 
 
 async def db_get_hpc_slurm_job(workflow_job_id: str) -> DBHPCSlurmJob:

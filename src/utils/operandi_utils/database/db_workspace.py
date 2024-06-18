@@ -6,12 +6,8 @@ from .models import DBWorkspace
 
 # TODO: This also updates to satisfy the PUT method in the Workspace Manager - fix this
 async def db_create_workspace(
-    workspace_id: str,
-    workspace_dir: str,
-    pages_amount: int,
-    bag_info: dict,
-    state: StateWorkspace = StateWorkspace.UNSET,
-    default_mets_basename: str = "mets.xml"
+    workspace_id: str, workspace_dir: str, pages_amount: int, bag_info: dict,
+    state: StateWorkspace = StateWorkspace.UNSET, default_mets_basename: str = "mets.xml"
 ) -> DBWorkspace:
     bag_info = dict(bag_info)
     mets_basename = default_mets_basename
@@ -55,10 +51,7 @@ async def db_create_workspace(
 
 @call_sync
 async def sync_db_create_workspace(
-    workspace_id: str,
-    workspace_dir: str,
-    pages_amount: int,
-    bag_info: dict,
+    workspace_id: str, workspace_dir: str, pages_amount: int, bag_info: dict,
     state: StateWorkspace = StateWorkspace.UNSET
 ) -> DBWorkspace:
     return await db_create_workspace(workspace_id, workspace_dir, pages_amount, bag_info, state)

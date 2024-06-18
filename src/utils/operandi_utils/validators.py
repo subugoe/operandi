@@ -7,8 +7,7 @@ class QueueServerParamType(ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            # perform validation check only
-            verify_and_parse_mq_uri(value)
+            verify_and_parse_mq_uri(value)  # perform validation check only
         except Exception as error:
             self.fail(message=f"{error}", param=param, ctx=ctx)
         return value
@@ -19,8 +18,7 @@ class DatabaseParamType(ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            # perform validation check only
-            verify_database_uri(value)
+            verify_database_uri(value)  # perform validation check only
         except Exception as error:
             self.fail(message=f"{error}", param=param, ctx=ctx)
         return value

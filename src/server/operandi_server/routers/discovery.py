@@ -25,10 +25,7 @@ class RouterDiscovery:
             response_model=PYDiscovery, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
-    async def discovery(
-        self,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
-    ) -> PYDiscovery:
+    async def discovery(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYDiscovery:
         await self.user_authenticator.user_login(auth)
         response = PYDiscovery(
             ram=virtual_memory().total / (1024.0 ** 3),

@@ -12,6 +12,7 @@ from .constants import ServerApiTags
 class RouterUser:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.user")
+        self.auth_headers = {"WWW-Authenticate": "Basic"}
         self.router = APIRouter(tags=[ServerApiTags.USER])
         self.router.add_api_route(
             path="/user/login",
@@ -35,16 +36,13 @@ class RouterUser:
         if not (email and password):
             message = f"User login failed, missing e-mail or password field."
             self.logger.error(f"{message}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, headers={"WWW-Authenticate": "Basic"}, detail=message)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=self.auth_headers, detail=message)
         try:
             account_type = await authenticate_user(email=email, password=password)
         except AuthenticationError as error:
             message = f"Invalid login credentials or unapproved account."
             self.logger.error(f"{message}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, headers={"WWW-Authenticate": "Basic"}, detail=message)
-
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=self.auth_headers, detail=message)
         return PYUserAction(account_type=account_type, action="Successfully logged!", email=email)
 
     async def user_register(self, email: str, password: str, account_type: str = "USER") -> PYUserAction:
@@ -66,14 +64,14 @@ class RouterUser:
             message = f"Wrong account type. Must be one of: {account_types}"
             self.logger.error(f"{message}")
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers={"WWW-Authenticate": "Basic"}, detail=message)
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers=self.auth_headers, detail=message)
         try:
             await register_user(email=email, password=password, account_type=account_type, approved_user=False)
         except RegistrationError as error:
             message = f"User failed to register: {email}, reason: {error}"
             self.logger.error(f"{message}")
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers={"WWW-Authenticate": "Basic"}, detail=message)
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers=self.auth_headers, detail=message)
         action = f"Successfully registered a new account: {email}. " \
                  f"Please contact the OCR-D team to get your account validated before use."
         return PYUserAction(account_type=account_type, action=action, email=email)

@@ -49,10 +49,7 @@ class HPCTransfer(HPCConnector):
         return hpc_batch_script_path
 
     def create_slurm_workspace_zip(
-        self,
-        ocrd_workspace_dir: str,
-        workflow_job_id: str,
-        nextflow_script_path: str,
+        self, ocrd_workspace_dir: str, workflow_job_id: str, nextflow_script_path: str,
         tempdir_prefix: str = "slurm_workspace-"
     ) -> str:
         self.log.info(f"Entering pack_slurm_workspace")
@@ -97,10 +94,7 @@ class HPCTransfer(HPCConnector):
         return hpc_dst_slurm_zip
 
     def pack_and_put_slurm_workspace(
-        self,
-        ocrd_workspace_dir: str,
-        workflow_job_id: str,
-        nextflow_script_path: str,
+        self, ocrd_workspace_dir: str, workflow_job_id: str, nextflow_script_path: str,
         tempdir_prefix: str = "slurm_workspace-"
     ) -> Tuple[str, str]:
         self.log.info(f"Entering put_slurm_workspace")
@@ -110,18 +104,11 @@ class HPCTransfer(HPCConnector):
         self.log.info(f"tempdir_prefix: {tempdir_prefix}")
 
         local_src_slurm_zip = self.create_slurm_workspace_zip(
-            ocrd_workspace_dir=ocrd_workspace_dir,
-            workflow_job_id=workflow_job_id,
-            nextflow_script_path=nextflow_script_path,
-            tempdir_prefix=tempdir_prefix
-        )
+            ocrd_workspace_dir=ocrd_workspace_dir, workflow_job_id=workflow_job_id,
+            nextflow_script_path=nextflow_script_path, tempdir_prefix=tempdir_prefix)
         self.log.info(f"Created slurm workspace zip: {local_src_slurm_zip}")
 
-        hpc_dst = self.put_slurm_workspace(
-            local_src_slurm_zip=local_src_slurm_zip,
-            workflow_job_id=workflow_job_id
-        )
-
+        hpc_dst = self.put_slurm_workspace(local_src_slurm_zip=local_src_slurm_zip, workflow_job_id=workflow_job_id)
         self.log.info(f"Leaving pack_and_put_slurm_workspace")
         return local_src_slurm_zip, hpc_dst
 
@@ -143,8 +130,7 @@ class HPCTransfer(HPCConnector):
             self.get_file(remote_src=get_src, local_dst=get_dst)
         except Exception as error:
             raise Exception(
-                f"Error when getting workflow job zip file: {error}, get_src: {get_src}, get_dst: {get_dst}"
-            )
+                f"Error when getting workflow job zip file: {error}, get_src: {get_src}, get_dst: {get_dst}")
         self.log.info(f"Got workflow job zip file from src: {get_src}, to dst: {get_dst}")
 
         unpack_src = get_dst
@@ -153,8 +139,7 @@ class HPCTransfer(HPCConnector):
             unpack_zip_archive(source=unpack_src, destination=unpack_dst)
         except Exception as error:
             raise Exception(
-                f"Error when unpacking workflow job zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}"
-            )
+                f"Error when unpacking workflow job zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}")
         self.log.info(f"Unpacked workflow job zip from src: {unpack_src}, to dst: {unpack_dst}")
 
         # Remove the temporary workflow job zip
@@ -174,8 +159,7 @@ class HPCTransfer(HPCConnector):
             self.get_file(remote_src=get_src, local_dst=get_dst)
         except Exception as error:
             raise Exception(
-                f"Error when getting workspace zip file: {error}, get_src: {get_src}, get_dst: {get_dst}"
-            )
+                f"Error when getting workspace zip file: {error}, get_src: {get_src}, get_dst: {get_dst}")
         self.log.info(f"Got workspace zip file from src: {get_src}, to dst: {get_dst}")
 
         unpack_src = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
@@ -184,8 +168,7 @@ class HPCTransfer(HPCConnector):
             unpack_zip_archive(source=unpack_src, destination=unpack_dst)
         except Exception as error:
             raise Exception(
-                f"Error when unpacking workspace zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}"
-            )
+                f"Error when unpacking workspace zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}")
         self.log.info(f"Unpacked workspace zip from src: {unpack_src}, to dst: {unpack_dst}")
 
         # Remove the temporary workspace zip
@@ -197,15 +180,10 @@ class HPCTransfer(HPCConnector):
         # workflow job dir
         workspace_dir_in_workflow_job = join(workflow_job_dir, ocrd_workspace_id)
         try:
-            symlink(
-                src=ocrd_workspace_dir,
-                dst=workspace_dir_in_workflow_job,
-                target_is_directory=True
-            )
+            symlink(src=ocrd_workspace_dir, dst=workspace_dir_in_workflow_job, target_is_directory=True)
         except Exception as error:
             raise Exception(
-                f"Error when symlink: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}"
-            )
+                f"Error when symlink: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}")
         self.log.info(f"Symlinked from src: {ocrd_workspace_dir}, to dst: {workspace_dir_in_workflow_job}")
         self.log.info(f"Leaving get_and_unpack_slurm_workspace")
 

@@ -7,7 +7,5 @@ from operandi_harvester import Harvester
 def fixture_operandi_harvester(auth_harvester):
     harvester = Harvester(
         server_address=environ.get("OPERANDI_SERVER_URL_LIVE"),
-        auth_username=auth_harvester[0],
-        auth_password=auth_harvester[1]
-    )
+        auth_username=auth_harvester[0], auth_password=auth_harvester[1])
     yield harvester

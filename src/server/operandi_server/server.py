@@ -47,19 +47,16 @@ class OperandiServer(FastAPI):
 
         live_server_80 = {"url": self.live_server_url, "description": "The URL of the live OPERANDI server."}
         local_server = {"url": self.local_server_url, "description": "The URL of the local OPERANDI server."}
+        server_license = {"name": "Apache 2.0", "url": "http://www.apache.org/licenses/LICENSE-2.0.html"}
         super().__init__(
             title="OPERANDI Server",
             description="REST API of the OPERANDI",
             version=OPERANDI_VERSION,
-            license={
-                "name": "Apache 2.0",
-                "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
-            },
+            license=server_license,
             servers=[live_server_80, local_server],
             on_startup=[self.startup_event],
             on_shutdown=[self.shutdown_event]
         )
-
         self.router.add_api_route(
             path="/",
             endpoint=self.home,

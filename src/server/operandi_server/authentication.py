@@ -14,12 +14,7 @@ async def create_user_if_not_available(username: str, password: str, account_typ
     except AuthenticationError:
         # TODO: Note that this account is never removed from
         #  the DB automatically in the current implementation
-        await register_user(
-            email=username,
-            password=password,
-            account_type=account_type,
-            approved_user=approved_user
-        )
+        await register_user(email=username, password=password, account_type=account_type, approved_user=approved_user)
 
 
 async def authenticate_user(email: str, password: str) -> str:
@@ -27,10 +22,7 @@ async def authenticate_user(email: str, password: str) -> str:
         db_user = await db_get_user_account(email=email)
     except RuntimeError:
         raise AuthenticationError(f"Not found user account for email: {email}")
-    password_status = validate_password(
-        plain_password=password,
-        encrypted_password=db_user.encrypted_pass
-    )
+    password_status = validate_password(plain_password=password, encrypted_password=db_user.encrypted_pass)
     if not password_status:
         raise AuthenticationError(f"Wrong credentials for email: {email}")
     if not db_user.approved_user:
@@ -41,16 +33,12 @@ async def authenticate_user(email: str, password: str) -> str:
 async def register_user(email: str, password: str, account_type: str, approved_user: bool = False):
     salt, encrypted_password = encrypt_password(password)
     try:
-        db_user = await db_get_user_account(email)
+        await db_get_user_account(email)
     except RuntimeError:
         # No user existing with the provided e-mail, register
-        created_user = await db_create_user_account(
-            email=email,
-            encrypted_pass=encrypted_password,
-            salt=salt,
-            account_type=account_type,
-            approved_user=approved_user
-        )
+        await db_create_user_account(
+            email=email, encrypted_pass=encrypted_password, salt=salt, account_type=account_type,
+            approved_user=approved_user)
         return
     raise RegistrationError(f"Another user is already registered with email: {email}")
 

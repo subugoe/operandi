@@ -12,65 +12,32 @@ def check_keyfile_existence(hpc_key_path: str):
         raise FileNotFoundError(f"HPC key path is not a file: {hpc_key_path}")
 
 
-def create_ssh_connection_to_hpc(
-    log: Logger,
-    host: str,
-    proxy_host: str,
-    username: str,
-    key_path: str
-) -> SSHClient:
+def create_ssh_connection_to_hpc(log: Logger, host: str, proxy_host: str, username: str, key_path: str) -> SSHClient:
     check_keyfile_existence(hpc_key_path=key_path)
     ssh_client = SSHClient()
     log.debug(f"Setting missing host key policy for the ssh connection")
     ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-    proxy_channel = create_proxy_jump(
-        log=log,
-        host=host,
-        proxy_host=proxy_host,
-        username=username,
-        key_path=key_path
-    )
+    proxy_channel = create_proxy_jump(log=log, host=host, proxy_host=proxy_host, username=username, key_path=key_path)
     log.debug(f"Opening a connection to host: {host}")
     ssh_client.connect(
-        hostname=host,
-        username=username,
-        key_filename=key_path,
-        sock=proxy_channel,
-        auth_timeout=60,
-        banner_timeout=60,
-        timeout=120
-    )
+        hostname=host, username=username, key_filename=key_path, sock=proxy_channel, auth_timeout=60, banner_timeout=60,
+        timeout=120)
     log.debug(f"Successfully opened a host connection")
     return ssh_client
 
 
 def create_proxy_jump(
-    log: Logger,
-    username: str,
-    key_path: str,
-    host: str,
-    proxy_host: str,
-    host_port: int = 22,
-    proxy_host_port: int = 22,
-    channel_kind: str = "direct-tcpip",
-    auth_timeout: float = 60,
-    banner_timeout: float = 60,
-    connection_timeout: float = 120,
-    channel_timeout: float = 120
+    log: Logger, username: str, key_path: str, host: str, proxy_host: str, host_port: int = 22,
+    proxy_host_port: int = 22, channel_kind: str = "direct-tcpip", auth_timeout: float = 60, banner_timeout: float = 60,
+    connection_timeout: float = 120, channel_timeout: float = 120
 ):
     jump_box = SSHClient()
     log.debug(f"Setting missing host key policy for the ssh jump connection")
     jump_box.set_missing_host_key_policy(AutoAddPolicy())
     log.debug(f"Opening a connection to proxy host: {proxy_host}")
     jump_box.connect(
-        proxy_host,
-        username=username,
-        key_filename=key_path,
-        timeout=connection_timeout,
-        auth_timeout=auth_timeout,
-        banner_timeout=banner_timeout,
-        channel_timeout=channel_timeout
-    )
+        proxy_host, username=username, key_filename=key_path, timeout=connection_timeout, auth_timeout=auth_timeout,
+        banner_timeout=banner_timeout, channel_timeout=channel_timeout)
     log.debug(f"Successfully opened a proxy host connection")
     log.debug(f"""
         Opening a channel: {channel_kind}, 
@@ -78,11 +45,7 @@ def create_proxy_jump(
         to host: {host}:{host_port}
     """)
     jump_box_channel = jump_box.get_transport().open_channel(
-        kind=channel_kind,
-        dest_addr=(host, host_port),
-        src_addr=(proxy_host, proxy_host_port),
-        timeout=channel_timeout
-    )
+        kind=channel_kind, dest_addr=(host, host_port), src_addr=(proxy_host, proxy_host_port), timeout=channel_timeout)
     log.debug(f"Successfully opened a channel from proxy host to host")
     return jump_box_channel
 

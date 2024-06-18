@@ -8,13 +8,8 @@ from sys import exit
 from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
 from operandi_utils.constants import LOG_LEVEL_WORKER, StateJob, StateWorkspace
 from operandi_utils.database import (
-    sync_db_initiate_database,
-    sync_db_get_workflow,
-    sync_db_get_workspace,
-    sync_db_create_hpc_slurm_job,
-    sync_db_update_workflow_job,
-    sync_db_update_workspace
-)
+    sync_db_initiate_database, sync_db_get_workflow, sync_db_get_workspace, sync_db_create_hpc_slurm_job,
+    sync_db_update_workflow_job, sync_db_update_workspace)
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
 from operandi_utils.hpc.constants import HPC_JOB_DEADLINE_TIME_REGULAR, HPC_JOB_DEADLINE_TIME_TEST
 from operandi_utils.rabbitmq import get_connection_consumer
@@ -197,19 +192,9 @@ class Worker:
 
     # TODO: This should be further refined, currently it's just everything in one place
     def prepare_and_trigger_slurm_job(
-            self,
-            workflow_job_id: str,
-            workspace_id: str,
-            workspace_dir: str,
-            workspace_base_mets: str,
-            workflow_script_path: str,
-            input_file_grp: str,
-            cpus: int,
-            ram: int,
-            nf_process_forks: int,
-            ws_pages_amount: int
+        self, workflow_job_id: str, workspace_id: str, workspace_dir: str, workspace_base_mets: str,
+        workflow_script_path: str, input_file_grp: str, cpus: int, ram: int, nf_process_forks: int, ws_pages_amount: int
     ) -> str:
-
         if self.test_sbatch:
             # The deadline of the test job - 1 hour
             job_deadline_time = HPC_JOB_DEADLINE_TIME_TEST
@@ -231,38 +216,26 @@ class Worker:
             sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_TO_HPC)
             sync_db_update_workflow_job(find_job_id=workflow_job_id, job_state=StateJob.TRANSFERRING_TO_HPC)
             self.hpc_io_transfer.pack_and_put_slurm_workspace(
-                ocrd_workspace_dir=workspace_dir,
-                workflow_job_id=workflow_job_id,
-                nextflow_script_path=workflow_script_path
-            )
+                ocrd_workspace_dir=workspace_dir, workflow_job_id=workflow_job_id,
+                nextflow_script_path=workflow_script_path)
         except Exception as error:
             raise Exception(f"Failed to pack and put slurm workspace: {error}")
 
         try:
             # NOTE: The paths below must be a valid existing path inside the HPC
             slurm_job_id = self.hpc_executor.trigger_slurm_job(
-                batch_script_path=hpc_batch_script_path,
-                workflow_job_id=workflow_job_id,
-                nextflow_script_path=workflow_script_path,
-                workspace_id=workspace_id,
-                mets_basename=workspace_base_mets,
-                input_file_grp=input_file_grp,
-                job_deadline_time=job_deadline_time,
-                cpus=cpus,
-                ram=ram,
-                nf_process_forks=nf_process_forks,
-                ws_pages_amount=ws_pages_amount
-            )
+                batch_script_path=hpc_batch_script_path, workflow_job_id=workflow_job_id,
+                nextflow_script_path=workflow_script_path, workspace_id=workspace_id, mets_basename=workspace_base_mets,
+                input_file_grp=input_file_grp, job_deadline_time=job_deadline_time, cpus=cpus, ram=ram,
+                nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount)
         except Exception as error:
             raise Exception(f"Triggering slurm job failed: {error}")
 
         try:
             sync_db_create_hpc_slurm_job(
-                workflow_job_id=workflow_job_id,
-                hpc_slurm_job_id=slurm_job_id,
+                workflow_job_id=workflow_job_id, hpc_slurm_job_id=slurm_job_id,
                 hpc_batch_script_path=hpc_batch_script_path,
-                hpc_slurm_workspace_path=join(self.hpc_io_transfer.slurm_workspaces_dir, workflow_job_id)
-            )
+                hpc_slurm_workspace_path=join(self.hpc_io_transfer.slurm_workspaces_dir, workflow_job_id))
         except Exception as error:
             raise Exception(f"Failed to save the hpc slurm job in DB: {error}")
         return slurm_job_id

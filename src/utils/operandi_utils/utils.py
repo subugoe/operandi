@@ -13,25 +13,24 @@ from shutil import make_archive, move, unpack_archive
 from .constants import OLA_HD_BAG_ENDPOINT, OLA_HD_USER, OLA_HD_PASSWORD
 
 
-# Based on:
-# https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
 def call_sync(func):
-    import asyncio
+    """
+    Based on:
+    https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
+    """
+    from asyncio import iscoroutine, get_event_loop
 
     @wraps(func)
     def func_wrapper(*args, **kwargs):
         result = func(*args, **kwargs)
-        if asyncio.iscoroutine(result):
-            return asyncio.get_event_loop().run_until_complete(result)
+        if iscoroutine(result):
+            return get_event_loop().run_until_complete(result)
         return result
     return func_wrapper
 
 
 def download_mets_file(
-    mets_url,
-    ocrd_workspace_dir,
-    mets_basename: str = "mets.xml",
-    chunk_size: int = DEFAULT_BUFFER_SIZE
+    mets_url, ocrd_workspace_dir, mets_basename: str = "mets.xml", chunk_size: int = DEFAULT_BUFFER_SIZE
 ) -> bool:
     try:
         response = get(mets_url, stream=True)
@@ -70,12 +69,7 @@ def get_nf_workflows_dir() -> Path:
     return Path(dirname(__file__), "hpc", "nextflow_workflows")
 
 
-def receive_file(
-    response,
-    download_path,
-    chunk_size: int = DEFAULT_BUFFER_SIZE,
-    mode: str = "wb"
-) -> None:
+def receive_file(response, download_path, chunk_size: int = DEFAULT_BUFFER_SIZE, mode: str = "wb") -> None:
     with open(download_path, mode) as filePtr:
         for chunk in response.iter_content(chunk_size=chunk_size):
             if chunk:
@@ -99,12 +93,9 @@ def unpack_zip_archive(source, destination) -> None:
 
 # TODO: Conceptual implementation, not tested in any way yet
 def send_bag_to_ola_hd(path_to_bag, json_pid_field: str = "pid") -> str:
-    ola_hd_response = post(
-        url=OLA_HD_BAG_ENDPOINT,
-        files={"file": open(path_to_bag, "rb")},
-        data={"isGt": False},
-        auth=(OLA_HD_USER, OLA_HD_PASSWORD)
-    )
+    ola_hd_files = {"file": open(path_to_bag, "rb")}
+    ola_hd_auth = (OLA_HD_USER, OLA_HD_PASSWORD)
+    ola_hd_response = post(url=OLA_HD_BAG_ENDPOINT, files=ola_hd_files, data={"isGt": False}, auth=ola_hd_auth)
     if ola_hd_response.status_code >= 400:
         ola_hd_response.raise_for_status()
     return ola_hd_response.json()[json_pid_field]
@@ -130,7 +121,6 @@ def verify_and_parse_mq_uri(rabbitmq_address: str):
     if not match:
         raise ValueError(f"The RabbitMQ server address is in wrong format: '{rabbitmq_address}'")
     url_params = URLParameters(rabbitmq_address)
-
     parsed_data = {
         "username": url_params.credentials.username,
         "password": url_params.credentials.password,
