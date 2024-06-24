@@ -87,10 +87,10 @@ def get_workspace_bag(db_workspace) -> Union[str, None]:
     if not mets_basename:
         mets_basename = DEFAULT_METS_BASENAME
     resolver = Resolver()
+    workspace = Workspace(resolver, directory=db_workspace.workspace_dir, mets_basename=mets_basename)
     # Warning: do not set processes to a higher value than 1, it would crash the Uvicorn internals
     WorkspaceBagger(resolver).bag(
-        Workspace(resolver, directory=db_workspace.workspace_dir, mets_basename=mets_basename),
-        ocrd_identifier=db_workspace.ocrd_identifier, dest=bag_dest, ocrd_mets=mets_basename, processes=1)
+        workspace, ocrd_identifier=db_workspace.ocrd_identifier, dest=bag_dest, ocrd_mets=mets_basename, processes=1)
     return bag_dest
 
 

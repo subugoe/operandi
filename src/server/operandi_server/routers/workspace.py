@@ -8,6 +8,9 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, 
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from ocrd import Resolver
+from ocrd.workspace import Workspace
+
 from operandi_utils.constants import StateWorkspace
 from operandi_utils.database import db_create_workspace, db_get_workspace, db_update_workspace
 from operandi_server.constants import SERVER_WORKSPACES_ROUTER, DEFAULT_METS_BASENAME
@@ -61,6 +64,12 @@ class RouterWorkspace:
             path="/import_external_workspace",
             endpoint=self.upload_workspace_from_url, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Import workspace from mets url. Returns a `resource_id` associated with the uploaded workspace.",
+            response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        self.router.add_api_route(
+            path="/remove_file_group/{workspace_id}",
+            endpoint=self.remove_file_group_from_workspace, methods=["DELETE"], status_code=status.HTTP_201_CREATED,
+            summary="Remove file groups from a workspace",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
@@ -162,8 +171,6 @@ class RouterWorkspace:
         workspace_id, workspace_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
         bag_dest = f"{workspace_dir}.zip"
         try:
-            # Split the file groups
-            # E.g., `DEFAULT` -> [`DEFAULT`] ; `DEFAULT,MAX` -> ['DEFAULT', 'MAX']
             file_grps_to_preserver = preserve_file_grps.split(",")
         except Exception as error:
             message = "Failed to parse the file groups to be preserved"
@@ -295,3 +302,43 @@ class RouterWorkspace:
         await db_update_workspace(find_workspace_id=workspace_id, deleted=True)
         return WorkspaceRsrc.create(
             workspace_id=workspace_id, workspace_url=deleted_workspace_url, state=db_workspace.state)
+
+    async def remove_file_group_from_workspace(
+        self, workspace_id: str, remove_file_grps: str, recursive: bool = True, force: bool = True,
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    ) -> WorkspaceRsrc:
+        await self.user_authenticator.user_login(auth)
+        try:
+            db_workspace = await db_get_workspace(workspace_id=workspace_id)
+        except RuntimeError as error:
+            message = f"Non-existing DB entry for workspace_id: {workspace_id}"
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+        self._check_workspace_ready_state_with_error_handling(workspace_id=workspace_id, db_workspace=db_workspace)
+
+        try:
+            file_grps_to_remove = remove_file_grps.split(",")
+        except Exception as error:
+            message = "Failed to parse the file groups to be removed"
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+
+        try:
+            resolver = Resolver()
+            # Create an OCR-D Workspace from a remote mets URL
+            # without downloading the files referenced in the mets file
+            workspace = resolver.workspace_from_url(
+                mets_url=db_workspace.workspace_mets_path, clobber_mets=False, mets_basename=db_workspace.mets_basename,
+                download=False)
+            for file_group in file_grps_to_remove:
+                workspace.remove_file_group(file_group, recursive=recursive, force=force)
+            workspace.save_mets()
+        except Exception as error:
+            message = "Failed to parse the file groups to be removed"
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+
+        workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
+        return WorkspaceRsrc.create(
+            workspace_id=workspace_id, workspace_url=workspace_url, state=db_workspace.state)
