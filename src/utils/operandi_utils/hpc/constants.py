@@ -6,7 +6,7 @@ __all__ = [
     "HPC_JOB_DEADLINE_TIME_REGULAR",
     "HPC_JOB_DEADLINE_TIME_TEST",
     "HPC_PATH_HOME_USERS",
-    "HPC_PATH_SCRATCH1_USERS",
+    "HPC_PATH_SCRATCH1_OCR_PROJECT",
     "HPC_SSH_CONNECTION_TRY_TIMES",
     "HPC_TRANSFER_HOSTS",
     "HPC_TRANSFER_PROXY_HOSTS"
@@ -18,7 +18,7 @@ HPC_EXECUTOR_PROXY_HOSTS = ["login.gwdg.de"]
 HPC_TRANSFER_HOSTS = ["transfer-scc.gwdg.de", "transfer-mdc.hpc.gwdg.de"]
 HPC_TRANSFER_PROXY_HOSTS = ["transfer.gwdg.de", "login.gwdg.de"]
 HPC_PATH_HOME_USERS = "/home/users"
-HPC_PATH_SCRATCH1_USERS = "/scratch1/users"
+HPC_PATH_SCRATCH1_OCR_PROJECT = "/scratch1/projects/project_pwieder_ocr"
 HPC_DIR_BATCH_SCRIPTS = "batch_scripts"
 HPC_DIR_SLURM_WORKSPACES = "slurm_workspaces"
 HPC_JOB_DEADLINE_TIME_REGULAR = "48:00:00"

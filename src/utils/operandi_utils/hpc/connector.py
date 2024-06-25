@@ -6,12 +6,8 @@ from typing import List, Union
 
 from .constants import HPC_SSH_CONNECTION_TRY_TIMES
 from .utils import (
-    resolve_hpc_user_home_dir,
-    resolve_hpc_user_scratch_dir,
-    resolve_hpc_project_root_dir,
-    resolve_hpc_batch_scripts_dir,
-    resolve_hpc_slurm_workspaces_dir,
-)
+    resolve_hpc_user_home_dir, resolve_hpc_project_root_dir, resolve_hpc_batch_scripts_dir,
+    resolve_hpc_slurm_workspaces_dir)
 
 
 class HPCConnector:
@@ -20,6 +16,7 @@ class HPCConnector:
         hpc_hosts: List[str],
         proxy_hosts: List[str],
         username: str,
+        project_username: str,
         key_path: Path,
         key_pass: Union[str, None],
         project_name: str,
@@ -30,7 +27,11 @@ class HPCConnector:
         tunnel_port: int = 0
     ) -> None:
         self.log = log
+
+        # The username is used to connect to the proxy server
         self.username = username
+        # The project username is used to connect to the HPC front end to access the shared project folder
+        self.project_username = project_username
 
         self.verify_pkey_file_existence(key_path)
 
@@ -66,16 +67,14 @@ class HPCConnector:
             """)
 
         self.project_name = project_name
-        self.user_home_dir = resolve_hpc_user_home_dir(username)
-        self.user_scratch_dir = resolve_hpc_user_scratch_dir(username)
-        self.project_root_dir = resolve_hpc_project_root_dir(username, project_name)
-        self.batch_scripts_dir = resolve_hpc_batch_scripts_dir(username, project_name)
-        self.slurm_workspaces_dir = resolve_hpc_slurm_workspaces_dir(username, project_name)
+        self.user_home_dir = resolve_hpc_user_home_dir(project_username)
+        self.project_root_dir = resolve_hpc_project_root_dir(project_name)
+        self.batch_scripts_dir = resolve_hpc_batch_scripts_dir(project_name)
+        self.slurm_workspaces_dir = resolve_hpc_slurm_workspaces_dir(project_name)
 
         self.log.info(f"""
             Project name: {self.project_name}\n
             User home dir: {self.user_home_dir}\n
-            User scratch dir: {self.user_scratch_dir}\n
             Project root dir: {self.project_root_dir}\n
             Batch scripts root dir: {self.batch_scripts_dir}\n
             Slurm workspaces root dir: {self.slurm_workspaces_dir}\n
@@ -130,9 +129,9 @@ class HPCConnector:
         self.ssh_hpc_client.set_missing_host_key_policy(AutoAddPolicy())
         self.log.info(f"Retrieving hpc frontend server private key file from path: {self.hpc_key_path}")
         hpc_pkey = RSAKey.from_private_key_file(str(self.hpc_key_path), self.hpc_key_pass)
-        self.log.info(f"Connecting to hpc frontend server {host}:{port} with username: {self.username}")
+        self.log.info(f"Connecting to hpc frontend server {host}:{port} with project username: {self.project_username}")
         self.ssh_hpc_client.connect(
-            hostname=host, port=port, username=self.username,
+            hostname=host, port=port, username=self.project_username,
             pkey=hpc_pkey, passphrase=self.hpc_key_pass,
             sock=proxy_tunnel
         )
