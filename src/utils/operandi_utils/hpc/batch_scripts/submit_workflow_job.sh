@@ -16,9 +16,9 @@ set -e
 # $9 - Amount of forks per OCR-D processor in the NF script
 # $10 - Amount of pages in the workspace
 
-SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
+SIF_PATH="/scratch1/projects/project_pwieder_ocr/ocrd_all_maximum_image.sif"
 SIF_PATH_IN_NODE="${TMP_LOCAL}/ocrd_all_maximum_image.sif"
-OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
+OCRD_MODELS_DIR="/scratch1/projects/project_pwieder_ocr/ocrd_models"
 OCRD_MODELS_DIR_IN_NODE="${TMP_LOCAL}/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
 BIND_OCRD_MODELS="${OCRD_MODELS_DIR_IN_NODE}:${OCRD_MODELS_DIR_IN_DOCKER}"

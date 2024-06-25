@@ -4,7 +4,9 @@
 #SBATCH --cpus-per-task 16
 #SBATCH --mem 64G
 #SBATCH --time 240
-#SBATCH --output /scratch1/users/mmustaf/download_all_ocrd_models_job-%J.txt
+#SBATCH --output /scratch1/projects/project_pwieder_ocr/batch_job_logs/batch_download_all_ocrd_models_job-%J.txt
+
+set -e
 
 module purge
 module load singularity
@@ -13,8 +15,8 @@ hostname
 /opt/slurm/etc/scripts/misc/slurm_resources
 
 # This sif file is generated with another batch script
-SIF_PATH="/scratch1/users/${USER}/ocrd_all_maximum_image.sif"
-OCRD_MODELS_DIR="/scratch1/users/${USER}/ocrd_models"
+SIF_PATH="/scratch1/projects/project_pwieder_ocr/ocrd_all_maximum_image.sif"
+OCRD_MODELS_DIR="/scratch1/projects/project_pwieder_ocr/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
 
 if [ ! -f "${SIF_PATH}" ]; then
