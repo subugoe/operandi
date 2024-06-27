@@ -9,8 +9,25 @@ from re import match as re_match
 from requests import get, post
 from requests.exceptions import RequestException
 from shutil import make_archive, move, unpack_archive
+from uuid import uuid4
+
+from ocrd_utils import initLogging
 
 from .constants import OLA_HD_BAG_ENDPOINT, OLA_HD_USER, OLA_HD_PASSWORD
+
+
+logging_initialized = False
+
+
+def safe_init_logging() -> None:
+    """
+    wrapper around ocrd_utils.initLogging. It assures that ocrd_utils.initLogging is only called
+    once. This function may be called multiple times
+    """
+    global logging_initialized
+    if not logging_initialized:
+        logging_initialized = True
+        initLogging()
 
 
 def call_sync(func):
@@ -67,6 +84,13 @@ def is_url_responsive(url: str) -> bool:
 
 def get_nf_workflows_dir() -> Path:
     return Path(dirname(__file__), "hpc", "nextflow_workflows")
+
+
+def generate_id(file_ext: str = None):
+    generated_id = str(uuid4())
+    if file_ext:
+        generated_id += file_ext
+    return generated_id
 
 
 def receive_file(response, download_path, chunk_size: int = DEFAULT_BUFFER_SIZE, mode: str = "wb") -> None:

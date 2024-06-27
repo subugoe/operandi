@@ -12,7 +12,7 @@ from operandi_server.authentication import create_user_if_not_available
 from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKFLOWS_ROUTER, SERVER_WORKSPACES_ROUTER
 from operandi_server.files_manager import create_resource_base_dir
 from operandi_server.routers import RouterDiscovery, RouterUser, RouterWorkflow, RouterWorkspace
-from operandi_server.utils import safe_init_logging
+from operandi_utils import safe_init_logging
 
 
 class OperandiServer(FastAPI):

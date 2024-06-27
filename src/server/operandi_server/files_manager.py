@@ -5,7 +5,7 @@ from os.path import isdir, isfile, join
 from pathlib import Path
 from shutil import rmtree
 from typing import List, Tuple
-from operandi_server.utils import generate_id
+from operandi_utils import generate_id
 
 
 def abs_resource_router_dir_path(resource_router: str) -> str:
