@@ -28,11 +28,21 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_default_work
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()["resource_id"]
 
+    remove_file_grps_list = [
+        "OCR-D-BIN", "OCR-D-CROP", "OCR-D-BIN2", "OCR-D-BIN-DENOISE", "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG",
+        "OCR-D-SEG-LINE-RESEG-DEWARP"
+    ]
+
     # Post workflow job
     input_file_grp = "DEFAULT"
     req_data = {
         "workflow_id": workflow_id,
-        "workflow_args": {"workspace_id": workspace_id, "input_file_grp": input_file_grp, "mets_name": "mets.xml"},
+        "workflow_args": {
+            "workspace_id": workspace_id,
+            "input_file_grp": input_file_grp,
+            "remove_file_grps": ",".join(remove_file_grps_list),
+            "mets_name": "mets.xml"
+        },
         "sbatch_args": {"cpus": 8, "ram": 32}
     }
     response = operandi.post(url=f"/workflow/{workflow_id}", json=req_data, auth=auth_harvester)
