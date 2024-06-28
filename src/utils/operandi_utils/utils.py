@@ -116,13 +116,13 @@ def unpack_zip_archive(source, destination) -> None:
 
 
 # TODO: Conceptual implementation, not tested in any way yet
-def send_bag_to_ola_hd(path_to_bag, json_pid_field: str = "pid") -> str:
+def send_bag_to_ola_hd(path_to_bag) -> str:
     ola_hd_files = {"file": open(path_to_bag, "rb")}
     ola_hd_auth = (OLA_HD_USER, OLA_HD_PASSWORD)
     ola_hd_response = post(url=OLA_HD_BAG_ENDPOINT, files=ola_hd_files, data={"isGt": False}, auth=ola_hd_auth)
     if ola_hd_response.status_code >= 400:
         ola_hd_response.raise_for_status()
-    return ola_hd_response.json()[json_pid_field]
+    return ola_hd_response.json()["pid"]
 
 
 def verify_database_uri(mongodb_address: str) -> str:
