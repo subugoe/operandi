@@ -27,6 +27,7 @@ class Job(Resource):
 class WorkflowArguments(BaseModel):
     workspace_id: str
     input_file_grp: Optional[str] = "DEFAULT"
+    remove_file_grps: Optional[str] = ""
     mets_name: Optional[str] = "mets.xml"
 
 

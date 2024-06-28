@@ -83,6 +83,7 @@ class Worker:
             self.current_message_wf_id = consumed_message["workflow_id"]
             self.current_message_job_id = consumed_message["job_id"]
             input_file_grp = consumed_message["input_file_grp"]
+            remove_file_grps = consumed_message["remove_file_grps"]
             slurm_job_cpus = int(consumed_message["cpus"])
             slurm_job_ram = int(consumed_message["ram"])
             # How many process instances to create for each OCR-D processor
@@ -115,6 +116,7 @@ class Worker:
 
         # Trigger a slurm job in the HPC
         try:
+            # TODO: Fix the use_mets_server flag - the flag should be set according to the used workflow
             self.prepare_and_trigger_slurm_job(
                 workflow_job_id=self.current_message_job_id,
                 workspace_id=self.current_message_ws_id,
@@ -125,7 +127,9 @@ class Worker:
                 cpus=slurm_job_cpus,
                 ram=slurm_job_ram,
                 nf_process_forks=nf_process_forks,
-                ws_pages_amount=ws_pages_amount
+                ws_pages_amount=ws_pages_amount,
+                use_mets_server=False,
+                file_groups_to_remove=remove_file_grps
             )
             self.log.info(f"The HPC slurm job was successfully submitted")
         except Exception as error:
@@ -193,7 +197,8 @@ class Worker:
     # TODO: This should be further refined, currently it's just everything in one place
     def prepare_and_trigger_slurm_job(
         self, workflow_job_id: str, workspace_id: str, workspace_dir: str, workspace_base_mets: str,
-        workflow_script_path: str, input_file_grp: str, cpus: int, ram: int, nf_process_forks: int, ws_pages_amount: int
+        workflow_script_path: str, input_file_grp: str, cpus: int, ram: int, nf_process_forks: int,
+        ws_pages_amount: int, use_mets_server: bool, file_groups_to_remove: str
     ) -> str:
         if self.test_sbatch:
             # The deadline of the test job - 1 hour
@@ -227,7 +232,8 @@ class Worker:
                 batch_script_path=hpc_batch_script_path, workflow_job_id=workflow_job_id,
                 nextflow_script_path=workflow_script_path, workspace_id=workspace_id, mets_basename=workspace_base_mets,
                 input_file_grp=input_file_grp, job_deadline_time=job_deadline_time, cpus=cpus, ram=ram,
-                nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount)
+                nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount, use_mets_server=use_mets_server,
+                file_groups_to_remove=file_groups_to_remove)
         except Exception as error:
             raise Exception(f"Triggering slurm job failed: {error}")
 
