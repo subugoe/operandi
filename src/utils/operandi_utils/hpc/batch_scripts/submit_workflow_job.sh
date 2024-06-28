@@ -15,6 +15,8 @@ set -e
 # $8 - RAM for the Nextflow processes
 # $9 - Amount of forks per OCR-D processor in the NF script
 # $10 - Amount of pages in the workspace
+# $11 - Boolean flag showing whether a mets server is utilized or not
+# $12 - File groups to be removed from the workspace after the processing
 
 SIF_PATH="/scratch1/projects/project_pwieder_ocr/ocrd_all_maximum_image.sif"
 SIF_PATH_IN_NODE="${TMP_LOCAL}/ocrd_all_maximum_image.sif"
@@ -33,8 +35,8 @@ CPUS=$7
 RAM=$8
 FORKS=$9
 PAGES=${10}
-# true/false flag to switch between using and not using a mets server
 USE_METS_SERVER=${11}
+FILE_GROUPS_TO_REMOVE=${12}
 
 WORKFLOW_JOB_DIR="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 NF_SCRIPT_PATH="${WORKFLOW_JOB_DIR}/${NEXTFLOW_SCRIPT_ID}"
@@ -202,6 +204,46 @@ execute_nextflow_workflow () {
   esac
 }
 
+list_file_groups_from_workspace () {
+    all_file_groups=()
+    mapfile -t all_file_groups < <(singularity exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" ocrd workspace -d "${WORKSPACE_DIR_IN_DOCKER}" list-group)
+    file_groups_length=${#all_file_groups[@]}
+    echo -n "File groups: "
+    for file_group in "${all_file_groups[@]}"
+    do
+       echo -n "${file_group} "
+    done
+    echo "Total amount of file groups detected: $file_groups_length"
+    echo
+}
+
+remove_file_group_from_workspace () {
+  echo "Removing file group: $1"
+  singularity exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" \
+  ocrd workspace -d "${WORKSPACE_DIR_IN_DOCKER}" remove-group -r -f "$1" \
+  > "${WORKSPACE_DIR}/remove_file_groups.log" 2>&1
+}
+
+remove_file_groups_from_workspace () {
+  list_file_groups_from_workspace
+  if [ "$1" != "" ] ; then
+    echo "Splitting file groups to an array"
+    file_groups=()
+    mapfile -t file_groups < <(echo "$1" | tr "," "\n")
+    for file_group in "${file_groups[@]}"
+    do
+      remove_file_group_from_workspace "$file_group"
+    done
+    list_file_groups_from_workspace
+    case $? in
+      0) echo "The file groups have been removed successfully" ;;
+      *) echo "The file groups removal has failed" >&2 exit 1 ;;
+    esac
+  else
+    echo "No file groups were requested to be removed"
+  fi
+}
+
 zip_results () {
   # Delete symlinks created for the Nextflow workers
   find "${WORKFLOW_JOB_DIR}" -type l -delete
@@ -218,4 +260,5 @@ unzip_workflow_job_dir
 start_mets_server "$USE_METS_SERVER"
 execute_nextflow_workflow "$USE_METS_SERVER"
 stop_mets_server "$USE_METS_SERVER"
+remove_file_groups_from_workspace "$FILE_GROUPS_TO_REMOVE"
 zip_results
