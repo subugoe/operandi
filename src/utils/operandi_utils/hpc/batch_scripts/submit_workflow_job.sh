@@ -91,6 +91,13 @@ check_existence_of_paths () {
   fi
 }
 
+clear_data_from_computing_node () {
+  echo "If existing, removing the SIF from the computing node, path: ${SIF_PATH_IN_NODE}"
+  rm -f "${SIF_PATH_IN_NODE}"
+  echo "If existing, removing the OCR-D models from the computing node, path: ${OCRD_MODELS_DIR_IN_NODE}"
+  rm -rf "${OCRD_MODELS_DIR_IN_NODE}"
+}
+
 transfer_requirements_to_node_storage() {
   cp "${SIF_PATH}" "${SIF_PATH_IN_NODE}"
   # Check if transfer successful
@@ -105,6 +112,7 @@ transfer_requirements_to_node_storage() {
   cp -R "${OCRD_MODELS_DIR}" "${OCRD_MODELS_DIR_IN_NODE}"
   if [ ! -d "${OCRD_MODELS_DIR_IN_NODE}" ]; then
     echo "Ocrd models directory not found at node local storage: ${OCRD_MODELS_DIR_IN_NODE}"
+    clear_data_from_computing_node
     exit 1
   else
     echo "Successfully transferred ocrd models to node local storage"
@@ -147,7 +155,7 @@ start_mets_server () {
       ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start \
       > "${WORKSPACE_DIR}/mets_server.log" 2>&1 &
   fi
-  sleep 5
+  sleep 10
 }
 
 stop_mets_server () {
@@ -197,10 +205,9 @@ execute_nextflow_workflow () {
     --forks "${FORKS}"
   fi
 
-  # Useful for handling all kinds of exit status codes in the future
   case $? in
     0) echo "The nextflow workflow execution has finished successfully" ;;
-    *) echo "The nextflow workflow execution has failed" >&2 exit 1 ;;
+    *) echo "The nextflow workflow execution has failed" >&2 clear_data_from_computing_node exit 1 ;;
   esac
 }
 
@@ -237,7 +244,7 @@ remove_file_groups_from_workspace () {
     list_file_groups_from_workspace
     case $? in
       0) echo "The file groups have been removed successfully" ;;
-      *) echo "The file groups removal has failed" >&2 exit 1 ;;
+      *) echo "The file groups removal has failed" >&2 clear_data_from_computing_node exit 1 ;;
     esac
   else
     echo "No file groups were requested to be removed"
@@ -251,12 +258,18 @@ zip_results () {
   cd "${WORKSPACE_DIR}" && zip -r "${WORKSPACE_ID}.zip" "." -x "*.sock" > "workspace_zipping.log"
   # Create a zip of the Nextflow run results by excluding the ocrd workspace dir
   cd "${WORKFLOW_JOB_DIR}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**" > "workflow_job_zipping.log"
+
+  case $? in
+    0) echo "The results have been zipped successfully" ;;
+    *) echo "The zipping of results has failed" >&2 clear_data_from_computing_node exit 1 ;;
+  esac
 }
+
 
 # Main loop for workflow job execution
 check_existence_of_paths
-transfer_requirements_to_node_storage
 unzip_workflow_job_dir
+transfer_requirements_to_node_storage
 start_mets_server "$USE_METS_SERVER"
 execute_nextflow_workflow "$USE_METS_SERVER"
 stop_mets_server "$USE_METS_SERVER"
