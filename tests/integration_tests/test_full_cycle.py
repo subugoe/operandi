@@ -5,7 +5,7 @@ from time import sleep
 from operandi_server.constants import DEFAULT_METS_BASENAME, DEFAULT_FILE_GRP
 from operandi_utils.constants import StateJob
 from operandi_utils.rabbitmq import RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_JOB_STATUSES
-from operandi_utils.hpc.constants import HPC_JOB_DEFAULT_PARTITION
+from operandi_utils.hpc.constants import HPC_JOB_TEST_PARTITION
 from tests.tests_server.helpers_asserts import assert_response_status_code
 
 
@@ -41,7 +41,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
             "remove_file_grps": ",".join(remove_file_grps_list),
             "mets_name": DEFAULT_METS_BASENAME
         },
-        "sbatch_args": {"partition": HPC_JOB_DEFAULT_PARTITION, "cpus": 8, "ram": 32}
+        "sbatch_args": {"partition": HPC_JOB_TEST_PARTITION, "cpus": 2, "ram": 8}
     }
     response = operandi.post(url=f"/workflow/{workflow_id}", json=req_data, auth=auth_harvester)
     assert_response_status_code(response.status_code, expected_floor=2)
