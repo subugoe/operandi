@@ -273,6 +273,7 @@ class RouterWorkflow:
         user_account_type = user_action.account_type
 
         try:
+            partition = sbatch_args.partition
             cpus = sbatch_args.cpus
             ram = sbatch_args.ram
         except Exception as error:
@@ -321,7 +322,7 @@ class RouterWorkflow:
 
         self._push_job_to_rabbitmq(
             user_type=user_account_type, workflow_id=workflow_id, workspace_id=workspace_id, job_id=job_id,
-            input_file_grp=input_file_grp, remove_file_grps=remove_file_grps, cpus=cpus, ram=ram
+            input_file_grp=input_file_grp, remove_file_grps=remove_file_grps, partition=partition, cpus=cpus, ram=ram
         )
 
         return WorkflowJobRsrc.create(
@@ -332,7 +333,7 @@ class RouterWorkflow:
 
     def _push_job_to_rabbitmq(
         self, user_type: str, workflow_id: str, workspace_id: str, job_id: str, input_file_grp: str,
-        remove_file_grps: str, cpus: int, ram: int
+        remove_file_grps: str, partition: str, cpus: int, ram: int
     ):
         # Create the message to be sent to the RabbitMQ queue
         self.logger.info("Creating a workflow job RabbitMQ message")
@@ -342,6 +343,7 @@ class RouterWorkflow:
             "job_id": f"{job_id}",
             "input_file_grp": f"{input_file_grp}",
             "remove_file_grps": f"{remove_file_grps}",
+            "partition": f"{partition}",
             "cpus": f"{cpus}",
             "ram": f"{ram}"
         }

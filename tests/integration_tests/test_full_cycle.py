@@ -39,7 +39,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
             "remove_file_grps": ",".join(remove_file_grps_list),
             "mets_name": "mets.xml"
         },
-        "sbatch_args": {"cpus": 8, "ram": 32}
+        "sbatch_args": {"partition": "medium", "cpus": 8, "ram": 32}
     }
     response = operandi.post(url=f"/workflow/{workflow_id}", json=req_data, auth=auth_harvester)
     assert_response_status_code(response.status_code, expected_floor=2)

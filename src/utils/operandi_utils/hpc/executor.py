@@ -68,6 +68,7 @@ class HPCExecutor(HPCConnector):
         input_file_grp: str,
         workspace_id: str,
         mets_basename: str,
+        partition: str,
         job_deadline_time: str,
         cpus: int,
         ram: int,
@@ -89,7 +90,7 @@ class HPCExecutor(HPCConnector):
             nf_process_forks = ws_pages_amount
 
         # SBATCH arguments passed to the batch script
-        command += f" --partition medium"
+        command += f" --partition={partition}"
         command += f" --time={job_deadline_time}"
         command += f" --output={self.project_root_dir}/slurm-job-%J.txt"
         command += f" --cpus-per-task={cpus}"

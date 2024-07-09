@@ -32,5 +32,6 @@ class WorkflowArguments(BaseModel):
 
 
 class SbatchArguments(BaseModel):
+    partition: str = "medium"  # partition to be used
     cpus: int = 4  # cpus per job allocated by default
     ram: int = 32  # RAM (in GB) per job allocated by default

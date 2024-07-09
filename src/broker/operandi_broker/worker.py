@@ -84,6 +84,7 @@ class Worker:
             self.current_message_job_id = consumed_message["job_id"]
             input_file_grp = consumed_message["input_file_grp"]
             remove_file_grps = consumed_message["remove_file_grps"]
+            slurm_job_partition = consumed_message["partition"]
             slurm_job_cpus = int(consumed_message["cpus"])
             slurm_job_ram = int(consumed_message["ram"])
             # How many process instances to create for each OCR-D processor
@@ -124,6 +125,7 @@ class Worker:
                 workspace_base_mets=mets_basename,
                 workflow_script_path=workflow_script_path,
                 input_file_grp=input_file_grp,
+                partition=slurm_job_partition,
                 cpus=slurm_job_cpus,
                 ram=slurm_job_ram,
                 nf_process_forks=nf_process_forks,
@@ -197,7 +199,7 @@ class Worker:
     # TODO: This should be further refined, currently it's just everything in one place
     def prepare_and_trigger_slurm_job(
         self, workflow_job_id: str, workspace_id: str, workspace_dir: str, workspace_base_mets: str,
-        workflow_script_path: str, input_file_grp: str, cpus: int, ram: int, nf_process_forks: int,
+        workflow_script_path: str, input_file_grp: str, partition: str, cpus: int, ram: int, nf_process_forks: int,
         ws_pages_amount: int, use_mets_server: bool, file_groups_to_remove: str
     ) -> str:
         if self.test_sbatch:
@@ -231,9 +233,9 @@ class Worker:
             slurm_job_id = self.hpc_executor.trigger_slurm_job(
                 batch_script_path=hpc_batch_script_path, workflow_job_id=workflow_job_id,
                 nextflow_script_path=workflow_script_path, workspace_id=workspace_id, mets_basename=workspace_base_mets,
-                input_file_grp=input_file_grp, job_deadline_time=job_deadline_time, cpus=cpus, ram=ram,
-                nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount, use_mets_server=use_mets_server,
-                file_groups_to_remove=file_groups_to_remove)
+                input_file_grp=input_file_grp, partition=partition, job_deadline_time=job_deadline_time, cpus=cpus,
+                ram=ram, nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount,
+                use_mets_server=use_mets_server, file_groups_to_remove=file_groups_to_remove)
         except Exception as error:
             raise Exception(f"Triggering slurm job failed: {error}")
 
