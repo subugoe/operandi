@@ -119,19 +119,12 @@ class Worker:
         try:
             # TODO: Fix the use_mets_server flag - the flag should be set according to the used workflow
             self.prepare_and_trigger_slurm_job(
-                workflow_job_id=self.current_message_job_id,
-                workspace_id=self.current_message_ws_id,
-                workspace_dir=workspace_dir,
-                workspace_base_mets=mets_basename,
-                workflow_script_path=workflow_script_path,
-                input_file_grp=input_file_grp,
-                partition=slurm_job_partition,
-                cpus=slurm_job_cpus,
-                ram=slurm_job_ram,
-                nf_process_forks=nf_process_forks,
-                ws_pages_amount=ws_pages_amount,
-                use_mets_server=False,
-                file_groups_to_remove=remove_file_grps
+                workflow_job_id=self.current_message_job_id, workspace_id=self.current_message_ws_id,
+                workspace_dir=workspace_dir, workspace_base_mets=mets_basename,
+                workflow_script_path=workflow_script_path, input_file_grp=input_file_grp,
+                nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount, use_mets_server=False,
+                file_groups_to_remove=remove_file_grps, cpus=slurm_job_cpus, ram=slurm_job_ram,
+                partition=slurm_job_partition
             )
             self.log.info(f"The HPC slurm job was successfully submitted")
         except Exception as error:
@@ -199,15 +192,17 @@ class Worker:
     # TODO: This should be further refined, currently it's just everything in one place
     def prepare_and_trigger_slurm_job(
         self, workflow_job_id: str, workspace_id: str, workspace_dir: str, workspace_base_mets: str,
-        workflow_script_path: str, input_file_grp: str, partition: str, cpus: int, ram: int, nf_process_forks: int,
-        ws_pages_amount: int, use_mets_server: bool, file_groups_to_remove: str
+        workflow_script_path: str, input_file_grp: str, nf_process_forks: int, ws_pages_amount: int,
+        use_mets_server: bool, file_groups_to_remove: str, cpus: int, ram: int, partition: str
     ) -> str:
         if self.test_sbatch:
             # The deadline of the test job - 1 hour
             job_deadline_time = HPC_JOB_DEADLINE_TIME_TEST
+            qos = "short"
         else:
             # The deadline of the regular jobs - 48 hours
             job_deadline_time = HPC_JOB_DEADLINE_TIME_REGULAR
+            qos = ""  # do not pass anything
 
         # Recreate the transfer connection for each workflow job submission
         # This is required due to all kind of nasty connection fails - timeouts,
@@ -233,9 +228,9 @@ class Worker:
             slurm_job_id = self.hpc_executor.trigger_slurm_job(
                 batch_script_path=hpc_batch_script_path, workflow_job_id=workflow_job_id,
                 nextflow_script_path=workflow_script_path, workspace_id=workspace_id, mets_basename=workspace_base_mets,
-                input_file_grp=input_file_grp, partition=partition, job_deadline_time=job_deadline_time, cpus=cpus,
-                ram=ram, nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount,
-                use_mets_server=use_mets_server, file_groups_to_remove=file_groups_to_remove)
+                input_file_grp=input_file_grp, nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount,
+                use_mets_server=use_mets_server, file_groups_to_remove=file_groups_to_remove, cpus=cpus, ram=ram,
+                job_deadline_time=job_deadline_time, partition=partition, qos=qos)
         except Exception as error:
             raise Exception(f"Triggering slurm job failed: {error}")
 

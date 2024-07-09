@@ -5,20 +5,18 @@ from time import sleep
 from typing import List
 from operandi_utils.constants import StateJobSlurm
 from .connector import HPCConnector
-from .constants import HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS
+from .constants import HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS, HPC_JOB_DEADLINE_TIME_TEST
 
 
 class HPCExecutor(HPCConnector):
     def __init__(
         self,
-        executor_hosts: List[str] = HPC_EXECUTOR_HOSTS,
-        proxy_hosts: List[str] = HPC_EXECUTOR_PROXY_HOSTS,
+        executor_hosts: List[str] = HPC_EXECUTOR_HOSTS, proxy_hosts: List[str] = HPC_EXECUTOR_PROXY_HOSTS,
         username: str = environ.get("OPERANDI_HPC_USERNAME", None),
         project_username: str = environ.get("OPERANDI_HPC_PROJECT_USERNAME", None),
         key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH", None),
         project_name: str = environ.get("OPERANDI_HPC_PROJECT_NAME", None),
-        tunnel_host: str = 'localhost',
-        tunnel_port: int = 0
+        tunnel_host: str = 'localhost', tunnel_port: int = 0
     ) -> None:
         if not username:
             raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
@@ -29,16 +27,9 @@ class HPCExecutor(HPCConnector):
         if not project_name:
             raise ValueError("Environment variable not set: OPERANDI_HPC_PROJECT_NAME")
         super().__init__(
-            hpc_hosts=executor_hosts,
-            proxy_hosts=proxy_hosts,
-            project_name=project_name,
-            log=getLogger("operandi_utils.hpc.executor"),
-            username=username,
-            project_username=project_username,
-            key_path=Path(key_path),
-            key_pass=None,
-            tunnel_host=tunnel_host,
-            tunnel_port=tunnel_port
+            hpc_hosts=executor_hosts, proxy_hosts=proxy_hosts, project_name=project_name,
+            log=getLogger("operandi_utils.hpc.executor"), username=username, project_username=project_username,
+            key_path=Path(key_path), key_pass=None, tunnel_host=tunnel_host, tunnel_port=tunnel_port
         )
 
     # TODO: Handle the output and return_code instead of just returning them
@@ -61,23 +52,11 @@ class HPCExecutor(HPCConnector):
         return output, err, return_code
 
     def trigger_slurm_job(
-        self,
-        batch_script_path: str,
-        workflow_job_id: str,
-        nextflow_script_path: str,
-        input_file_grp: str,
-        workspace_id: str,
-        mets_basename: str,
-        partition: str,
-        job_deadline_time: str,
-        cpus: int,
-        ram: int,
-        nf_process_forks: int,
-        ws_pages_amount: int,
-        use_mets_server: bool,
-        file_groups_to_remove: str
+        self, batch_script_path: str, workflow_job_id: str, nextflow_script_path: str, input_file_grp: str,
+        workspace_id: str, mets_basename: str, nf_process_forks: int, ws_pages_amount: int, use_mets_server: bool,
+        file_groups_to_remove: str, cpus: int = 2, ram: int = 8, job_deadline_time: str = HPC_JOB_DEADLINE_TIME_TEST,
+        partition: str = "medium", qos: str = ""
     ) -> str:
-
         nextflow_script_id = nextflow_script_path.split('/')[-1]
         command = "bash -lc"
         command += f" 'sbatch"
@@ -95,6 +74,9 @@ class HPCExecutor(HPCConnector):
         command += f" --output={self.project_root_dir}/slurm-job-%J.txt"
         command += f" --cpus-per-task={cpus}"
         command += f" --mem={ram}G"
+
+        if qos != "":
+            command += f" --qos={qos}"
 
         # Regular arguments passed to the batch script
         command += f" {batch_script_path}"

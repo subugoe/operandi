@@ -61,8 +61,9 @@ def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB,
         nextflow_script_path=template_workflow, input_file_grp="DEFAULT", workspace_id=ID_WORKSPACE,
-        mets_basename="mets.xml", partition="medium", job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
-        cpus=2, ram=16, nf_process_forks=2, ws_pages_amount=8, use_mets_server=False, file_groups_to_remove='')
+        mets_basename="mets.xml", nf_process_forks=2, ws_pages_amount=8, use_mets_server=False,
+        file_groups_to_remove="", cpus=2, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST, partition="medium",
+        qos="short")
     finished_successfully = hpc_command_executor.poll_till_end_slurm_job_state(
         slurm_job_id=slurm_job_id, interval=5, timeout=300)
     assert finished_successfully
@@ -73,8 +74,9 @@ def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_w
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB_WITH_MS,
         nextflow_script_path=template_workflow_with_ms, input_file_grp="DEFAULT", workspace_id=ID_WORKSPACE_WITH_MS,
-        mets_basename="mets.xml", partition="medium", job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
-        cpus=3, ram=16, nf_process_forks=2, ws_pages_amount=8, use_mets_server=True, file_groups_to_remove='')
+        mets_basename="mets.xml", nf_process_forks=2, ws_pages_amount=8, use_mets_server=True,
+        file_groups_to_remove="", cpus=3, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST, partition="medium",
+        qos="short")
     finished_successfully = hpc_command_executor.poll_till_end_slurm_job_state(
         slurm_job_id=slurm_job_id, interval=5, timeout=300)
     assert finished_successfully
