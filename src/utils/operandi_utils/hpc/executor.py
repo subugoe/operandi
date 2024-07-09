@@ -120,13 +120,12 @@ class HPCExecutor(HPCConnector):
             self.log.info(f"Command err: {err}")
             self.log.info(f"Command return code: {return_code}")
             if output:
+                if len(output) < 3:
+                    self.log.warning("The output has returned with less than 3 lines. The job has not been listed yet.")
+                    continue
                 # Split the last line and get the second element,
                 # i.e., the state element in the requested output format
                 slurm_job_state = output[-2].split()[1]
-                # TODO: dirty fast fix, improve this
-                if slurm_job_state == '----------':
-                    slurm_job_state = None
-                    continue
             if slurm_job_state:
                 break
             tries -= 1
