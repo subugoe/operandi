@@ -2,6 +2,9 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from operandi_utils import StateJob
+from operandi_utils.hpc.constants import HPC_JOB_DEFAULT_PARTITION
+
+from ..constants import DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME
 
 
 class Resource(BaseModel):
@@ -26,12 +29,12 @@ class Job(Resource):
 
 class WorkflowArguments(BaseModel):
     workspace_id: str
-    input_file_grp: Optional[str] = "DEFAULT"
+    input_file_grp: Optional[str] = DEFAULT_FILE_GRP
     remove_file_grps: Optional[str] = ""
-    mets_name: Optional[str] = "mets.xml"
+    mets_name: Optional[str] = DEFAULT_METS_BASENAME
 
 
 class SbatchArguments(BaseModel):
-    partition: str = "medium"  # partition to be used
+    partition: str = HPC_JOB_DEFAULT_PARTITION  # partition to be used
     cpus: int = 4  # cpus per job allocated by default
     ram: int = 32  # RAM (in GB) per job allocated by default

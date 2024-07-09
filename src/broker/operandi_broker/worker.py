@@ -11,7 +11,9 @@ from operandi_utils.database import (
     sync_db_initiate_database, sync_db_get_workflow, sync_db_get_workspace, sync_db_create_hpc_slurm_job,
     sync_db_update_workflow_job, sync_db_update_workspace)
 from operandi_utils.hpc import HPCExecutor, HPCTransfer
-from operandi_utils.hpc.constants import HPC_JOB_DEADLINE_TIME_REGULAR, HPC_JOB_DEADLINE_TIME_TEST
+from operandi_utils.hpc.constants import (
+    HPC_JOB_DEADLINE_TIME_REGULAR, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_2H, HPC_JOB_QOS_REGULAR
+)
 from operandi_utils.rabbitmq import get_connection_consumer
 
 
@@ -198,11 +200,11 @@ class Worker:
         if self.test_sbatch:
             # The deadline of the test job - 1 hour
             job_deadline_time = HPC_JOB_DEADLINE_TIME_TEST
-            qos = "short"
+            qos = HPC_JOB_QOS_2H
         else:
             # The deadline of the regular jobs - 48 hours
             job_deadline_time = HPC_JOB_DEADLINE_TIME_REGULAR
-            qos = ""  # do not pass anything
+            qos = HPC_JOB_QOS_REGULAR
 
         # Recreate the transfer connection for each workflow job submission
         # This is required due to all kind of nasty connection fails - timeouts,
