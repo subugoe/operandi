@@ -3,8 +3,10 @@ from os import environ
 from os.path import join
 from shutil import copytree
 from time import sleep
-from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
-from operandi_utils.hpc.constants import HPC_JOB_DEADLINE_TIME_TEST
+from operandi_server.constants import (
+    DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
+)
+from operandi_utils.hpc.constants import HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_DEFAULT_PARTITION, HPC_JOB_QOS_2H
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
@@ -60,10 +62,10 @@ def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow)
     hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SCRIPT_ID)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB,
-        nextflow_script_path=template_workflow, input_file_grp="DEFAULT", workspace_id=ID_WORKSPACE,
-        mets_basename="mets.xml", nf_process_forks=2, ws_pages_amount=8, use_mets_server=False,
-        file_groups_to_remove="", cpus=2, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST, partition="medium",
-        qos="short")
+        nextflow_script_path=template_workflow, input_file_grp=DEFAULT_FILE_GRP, workspace_id=ID_WORKSPACE,
+        mets_basename=DEFAULT_METS_BASENAME, nf_process_forks=2, ws_pages_amount=8, use_mets_server=False,
+        file_groups_to_remove="", cpus=2, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
+        partition=HPC_JOB_DEFAULT_PARTITION, qos=HPC_JOB_QOS_2H)
     finished_successfully = hpc_command_executor.poll_till_end_slurm_job_state(
         slurm_job_id=slurm_job_id, interval=5, timeout=300)
     assert finished_successfully
@@ -73,10 +75,10 @@ def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_w
     hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SCRIPT_ID)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB_WITH_MS,
-        nextflow_script_path=template_workflow_with_ms, input_file_grp="DEFAULT", workspace_id=ID_WORKSPACE_WITH_MS,
-        mets_basename="mets.xml", nf_process_forks=2, ws_pages_amount=8, use_mets_server=True,
-        file_groups_to_remove="", cpus=3, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST, partition="medium",
-        qos="short")
+        nextflow_script_path=template_workflow_with_ms, input_file_grp=DEFAULT_FILE_GRP,
+        workspace_id=ID_WORKSPACE_WITH_MS, mets_basename=DEFAULT_METS_BASENAME, nf_process_forks=2, ws_pages_amount=8,
+        use_mets_server=True, file_groups_to_remove="", cpus=3, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
+        partition=HPC_JOB_DEFAULT_PARTITION, qos=HPC_JOB_QOS_2H)
     finished_successfully = hpc_command_executor.poll_till_end_slurm_job_state(
         slurm_job_id=slurm_job_id, interval=5, timeout=300)
     assert finished_successfully
