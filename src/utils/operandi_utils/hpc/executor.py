@@ -127,7 +127,8 @@ class HPCExecutor(HPCConnector):
                 # i.e., the state element in the requested output format
                 slurm_job_state = output[-2].split()[1]
                 # TODO: dirty fast fix, improve this
-                if slurm_job_state == '----------':
+                if slurm_job_state.startswith('---'):
+                    self.log.warning("The output is dashes. The job has not been listed yet.")
                     slurm_job_state = None
                     continue
             if slurm_job_state:
