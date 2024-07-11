@@ -15,8 +15,7 @@ from .constants import HPC_TRANSFER_HOSTS, HPC_TRANSFER_PROXY_HOSTS
 class HPCTransfer(HPCConnector):
     def __init__(
         self,
-        transfer_hosts: List[str] = HPC_TRANSFER_HOSTS,
-        proxy_hosts: List[str] = HPC_TRANSFER_PROXY_HOSTS,
+        transfer_hosts: List[str] = HPC_TRANSFER_HOSTS, proxy_hosts: List[str] = HPC_TRANSFER_PROXY_HOSTS,
         username: str = environ.get("OPERANDI_HPC_USERNAME", None),
         project_username: str = environ.get("OPERANDI_HPC_PROJECT_USERNAME", None),
         key_path: str = environ.get("OPERANDI_HPC_SSH_KEYPATH", None),
@@ -24,26 +23,10 @@ class HPCTransfer(HPCConnector):
         tunnel_host: str = 'localhost',
         tunnel_port: int = 0
     ) -> None:
-        if not username:
-            raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
-        if not project_username:
-            raise ValueError("Environment variable not set: OPERANDI_HPC_PROJECT_USERNAME")
-        if not key_path:
-            raise ValueError("Environment variable not set: OPERANDI_HPC_SSH_KEYPATH")
-        if not project_name:
-            raise ValueError("Environment variable not set: OPERANDI_HPC_PROJECT_NAME")
         super().__init__(
-            hpc_hosts=transfer_hosts,
-            proxy_hosts=proxy_hosts,
-            project_name=environ.get("OPERANDI_HPC_PROJECT_NAME", None),
-            log=getLogger("operandi_utils.hpc.transfer"),
-            username=username,
-            project_username=project_username,
-            key_path=Path(key_path),
-            key_pass=None,
-            tunnel_host=tunnel_host,
-            tunnel_port=tunnel_port
-        )
+            hpc_hosts=transfer_hosts, proxy_hosts=proxy_hosts, project_name=project_name,
+            log=getLogger("operandi_utils.hpc.transfer"), username=username, project_username=project_username,
+            key_path=Path(key_path), key_pass=None, tunnel_host=tunnel_host, tunnel_port=tunnel_port)
 
     def put_batch_script(self, batch_script_id: str) -> str:
         local_batch_script_path = join(dirname(__file__), "batch_scripts", batch_script_id)

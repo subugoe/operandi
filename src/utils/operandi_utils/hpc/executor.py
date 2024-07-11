@@ -21,23 +21,12 @@ class HPCExecutor(HPCConnector):
         project_name: str = environ.get("OPERANDI_HPC_PROJECT_NAME", None),
         tunnel_host: str = 'localhost', tunnel_port: int = 0
     ) -> None:
-        if not username:
-            raise ValueError("Environment variable not set: OPERANDI_HPC_USERNAME")
-        if not project_username:
-            raise ValueError("Environment variable not set: OPERANDI_HPC_PROJECT_USERNAME")
-        if not key_path:
-            raise ValueError("Environment variable not set: OPERANDI_HPC_SSH_KEYPATH")
-        if not project_name:
-            raise ValueError("Environment variable not set: OPERANDI_HPC_PROJECT_NAME")
         super().__init__(
             hpc_hosts=executor_hosts, proxy_hosts=proxy_hosts, project_name=project_name,
             log=getLogger("operandi_utils.hpc.executor"), username=username, project_username=project_username,
-            key_path=Path(key_path), key_pass=None, tunnel_host=tunnel_host, tunnel_port=tunnel_port
-        )
+            key_path=Path(key_path), key_pass=None, tunnel_host=tunnel_host, tunnel_port=tunnel_port)
 
-    # TODO: Handle the output and return_code instead of just returning them
-    # Execute blocking commands
-    # Waiting for an output and return_code
+    # Execute blocking commands and wait for an output and return code
     def execute_blocking(self, command, timeout=None, environment=None):
         self.reconnect_if_required()
         stdin, stdout, stderr = self.ssh_hpc_client.exec_command(
@@ -109,8 +98,7 @@ class HPCExecutor(HPCConnector):
         return slurm_job_id
 
     def check_slurm_job_state(self, slurm_job_id: str, tries: int = 10, wait_time: int = 2) -> str:
-        command = "bash -lc"
-        command += f" 'sacct -j {slurm_job_id} --format=jobid,state,exitcode'"
+        command = f"bash -lc 'sacct -j {slurm_job_id} --format=jobid,state,exitcode'"
         slurm_job_state = None
 
         while not slurm_job_state and tries > 0:
