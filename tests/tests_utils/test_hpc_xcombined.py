@@ -2,7 +2,7 @@ from datetime import datetime
 from os import environ
 from os.path import join
 from shutil import copytree
-from time import sleep
+from pathlib import Path
 from operandi_server.constants import (
     DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
 )
@@ -37,6 +37,8 @@ def helper_pack_and_put_slurm_workspace(
 
     # TODO: implement this
     # assert_exists_remote_file(hpc_dst_slurm_zip)
+
+    Path(local_slurm_workspace_zip_path).unlink(missing_ok=True)
 
 
 def test_hpc_connector_put_batch_script(hpc_data_transfer, path_batch_script_submit_workflow_job):
