@@ -183,6 +183,7 @@ class RouterWorkflow:
             message = f"Production workflow cannot be replaced. Tried to replace: {workflow_id}"
             self.logger.error(message)
             raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail=message)
+
         try:
             delete_resource_dir(SERVER_WORKFLOWS_ROUTER, workflow_id)
         except FileNotFoundError:
@@ -293,6 +294,9 @@ class RouterWorkflow:
 
         # Check the availability and readiness of the workspace to be used
         await get_db_workspace_with_handling(self.logger, workspace_id=workspace_id)
+
+        # Check the availability of the workflow to be used
+        await get_db_workflow_with_handling(self.logger, workflow_id=workflow_id)
 
         try:
             # Create job request parameters
