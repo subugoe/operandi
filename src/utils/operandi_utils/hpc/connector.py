@@ -1,6 +1,6 @@
-from logging import getLogger, Logger
+from logging import Logger
 from os.path import exists, isfile
-from paramiko import AutoAddPolicy, Channel, RSAKey, SFTPClient, SSHClient, Transport
+from paramiko import AutoAddPolicy, Channel, RSAKey, SSHClient, Transport
 from pathlib import Path
 from typing import List, Union
 
@@ -13,7 +13,7 @@ from .utils import (
 class HPCConnector:
     def __init__(
         self, hpc_hosts: List[str], proxy_hosts: List[str], username: str, project_username: str, key_path: Path,
-        key_pass: Union[str, None], project_name: str, log: Logger = getLogger("operandi_utils.hpc.connector"),
+        key_pass: Union[str, None], project_name: str, log: Logger,
         channel_keep_alive_interval: int = 30, connection_keep_alive_interval: int = 30, tunnel_host: str = 'localhost',
         tunnel_port: int = 0
     ) -> None:
@@ -92,20 +92,20 @@ class HPCConnector:
 
     def connect_to_proxy_server(self, host: str, port: int = 22) -> SSHClient:
         if self.ssh_proxy_client:
-            self.log.info(f"Closing the previously existing ssh proxy client")
+            self.log.warning(f"Closing the previously existing ssh proxy client")
             self.ssh_proxy_client.close()
             self.ssh_proxy_client = None
         self.ssh_proxy_client = SSHClient()
-        self.log.info(f"Setting missing host key policy for the proxy client")
+        self.log.debug(f"Setting missing host key policy for the proxy client")
         self.ssh_proxy_client.set_missing_host_key_policy(AutoAddPolicy())
-        self.log.info(f"Retrieving proxy server private key file from path: {self.proxy_key_path}")
+        self.log.debug(f"Retrieving proxy server private key file from path: {self.proxy_key_path}")
         proxy_pkey = RSAKey.from_private_key_file(str(self.proxy_key_path), self.proxy_key_pass)
         self.log.info(f"Connecting to proxy server {host}:{port} with username: {self.username}")
         self.ssh_proxy_client.connect(
             hostname=host, port=port, username=self.username, pkey=proxy_pkey, passphrase=self.proxy_key_pass)
         # self.ssh_proxy_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
         self.last_used_proxy_host = host
-        self.log.info(f"Successfully connected to the proxy server")
+        self.log.debug(f"Successfully connected to the proxy server")
         return self.ssh_proxy_client
 
     def establish_proxy_tunnel(
@@ -113,69 +113,66 @@ class HPCConnector:
         channel_kind: str = 'direct-tcpip',
     ) -> Channel:
         proxy_transport = self.ssh_proxy_client.get_transport()
-        self.log.info(f"Configuring a tunnel to destination {dst_host}:{dst_port} from {src_host}:{src_port}")
         if self.proxy_tunnel:
-            self.log.info(f"Closing the previously existing ssh proxy tunel")
+            self.log.warning(f"Closing the previously existing ssh proxy tunel")
             self.proxy_tunnel.close()
             self.proxy_tunnel = None
+        self.log.info(f"Configuring a tunnel to destination {dst_host}:{dst_port} from {src_host}:{src_port}")
         self.proxy_tunnel = proxy_transport.open_channel(
             kind=channel_kind, src_addr=(src_host, src_port), dest_addr=(dst_host, dst_port))
         # self.proxy_tunnel.get_transport().set_keepalive(self.channel_keep_alive_interval)
         self.last_used_hpc_host = dst_host
-        self.log.info(f"Successfully configured a proxy tunnel")
+        self.log.debug(f"Successfully configured a proxy tunnel")
         return self.proxy_tunnel
 
     def connect_to_hpc_frontend_server(self, host: str, port: int = 22, proxy_tunnel: Channel = None) -> SSHClient:
         if self.ssh_hpc_client:
-            self.log.info(f"Closing the previously existing ssh hpc client")
+            self.log.warning(f"Closing the previously existing ssh hpc client")
             self.ssh_hpc_client.close()
             self.ssh_hpc_client = None
         self.ssh_hpc_client = SSHClient()
-        self.log.info(f"Setting missing host key policy for the hpc frontend client")
+        self.log.debug(f"Setting missing host key policy for the hpc frontend client")
         self.ssh_hpc_client.set_missing_host_key_policy(AutoAddPolicy())
-        self.log.info(f"Retrieving hpc frontend server private key file from path: {self.hpc_key_path}")
+        self.log.debug(f"Retrieving hpc frontend server private key file from path: {self.hpc_key_path}")
         hpc_pkey = RSAKey.from_private_key_file(str(self.hpc_key_path), self.hpc_key_pass)
         self.log.info(f"Connecting to hpc frontend server {host}:{port} with project username: {self.project_username}")
         self.ssh_hpc_client.connect(hostname=host, port=port, username=self.project_username, pkey=hpc_pkey,
                                     passphrase=self.hpc_key_pass, sock=proxy_tunnel)
         # self.ssh_hpc_client.get_transport().set_keepalive(self.connection_keep_alive_interval)
         self.last_used_hpc_host = host
-        self.log.info(f"Successfully connected to the hpc frontend server")
+        self.log.debug(f"Successfully connected to the hpc frontend server")
         return self.ssh_hpc_client
 
-    def is_transport_responsive(self, transport) -> bool:
+    def is_transport_responsive(self, transport: Transport) -> bool:
         if not transport:
-            self.log.info("The transport is non-existing")
+            self.log.warning("The transport is non-existing")
             return False
         if not transport.is_active():
-            self.log.info("The transport is non-active")
+            self.log.warning("The transport is non-active")
             return False
         try:
             # Sometimes is_active() returns false-positives, hence the extra check
             transport.send_ignore()
             # Nevertheless this still returns false-positives...!!!
             # https://github.com/paramiko/paramiko/issues/2026
-            self.log.info("The transport is responsive")
             return True
         except EOFError as error:
-            self.log.info(f"EOFError: {error}")
+            self.log.error(f"is_transport_responsive EOFError: {error}")
             return False
 
     def is_ssh_connection_still_responsive(self, ssh_client: SSHClient) -> bool:
-        self.log.info("Checking SSH connection responsiveness")
         if not ssh_client:
-            self.log.info("The ssh client is non-existing")
+            self.log.warning("The ssh client is non-existing")
             return False
         return self.is_transport_responsive(ssh_client.get_transport())
 
     def is_sftp_still_responsive(self) -> bool:
-        self.log.info("Checking SFTP connection responsiveness")
         if not self.sftp_client:
-            self.log.info("The sftp client is non-existing")
+            self.log.warning("The sftp client is non-existing")
             return False
         channel = self.sftp_client.get_channel()
         if not channel:
-            self.log.info("The sftp client channel is non-existing")
+            self.log.warning("The sftp client channel is non-existing")
             return False
         return self.is_transport_responsive(channel.get_transport())
 
@@ -226,8 +223,10 @@ class HPCConnector:
                     self.ssh_hpc_client = None
                     self.last_used_hpc_host = None
                     try:
-                        self.reconnect_if_required(hpc_host=hpc_host, hpc_port=22, proxy_host=proxy_host, proxy_port=22,
-                                                   tunnel_host=tunnel_host, tunnel_port=tunnel_port)
+                        self.reconnect_if_required(
+                            hpc_host=hpc_host, hpc_port=22,
+                            proxy_host=proxy_host, proxy_port=22,
+                            tunnel_host=tunnel_host, tunnel_port=tunnel_port)
                         return  # all connections were successful
                     except Exception as error:
                         self.log.error(f"""
