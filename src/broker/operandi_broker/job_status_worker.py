@@ -161,11 +161,11 @@ class JobStatusWorker:
             # self.rmq_consumer._channel.basic_nack(delivery_tag=self.current_message_delivery_tag)
             # TODO: Sending ACK for now because it is hard to clean up without a mets workspace backup mechanism
             self.log.info(f"Interruption Acking delivery tag: {self.current_message_delivery_tag}")
-            self.rmq_consumer._channel.basic_ack(delivery_tag=self.current_message_delivery_tag)
+            self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
             return
 
         self.log.info(f"Acking delivery tag: {self.current_message_delivery_tag}")
-        self.rmq_consumer._channel.basic_ack(delivery_tag=self.current_message_delivery_tag)
+        self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
 
         # Reset the current message related parameters
         self.current_message_delivery_tag = None
