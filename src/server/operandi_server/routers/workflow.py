@@ -38,11 +38,6 @@ class RouterWorkflow:
         self.rmq_publisher = get_connection_publisher(enable_acks=True)
         self.logger.info(f"RMQPublisher connected")
 
-        # TODO: Reconsider the creation of queues here.
-        self.rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_HARVESTER)
-        self.rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_USERS)
-        self.rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, auto_delete=True)
-
         self.router = APIRouter(tags=[ServerApiTags.WORKFLOW])
         self.router.add_api_route(
             path=f"/workflow", endpoint=self.list_workflows, methods=["GET"], status_code=status.HTTP_200_OK,

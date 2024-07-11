@@ -42,12 +42,14 @@ def reconfigure_all_loggers(log_level: str, log_file_path: str):
 
     # Remove other loggers' handlers and propagate logs to root logger
     for name in logging.root.manager.loggerDict.keys():
+        print(f"Resetting handlers, propagation True, reconfiguring the logger: {name}")
         logging.getLogger(name).handlers = []
         logging.getLogger(name).propagate = True
     handlers = [
         {"sink": sys.stdout},
         {"sink": log_file_path, "serialize": False}
     ]
+    print(f"Configured new handlers: {handlers}")
     loguru.logger.configure(handlers=handlers)
 
 

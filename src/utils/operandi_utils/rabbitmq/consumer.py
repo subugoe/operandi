@@ -34,7 +34,7 @@ class RMQConsumer(RMQConnector):
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
         self.create_queue(queue_name=RABBITMQ_QUEUE_HARVESTER)
         self.create_queue(queue_name=RABBITMQ_QUEUE_USERS)
-        self.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES)
+        self.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, auto_delete=True)
 
     def create_queue(
         self, queue_name: str, exchange_name: str = DEFAULT_EXCHANGER_NAME, exchange_type: str = DEFAULT_EXCHANGER_TYPE,
