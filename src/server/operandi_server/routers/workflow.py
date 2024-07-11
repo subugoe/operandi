@@ -41,7 +41,7 @@ class RouterWorkflow:
         # TODO: Reconsider the creation of queues here.
         self.rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_HARVESTER)
         self.rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_USERS)
-        self.rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES)
+        self.rmq_publisher.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, auto_delete=True)
 
         self.router = APIRouter(tags=[ServerApiTags.WORKFLOW])
         self.router.add_api_route(
