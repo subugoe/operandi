@@ -42,6 +42,10 @@ class Worker:
         self.tunnel_port_executor = tunnel_port_executor
         self.tunnel_port_transfer = tunnel_port_transfer
 
+    def __del__(self):
+        if self.rmq_consumer:
+            self.rmq_consumer.disconnect()
+
     def run(self):
         try:
             # Source: https://unix.stackexchange.com/questions/18166/what-are-session-leaders-in-ps
@@ -161,12 +165,12 @@ class Worker:
             # self.log.info(f"Nacking delivery tag: {self.current_message_delivery_tag}")
             # self.rmq_consumer._channel.basic_nack(delivery_tag=self.current_message_delivery_tag)
             # TODO: Sending ACK for now because it is hard to clean up without a mets workspace backup mechanism
-            self.log.info(f"Interruption Acking delivery tag: {self.current_message_delivery_tag}")
-            self.rmq_consumer._channel.basic_ack(delivery_tag=self.current_message_delivery_tag)
+            self.log.info(f"Interruption Ack delivery tag: {self.current_message_delivery_tag}")
+            self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
             return
 
-        self.log.info(f"Acking delivery tag: {self.current_message_delivery_tag}")
-        self.rmq_consumer._channel.basic_ack(delivery_tag=self.current_message_delivery_tag)
+        self.log.info(f"Ack delivery tag: {self.current_message_delivery_tag}")
+        self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
 
         # Reset the current message related parameters
         self.current_message_delivery_tag = None
@@ -184,9 +188,7 @@ class Worker:
             self.log.info(f"Handling the message failure due to interruption: {signal_name}")
             self.__handle_message_failure(interruption=True)
 
-        # TODO: Disconnect the RMQConsumer properly
-        # TODO: Clean the remaining leftovers (if any)
-        self.rmq_consumer._channel.close()
+        self.rmq_consumer.disconnect()
         self.rmq_consumer = None
         self.log.info("Exiting gracefully.")
         exit(0)

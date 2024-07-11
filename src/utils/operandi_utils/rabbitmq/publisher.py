@@ -78,3 +78,13 @@ class RMQPublisher(RMQConnector):
     def enable_delivery_confirmations(self) -> None:
         self.logger.info("Enabling delivery confirmations")
         RMQConnector.confirm_delivery(channel=self._channel)
+
+    def disconnect(self) -> None:
+        try:
+            if self._channel:
+                self._channel.close()
+            if self._connection:
+                self._connection.close()
+        except Exception as error:
+            self.logger.error(f"Failed to gracefully disconnect the RabbitMQ publisher: {error}")
+            return

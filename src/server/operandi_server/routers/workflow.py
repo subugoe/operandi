@@ -94,6 +94,10 @@ class RouterWorkflow:
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
 
+    def __del__(self):
+        if self.rmq_publisher:
+            self.rmq_publisher.disconnect()
+
     async def _push_status_request_to_rabbitmq(self, job_id: str):
         # Create the job status message to be sent to the RabbitMQ queue
         try:

@@ -80,3 +80,14 @@ class RMQConsumer(RMQConnector):
     def ack_message(self, delivery_tag: int) -> None:
         self.logger.debug(f"Acknowledging message {delivery_tag}")
         self._channel.basic_ack(delivery_tag)
+
+    def disconnect(self):
+        try:
+            if self._channel:
+                self._channel.stop_consuming()
+                self._channel.close()
+            if self._connection:
+                self._connection.close()
+        except Exception as error:
+            self.logger.error(f"Failed to gracefully disconnect the RabbitMQ consumer: {error}")
+            return

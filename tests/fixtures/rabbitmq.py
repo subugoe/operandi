@@ -26,9 +26,11 @@ def fixture_configure_exchange_and_queue():
 def fixture_rabbitmq_publisher(rabbitmq_defaults):
     publisher = get_connection_publisher(enable_acks=True)
     yield publisher
+    publisher.disconnect()
 
 
 @fixture(scope="package", name="rabbitmq_consumer")
 def fixture_rabbitmq_consumer(rabbitmq_defaults):
     consumer = get_connection_consumer()
     yield consumer
+    consumer.disconnect()
