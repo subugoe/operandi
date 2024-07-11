@@ -143,33 +143,39 @@ class HPCConnector:
         self.log.info(f"Successfully connected to the hpc frontend server")
         return self.ssh_hpc_client
 
-    @staticmethod
-    def is_transport_responsive(transport) -> bool:
+    def is_transport_responsive(self, transport) -> bool:
         if not transport:
+            self.log.info("The transport is non-existing")
             return False
         if not transport.is_active():
+            self.log.info("The transport is non-active")
             return False
         try:
             # Sometimes is_active() returns false-positives, hence the extra check
             transport.send_ignore()
             # Nevertheless this still returns false-positives...!!!
             # https://github.com/paramiko/paramiko/issues/2026
+            self.log.info("The transport is responsive")
             return True
-        except EOFError:
+        except EOFError as error:
+            self.log.info(f"EOFError: {error}")
             return False
 
     def is_ssh_connection_still_responsive(self, ssh_client: SSHClient) -> bool:
         self.log.info("Checking SSH connection responsiveness")
         if not ssh_client:
+            self.log.info("The ssh client is non-existing")
             return False
         return self.is_transport_responsive(ssh_client.get_transport())
 
     def is_sftp_still_responsive(self) -> bool:
         self.log.info("Checking SFTP connection responsiveness")
         if not self.sftp_client:
+            self.log.info("The sftp client is non-existing")
             return False
         channel = self.sftp_client.get_channel()
         if not channel:
+            self.log.info("The sftp client channel is non-existing")
             return False
         return self.is_transport_responsive(channel.get_transport())
 
@@ -186,8 +192,7 @@ class HPCConnector:
             self.ssh_proxy_client = self.connect_to_proxy_server(host=proxy_host, port=proxy_port)
         if not self.is_ssh_connection_still_responsive(self.proxy_tunnel):
             self.log.warning("The proxy tunnel is not responsive, trying to establish a new proxy tunnel")
-            self.proxy_tunnel = self.establish_proxy_tunnel(
-                dst_host=hpc_host, dst_port=hpc_port, src_host=tunnel_host, src_port=tunnel_port)
+            self.proxy_tunnel = self.establish_proxy_tunnel(hpc_host, hpc_port, tunnel_host, tunnel_port)
         if not self.is_ssh_connection_still_responsive(self.ssh_hpc_client):
             self.log.warning("The connection to hpc frontend server is not responsive, trying to open a new connection")
             self.ssh_hpc_client = self.connect_to_hpc_frontend_server(proxy_host, proxy_port, self.proxy_tunnel)
