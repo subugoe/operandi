@@ -28,7 +28,7 @@ class HPCExecutor(HPCConnector):
 
     # Execute blocking commands and wait for an output and return code
     def execute_blocking(self, command, timeout=None, environment=None):
-        self.reconnect_if_required()
+        # self.reconnect_if_required()
         stdin, stdout, stderr = self.ssh_hpc_client.exec_command(
             command=command, timeout=timeout, environment=environment)
 
