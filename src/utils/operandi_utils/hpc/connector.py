@@ -143,14 +143,6 @@ class HPCConnector:
         self.log.info(f"Successfully connected to the hpc frontend server")
         return self.ssh_hpc_client
 
-    def create_sftp_client(self) -> SFTPClient:
-        if self.sftp_client:
-            self.sftp_client.close()
-            self.sftp_client = None
-        self.sftp_client = self.ssh_hpc_client.open_sftp()
-        # self.sftp_client.get_channel().get_transport().set_keepalive(self.channel_keep_alive_interval)
-        return self.sftp_client
-
     @staticmethod
     def is_transport_responsive(transport) -> bool:
         if not transport:
@@ -172,12 +164,6 @@ class HPCConnector:
             return False
         return self.is_transport_responsive(ssh_client.get_transport())
 
-    def is_proxy_tunnel_still_responsive(self) -> bool:
-        self.log.info("Checking proxy tunel responsiveness")
-        if not self.proxy_tunnel:
-            return False
-        return self.is_transport_responsive(self.proxy_tunnel.get_transport())
-
     def is_sftp_still_responsive(self) -> bool:
         self.log.info("Checking SFTP connection responsiveness")
         if not self.sftp_client:
@@ -198,7 +184,7 @@ class HPCConnector:
         if not self.is_ssh_connection_still_responsive(self.ssh_proxy_client):
             self.log.warning("The connection to proxy server is not responsive, trying to open a new connection")
             self.ssh_proxy_client = self.connect_to_proxy_server(host=proxy_host, port=proxy_port)
-        if not self.is_proxy_tunnel_still_responsive():
+        if not self.is_ssh_connection_still_responsive(self.proxy_tunnel):
             self.log.warning("The proxy tunnel is not responsive, trying to establish a new proxy tunnel")
             self.proxy_tunnel = self.establish_proxy_tunnel(
                 dst_host=hpc_host, dst_port=hpc_port, src_host=tunnel_host, src_port=tunnel_port)
@@ -218,7 +204,11 @@ class HPCConnector:
                                    tunnel_host=tunnel_host, tunnel_port=tunnel_port)
         if not self.is_sftp_still_responsive():
             self.log.warning("The SFTP client is not responsive, trying to create a new SFTP client")
-            self.create_sftp_client()
+            if self.sftp_client:
+                self.sftp_client.close()
+                self.sftp_client = None
+            self.sftp_client = self.ssh_hpc_client.open_sftp()
+            # self.sftp_client.get_channel().get_transport().set_keepalive(self.channel_keep_alive_interval)
 
     def create_ssh_connection_to_hpc_by_iteration(
         self, try_times: int = HPC_SSH_CONNECTION_TRY_TIMES, tunnel_host: str = 'localhost', tunnel_port: int = 0
