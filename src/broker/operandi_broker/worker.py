@@ -147,7 +147,7 @@ class Worker:
         sync_db_update_workspace(find_workspace_id=self.current_message_ws_id, state=ws_state)
 
         self.has_consumed_message = False
-        self.log.info(f"Acking delivery tag: {self.current_message_delivery_tag}")
+        self.log.debug(f"Ack delivery tag: {self.current_message_delivery_tag}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def __handle_message_failure(self, interruption: bool = False, set_ws_ready: bool = False):
@@ -169,7 +169,7 @@ class Worker:
             self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
             return
 
-        self.log.info(f"Ack delivery tag: {self.current_message_delivery_tag}")
+        self.log.debug(f"Ack delivery tag: {self.current_message_delivery_tag}")
         self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
 
         # Reset the current message related parameters
