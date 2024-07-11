@@ -5,6 +5,7 @@ from pathlib import Path
 from shutil import rmtree, copytree
 from stat import S_ISDIR
 from tempfile import mkdtemp
+from time import sleep
 from typing import List, Tuple
 
 from operandi_utils import make_zip_archive, unpack_zip_archive
@@ -97,6 +98,7 @@ class HPCTransfer(HPCConnector):
 
         hpc_dst = self.put_slurm_workspace(local_src_slurm_zip=local_src_slurm_zip, workflow_job_id=workflow_job_id)
         self.log.info(f"Leaving pack_and_put_slurm_workspace")
+        Path(local_src_slurm_zip).unlink(missing_ok=True)
         return local_src_slurm_zip, hpc_dst
 
     def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: str, workflow_job_dir: str):
@@ -112,12 +114,8 @@ class HPCTransfer(HPCConnector):
 
         get_src = join(self.slurm_workspaces_dir, workflow_job_id, f"{workflow_job_id}.zip")
         get_dst = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
-        self.log.info(f"Getting workflow job zip file")
-        try:
-            self.get_file(remote_src=get_src, local_dst=get_dst)
-        except Exception as error:
-            raise Exception(
-                f"Error when getting workflow job zip file: {error}, get_src: {get_src}, get_dst: {get_dst}")
+
+        self._get_file_with_retries(remote_src=get_src, local_dst=get_dst)
         self.log.info(f"Got workflow job zip file from src: {get_src}, to dst: {get_dst}")
 
         unpack_src = get_dst
@@ -130,7 +128,7 @@ class HPCTransfer(HPCConnector):
         self.log.info(f"Unpacked workflow job zip from src: {unpack_src}, to dst: {unpack_dst}")
 
         # Remove the temporary workflow job zip
-        remove(unpack_src)
+        Path(unpack_src).unlink(missing_ok=True)
         self.log.info(f"Removed the temp workflow job zip: {unpack_src}")
 
         # Remove the workspace dir from the local storage,
@@ -141,12 +139,7 @@ class HPCTransfer(HPCConnector):
 
         get_src = join(self.slurm_workspaces_dir, workflow_job_id, ocrd_workspace_id, f"{ocrd_workspace_id}.zip")
         get_dst = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
-        self.log.info(f"Getting workspace zip file")
-        try:
-            self.get_file(remote_src=get_src, local_dst=get_dst)
-        except Exception as error:
-            raise Exception(
-                f"Error when getting workspace zip file: {error}, get_src: {get_src}, get_dst: {get_dst}")
+        self._get_file_with_retries(remote_src=get_src, local_dst=get_dst)
         self.log.info(f"Got workspace zip file from src: {get_src}, to dst: {get_dst}")
 
         unpack_src = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
@@ -159,7 +152,7 @@ class HPCTransfer(HPCConnector):
         self.log.info(f"Unpacked workspace zip from src: {unpack_src}, to dst: {unpack_dst}")
 
         # Remove the temporary workspace zip
-        remove(unpack_src)
+        Path(unpack_src).unlink(missing_ok=True)
         self.log.info(f"Removed the temp workspace zip: {unpack_src}")
 
         # Remove the workspace dir from the local workflow job dir,
@@ -173,6 +166,22 @@ class HPCTransfer(HPCConnector):
                 f"Error when symlink: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}")
         self.log.info(f"Symlinked from src: {ocrd_workspace_dir}, to dst: {workspace_dir_in_workflow_job}")
         self.log.info(f"Leaving get_and_unpack_slurm_workspace")
+
+    def _get_file_with_retries(self, remote_src, local_dst, try_times: int = 100, sleep_time: int = 3):
+        if try_times < 0 or sleep_time < 0:
+            raise ValueError("Negative values passed for the times")
+        tries = try_times
+        while tries > 0:
+            try:
+                self.get_file(remote_src=remote_src, local_dst=local_dst)
+                break
+            except Exception as error:
+                tries -= 1
+                if tries <= 0:
+                    raise Exception(f"Error when getting zip file: {error}, "
+                                    f"remote_src: {remote_src}, local_dst: {local_dst}")
+                sleep(sleep_time)
+                continue
 
     def mkdir_p(self, remotepath, mode=0o766):
         self.recreate_sftp_if_required()

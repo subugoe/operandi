@@ -85,8 +85,6 @@ def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_w
 
 
 def test_get_and_unpack_slurm_workspace(hpc_data_transfer):
-    # Wait some time till the zip is created in the HPC
-    sleep(45)
     hpc_data_transfer.get_and_unpack_slurm_workspace(
         ocrd_workspace_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE),
         workflow_job_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB)
@@ -94,8 +92,6 @@ def test_get_and_unpack_slurm_workspace(hpc_data_transfer):
 
 
 def test_get_and_unpack_slurm_workspace_with_ms(hpc_data_transfer):
-    # Wait some time till the zip is created in the HPC
-    sleep(45)
     hpc_data_transfer.get_and_unpack_slurm_workspace(
         ocrd_workspace_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE_WITH_MS),
         workflow_job_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB_WITH_MS)
