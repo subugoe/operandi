@@ -52,7 +52,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
     check_job_status_url = f"/workflow/{workflow_id}/{workflow_job_id}"
     while tries > 0:
         tries -= 1
-        sleep(30)
+        sleep(60)
         response = operandi.get(url=check_job_status_url, auth=auth_harvester)
         assert_response_status_code(response.status_code, expected_floor=2)
         job_status = response.json()["job_state"]

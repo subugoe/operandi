@@ -6,7 +6,7 @@ from typing import List
 from operandi_utils.constants import StateJobSlurm
 from .connector import HPCConnector
 from .constants import (
-    HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_REGULAR,
+    HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_48H,
     HPC_JOB_DEFAULT_PARTITION
 )
 
@@ -58,7 +58,7 @@ class HPCExecutor(HPCConnector):
         self, batch_script_path: str, workflow_job_id: str, nextflow_script_path: str, input_file_grp: str,
         workspace_id: str, mets_basename: str, nf_process_forks: int, ws_pages_amount: int, use_mets_server: bool,
         file_groups_to_remove: str, cpus: int = 2, ram: int = 8, job_deadline_time: str = HPC_JOB_DEADLINE_TIME_TEST,
-        partition: str = HPC_JOB_DEFAULT_PARTITION, qos: str = HPC_JOB_QOS_REGULAR
+        partition: str = HPC_JOB_DEFAULT_PARTITION, qos: str = HPC_JOB_QOS_48H
     ) -> str:
         nextflow_script_id = nextflow_script_path.split('/')[-1]
         command = "bash -lc"
@@ -78,7 +78,7 @@ class HPCExecutor(HPCConnector):
         command += f" --cpus-per-task={cpus}"
         command += f" --mem={ram}G"
 
-        if qos != HPC_JOB_QOS_REGULAR:
+        if qos != "":
             command += f" --qos={qos}"
 
         # Regular arguments passed to the batch script
