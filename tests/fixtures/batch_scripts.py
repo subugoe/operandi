@@ -11,4 +11,4 @@ def fixture_path_batch_script_empty():
 
 @fixture(scope="package", name="path_batch_script_submit_workflow_job")
 def fixture_path_batch_script_submit_workflow_job():
-    yield to_asset_path(resource_type=BATCH_SCRIPTS_ROUTER_DIR, name="submit_workflow_job.sh")
+    yield to_asset_path(resource_type=BATCH_SCRIPTS_ROUTER_DIR, name="batch_submit_workflow_job.sh")
