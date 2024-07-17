@@ -1,1 +1,0 @@
-../../../src/utils/operandi_utils/hpc/batch_scripts/submit_workflow_job.sh
