@@ -7,7 +7,7 @@
 
 set -e
 
-# hostname
+hostname
 /opt/slurm/etc/scripts/misc/slurm_resources
 
 module purge

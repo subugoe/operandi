@@ -49,26 +49,24 @@ class HPCExecutor(HPCConnector):
         file_groups_to_remove: str, cpus: int = 2, ram: int = 8, job_deadline_time: str = HPC_JOB_DEADLINE_TIME_TEST,
         partition: str = HPC_JOB_DEFAULT_PARTITION, qos: str = HPC_JOB_QOS_48H
     ) -> str:
-        nextflow_script_id = nextflow_script_path.split('/')[-1]
-        command = "bash -lc"
-        command += f" 'sbatch"
-
         if ws_pages_amount < nf_process_forks:
             self.log.warning(
-                "The amount of workspace pages is less than the amount of requested Nextflow process forks. "
-                f"The pages amount: {ws_pages_amount}, forks requested: {nf_process_forks}. "
-                f"Setting the forks value to the value of amount of pages.")
+                    "The amount of workspace pages is less than the amount of requested Nextflow process forks. "
+                    f"The pages amount: {ws_pages_amount}, forks requested: {nf_process_forks}. "
+                    f"Setting the forks value to the value of amount of pages.")
             nf_process_forks = ws_pages_amount
 
-        # SBATCH arguments passed to the batch script
-        command += f" --partition={partition}"
-        command += f" --time={job_deadline_time}"
-        command += f" --output={self.project_root_dir}/slurm-job-%J.txt"
-        command += f" --cpus-per-task={cpus}"
-        command += f" --mem={ram}G"
+        nextflow_script_id = nextflow_script_path.split('/')[-1]
+        invoke_script_path = "/scratch1/projects/project_pwieder_ocr/invoke_batch_script.sh"
+        command = f"{invoke_script_path}"
 
-        if qos != "":
-            command += f" --qos={qos}"
+        # SBATCH arguments passed to the batch script
+        command += f" {partition}"
+        command += f" {job_deadline_time}"
+        command += f" {self.project_root_dir}/slurm-job-%J.txt"
+        command += f" {cpus}"
+        command += f" {ram}G"
+        command += f" {qos}"
 
         # Regular arguments passed to the batch script
         command += f" {batch_script_path}"
@@ -85,7 +83,6 @@ class HPCExecutor(HPCConnector):
         use_mets_server_bash_flag = "true" if use_mets_server else "false"
         command += f" {use_mets_server_bash_flag}"
         command += f" {file_groups_to_remove}"
-        command += "'"
 
         self.log.info(f"About to execute a blocking command: {command}")
         output, err, return_code = self.execute_blocking(command)
