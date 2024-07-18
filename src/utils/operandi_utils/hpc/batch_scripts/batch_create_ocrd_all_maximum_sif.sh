@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --constraint scratch
 #SBATCH --partition medium
-#SBATCH --cpus-per-task 32
+#SBATCH --time 02:00:00
+#SBATCH --output /scratch1/projects/project_pwieder_ocr/batch_job_logs/batch_create_ocrd_all_sif_job-%J.txt
+#SBATCH --cpus-per-task 16
 #SBATCH --mem 64G
-#SBATCH --time 240
-#SBATCH --output /scratch1/projects/project_pwieder_ocr/batch_job_logs/create_ocrd_all_sif_job-%J.txt
 
 set -e
 
