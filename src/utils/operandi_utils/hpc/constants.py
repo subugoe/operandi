@@ -11,6 +11,7 @@ __all__ = [
     "HPC_JOB_QOS_48H",
     "HPC_PATH_HOME_USERS",
     "HPC_PATH_SCRATCH1_OCR_PROJECT",
+    "HPC_ROOT_BASH_SCRIPT",
     "HPC_SSH_CONNECTION_TRY_TIMES",
     "HPC_TRANSFER_HOSTS",
     "HPC_TRANSFER_PROXY_HOSTS"
@@ -23,6 +24,7 @@ HPC_TRANSFER_HOSTS = ["transfer-scc.gwdg.de", "transfer-mdc.hpc.gwdg.de"]
 HPC_TRANSFER_PROXY_HOSTS = ["transfer.gwdg.de", "login.gwdg.de"]
 HPC_PATH_HOME_USERS = "/home/users"
 HPC_PATH_SCRATCH1_OCR_PROJECT = "/scratch1/projects/project_pwieder_ocr"
+HPC_ROOT_BASH_SCRIPT = "/scratch1/projects/project_pwieder_ocr/invoke_batch_script.sh"
 HPC_DIR_BATCH_SCRIPTS = "batch_scripts"
 HPC_DIR_SLURM_WORKSPACES = "slurm_workspaces"
 

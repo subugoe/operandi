@@ -7,7 +7,7 @@ from operandi_utils.constants import StateJobSlurm
 from .connector import HPCConnector
 from .constants import (
     HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_48H,
-    HPC_JOB_DEFAULT_PARTITION
+    HPC_JOB_DEFAULT_PARTITION, HPC_ROOT_BASH_SCRIPT
 )
 
 
@@ -57,8 +57,9 @@ class HPCExecutor(HPCConnector):
             nf_process_forks = ws_pages_amount
 
         nextflow_script_id = nextflow_script_path.split('/')[-1]
-        invoke_script_path = "/scratch1/projects/project_pwieder_ocr/invoke_batch_script.sh"
-        command = f"{invoke_script_path}"
+        use_mets_server_bash_flag = "true" if use_mets_server else "false"
+        
+        command = f"{HPC_ROOT_BASH_SCRIPT}"
 
         # SBATCH arguments passed to the batch script
         command += f" {partition}"
@@ -80,7 +81,6 @@ class HPCExecutor(HPCConnector):
         command += f" {ram}"
         command += f" {nf_process_forks}"
         command += f" {ws_pages_amount}"
-        use_mets_server_bash_flag = "true" if use_mets_server else "false"
         command += f" {use_mets_server_bash_flag}"
         command += f" {file_groups_to_remove}"
 
