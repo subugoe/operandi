@@ -7,10 +7,10 @@ from operandi_server.constants import (
     DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
 )
 from operandi_utils.hpc.constants import HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_TEST_PARTITION, HPC_JOB_QOS_2H
+from tests.constants import BATCH_SUBMIT_WORKFLOW_JOB
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
-BATCH_SCRIPT_ID = "batch_submit_workflow_job.sh"
 
 current_time = datetime.now().strftime("%Y%m%d_%H%M")
 ID_WORKFLOW_JOB_WITH_MS = f"test_wf_job_ms_{current_time}"
@@ -42,7 +42,7 @@ def helper_pack_and_put_slurm_workspace(
 
 
 def test_hpc_connector_put_batch_script(hpc_data_transfer, path_batch_script_submit_workflow_job):
-    hpc_batch_script_path = join(hpc_data_transfer.batch_scripts_dir, BATCH_SCRIPT_ID)
+    hpc_batch_script_path = join(hpc_data_transfer.batch_scripts_dir, BATCH_SUBMIT_WORKFLOW_JOB)
     hpc_data_transfer.put_file(local_src=path_batch_script_submit_workflow_job, remote_dst=hpc_batch_script_path)
 
 
@@ -61,7 +61,7 @@ def test_pack_and_put_slurm_workspace_with_ms(
 
 
 def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow):
-    hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SCRIPT_ID)
+    hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SUBMIT_WORKFLOW_JOB)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB,
         nextflow_script_path=template_workflow, input_file_grp=DEFAULT_FILE_GRP, workspace_id=ID_WORKSPACE,
@@ -74,7 +74,7 @@ def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow)
 
 
 def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_workflow_with_ms):
-    hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SCRIPT_ID)
+    hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SUBMIT_WORKFLOW_JOB)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB_WITH_MS,
         nextflow_script_path=template_workflow_with_ms, input_file_grp=DEFAULT_FILE_GRP,

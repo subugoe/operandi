@@ -1,7 +1,6 @@
 from pytest import fixture
+from tests.constants import WORKFLOWS_ROUTER_DIR
 from tests.helpers_utils import to_asset_path
-
-WORKFLOWS_ROUTER_DIR = "workflows"
 
 
 @fixture(scope="package", name="template_workflow")

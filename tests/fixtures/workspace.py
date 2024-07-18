@@ -1,7 +1,6 @@
 from pytest import fixture
+from tests.constants import WORKSPACES_ROUTER_DIR
 from tests.helpers_utils import to_asset_path
-
-WORKSPACES_ROUTER_DIR = "workspaces"
 
 
 @fixture(scope="package", name="path_dummy_workspace_data_dir")
