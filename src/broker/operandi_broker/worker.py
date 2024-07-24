@@ -214,7 +214,7 @@ class Worker:
         # self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=4023)
         # self.log.info("HPC transfer connection renewed successfully.")
 
-        hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(batch_script_id="submit_workflow_job.sh")
+        hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(batch_script_id="batch_submit_workflow_job.sh")
 
         try:
             sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_TO_HPC)
