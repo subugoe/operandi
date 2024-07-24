@@ -22,8 +22,8 @@ SIF_PATH="/scratch1/projects/project_pwieder_ocr/ocrd_all_maximum_image.sif"
 SIF_PATH_IN_NODE="${TMP_LOCAL}/ocrd_all_maximum_image.sif"
 OCRD_MODELS_DIR="/scratch1/projects/project_pwieder_ocr/ocrd_models"
 OCRD_MODELS_DIR_IN_NODE="${TMP_LOCAL}/ocrd_models"
-OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
-BIND_OCRD_MODELS="${OCRD_MODELS_DIR_IN_NODE}:${OCRD_MODELS_DIR_IN_DOCKER}"
+OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share/ocrd-resources"
+BIND_OCRD_MODELS="${OCRD_MODELS_DIR_IN_NODE}/ocrd-resources:${OCRD_MODELS_DIR_IN_DOCKER}"
 
 SCRATCH_BASE=$1
 WORKFLOW_JOB_ID=$2
@@ -61,6 +61,7 @@ echo "Workspace dir: $WORKSPACE_DIR"
 echo "Nextflow script path: $NF_SCRIPT_PATH"
 echo "Use mets server: $USE_METS_SERVER"
 echo "Used file group: $IN_FILE_GRP"
+echo "File groups to remove: $FILE_GROUPS_TO_REMOVE"
 echo "Pages: $PAGES"
 
 # To submit separate jobs for each process in the NF script
