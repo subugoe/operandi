@@ -202,25 +202,6 @@ process ocrd_calamari_recognize {
     """
 }
 
-process ocrd_fileformat_transform {
-    maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
-    debug true
-
-    input:
-        val page_range
-        val input_group
-        val output_group
-    output:
-        val page_range
-
-    script:
-    """
-    ${params.singularity_wrapper} ocrd-fileformat-transform -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P from-to "page alto"
-    """
-}
-
 workflow {
     main:
         ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
@@ -233,5 +214,4 @@ workflow {
         ocrd_cis_ocropy_segment(ocrd_tesserocr_deskew.out, "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG")
         ocrd_cis_ocropy_dewarp(ocrd_cis_ocropy_segment.out, "OCR-D-SEG", "OCR-D-SEG-LINE-RESEG-DEWARP")
         ocrd_calamari_recognize(ocrd_cis_ocropy_dewarp.out, "OCR-D-SEG-LINE-RESEG-DEWARP", "OCR-D-OCR")
-        ocrd_fileformat_transform(ocrd_calamari_recognize.out, "OCR-D-OCR", "OCR-D-ALTO")
 }

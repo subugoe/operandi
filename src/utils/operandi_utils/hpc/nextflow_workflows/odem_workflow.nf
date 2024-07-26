@@ -262,27 +262,6 @@ process ocrd_tesserocr_recognize_9 {
     """
 }
 
-process ocrd_fileformat_transform_10 {
-    maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
-    debug true
-
-    input:
-        val mets_file_chunk
-        val page_range
-        val input_group
-        val output_group
-    output:
-        val mets_file_chunk
-        val page_range
-
-    script:
-    """
-    ${params.singularity_wrapper} ocrd-fileformat-transform -w ${params.workspace_dir} -m ${mets_file_chunk} --page-id ${page_range} -I ${input_group} -O ${output_group} -P from-to "page alto"
-    """    
-}
-
 process merging_mets {
     // Must be a single instance - modifying the main mets file
     maxForks 1
@@ -311,6 +290,5 @@ workflow {
         ocrd_cis_ocropy_segment_7(ocrd_cis_ocropy_clip_6.out[0], ocrd_cis_ocropy_clip_6.out[1], "OCR-D-CLIP", "OCR-D-SEGMENT-OCROPY")
         ocrd_cis_ocropy_dewarp_8(ocrd_cis_ocropy_segment_7.out[0], ocrd_cis_ocropy_segment_7.out[1], "OCR-D-SEGMENT-OCROPY", "OCR-D-DEWARP")
         ocrd_tesserocr_recognize_9(ocrd_cis_ocropy_dewarp_8.out[0], ocrd_cis_ocropy_dewarp_8.out[1], "OCR-D-DEWARP", "OCR-D-OCR")
-        ocrd_fileformat_transform_10(ocrd_tesserocr_recognize_9.out[0], ocrd_tesserocr_recognize_9.out[1], "OCR-D-OCR", "OCR-D-ALTO")
-        merging_mets(ocrd_fileformat_transform_10.out[0], ocrd_fileformat_transform_10.out[1])
+        merging_mets(ocrd_tesserocr_recognize_9.out[0], ocrd_tesserocr_recognize_9.out[1])
 }
