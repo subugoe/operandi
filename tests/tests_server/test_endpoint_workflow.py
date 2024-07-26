@@ -73,9 +73,9 @@ def _test_delete_workflow_non_existing():
     pass
 
 
-def test_get_workflow_script(operandi, auth, bytes_template_workflow_with_ms):
+def test_get_workflow_script(operandi, auth, bytes_template_workflow):
     # Post a new workflow script
-    response = operandi.post(url="/workflow", files={"nextflow_script": bytes_template_workflow_with_ms}, auth=auth)
+    response = operandi.post(url="/workflow", files={"nextflow_script": bytes_template_workflow}, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
