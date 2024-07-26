@@ -107,6 +107,7 @@ class Worker:
             workspace_db = sync_db_get_workspace(self.current_message_ws_id)
 
             workflow_script_path = workflow_db.workflow_script_path
+            nf_uses_mets_server = workflow_db.uses_mets_server
             workspace_dir = workspace_db.workspace_dir
             mets_basename = workspace_db.mets_basename
             ws_pages_amount = workspace_db.pages_amount
@@ -123,12 +124,11 @@ class Worker:
 
         # Trigger a slurm job in the HPC
         try:
-            # TODO: Fix the use_mets_server flag - the flag should be set according to the used workflow
             self.prepare_and_trigger_slurm_job(
                 workflow_job_id=self.current_message_job_id, workspace_id=self.current_message_ws_id,
                 workspace_dir=workspace_dir, workspace_base_mets=mets_basename,
                 workflow_script_path=workflow_script_path, input_file_grp=input_file_grp,
-                nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount, use_mets_server=False,
+                nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount, use_mets_server=nf_uses_mets_server,
                 file_groups_to_remove=remove_file_grps, cpus=slurm_job_cpus, ram=slurm_job_ram,
                 partition=slurm_job_partition
             )
