@@ -62,6 +62,7 @@ class DBWorkflow(Document):
         workflow_dir            dir of the workflow
         workflow_script_base    the name of the nextflow script file
         workflow_script_path    the full path of the workflow script
+        uses_mets_server        whether the NF script forwards requests to a workpsace mets server
         deleted                 whether this record is deleted by the user
                                 (still available in the DB itself)
     """
@@ -69,6 +70,7 @@ class DBWorkflow(Document):
     workflow_dir: str
     workflow_script_base: str
     workflow_script_path: str
+    uses_mets_server: bool
     deleted: bool = False
 
     class Settings:

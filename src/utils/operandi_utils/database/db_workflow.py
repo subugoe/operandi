@@ -4,28 +4,31 @@ from .models import DBWorkflow
 
 # TODO: This also updates to satisfy the PUT method in the Workflow Manager - fix this
 async def db_create_workflow(
-    workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str
+    workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str, uses_mets_server: bool
 ) -> DBWorkflow:
     try:
         db_workflow = await db_get_workflow(workflow_id)
     except RuntimeError:
         db_workflow = DBWorkflow(
             workflow_id=workflow_id, workflow_dir=workflow_dir,
-            workflow_script_base=workflow_script_base, workflow_script_path=workflow_script_path)
+            workflow_script_base=workflow_script_base, workflow_script_path=workflow_script_path,
+            uses_mets_server=uses_mets_server)
     else:
         db_workflow.workflow_id = workflow_id
         db_workflow.workflow_dir = workflow_dir
         db_workflow.workflow_script_base = workflow_script_base
         db_workflow.workflow_script_path = workflow_script_path
+        db_workflow.uses_mets_server = uses_mets_server
     await db_workflow.save()
     return db_workflow
 
 
 @call_sync
 async def sync_db_create_workflow(
-    workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str
+    workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str, uses_mets_server: bool
 ) -> DBWorkflow:
-    return await db_create_workflow(workflow_id, workflow_dir, workflow_script_base, workflow_script_path)
+    return await db_create_workflow(
+        workflow_id, workflow_dir, workflow_script_base, workflow_script_path, uses_mets_server)
 
 
 async def db_get_workflow(workflow_id: str) -> DBWorkflow:
@@ -54,6 +57,8 @@ async def db_update_workflow(find_workflow_id: str, **kwargs) -> DBWorkflow:
             db_workflow.workflow_script_base = value
         elif key == "workflow_script_path":
             db_workflow.workflow_script_path = value
+        elif key == "uses_mets_server":
+            db_workflow.uses_mets_server = value
         elif key == "deleted":
             db_workflow.deleted = value
         else:

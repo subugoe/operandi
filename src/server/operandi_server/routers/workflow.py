@@ -21,7 +21,8 @@ from operandi_server.files_manager import (
     receive_resource)
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
 from .constants import ServerApiTags
-from .workflow_utils import get_db_workflow_job_with_handling, get_db_workflow_with_handling
+from .workflow_utils import (
+    get_db_workflow_job_with_handling, get_db_workflow_with_handling, nf_script_uses_mets_server_with_handling)
 from .workspace_utils import get_db_workspace_with_handling
 from .user import RouterUser
 
@@ -117,11 +118,12 @@ class RouterWorkflow:
             # path.name -> file_name.ext
             workflow_id, workflow_dir = create_resource_dir(
                 SERVER_WORKFLOWS_ROUTER, resource_id=path.stem, exists_ok=True)
-            nf_script_dst = join(workflow_dir, path.name)
-            copyfile(src=path, dst=nf_script_dst)
+            nf_script_dest = join(workflow_dir, path.name)
+            copyfile(src=path, dst=nf_script_dest)
+            uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
             await db_create_workflow(
-                workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dst,
-                workflow_script_base=path.name)
+                workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
+                workflow_script_base=path.name, uses_mets_server=uses_mets_server)
             self.production_workflows.append(workflow_id)
 
     async def list_workflows(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
@@ -165,9 +167,10 @@ class RouterWorkflow:
             message = "Failed to receive the workflow resource"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+        uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
         await db_create_workflow(
             workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-            workflow_script_base=nextflow_script.filename)
+            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server)
         workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
         return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
 
@@ -191,16 +194,17 @@ class RouterWorkflow:
             pass
 
         workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
-        nf_script_dst = join(workflow_dir, nextflow_script.filename)
+        nf_script_dest = join(workflow_dir, nextflow_script.filename)
         try:
-            await receive_resource(file=nextflow_script, resource_dst=nf_script_dst)
+            await receive_resource(file=nextflow_script, resource_dst=nf_script_dest)
         except Exception as error:
             message = f"Failed to receive the workflow resource"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+        uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
         await db_create_workflow(
-            workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dst,
-            workflow_script_base=nextflow_script.filename)
+            workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
+            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server)
         workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
         return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
 

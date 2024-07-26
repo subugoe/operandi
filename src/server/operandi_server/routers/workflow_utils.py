@@ -37,3 +37,20 @@ async def get_db_workflow_job_with_handling(logger, job_id: str, check_local_exi
         logger.error(f"{message}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
     return db_workflow_job
+
+
+async def nf_script_uses_mets_server_with_handling(
+    logger, nf_script_path: str, search_string: str = "params.mets_socket"
+) -> bool:
+    try:
+        with open(nf_script_path) as nf_file:
+            line = nf_file.readline()
+            while line:
+                if search_string in line:
+                    return True
+                line = nf_file.readline()
+            return False
+    except Exception as error:
+        message = "Failed to identify whether a mets server is used or not in the provided Nextflow workflow."
+        logger.error(f"{message}, error: {error}")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
