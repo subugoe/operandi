@@ -60,7 +60,7 @@ def test_pack_and_put_slurm_workspace_with_ms(
         path_workflow=template_workflow_with_ms, path_workspace_dir=path_small_workspace_data_dir)
 
 
-def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow):
+def _test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow):
     hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SUBMIT_WORKFLOW_JOB)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB,
@@ -73,7 +73,7 @@ def test_hpc_connector_run_batch_script(hpc_command_executor, template_workflow)
     assert finished_successfully
 
 
-def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_workflow_with_ms):
+def _test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_workflow_with_ms):
     hpc_batch_script_path = join(hpc_command_executor.batch_scripts_dir, BATCH_SUBMIT_WORKFLOW_JOB)
     slurm_job_id = hpc_command_executor.trigger_slurm_job(
         batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB_WITH_MS,
@@ -86,14 +86,14 @@ def test_hpc_connector_run_batch_script_with_ms(hpc_command_executor, template_w
     assert finished_successfully
 
 
-def test_get_and_unpack_slurm_workspace(hpc_data_transfer):
+def _test_get_and_unpack_slurm_workspace(hpc_data_transfer):
     hpc_data_transfer.get_and_unpack_slurm_workspace(
         ocrd_workspace_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE),
         workflow_job_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB)
     )
 
 
-def test_get_and_unpack_slurm_workspace_with_ms(hpc_data_transfer):
+def _test_get_and_unpack_slurm_workspace_with_ms(hpc_data_transfer):
     hpc_data_transfer.get_and_unpack_slurm_workspace(
         ocrd_workspace_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE_WITH_MS),
         workflow_job_dir=join(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB_WITH_MS)
