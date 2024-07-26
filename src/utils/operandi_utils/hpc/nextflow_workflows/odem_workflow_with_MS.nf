@@ -255,7 +255,7 @@ process ocrd_fileformat_transform_10 {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-fileformat-transform -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"from-to": "page alto"}'
+    ${params.singularity_wrapper} ocrd-fileformat-transform -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P from-to "page alto"
     """
 }
 

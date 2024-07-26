@@ -103,7 +103,7 @@ process ocrd_skimage_binarize {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-skimage-binarize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
+    ${params.singularity_wrapper} ocrd-skimage-binarize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P method "li"
     """
 }
 
@@ -122,7 +122,7 @@ process ocrd_skimage_denoise {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-skimage-denoise -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+    ${params.singularity_wrapper} ocrd-skimage-denoise -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P level-of-operation "page"
     """
 }
 
@@ -141,7 +141,7 @@ process ocrd_tesserocr_deskew {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-tesserocr-deskew -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
+    ${params.singularity_wrapper} ocrd-tesserocr-deskew -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P operation_level "page"
     """
 }
 
@@ -160,7 +160,7 @@ process ocrd_cis_ocropy_segment {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-cis-ocropy-segment -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+    ${params.singularity_wrapper} ocrd-cis-ocropy-segment -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P level-of-operation "page"
     """
 }
 
@@ -198,7 +198,7 @@ process ocrd_calamari_recognize {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-calamari-recognize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
+    ${params.singularity_wrapper} ocrd-calamari-recognize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P checkpoint_dir "qurator-gt4histocr-1.0"
     """
 }
 
@@ -217,7 +217,7 @@ process ocrd_fileformat_transform {
 
     script:
     """
-    ${params.singularity_wrapper} ocrd-fileformat-transform -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"from-to": "page alto"}'
+    ${params.singularity_wrapper} ocrd-fileformat-transform -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P from-to "page alto"
     """
 }
 
