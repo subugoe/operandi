@@ -6,7 +6,7 @@ from typing import List
 from operandi_utils.constants import StateJobSlurm
 from .connector import HPCConnector
 from .constants import (
-    HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_LONG,
+    HPC_EXECUTOR_HOSTS, HPC_EXECUTOR_PROXY_HOSTS, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_DEFAULT,
     HPC_JOB_DEFAULT_PARTITION, HPC_ROOT_BASH_SCRIPT
 )
 
@@ -47,7 +47,7 @@ class HPCExecutor(HPCConnector):
         self, batch_script_path: str, workflow_job_id: str, nextflow_script_path: str, input_file_grp: str,
         workspace_id: str, mets_basename: str, nf_process_forks: int, ws_pages_amount: int, use_mets_server: bool,
         file_groups_to_remove: str, cpus: int = 2, ram: int = 8, job_deadline_time: str = HPC_JOB_DEADLINE_TIME_TEST,
-        partition: str = HPC_JOB_DEFAULT_PARTITION, qos: str = HPC_JOB_QOS_LONG
+        partition: str = HPC_JOB_DEFAULT_PARTITION, qos: str = HPC_JOB_QOS_DEFAULT
     ) -> str:
         if ws_pages_amount < nf_process_forks:
             self.log.warning(

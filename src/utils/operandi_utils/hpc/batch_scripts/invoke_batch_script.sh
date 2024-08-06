@@ -22,4 +22,9 @@
 # $18 - Boolean flag showing whether a mets server is utilized or not
 # $19 - File groups to be removed from the workspace after the processing
 
-sbatch --partition="$1" --time="$2" --output="$3" --cpus-per-task="$4" --mem="$5" --qos="$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}"
+if [ "$6" == "48h" ] ; then
+  # QOS not set, the default of 48h is used
+  sbatch --partition="$1" --time="$2" --output="$3" --cpus-per-task="$4" --mem="$5" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}"
+else
+  sbatch --partition="$1" --time="$2" --output="$3" --cpus-per-task="$4" --mem="$5" --qos="$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}"
+fi
