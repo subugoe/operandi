@@ -67,18 +67,20 @@ echo "Pages: $PAGES"
 
 
 # Define functions to be used
-check_existence_of_paths () {
+check_existence_of_paths() {
   # The SIF file of the OCR-D All docker image must be previously created
   if [ ! -f "${SIF_PATH}" ]; then
     echo "Required ocrd_all_image sif file not found at: ${SIF_PATH}"
     exit 1
   fi
+  echo "Required ocrd_all_image sif file found at: ${SIF_PATH}"
 
   # Models directory must be previously filled with OCR-D models
   if [ ! -d "${OCRD_MODELS_DIR}" ]; then
     echo "Ocrd models directory not found at: ${OCRD_MODELS_DIR}"
     exit 1
   fi
+  echo "Ocrd models directory found at: ${OCRD_MODELS_DIR}"
 
   if [ ! -d "${SCRATCH_BASE}" ]; then
     mkdir -p "${SCRATCH_BASE}"
@@ -88,9 +90,10 @@ check_existence_of_paths () {
     echo "Required scratch base dir was not created: ${SCRATCH_BASE}"
     exit 1
   fi
+  echo "Scratch base found/created at: ${SCRATCH_BASE}"
 }
 
-clear_data_from_computing_node () {
+clear_data_from_computing_node() {
   echo "If existing, removing the SIF from the computing node, path: ${SIF_PATH_IN_NODE}"
   rm -f "${SIF_PATH_IN_NODE}"
   echo "If existing, removing the OCR-D models from the computing node, path: ${OCRD_MODELS_DIR_IN_NODE}"
@@ -118,7 +121,7 @@ transfer_requirements_to_node_storage() {
   fi
 }
 
-unzip_workflow_job_dir () {
+unzip_workflow_job_dir() {
   if [ ! -f "${WORKFLOW_JOB_DIR}.zip" ]; then
     echo "Required scratch slurm workspace zip is not available: ${WORKFLOW_JOB_DIR}.zip"
     exit 1
@@ -138,7 +141,7 @@ unzip_workflow_job_dir () {
   cd "${WORKFLOW_JOB_DIR}" || exit 1
 }
 
-start_mets_server () {
+start_mets_server() {
   # TODO: Would be better to start the mets server as an instance, but this is still broken
   # apptainer instance start \
   #   --bind "${BIND_WORKSPACE_DIR}" \
@@ -157,12 +160,12 @@ start_mets_server () {
   sleep 10
 }
 
-stop_mets_server () {
+stop_mets_server() {
   # Not supported in the HPC (the version there is <7.40)
   # curl -X DELETE --unix-socket "${WORKSPACE_DIR}/${METS_SOCKET_BASENAME}" "http://localhost/"
 
   # TODO Stop the instance here
-  # apptainer instance stop instance_mets_server
+  # singularity instance stop instance_mets_server
 
   if [ "$1" == "true" ] ; then
     echo "Stopping the mets server"
@@ -173,7 +176,7 @@ stop_mets_server () {
   fi
 }
 
-execute_nextflow_workflow () {
+execute_nextflow_workflow() {
   local APPTAINER_CMD="apptainer exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=false ${SIF_PATH_IN_NODE}"
   if [ "$1" == "true" ] ; then
     echo "Executing the nextflow workflow with mets server"
@@ -210,7 +213,7 @@ execute_nextflow_workflow () {
   esac
 }
 
-list_file_groups_from_workspace () {
+list_file_groups_from_workspace() {
     all_file_groups=()
     mapfile -t all_file_groups < <(apptainer exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" ocrd workspace -d "${WORKSPACE_DIR_IN_DOCKER}" list-group)
     file_groups_length=${#all_file_groups[@]}
@@ -223,14 +226,14 @@ list_file_groups_from_workspace () {
     echo
 }
 
-remove_file_group_from_workspace () {
+remove_file_group_from_workspace() {
   echo "Removing file group: $1"
   apptainer exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" \
   ocrd workspace -d "${WORKSPACE_DIR_IN_DOCKER}" remove-group -r -f "$1" \
   > "${WORKSPACE_DIR}/remove_file_groups.log" 2>&1
 }
 
-remove_file_groups_from_workspace () {
+remove_file_groups_from_workspace() {
   list_file_groups_from_workspace
   if [ "$1" != "" ] ; then
     echo "Splitting file groups to an array"
@@ -250,7 +253,7 @@ remove_file_groups_from_workspace () {
   fi
 }
 
-zip_results () {
+zip_results() {
   # Delete symlinks created for the Nextflow workers
   find "${WORKFLOW_JOB_DIR}" -type l -delete
   # Create a zip of the ocrd workspace dir
@@ -266,11 +269,19 @@ zip_results () {
 
 
 # Main loop for workflow job execution
+echo "About to check existence of paths"
 check_existence_of_paths
+echo "About to unzip workflow job dir"
 unzip_workflow_job_dir
+echo "About to transfer requirements to node storage"
 transfer_requirements_to_node_storage
+echo "About to start mets server if enabled"
 start_mets_server "$USE_METS_SERVER"
+echo "About to execute nextflow workflow"
 execute_nextflow_workflow "$USE_METS_SERVER"
+echo "About to stop mets server if enabled"
 stop_mets_server "$USE_METS_SERVER"
+echo "About to remove file groups from workspace"
 remove_file_groups_from_workspace "$FILE_GROUPS_TO_REMOVE"
+echo "About to zip results"
 zip_results

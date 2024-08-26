@@ -3,7 +3,8 @@ from time import sleep
 
 from operandi_utils.constants import StateJobSlurm
 from .constants import (
-    HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_DEFAULT, HPC_NHR_JOB_DEFAULT_PARTITION, HPC_ROOT_BASH_SCRIPT
+    HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_DEFAULT, HPC_NHR_JOB_DEFAULT_PARTITION, HPC_BATCH_SUBMIT_WORKFLOW_JOB,
+    HPC_WRAPPER_SUBMIT_WORKFLOW_JOB
 )
 from .nhr_connector import NHRConnector
 
@@ -29,7 +30,7 @@ class NHRExecutor(NHRConnector):
         return output, err, return_code
 
     def trigger_slurm_job(
-        self, batch_script_path: str, workflow_job_id: str, nextflow_script_path: str, input_file_grp: str,
+        self, workflow_job_id: str, nextflow_script_path: str, input_file_grp: str,
         workspace_id: str, mets_basename: str, nf_process_forks: int, ws_pages_amount: int, use_mets_server: bool,
         file_groups_to_remove: str, cpus: int = 2, ram: int = 8, job_deadline_time: str = HPC_JOB_DEADLINE_TIME_TEST,
         partition: str = HPC_NHR_JOB_DEFAULT_PARTITION, qos: str = HPC_JOB_QOS_DEFAULT
@@ -44,7 +45,7 @@ class NHRExecutor(NHRConnector):
         nextflow_script_id = nextflow_script_path.split('/')[-1]
         use_mets_server_bash_flag = "true" if use_mets_server else "false"
 
-        command = f"{HPC_ROOT_BASH_SCRIPT}"
+        command = f"{HPC_WRAPPER_SUBMIT_WORKFLOW_JOB}"
 
         # SBATCH arguments passed to the batch script
         command += f" {partition}"
@@ -55,7 +56,7 @@ class NHRExecutor(NHRConnector):
         command += f" {qos}"
 
         # Regular arguments passed to the batch script
-        command += f" {batch_script_path}"
+        command += f" {HPC_BATCH_SUBMIT_WORKFLOW_JOB}"
         command += f" {self.slurm_workspaces_dir}"
         command += f" {workflow_job_id}"
         command += f" {nextflow_script_id}"
@@ -71,6 +72,9 @@ class NHRExecutor(NHRConnector):
 
         self.logger.info(f"About to execute a blocking command: {command}")
         output, err, return_code = self.execute_blocking(command)
+        print(f"Command output: {output}")
+        print(f"Command err: {err}")
+        print(f"Command return code: {return_code}")
         self.logger.info(f"Command output: {output}")
         self.logger.info(f"Command err: {err}")
         self.logger.info(f"Command return code: {return_code}")

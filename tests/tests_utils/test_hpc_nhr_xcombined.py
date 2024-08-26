@@ -7,9 +7,8 @@ from operandi_server.constants import (
     DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
 )
 from operandi_utils.hpc.constants import (
-    HPC_JOB_DEADLINE_TIME_TEST, HPC_NHR_JOB_TEST_PARTITION, HPC_JOB_QOS_SHORT, HPC_NHR_CLUSTERS
+    HPC_JOB_DEADLINE_TIME_TEST, HPC_NHR_JOB_TEST_PARTITION, HPC_JOB_QOS_SHORT
 )
-from tests.constants import BATCH_SUBMIT_WORKFLOW_JOB
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
@@ -19,11 +18,6 @@ ID_WORKFLOW_JOB_WITH_MS = f"test_wf_job_ms_{current_time}"
 ID_WORKSPACE_WITH_MS = f"test_ws_ms_{current_time}"
 ID_WORKFLOW_JOB = f"test_wf_job_{current_time}"
 ID_WORKSPACE = f"test_ws_{current_time}"
-
-# TODO: Make project root more flexible based on the sub cluster
-project_root = join(HPC_NHR_CLUSTERS["EmmyPhase3"]["scratch-emmy-hdd"], environ["OPERANDI_HPC_PROJECT_NAME"])
-batch_scripts_dir = join(project_root, "batch_scripts")
-
 
 def helper_pack_and_put_slurm_workspace(
     hpc_nhr_data_transfer, workflow_job_id: str, workspace_id: str, path_workflow: str, path_workspace_dir: str
@@ -46,12 +40,6 @@ def helper_pack_and_put_slurm_workspace(
 
     Path(local_slurm_workspace_zip_path).unlink(missing_ok=True)
 
-
-def test_hpc_connector_put_batch_script(hpc_nhr_data_transfer, path_batch_script_submit_workflow_job):
-    hpc_batch_script_path = join(batch_scripts_dir, BATCH_SUBMIT_WORKFLOW_JOB)
-    hpc_nhr_data_transfer.put_file(local_src=path_batch_script_submit_workflow_job, remote_dst=hpc_batch_script_path)
-
-
 def test_pack_and_put_slurm_workspace(hpc_nhr_data_transfer, path_small_workspace_data_dir, template_workflow):
     helper_pack_and_put_slurm_workspace(
         hpc_nhr_data_transfer=hpc_nhr_data_transfer, workflow_job_id=ID_WORKFLOW_JOB, workspace_id=ID_WORKSPACE,
@@ -68,10 +56,9 @@ def test_pack_and_put_slurm_workspace_with_ms(
 
 
 def test_hpc_connector_run_batch_script(hpc_nhr_command_executor, template_workflow):
-    hpc_batch_script_path = join(batch_scripts_dir, BATCH_SUBMIT_WORKFLOW_JOB)
     slurm_job_id = hpc_nhr_command_executor.trigger_slurm_job(
-        batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB,
-        nextflow_script_path=template_workflow, input_file_grp=DEFAULT_FILE_GRP, workspace_id=ID_WORKSPACE,
+        workflow_job_id=ID_WORKFLOW_JOB, nextflow_script_path=template_workflow,
+        input_file_grp=DEFAULT_FILE_GRP, workspace_id=ID_WORKSPACE,
         mets_basename=DEFAULT_METS_BASENAME, nf_process_forks=2, ws_pages_amount=8, use_mets_server=False,
         file_groups_to_remove="", cpus=2, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
         partition=HPC_NHR_JOB_TEST_PARTITION, qos=HPC_JOB_QOS_SHORT)
@@ -81,11 +68,10 @@ def test_hpc_connector_run_batch_script(hpc_nhr_command_executor, template_workf
 
 
 def test_hpc_connector_run_batch_script_with_ms(hpc_nhr_command_executor, template_workflow_with_ms):
-    hpc_batch_script_path = join(batch_scripts_dir, BATCH_SUBMIT_WORKFLOW_JOB)
     slurm_job_id = hpc_nhr_command_executor.trigger_slurm_job(
-        batch_script_path=hpc_batch_script_path, workflow_job_id=ID_WORKFLOW_JOB_WITH_MS,
-        nextflow_script_path=template_workflow_with_ms, input_file_grp=DEFAULT_FILE_GRP,
-        workspace_id=ID_WORKSPACE_WITH_MS, mets_basename=DEFAULT_METS_BASENAME, nf_process_forks=2, ws_pages_amount=8,
+        workflow_job_id=ID_WORKFLOW_JOB_WITH_MS, nextflow_script_path=template_workflow_with_ms,
+        input_file_grp=DEFAULT_FILE_GRP, workspace_id=ID_WORKSPACE_WITH_MS,
+        mets_basename=DEFAULT_METS_BASENAME, nf_process_forks=2, ws_pages_amount=8,
         use_mets_server=True, file_groups_to_remove="", cpus=3, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
         partition=HPC_NHR_JOB_TEST_PARTITION, qos=HPC_JOB_QOS_SHORT)
     finished_successfully = hpc_nhr_command_executor.poll_till_end_slurm_job_state(

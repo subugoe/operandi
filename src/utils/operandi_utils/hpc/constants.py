@@ -1,4 +1,5 @@
 __all__ = [
+    "HPC_BATCH_SUBMIT_WORKFLOW_JOB",
     "HPC_DIR_BATCH_SCRIPTS",
     "HPC_DIR_SLURM_WORKSPACES",
     "HPC_JOB_DEADLINE_TIME_REGULAR",
@@ -9,10 +10,10 @@ __all__ = [
     "HPC_JOB_QOS_LONG",
     "HPC_JOB_QOS_SHORT",
     "HPC_JOB_QOS_VERY_LONG",
-    "HPC_ROOT_BASH_SCRIPT",
     "HPC_SSH_CONNECTION_TRY_TIMES",
     "HPC_NHR_PROJECT",
     "HPC_NHR_CLUSTERS",
+    "HPC_WRAPPER_SUBMIT_WORKFLOW_JOB"
 ]
 
 HPC_NHR_PROJECT: str = "project_pwieder_ocr_nhr"
@@ -59,7 +60,8 @@ HPC_NHR_CLUSTERS = {
 HPC_DIR_BATCH_SCRIPTS = "batch_scripts"
 HPC_DIR_SLURM_WORKSPACES = "slurm_workspaces"
 # TODO: Fix the constant file name - it should be automatically resolved
-HPC_ROOT_BASH_SCRIPT = f"{HPC_NHR_SCRATCH_EMMY_HDD}/{HPC_DIR_BATCH_SCRIPTS}/wrapper_submit_workflow_job.sh"
+HPC_BATCH_SUBMIT_WORKFLOW_JOB = f"{HPC_NHR_SCRATCH_EMMY_HDD}/{HPC_DIR_BATCH_SCRIPTS}/batch_submit_workflow_job.sh"
+HPC_WRAPPER_SUBMIT_WORKFLOW_JOB = f"{HPC_NHR_SCRATCH_EMMY_HDD}/{HPC_DIR_BATCH_SCRIPTS}/wrapper_submit_workflow_job.sh"
 
 HPC_JOB_DEADLINE_TIME_REGULAR = "48:00:00"
 HPC_JOB_DEADLINE_TIME_TEST = "0:30:00"
