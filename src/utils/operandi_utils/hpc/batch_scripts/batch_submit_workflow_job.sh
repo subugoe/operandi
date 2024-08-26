@@ -140,7 +140,7 @@ unzip_workflow_job_dir () {
 
 start_mets_server () {
   # TODO: Would be better to start the mets server as an instance, but this is still broken
-  # singularity instance start \
+  # apptainer instance start \
   #   --bind "${BIND_WORKSPACE_DIR}" \
   #   "${SIF_PATH_IN_NODE}" \
   #   instance_mets_server \
@@ -162,7 +162,7 @@ stop_mets_server () {
   # curl -X DELETE --unix-socket "${WORKSPACE_DIR}/${METS_SOCKET_BASENAME}" "http://localhost/"
 
   # TODO Stop the instance here
-  # singularity instance stop instance_mets_server
+  # apptainer instance stop instance_mets_server
 
   if [ "$1" == "true" ] ; then
     echo "Stopping the mets server"
@@ -174,7 +174,7 @@ stop_mets_server () {
 }
 
 execute_nextflow_workflow () {
-  local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=false ${SIF_PATH_IN_NODE}"
+  local APPTAINER_CMD="apptainer exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=false ${SIF_PATH_IN_NODE}"
   if [ "$1" == "true" ] ; then
     echo "Executing the nextflow workflow with mets server"
     nextflow run "${NF_SCRIPT_PATH}" \
@@ -185,7 +185,7 @@ execute_nextflow_workflow () {
     --mets_socket "${BIND_METS_SOCKET_PATH}" \
     --workspace_dir "${WORKSPACE_DIR_IN_DOCKER}" \
     --pages "${PAGES}" \
-    --singularity_wrapper "${SINGULARITY_CMD}" \
+    --singularity_wrapper "${APPTAINER_CMD}" \
     --cpus "${CPUS}" \
     --ram "${RAM}" \
     --forks "${FORKS}"
@@ -198,7 +198,7 @@ execute_nextflow_workflow () {
     --mets "${BIND_METS_FILE_PATH}" \
     --workspace_dir "${WORKSPACE_DIR_IN_DOCKER}" \
     --pages "${PAGES}" \
-    --singularity_wrapper "${SINGULARITY_CMD}" \
+    --singularity_wrapper "${APPTAINER_CMD}" \
     --cpus "${CPUS}" \
     --ram "${RAM}" \
     --forks "${FORKS}"
@@ -212,7 +212,7 @@ execute_nextflow_workflow () {
 
 list_file_groups_from_workspace () {
     all_file_groups=()
-    mapfile -t all_file_groups < <(singularity exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" ocrd workspace -d "${WORKSPACE_DIR_IN_DOCKER}" list-group)
+    mapfile -t all_file_groups < <(apptainer exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" ocrd workspace -d "${WORKSPACE_DIR_IN_DOCKER}" list-group)
     file_groups_length=${#all_file_groups[@]}
     echo -n "File groups: "
     for file_group in "${all_file_groups[@]}"
