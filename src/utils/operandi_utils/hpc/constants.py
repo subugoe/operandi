@@ -19,6 +19,47 @@ __all__ = [
     "HPC_TRANSFER_PROXY_HOSTS"
 ]
 
+HPC_NHR_PROJECT: str = "project_pwieder_ocr_nhr"
+
+# https://docs.hpc.gwdg.de/start_here/connecting/login_nodes_and_example_commands/index.html#the-login-nodes
+# https://docs.hpc.gwdg.de/how_to_use/the_storage_systems/data_stores/scratch_work/index.html#nhr
+HPC_NHR_SCRATCH_EMMY_HDD: str = f"/mnt/lustre-emmy-hdd/projects/{HPC_NHR_PROJECT}"  # Capacity - 110 TiB
+HPC_NHR_SCRATCH_EMMY_SSD: str = f"/mnt/lustre-emmy-ssd/projects/{HPC_NHR_PROJECT}"  # Capacity - 8.4 PiB
+HPC_NHR_SCRATCH_GRETE_SSD: str = f"/mnt/lustre-grete/projects/{HPC_NHR_PROJECT}"  # Capacity - 110 TiB
+
+HPC_NHR_CLUSTER = {
+    "EmmyPhase1": {
+        "host": "glogin-p1.hpc.gwdg.de",
+        "scratch-emmy-hdd": HPC_NHR_SCRATCH_EMMY_HDD,
+        "scratch-emmy-ssd": HPC_NHR_SCRATCH_EMMY_SSD,
+        "scratch-grete-ssd": ""  # No Access
+    },
+    "EmmyPhase2": {
+        "host": "glogin-p2.hpc.gwdg.de",
+        "scratch-emmy-hdd": HPC_NHR_SCRATCH_EMMY_HDD,
+        "scratch-emmy-ssd": HPC_NHR_SCRATCH_EMMY_SSD,
+        "scratch-grete-ssd": ""  # No Access
+    },
+    "EmmyPhase3": {
+        "host": "glogin-p3.hpc.gwdg.de",
+        "scratch-emmy-hdd": HPC_NHR_SCRATCH_EMMY_HDD,
+        "scratch-emmy-ssd": HPC_NHR_SCRATCH_EMMY_SSD,
+        "scratch-grete-ssd": HPC_NHR_SCRATCH_GRETE_SSD
+    },
+    "Grete": {
+        "host": "glogin-gpu.hpc.gwdg.de",
+        "scratch-emmy-hdd": HPC_NHR_SCRATCH_EMMY_HDD,
+        "scratch-emmy-ssd": HPC_NHR_SCRATCH_EMMY_SSD,
+        "scratch-grete-ssd": HPC_NHR_SCRATCH_GRETE_SSD
+    },
+    "KISSKI": {
+        "host": "glogin9.hpc.gwdg.de",
+        "scratch-emmy-hdd": HPC_NHR_SCRATCH_EMMY_HDD,
+        "scratch-emmy-ssd": HPC_NHR_SCRATCH_EMMY_SSD,
+        "scratch-grete-ssd": HPC_NHR_SCRATCH_GRETE_SSD
+    }
+}
+
 # "gwdu103.hpc.gwdg.de" - bad host entry, has no access to /scratch1, but to /scratch2
 HPC_EXECUTOR_HOSTS = ["login-mdc.hpc.gwdg.de", "gwdu101.hpc.gwdg.de", "gwdu102.hpc.gwdg.de"]
 HPC_EXECUTOR_PROXY_HOSTS = ["login.gwdg.de"]
