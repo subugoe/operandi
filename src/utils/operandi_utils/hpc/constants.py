@@ -7,16 +7,22 @@ __all__ = [
     "HPC_JOB_DEADLINE_TIME_TEST",
     "HPC_JOB_DEFAULT_PARTITION",
     "HPC_JOB_TEST_PARTITION",
+    "HPC_NHR_JOB_DEFAULT_PARTITION",
+    "HPC_NHR_JOB_TEST_PARTITION",
     "HPC_JOB_QOS_DEFAULT",
     "HPC_JOB_QOS_LONG",
     "HPC_JOB_QOS_SHORT",
     "HPC_JOB_QOS_VERY_LONG",
     "HPC_PATH_HOME_USERS",
-    "HPC_PATH_SCRATCH1_OCR_PROJECT",
     "HPC_ROOT_BASH_SCRIPT",
     "HPC_SSH_CONNECTION_TRY_TIMES",
     "HPC_TRANSFER_HOSTS",
-    "HPC_TRANSFER_PROXY_HOSTS"
+    "HPC_TRANSFER_PROXY_HOSTS",
+
+    "HPC_NHR_PROJECT",
+    "HPC_NHR_CLUSTERS",
+    # TODO: Remove once CI/CD works
+    "HPC_NHR_SCRATCH_EMMY_HDD"
 ]
 
 HPC_NHR_PROJECT: str = "project_pwieder_ocr_nhr"
@@ -27,7 +33,7 @@ HPC_NHR_SCRATCH_EMMY_HDD: str = f"/mnt/lustre-emmy-hdd/projects/{HPC_NHR_PROJECT
 HPC_NHR_SCRATCH_EMMY_SSD: str = f"/mnt/lustre-emmy-ssd/projects/{HPC_NHR_PROJECT}"  # Capacity - 8.4 PiB
 HPC_NHR_SCRATCH_GRETE_SSD: str = f"/mnt/lustre-grete/projects/{HPC_NHR_PROJECT}"  # Capacity - 110 TiB
 
-HPC_NHR_CLUSTER = {
+HPC_NHR_CLUSTERS = {
     "EmmyPhase1": {
         "host": "glogin-p1.hpc.gwdg.de",
         "scratch-emmy-hdd": HPC_NHR_SCRATCH_EMMY_HDD,
@@ -66,8 +72,7 @@ HPC_EXECUTOR_PROXY_HOSTS = ["login.gwdg.de"]
 HPC_TRANSFER_HOSTS = ["transfer-scc.gwdg.de", "transfer-mdc.hpc.gwdg.de"]
 HPC_TRANSFER_PROXY_HOSTS = ["transfer.gwdg.de", "login.gwdg.de"]
 HPC_PATH_HOME_USERS = "/home/users"
-HPC_PATH_SCRATCH1_OCR_PROJECT = "/scratch1/projects/project_pwieder_ocr"
-HPC_ROOT_BASH_SCRIPT = "/scratch1/projects/project_pwieder_ocr/invoke_batch_script.sh"
+HPC_ROOT_BASH_SCRIPT = f"{HPC_NHR_SCRATCH_EMMY_HDD}/invoke_batch_script.sh"
 HPC_DIR_BATCH_SCRIPTS = "batch_scripts"
 HPC_DIR_SLURM_WORKSPACES = "slurm_workspaces"
 
@@ -75,6 +80,8 @@ HPC_JOB_DEADLINE_TIME_REGULAR = "48:00:00"
 HPC_JOB_DEADLINE_TIME_TEST = "0:30:00"
 HPC_JOB_DEFAULT_PARTITION = "medium"
 HPC_JOB_TEST_PARTITION = "medium"
+HPC_NHR_JOB_DEFAULT_PARTITION = "standard96:shared"
+HPC_NHR_JOB_TEST_PARTITION = "standard96:shared"
 
 # Check here: https://docs.hpc.gwdg.de/getting_started/transition/index.html
 HPC_JOB_QOS_SHORT = "2h"

@@ -6,7 +6,6 @@ from typing import Optional
 
 from paramiko import AutoAddPolicy, RSAKey, SSHClient
 
-from .utils import check_keyfile_existence
 from .constants import HPC_NHR_CLUSTERS
 
 class NHRConnector:
