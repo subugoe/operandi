@@ -10,7 +10,7 @@ from operandi_utils.database import (
     DBHPCSlurmJob, DBWorkflowJob, DBWorkspace,
     sync_db_initiate_database, sync_db_get_hpc_slurm_job, sync_db_get_workflow_job, sync_db_get_workspace,
     sync_db_update_hpc_slurm_job, sync_db_update_workflow_job, sync_db_update_workspace)
-from operandi_utils.hpc import HPCExecutor, HPCTransfer
+from operandi_utils.hpc import NHRExecutor, NHRTransfer
 from operandi_utils.rabbitmq import get_connection_consumer
 
 
@@ -51,9 +51,9 @@ class JobStatusWorker:
             signal.signal(signal.SIGTERM, self.signal_handler)
 
             sync_db_initiate_database(self.db_url)
-            self.hpc_executor = HPCExecutor(tunnel_host='localhost', tunnel_port=self.tunnel_port_executor)
+            self.hpc_executor = NHRExecutor()
             self.log.info("HPC executor connection successful.")
-            self.hpc_io_transfer = HPCTransfer(tunnel_host='localhost', tunnel_port=self.tunnel_port_transfer)
+            self.hpc_io_transfer = NHRTransfer()
             self.log.info("HPC transfer connection successful.")
 
             self.rmq_consumer = get_connection_consumer(rabbitmq_url=self.rmq_url)
