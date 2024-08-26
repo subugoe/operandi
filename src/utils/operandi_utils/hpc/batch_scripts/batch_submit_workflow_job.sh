@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH --constraint scratch
 
 set -e
 
@@ -18,9 +17,9 @@ set -e
 # $11 - Boolean flag showing whether a mets server is utilized or not
 # $12 - File groups to be removed from the workspace after the processing
 
-SIF_PATH="/scratch1/projects/project_pwieder_ocr/ocrd_all_maximum_image.sif"
+SIF_PATH="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_all_maximum_image.sif"
 SIF_PATH_IN_NODE="${TMP_LOCAL}/ocrd_all_maximum_image.sif"
-OCRD_MODELS_DIR="/scratch1/projects/project_pwieder_ocr/ocrd_models"
+OCRD_MODELS_DIR="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_models"
 OCRD_MODELS_DIR_IN_NODE="${TMP_LOCAL}/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share/ocrd-resources"
 BIND_OCRD_MODELS="${OCRD_MODELS_DIR_IN_NODE}/ocrd-resources:${OCRD_MODELS_DIR_IN_DOCKER}"
@@ -51,7 +50,7 @@ hostname
 /opt/slurm/etc/scripts/misc/slurm_resources
 
 module purge
-module load singularity
+module load apptainer
 module load nextflow
 # module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
 
@@ -61,7 +60,6 @@ echo "Workspace dir: $WORKSPACE_DIR"
 echo "Nextflow script path: $NF_SCRIPT_PATH"
 echo "Use mets server: $USE_METS_SERVER"
 echo "Used file group: $IN_FILE_GRP"
-echo "File groups to remove: $FILE_GROUPS_TO_REMOVE"
 echo "Pages: $PAGES"
 
 # To submit separate jobs for each process in the NF script
@@ -107,7 +105,7 @@ transfer_requirements_to_node_storage() {
     exit 1
   else
     echo "Successfully transferred SIF to node local storage"
-    singularity exec "$SIF_PATH_IN_NODE" ocrd --version
+    apptainer exec "$SIF_PATH_IN_NODE" ocrd --version
   fi
 
   cp -R "${OCRD_MODELS_DIR}" "${OCRD_MODELS_DIR_IN_NODE}"
@@ -150,7 +148,7 @@ start_mets_server () {
 
   if [ "$1" == "true" ] ; then
     echo "Starting the mets server for the specific workspace in the background"
-    singularity exec \
+    apptainer exec \
       --bind "${BIND_WORKSPACE_DIR}" \
       "${SIF_PATH_IN_NODE}" \
       ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start \
@@ -168,7 +166,7 @@ stop_mets_server () {
 
   if [ "$1" == "true" ] ; then
     echo "Stopping the mets server"
-    singularity exec \
+    apptainer exec \
       --bind "${BIND_WORKSPACE_DIR}" \
       "${SIF_PATH_IN_NODE}" \
       ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server stop
@@ -227,7 +225,7 @@ list_file_groups_from_workspace () {
 
 remove_file_group_from_workspace () {
   echo "Removing file group: $1"
-  singularity exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" \
+  apptainer exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" \
   ocrd workspace -d "${WORKSPACE_DIR_IN_DOCKER}" remove-group -r -f "$1" \
   > "${WORKSPACE_DIR}/remove_file_groups.log" 2>&1
 }
@@ -276,4 +274,3 @@ execute_nextflow_workflow "$USE_METS_SERVER"
 stop_mets_server "$USE_METS_SERVER"
 remove_file_groups_from_workspace "$FILE_GROUPS_TO_REMOVE"
 zip_results
-clear_data_from_computing_node

@@ -1,22 +1,21 @@
 #!/bin/bash
-#SBATCH --constraint scratch
-#SBATCH --partition medium
-#SBATCH --time 06:00:00
-#SBATCH --output /scratch1/projects/project_pwieder_ocr/batch_job_logs/batch_download_all_ocrd_models_job-%J.txt
+#SBATCH --partition standard96:shared
+#SBATCH --time 6:00:00
+#SBATCH --output download_all_ocrd_models_job-%J.txt
 #SBATCH --cpus-per-task 16
-#SBATCH --mem 64G
+#SBATCH --mem 32G
 
 set -e
 
 module purge
-module load singularity
+module load apptainer
 
 hostname
 /opt/slurm/etc/scripts/misc/slurm_resources
 
 # This sif file is generated with another batch script
-SIF_PATH="/scratch1/projects/project_pwieder_ocr/ocrd_all_maximum_image.sif"
-OCRD_MODELS_DIR="/scratch1/projects/project_pwieder_ocr/ocrd_models"
+SIF_PATH="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_all_maximum_image.sif"
+OCRD_MODELS_DIR="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share"
 
 if [ ! -f "${SIF_PATH}" ]; then
@@ -28,11 +27,9 @@ if [ ! -d "${OCRD_MODELS_DIR}" ]; then
   mkdir -p "${OCRD_MODELS_DIR}"
 fi
 
-# Download all available ocrd models
-singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download '*'
-# Download models for ocrd-tesserocr-recognize which are not downloaded with the '*' glob
-singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download ocrd-tesserocr-recognize '*'
-# Download models for ocrd-kraken-recognize which are not downloaded with the '*' glob
-singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download ocrd-kraken-recognize '*'
-# Download models for ocrd-calamari-recognize which are not downloaded with the '*' glob
-singularity exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download ocrd-calamari-recognize '*'
+apptainer exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download -o '*'
+apptainer exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download -o ocrd-tesserocr-recognize '*'
+apptainer exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download -o ocrd-calamari-recognize '*'
+apptainer exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download -o ocrd-kraken-recognize '*'
+apptainer exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download -o ocrd-sbb-binarize '*'
+apptainer exec --bind "${OCRD_MODELS_DIR}:${OCRD_MODELS_DIR_IN_DOCKER}" "${SIF_PATH}" ocrd resmgr download -o ocrd-cis-ocropy-recognize '*'
