@@ -33,6 +33,7 @@ class NHRConnector:
         self._sftp_client = None
         # TODO: Make the sub cluster options selectable
         self.project_root_dir = join(HPC_NHR_CLUSTERS["EmmyPhase3"]["scratch-emmy-hdd"], project_env)
+        self.batch_scripts_dir = join(self.project_root_dir, "batch_scripts")
         self.slurm_workspaces_dir = join(self.project_root_dir, "slurm_workspaces")
 
     @property
