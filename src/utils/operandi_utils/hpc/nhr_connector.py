@@ -27,7 +27,7 @@ class NHRConnector:
         self.project_username = project_username
         self.key_path = Path(key_path)
         self.key_pass = key_pass
-        check_keyfile_existence(hpc_key_path=self.key_path)
+        self.check_keyfile_existence(key_path=self.key_path)
         self.logger.debug(f"Retrieving hpc frontend server private key file from path: {self.key_path}")
         self._ssh_client = None
         self._sftp_client = None

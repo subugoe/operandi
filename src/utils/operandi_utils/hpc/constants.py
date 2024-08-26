@@ -72,16 +72,17 @@ HPC_EXECUTOR_PROXY_HOSTS = ["login.gwdg.de"]
 HPC_TRANSFER_HOSTS = ["transfer-scc.gwdg.de", "transfer-mdc.hpc.gwdg.de"]
 HPC_TRANSFER_PROXY_HOSTS = ["transfer.gwdg.de", "login.gwdg.de"]
 HPC_PATH_HOME_USERS = "/home/users"
-HPC_ROOT_BASH_SCRIPT = f"{HPC_NHR_SCRATCH_EMMY_HDD}/invoke_batch_script.sh"
 HPC_DIR_BATCH_SCRIPTS = "batch_scripts"
 HPC_DIR_SLURM_WORKSPACES = "slurm_workspaces"
+# TODO: Fix the constant file name - it should be automatically resolved
+HPC_ROOT_BASH_SCRIPT = f"{HPC_NHR_SCRATCH_EMMY_HDD}/{HPC_DIR_BATCH_SCRIPTS}/wrapper_submit_workflow_job.sh"
 
 HPC_JOB_DEADLINE_TIME_REGULAR = "48:00:00"
 HPC_JOB_DEADLINE_TIME_TEST = "0:30:00"
 HPC_JOB_DEFAULT_PARTITION = "medium"
 HPC_JOB_TEST_PARTITION = "medium"
-HPC_NHR_JOB_DEFAULT_PARTITION = "standard96:shared"
-HPC_NHR_JOB_TEST_PARTITION = "standard96:shared"
+HPC_NHR_JOB_DEFAULT_PARTITION = "standard96s:shared"
+HPC_NHR_JOB_TEST_PARTITION = "standard96s:shared"
 
 # Check here: https://docs.hpc.gwdg.de/getting_started/transition/index.html
 HPC_JOB_QOS_SHORT = "2h"
