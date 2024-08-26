@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from operandi_utils import StateJob
-from operandi_utils.hpc.constants import HPC_JOB_DEFAULT_PARTITION
+from operandi_utils.hpc.constants import HPC_NHR_JOB_DEFAULT_PARTITION
 
 from ..constants import DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME
 
@@ -35,6 +35,6 @@ class WorkflowArguments(BaseModel):
 
 
 class SbatchArguments(BaseModel):
-    partition: str = HPC_JOB_DEFAULT_PARTITION  # partition to be used
+    partition: str = HPC_NHR_JOB_DEFAULT_PARTITION  # partition to be used
     cpus: int = 4  # cpus per job allocated by default
     ram: int = 32  # RAM (in GB) per job allocated by default
