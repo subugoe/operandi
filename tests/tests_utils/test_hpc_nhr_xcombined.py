@@ -20,7 +20,8 @@ ID_WORKSPACE_WITH_MS = f"test_ws_ms_{current_time}"
 ID_WORKFLOW_JOB = f"test_wf_job_{current_time}"
 ID_WORKSPACE = f"test_ws_{current_time}"
 
-project_root = join(HPC_NHR_CLUSTERS[""], "operandi_test")
+# TODO: Make project root more flexible based on the sub cluster
+project_root = join(HPC_NHR_CLUSTERS["EmmyPhase3"]["scratch-emmy-hdd"], environ["OPERANDI_HPC_PROJECT_NAME"])
 batch_scripts_dir = join(project_root, "batch_scripts")
 
 

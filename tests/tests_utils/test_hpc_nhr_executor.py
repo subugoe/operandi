@@ -1,11 +1,13 @@
 from datetime import datetime
+from os import environ
 from os.path import join
 from time import sleep
-
-from operandi_utils.hpc.constants import HPC_NHR_SCRATCH_EMMY_HDD
+from operandi_utils.hpc.constants import HPC_NHR_CLUSTERS
 
 current_time = datetime.now().strftime("%Y%m%d_%H%M")
-project_root = join(HPC_NHR_SCRATCH_EMMY_HDD, "operandi_test")
+# TODO: Make project root more flexible based on the sub cluster
+project_root = join(HPC_NHR_CLUSTERS["EmmyPhase3"]["scratch-emmy-hdd"], environ["OPERANDI_HPC_PROJECT_NAME"])
+
 
 def test_hpc_connector_executor_mk_dir(hpc_nhr_command_executor):
     test_dir_name = join(project_root, f"test_dir_{current_time}")

@@ -4,13 +4,14 @@ from os.path import join
 from time import sleep
 from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 from tests.constants import BATCH_SCRIPT_EMPTY
-
-from operandi_utils.hpc.constants import HPC_NHR_SCRATCH_EMMY_HDD
+from operandi_utils.hpc.constants import HPC_NHR_CLUSTERS
 
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
 current_time = datetime.now().strftime("%Y%m%d_%H%M")
 ID_WORKSPACE = f"test_folder_{current_time}"
-project_root = join(HPC_NHR_SCRATCH_EMMY_HDD, "operandi_test")
+
+# TODO: Make project root more flexible based on the sub cluster
+project_root = join(HPC_NHR_CLUSTERS["EmmyPhase3"]["scratch-emmy-hdd"], environ["OPERANDI_HPC_PROJECT_NAME"])
 
 def test_hpc_connector_transfer_file(hpc_nhr_data_transfer, path_batch_script_empty):
     """
