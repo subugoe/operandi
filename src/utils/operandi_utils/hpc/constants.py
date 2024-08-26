@@ -11,11 +11,8 @@ __all__ = [
     "HPC_JOB_QOS_VERY_LONG",
     "HPC_ROOT_BASH_SCRIPT",
     "HPC_SSH_CONNECTION_TRY_TIMES",
-
     "HPC_NHR_PROJECT",
     "HPC_NHR_CLUSTERS",
-    # TODO: Remove once CI/CD works
-    "HPC_NHR_SCRATCH_EMMY_HDD"
 ]
 
 HPC_NHR_PROJECT: str = "project_pwieder_ocr_nhr"
