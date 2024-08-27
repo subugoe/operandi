@@ -277,3 +277,4 @@ execute_nextflow_workflow "$USE_METS_SERVER"
 stop_mets_server "$USE_METS_SERVER"
 remove_file_groups_from_workspace "$FILE_GROUPS_TO_REMOVE"
 zip_results
+clear_data_from_computing_node
