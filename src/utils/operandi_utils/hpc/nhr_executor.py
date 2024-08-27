@@ -72,9 +72,6 @@ class NHRExecutor(NHRConnector):
 
         self.logger.info(f"About to execute a blocking command: {command}")
         output, err, return_code = self.execute_blocking(command)
-        print(f"Command output: {output}")
-        print(f"Command err: {err}")
-        print(f"Command return code: {return_code}")
         self.logger.info(f"Command output: {output}")
         self.logger.info(f"Command err: {err}")
         self.logger.info(f"Command return code: {return_code}")
