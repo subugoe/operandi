@@ -269,19 +269,11 @@ zip_results() {
 
 
 # Main loop for workflow job execution
-echo "About to check existence of paths"
 check_existence_of_paths
-echo "About to unzip workflow job dir"
 unzip_workflow_job_dir
-echo "About to transfer requirements to node storage"
 transfer_requirements_to_node_storage
-echo "About to start mets server if enabled"
 start_mets_server "$USE_METS_SERVER"
-echo "About to execute nextflow workflow"
 execute_nextflow_workflow "$USE_METS_SERVER"
-echo "About to stop mets server if enabled"
 stop_mets_server "$USE_METS_SERVER"
-echo "About to remove file groups from workspace"
 remove_file_groups_from_workspace "$FILE_GROUPS_TO_REMOVE"
-echo "About to zip results"
 zip_results
