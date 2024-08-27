@@ -4,7 +4,7 @@ from time import sleep
 from operandi_utils.constants import StateJobSlurm
 from .constants import (
     HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_DEFAULT, HPC_NHR_JOB_DEFAULT_PARTITION, HPC_BATCH_SUBMIT_WORKFLOW_JOB,
-    HPC_WRAPPER_SUBMIT_WORKFLOW_JOB
+    HPC_WRAPPER_SUBMIT_WORKFLOW_JOB, HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS
 )
 from .nhr_connector import NHRConnector
 
@@ -70,7 +70,7 @@ class NHRExecutor(NHRConnector):
         command += f" {use_mets_server_bash_flag}"
         command += f" {file_groups_to_remove}"
 
-        self.logger.info(f"About to execute a blocking command: {command}")
+        self.logger.info(f"About to execute a force command: {command}")
         output, err, return_code = self.execute_blocking(command)
         self.logger.info(f"Command output: {output}")
         self.logger.info(f"Command err: {err}")
@@ -81,12 +81,11 @@ class NHRExecutor(NHRConnector):
         return slurm_job_id
 
     def check_slurm_job_state(self, slurm_job_id: str, tries: int = 10, wait_time: int = 2) -> str:
-        # TODO: Use force command here
-        command = f"bash -lc 'sacct -j {slurm_job_id} --format=jobid,state,exitcode'"
+        command = f"{HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS} {slurm_job_id}"
         slurm_job_state = None
 
         while not slurm_job_state and tries > 0:
-            self.logger.info(f"About to execute a blocking command: {command}")
+            self.logger.info(f"About to execute a force command: {command}")
             output, err, return_code = self.execute_blocking(command)
             self.logger.info(f"Command output: {output}")
             self.logger.info(f"Command err: {err}")
