@@ -31,8 +31,8 @@ services:
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
       interval: 1s
-      timeout: 3s
-      retries: 30
+      timeout: 5s
+      retries: 120
 
   operandi-mongodb:
     image: "mongo"
@@ -50,8 +50,8 @@ services:
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 1s
-      timeout: 3s
-      retries: 30
+      timeout: 5s
+      retries: 120
 
   operandi-server:
     image: operandi-server
