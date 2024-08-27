@@ -2,7 +2,7 @@ from datetime import datetime
 from os.path import join
 from time import sleep
 
-current_time = datetime.now().strftime("%Y%m%d_%H%M")
+current_time = datetime.now().strftime("%Y%m%d_%H%M%S%f")
 
 
 def test_hpc_connector_executor_mk_dir(hpc_nhr_command_executor):

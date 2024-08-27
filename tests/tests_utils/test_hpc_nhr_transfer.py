@@ -6,7 +6,7 @@ from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 from tests.constants import BATCH_SCRIPT_EMPTY
 
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
-current_time = datetime.now().strftime("%Y%m%d_%H%M")
+current_time = datetime.now().strftime("%Y%m%d_%H%M%S%f")
 ID_WORKSPACE = f"test_folder_{current_time}"
 
 def test_hpc_connector_transfer_file(hpc_nhr_data_transfer, path_batch_script_empty):

@@ -13,7 +13,7 @@ from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
 
-current_time = datetime.now().strftime("%Y%m%d_%H%M")
+current_time = datetime.now().strftime("%Y%m%d_%H%M%S%f")
 ID_WORKFLOW_JOB_WITH_MS = f"test_wf_job_ms_{current_time}"
 ID_WORKSPACE_WITH_MS = f"test_ws_ms_{current_time}"
 ID_WORKFLOW_JOB = f"test_wf_job_{current_time}"
