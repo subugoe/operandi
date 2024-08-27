@@ -10,10 +10,10 @@ from operandi_utils.constants import LOG_LEVEL_WORKER, StateJob, StateWorkspace
 from operandi_utils.database import (
     sync_db_initiate_database, sync_db_get_workflow, sync_db_get_workspace, sync_db_create_hpc_slurm_job,
     sync_db_update_workflow_job, sync_db_update_workspace)
-from operandi_utils.hpc import HPCExecutor, HPCTransfer
+from operandi_utils.hpc import NHRExecutor, NHRTransfer
 from operandi_utils.hpc.constants import (
-    HPC_JOB_DEADLINE_TIME_REGULAR, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_SHORT, HPC_JOB_QOS_DEFAULT
-)
+    HPC_BATCH_SUBMIT_WORKFLOW_JOB, HPC_JOB_DEADLINE_TIME_REGULAR, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_SHORT,
+    HPC_JOB_QOS_DEFAULT)
 from operandi_utils.rabbitmq import get_connection_consumer
 
 
@@ -58,9 +58,9 @@ class Worker:
             signal.signal(signal.SIGTERM, self.signal_handler)
 
             sync_db_initiate_database(self.db_url)
-            self.hpc_executor = HPCExecutor(tunnel_host='localhost', tunnel_port=self.tunnel_port_executor)
+            self.hpc_executor = NHRExecutor()
             self.log.info("HPC executor connection successful.")
-            self.hpc_io_transfer = HPCTransfer(tunnel_host='localhost', tunnel_port=self.tunnel_port_transfer)
+            self.hpc_io_transfer = NHRTransfer()
             self.log.info("HPC transfer connection successful.")
 
             self.rmq_consumer = get_connection_consumer(rabbitmq_url=self.rmq_url)
@@ -214,8 +214,6 @@ class Worker:
         # self.hpc_io_transfer = HPCTransfer(tunel_host='localhost', tunel_port=4023)
         # self.log.info("HPC transfer connection renewed successfully.")
 
-        hpc_batch_script_path = self.hpc_io_transfer.put_batch_script(batch_script_id="batch_submit_workflow_job.sh")
-
         try:
             sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_TO_HPC)
             sync_db_update_workflow_job(find_job_id=workflow_job_id, job_state=StateJob.TRANSFERRING_TO_HPC)
@@ -228,8 +226,8 @@ class Worker:
         try:
             # NOTE: The paths below must be a valid existing path inside the HPC
             slurm_job_id = self.hpc_executor.trigger_slurm_job(
-                batch_script_path=hpc_batch_script_path, workflow_job_id=workflow_job_id,
-                nextflow_script_path=workflow_script_path, workspace_id=workspace_id, mets_basename=workspace_base_mets,
+                workflow_job_id=workflow_job_id, nextflow_script_path=workflow_script_path,
+                workspace_id=workspace_id, mets_basename=workspace_base_mets,
                 input_file_grp=input_file_grp, nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount,
                 use_mets_server=use_mets_server, file_groups_to_remove=file_groups_to_remove, cpus=cpus, ram=ram,
                 job_deadline_time=job_deadline_time, partition=partition, qos=qos)
@@ -239,7 +237,7 @@ class Worker:
         try:
             sync_db_create_hpc_slurm_job(
                 workflow_job_id=workflow_job_id, hpc_slurm_job_id=slurm_job_id,
-                hpc_batch_script_path=hpc_batch_script_path,
+                hpc_batch_script_path=HPC_BATCH_SUBMIT_WORKFLOW_JOB,
                 hpc_slurm_workspace_path=join(self.hpc_io_transfer.slurm_workspaces_dir, workflow_job_id))
         except Exception as error:
             raise Exception(f"Failed to save the hpc slurm job in DB: {error}")

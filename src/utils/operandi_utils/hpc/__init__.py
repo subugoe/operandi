@@ -1,9 +1,5 @@
-__all__ = [
-    "HPCConnector",
-    "HPCExecutor",
-    "HPCTransfer"
-]
+__all__ = ["NHRConnector", "NHRExecutor", "NHRTransfer"]
 
-from operandi_utils.hpc.connector import HPCConnector
-from operandi_utils.hpc.executor import HPCExecutor
-from operandi_utils.hpc.transfer import HPCTransfer
+from operandi_utils.hpc.nhr_connector import NHRConnector
+from operandi_utils.hpc.nhr_executor import NHRExecutor
+from operandi_utils.hpc.nhr_transfer import NHRTransfer

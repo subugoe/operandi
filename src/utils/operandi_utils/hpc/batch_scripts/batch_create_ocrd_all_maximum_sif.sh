@@ -1,23 +1,23 @@
 #!/bin/bash
-#SBATCH --constraint scratch
-#SBATCH --partition medium
-#SBATCH --time 02:00:00
-#SBATCH --output /scratch1/projects/project_pwieder_ocr/batch_job_logs/batch_create_ocrd_all_sif_job-%J.txt
+#SBATCH --partition standard96:shared
+#SBATCH --time 2:00:00
+#SBATCH --output create_ocrd_all_sif_job-%J.txt
 #SBATCH --cpus-per-task 16
 #SBATCH --mem 64G
 
 set -e
 
 module purge
-module load singularity
+module load apptainer
 
 hostname
 /opt/slurm/etc/scripts/misc/slurm_resources
 
-SINGULARITY_CACHE_DIR="/scratch1/projects/project_pwieder_ocr"
-SIF_NAME="ocrd_all_maximum_image.sif"
+APPTAINER_TMPDIR="$LOCAL_TMPDIR"
+APPTAINER_CACHE_DIR="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr"
+SIF_NAME="ocrd_all_maximum_image_new.sif"
 OCRD_ALL_MAXIMUM_IMAGE="docker://ocrd/all:latest"
 
-cd "${SINGULARITY_CACHE_DIR}" || exit
-singularity build --disable-cache "${SIF_NAME}" "${OCRD_ALL_MAXIMUM_IMAGE}"
-singularity exec "${SIF_NAME}" ocrd --version
+cd "${APPTAINER_CACHE_DIR}" || exit
+apptainer build --disable-cache "${SIF_NAME}" "${OCRD_ALL_MAXIMUM_IMAGE}"
+apptainer exec "${SIF_NAME}" ocrd --version

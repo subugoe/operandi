@@ -31,8 +31,8 @@ services:
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
       interval: 1s
-      timeout: 3s
-      retries: 30
+      timeout: 5s
+      retries: 120
 
   operandi-mongodb:
     image: "mongo"
@@ -50,15 +50,15 @@ services:
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 1s
-      timeout: 3s
-      retries: 30
+      timeout: 5s
+      retries: 120
 
   operandi-server:
     image: operandi-server
     container_name: operandi-server
     build:
       context: ./src
-      dockerfile: ./Dockerfile_server  
+      dockerfile: ./Dockerfile_server
     depends_on:
       operandi-rabbitmq:
         condition: service_healthy
@@ -102,7 +102,6 @@ services:
       - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
       - OPERANDI_DB_URL=${OPERANDI_DB_URL}
       - OPERANDI_HPC_PROJECT_NAME=${OPERANDI_HPC_PROJECT_NAME}
-      - OPERANDI_HPC_USERNAME=${OPERANDI_HPC_USERNAME}
       - OPERANDI_HPC_PROJECT_USERNAME=${OPERANDI_HPC_PROJECT_USERNAME}
       - OPERANDI_HPC_SSH_KEYPATH=/home/root/.ssh/gwdg_hpc_key
       - OPERANDI_LOGS_DIR=${OPERANDI_LOGS_DIR}

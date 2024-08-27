@@ -1,5 +1,4 @@
 #!/bin/bash
-#SBATCH --constraint scratch
 
 set -e
 
@@ -18,9 +17,9 @@ set -e
 # $11 - Boolean flag showing whether a mets server is utilized or not
 # $12 - File groups to be removed from the workspace after the processing
 
-SIF_PATH="/scratch1/projects/project_pwieder_ocr/ocrd_all_maximum_image.sif"
+SIF_PATH="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_all_maximum_image.sif"
 SIF_PATH_IN_NODE="${TMP_LOCAL}/ocrd_all_maximum_image.sif"
-OCRD_MODELS_DIR="/scratch1/projects/project_pwieder_ocr/ocrd_models"
+OCRD_MODELS_DIR="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_models"
 OCRD_MODELS_DIR_IN_NODE="${TMP_LOCAL}/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share/ocrd-resources"
 BIND_OCRD_MODELS="${OCRD_MODELS_DIR_IN_NODE}/ocrd-resources:${OCRD_MODELS_DIR_IN_DOCKER}"
@@ -51,7 +50,7 @@ hostname
 /opt/slurm/etc/scripts/misc/slurm_resources
 
 module purge
-module load singularity
+module load apptainer
 module load nextflow
 # module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
 
@@ -61,7 +60,6 @@ echo "Workspace dir: $WORKSPACE_DIR"
 echo "Nextflow script path: $NF_SCRIPT_PATH"
 echo "Use mets server: $USE_METS_SERVER"
 echo "Used file group: $IN_FILE_GRP"
-echo "File groups to remove: $FILE_GROUPS_TO_REMOVE"
 echo "Pages: $PAGES"
 
 # To submit separate jobs for each process in the NF script
@@ -69,18 +67,20 @@ echo "Pages: $PAGES"
 
 
 # Define functions to be used
-check_existence_of_paths () {
+check_existence_of_paths() {
   # The SIF file of the OCR-D All docker image must be previously created
   if [ ! -f "${SIF_PATH}" ]; then
     echo "Required ocrd_all_image sif file not found at: ${SIF_PATH}"
     exit 1
   fi
+  echo "Required ocrd_all_image sif file found at: ${SIF_PATH}"
 
   # Models directory must be previously filled with OCR-D models
   if [ ! -d "${OCRD_MODELS_DIR}" ]; then
     echo "Ocrd models directory not found at: ${OCRD_MODELS_DIR}"
     exit 1
   fi
+  echo "Ocrd models directory found at: ${OCRD_MODELS_DIR}"
 
   if [ ! -d "${SCRATCH_BASE}" ]; then
     mkdir -p "${SCRATCH_BASE}"
@@ -90,9 +90,10 @@ check_existence_of_paths () {
     echo "Required scratch base dir was not created: ${SCRATCH_BASE}"
     exit 1
   fi
+  echo "Scratch base found/created at: ${SCRATCH_BASE}"
 }
 
-clear_data_from_computing_node () {
+clear_data_from_computing_node() {
   echo "If existing, removing the SIF from the computing node, path: ${SIF_PATH_IN_NODE}"
   rm -f "${SIF_PATH_IN_NODE}"
   echo "If existing, removing the OCR-D models from the computing node, path: ${OCRD_MODELS_DIR_IN_NODE}"
@@ -107,7 +108,7 @@ transfer_requirements_to_node_storage() {
     exit 1
   else
     echo "Successfully transferred SIF to node local storage"
-    singularity exec "$SIF_PATH_IN_NODE" ocrd --version
+    apptainer exec "$SIF_PATH_IN_NODE" ocrd --version
   fi
 
   cp -R "${OCRD_MODELS_DIR}" "${OCRD_MODELS_DIR_IN_NODE}"
@@ -120,7 +121,7 @@ transfer_requirements_to_node_storage() {
   fi
 }
 
-unzip_workflow_job_dir () {
+unzip_workflow_job_dir() {
   if [ ! -f "${WORKFLOW_JOB_DIR}.zip" ]; then
     echo "Required scratch slurm workspace zip is not available: ${WORKFLOW_JOB_DIR}.zip"
     exit 1
@@ -140,9 +141,9 @@ unzip_workflow_job_dir () {
   cd "${WORKFLOW_JOB_DIR}" || exit 1
 }
 
-start_mets_server () {
+start_mets_server() {
   # TODO: Would be better to start the mets server as an instance, but this is still broken
-  # singularity instance start \
+  # apptainer instance start \
   #   --bind "${BIND_WORKSPACE_DIR}" \
   #   "${SIF_PATH_IN_NODE}" \
   #   instance_mets_server \
@@ -150,7 +151,7 @@ start_mets_server () {
 
   if [ "$1" == "true" ] ; then
     echo "Starting the mets server for the specific workspace in the background"
-    singularity exec \
+    apptainer exec \
       --bind "${BIND_WORKSPACE_DIR}" \
       "${SIF_PATH_IN_NODE}" \
       ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start \
@@ -159,7 +160,7 @@ start_mets_server () {
   sleep 10
 }
 
-stop_mets_server () {
+stop_mets_server() {
   # Not supported in the HPC (the version there is <7.40)
   # curl -X DELETE --unix-socket "${WORKSPACE_DIR}/${METS_SOCKET_BASENAME}" "http://localhost/"
 
@@ -168,15 +169,15 @@ stop_mets_server () {
 
   if [ "$1" == "true" ] ; then
     echo "Stopping the mets server"
-    singularity exec \
+    apptainer exec \
       --bind "${BIND_WORKSPACE_DIR}" \
       "${SIF_PATH_IN_NODE}" \
       ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server stop
   fi
 }
 
-execute_nextflow_workflow () {
-  local SINGULARITY_CMD="singularity exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=false ${SIF_PATH_IN_NODE}"
+execute_nextflow_workflow() {
+  local APPTAINER_CMD="apptainer exec --bind ${BIND_WORKSPACE_DIR} --bind ${BIND_OCRD_MODELS} --env OCRD_METS_CACHING=false ${SIF_PATH_IN_NODE}"
   if [ "$1" == "true" ] ; then
     echo "Executing the nextflow workflow with mets server"
     nextflow run "${NF_SCRIPT_PATH}" \
@@ -187,7 +188,7 @@ execute_nextflow_workflow () {
     --mets_socket "${BIND_METS_SOCKET_PATH}" \
     --workspace_dir "${WORKSPACE_DIR_IN_DOCKER}" \
     --pages "${PAGES}" \
-    --singularity_wrapper "${SINGULARITY_CMD}" \
+    --singularity_wrapper "${APPTAINER_CMD}" \
     --cpus "${CPUS}" \
     --ram "${RAM}" \
     --forks "${FORKS}"
@@ -200,7 +201,7 @@ execute_nextflow_workflow () {
     --mets "${BIND_METS_FILE_PATH}" \
     --workspace_dir "${WORKSPACE_DIR_IN_DOCKER}" \
     --pages "${PAGES}" \
-    --singularity_wrapper "${SINGULARITY_CMD}" \
+    --singularity_wrapper "${APPTAINER_CMD}" \
     --cpus "${CPUS}" \
     --ram "${RAM}" \
     --forks "${FORKS}"
@@ -212,9 +213,9 @@ execute_nextflow_workflow () {
   esac
 }
 
-list_file_groups_from_workspace () {
+list_file_groups_from_workspace() {
     all_file_groups=()
-    mapfile -t all_file_groups < <(singularity exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" ocrd workspace -d "${WORKSPACE_DIR_IN_DOCKER}" list-group)
+    mapfile -t all_file_groups < <(apptainer exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" ocrd workspace -d "${WORKSPACE_DIR_IN_DOCKER}" list-group)
     file_groups_length=${#all_file_groups[@]}
     echo -n "File groups: "
     for file_group in "${all_file_groups[@]}"
@@ -225,14 +226,14 @@ list_file_groups_from_workspace () {
     echo
 }
 
-remove_file_group_from_workspace () {
+remove_file_group_from_workspace() {
   echo "Removing file group: $1"
-  singularity exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" \
+  apptainer exec --bind "${BIND_WORKSPACE_DIR}" "${SIF_PATH_IN_NODE}" \
   ocrd workspace -d "${WORKSPACE_DIR_IN_DOCKER}" remove-group -r -f "$1" \
   > "${WORKSPACE_DIR}/remove_file_groups.log" 2>&1
 }
 
-remove_file_groups_from_workspace () {
+remove_file_groups_from_workspace() {
   list_file_groups_from_workspace
   if [ "$1" != "" ] ; then
     echo "Splitting file groups to an array"
@@ -252,7 +253,7 @@ remove_file_groups_from_workspace () {
   fi
 }
 
-zip_results () {
+zip_results() {
   # Delete symlinks created for the Nextflow workers
   find "${WORKFLOW_JOB_DIR}" -type l -delete
   # Create a zip of the ocrd workspace dir
