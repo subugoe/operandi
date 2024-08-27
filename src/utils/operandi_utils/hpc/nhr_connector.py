@@ -32,7 +32,7 @@ class NHRConnector:
         self._ssh_client = None
         self._sftp_client = None
         # TODO: Make the sub cluster options selectable
-        self.project_root_dir = join(HPC_NHR_CLUSTERS["EmmyPhase3"]["scratch-emmy-hdd"], project_env)
+        self.project_root_dir = join(HPC_NHR_CLUSTERS["EmmyPhase2"]["scratch-emmy-hdd"], project_env)
         self.batch_scripts_dir = join(self.project_root_dir, "batch_scripts")
         self.slurm_workspaces_dir = join(self.project_root_dir, "slurm_workspaces")
 
@@ -40,7 +40,7 @@ class NHRConnector:
     def ssh_client(self):
         if not self._ssh_client:
             # TODO: Make the sub cluster option selectable
-            self._ssh_client = self.connect_to_hpc_nhr_frontend_server(host=HPC_NHR_CLUSTERS["EmmyPhase3"]["host"])
+            self._ssh_client = self.connect_to_hpc_nhr_frontend_server(host=HPC_NHR_CLUSTERS["EmmyPhase2"]["host"])
             # self._ssh_client.get_transport().set_keepalive(30)
         return self._ssh_client
 
