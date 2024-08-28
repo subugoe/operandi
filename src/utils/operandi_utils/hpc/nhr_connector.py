@@ -39,9 +39,13 @@ class NHRConnector:
 
     @property
     def ssh_client(self):
-        if not self._ssh_client:
-            self._ssh_client = self.connect_to_hpc_nhr_frontend_server(host=HPC_NHR_CLUSTERS["EmmyPhase2"]["host"])
-            self._ssh_client.get_transport().set_keepalive(30)
+        if self._ssh_client:
+            self._ssh_client.close()
+            self._ssh_client = None
+        self._ssh_client = self.connect_to_hpc_nhr_frontend_server(host=HPC_NHR_CLUSTERS["EmmyPhase2"]["host"])
+        # self._ssh_client.get_transport().set_keepalive(30)
+
+        """
         try:
             # Note: This extra check is required against aggressive
             # Firewalls that ignore the keepalive option!
@@ -58,6 +62,11 @@ class NHRConnector:
             self._ssh_reconnect_tries_remaining -= 1
             return self.ssh_client  # recursive call to itself to try again
         return self._ssh_client
+        """
+
+        return self._ssh_client
+
+
 
     @staticmethod
     def check_keyfile_existence(key_path: Path):

@@ -21,9 +21,13 @@ class NHRTransfer(NHRConnector):
 
     @property
     def sftp_client(self):
-        if not self._sftp_client:
-            self._sftp_client = self.ssh_client.open_sftp()
-            self._sftp_client.get_channel().get_transport().set_keepalive(30)
+        if self._sftp_client:
+            self._sftp_client.close()
+            self._ssh_client = None
+        self._sftp_client = self.ssh_client.open_sftp()
+        # self._sftp_client.get_channel().get_transport().set_keepalive(30)
+
+        """
         try:
             # Note: This extra check is required against aggressive
             # Firewalls that ignore the keepalive option!
@@ -40,6 +44,9 @@ class NHRTransfer(NHRConnector):
             self._sftp_reconnect_tries_remaining -= 1
             return self.sftp_client  # recursive call to itself to try again
         return self._sftp_client
+        """
+
+        return self._ssh_client
 
     def create_slurm_workspace_zip(
         self, ocrd_workspace_dir: str, workflow_job_id: str, nextflow_script_path: str,
