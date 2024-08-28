@@ -16,6 +16,8 @@ class NHRTransfer(NHRConnector):
         logger = getLogger(name=self.__class__.__name__)
         super().__init__(logger)
         self._sftp_client = None
+        self._sftp_reconnect_tries = 5
+        self._sftp_reconnect_tries_remaining = self._sftp_reconnect_tries
 
     @property
     def sftp_client(self):
@@ -26,14 +28,17 @@ class NHRTransfer(NHRConnector):
             # Note: This extra check is required against aggressive
             # Firewalls that ignore the keepalive option!
             self._sftp_client.get_channel().get_transport().send_ignore()
+            self._sftp_reconnect_tries_remaining = self._sftp_reconnect_tries
         except Exception as error:
-            self.logger.warning(f"SFTP client error: {error}")
+            self.logger.warning(f"SFTP client failed to send ignore, connection is broken: {error}")
             if self._sftp_client:
                 self._sftp_client.close()
                 self._sftp_client = None
-            self.logger.info(f"Reconnecting the SFTP client")
-            self._sftp_client = self.ssh_client.open_sftp()
-            self._sftp_client.get_channel().get_transport().set_keepalive(30)
+            if self._sftp_reconnect_tries_remaining < 0:
+                raise Exception(f"Failed to reconnect {self._sftp_reconnect_tries} times: {error}")
+            self.logger.info(f"Reconnecting the SFTP client, try times: {self._sftp_reconnect_tries_remaining}")
+            self._sftp_reconnect_tries_remaining -= 1
+            return self.sftp_client  # recursive call to itself to try again
         return self._sftp_client
 
     def create_slurm_workspace_zip(
