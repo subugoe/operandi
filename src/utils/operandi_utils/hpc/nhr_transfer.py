@@ -86,6 +86,7 @@ class NHRTransfer(NHRConnector):
     def put_slurm_workspace(self, local_src_slurm_zip: str, workflow_job_id: str) -> str:
         self.logger.info(f"Workflow job id to be used: {workflow_job_id}")
         hpc_dst_slurm_zip = join(self.slurm_workspaces_dir, f"{workflow_job_id}.zip")
+        self.sftp_client()  # Force reconnect of the SFTP Client
         self.put_file(local_src=local_src_slurm_zip, remote_dst=hpc_dst_slurm_zip)
         self.logger.info(f"Put file from local src: {local_src_slurm_zip}, to remote dst: {hpc_dst_slurm_zip}")
         self.logger.info(f"Leaving put_slurm_workspace, returning: {hpc_dst_slurm_zip}")
@@ -126,6 +127,7 @@ class NHRTransfer(NHRConnector):
         get_src = join(self.slurm_workspaces_dir, workflow_job_id, f"{workflow_job_id}.zip")
         get_dst = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
 
+        self.sftp_client()  # Force reconnect of the SFTP Client
         self._get_file_with_retries(remote_src=get_src, local_dst=get_dst)
         self.logger.info(f"Got workflow job zip file from src: {get_src}, to dst: {get_dst}")
 
@@ -195,22 +197,22 @@ class NHRTransfer(NHRConnector):
 
     def mkdir_p(self, remote_path, mode=0o766):
         if remote_path == '/':
-            self.sftp_client.chdir('/')  # absolute path so change directory to root
+            self._sftp_client.chdir('/')  # absolute path so change directory to root
             return False
         if remote_path == '':
             return False  # top-level relative directory must exist
         try:
-            self.sftp_client.chdir(remote_path)  # subdirectory exists
+            self._sftp_client.chdir(remote_path)  # subdirectory exists
         except IOError as error:
             dir_name, base_name = split(remote_path.rstrip('/'))
             self.mkdir_p(dir_name)  # make parent directories
-            self.sftp_client.mkdir(path=base_name, mode=mode)  # subdirectory missing, so created it
-            self.sftp_client.chdir(base_name)
+            self._sftp_client.mkdir(path=base_name, mode=mode)  # subdirectory missing, so created it
+            self._sftp_client.chdir(base_name)
             return True
 
     def get_file(self, remote_src, local_dst):
         makedirs(name=Path(local_dst).parent.absolute(), exist_ok=True)
-        self.sftp_client.get(remotepath=remote_src, localpath=local_dst)
+        self._sftp_client.get(remotepath=remote_src, localpath=local_dst)
 
     def get_dir(self, remote_src, local_dst, mode=0o766):
         """
@@ -219,17 +221,17 @@ class NHRTransfer(NHRConnector):
         All subdirectories in source are created under destination.
         """
         makedirs(name=local_dst, mode=mode, exist_ok=True)
-        for item in self.sftp_client.listdir(remote_src):
+        for item in self._sftp_client.listdir(remote_src):
             item_src = join(remote_src, item)
             item_dst = join(local_dst, item)
-            if S_ISDIR(self.sftp_client.lstat(item_src).st_mode):
+            if S_ISDIR(self._sftp_client.lstat(item_src).st_mode):
                 self.get_dir(remote_src=item_src, local_dst=item_dst, mode=mode)
             else:
                 self.get_file(remote_src=item_src, local_dst=item_dst)
 
     def put_file(self, local_src, remote_dst):
         self.mkdir_p(remote_path=str(Path(remote_dst).parent.absolute()))
-        self.sftp_client.put(localpath=local_src, remotepath=remote_dst)
+        self._sftp_client.put(localpath=local_src, remotepath=remote_dst)
 
     def put_dir(self, local_src, remote_dst, mode=0o766):
         """
@@ -244,5 +246,5 @@ class NHRTransfer(NHRConnector):
             if isdir(item_src):
                 self.put_dir(local_src=item_src, remote_dst=item_dst, mode=mode)
             else:
-                self.sftp_client.chdir(remote_dst)
+                self._sftp_client.chdir(remote_dst)
                 self.put_file(local_src=item_src, remote_dst=item_dst)
