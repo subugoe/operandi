@@ -216,12 +216,14 @@ class RouterWorkflow:
         `curl -X GET SERVER_ADDR/workflow/{workflow_id}/{job_id}`
         """
         await self.user_authenticator.user_login(auth)
-        await self._push_status_request_to_rabbitmq(job_id=job_id)
 
         db_wf_job = await get_db_workflow_job_with_handling(self.logger, job_id=job_id, check_local_existence=True)
         workspace_id = db_wf_job.workspace_id
         db_workspace = await get_db_workspace_with_handling(
             self.logger, workspace_id=workspace_id, check_ready=False, check_deleted=True, check_local_existence=True)
+
+        if db_wf_job.job_state != StateJob.FAILED and db_wf_job.job_state != StateJob.SUCCESS:
+            await self._push_status_request_to_rabbitmq(job_id=job_id)
 
         # TODO: Fix that by getting rid of the FileManager module
         try:
