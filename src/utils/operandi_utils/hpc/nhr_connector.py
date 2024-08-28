@@ -30,7 +30,6 @@ class NHRConnector:
         self.check_keyfile_existence(key_path=self.key_path)
         self.logger.debug(f"Retrieving hpc frontend server private key file from path: {self.key_path}")
         self._ssh_client = None
-        self._sftp_client = None
         # TODO: Make the sub cluster options selectable
         self.project_root_dir = join(HPC_NHR_CLUSTERS["EmmyPhase2"]["scratch-emmy-hdd"], project_env)
         self.batch_scripts_dir = join(self.project_root_dir, "batch_scripts")
@@ -38,9 +37,10 @@ class NHRConnector:
 
     @property
     def ssh_client(self):
+        if not self._ssh_client:
+            self._ssh_client = self.connect_to_hpc_nhr_frontend_server(host=HPC_NHR_CLUSTERS["EmmyPhase2"]["host"])
+            self._ssh_client.get_transport().set_keepalive(30)
         try:
-            if not self._ssh_client:
-                self._ssh_client = self.connect_to_hpc_nhr_frontend_server(host=HPC_NHR_CLUSTERS["EmmyPhase2"]["host"])
             # Note: This extra check is required against aggressive
             # Firewalls that ignore the keepalive option!
             self._ssh_client.get_transport().send_ignore()
@@ -62,11 +62,11 @@ class NHRConnector:
             raise FileNotFoundError(f"HPC private key path is not a file: {key_path}")
 
     def connect_to_hpc_nhr_frontend_server(self, host: str, port: int = 22) -> SSHClient:
-        self._ssh_client = SSHClient()
-        self.ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+        ssh_client = SSHClient()
+        ssh_client.set_missing_host_key_policy(AutoAddPolicy())
         hpc_pkey = RSAKey.from_private_key_file(str(self.key_path), self.key_pass)
         self.logger.info(f"Connecting to hpc frontend server {host}:{port} with username: {self.project_username}")
-        self.ssh_client.connect(
+        ssh_client.connect(
             hostname=host, port=port, username=self.project_username, pkey=hpc_pkey, passphrase=self.key_pass)
         self.logger.debug(f"Successfully connected to the hpc frontend server")
-        return self.ssh_client
+        return ssh_client

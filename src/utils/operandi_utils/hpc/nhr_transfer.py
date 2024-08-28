@@ -15,15 +15,17 @@ class NHRTransfer(NHRConnector):
     def __init__(self) -> None:
         logger = getLogger(name=self.__class__.__name__)
         super().__init__(logger)
+        self._sftp_client = None
 
     @property
     def sftp_client(self):
+        if not self._sftp_client:
+            self._sftp_client = self.ssh_client.open_sftp()
+            self._sftp_client.get_channel().get_transport().set_keepalive(30)
         try:
-            if not self._sftp_client:
-                self._sftp_client = self.ssh_client.open_sftp()
             # Note: This extra check is required against aggressive
             # Firewalls that ignore the keepalive option!
-            self._sftp_client.get_transport().send_ignore()
+            self._sftp_client.get_channel().get_transport().send_ignore()
         except Exception as error:
             self.logger.warning(f"SFTP client error: {error}")
             if self._sftp_client:
@@ -31,7 +33,7 @@ class NHRTransfer(NHRConnector):
                 self._sftp_client = None
             self.logger.info(f"Reconnecting the SFTP client")
             self._sftp_client = self.ssh_client.open_sftp()
-            self._sftp_client.get_transport().set_keepalive(30)
+            self._sftp_client.get_channel().get_transport().set_keepalive(30)
         return self._sftp_client
 
     def create_slurm_workspace_zip(
