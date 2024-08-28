@@ -39,6 +39,8 @@ class NHRConnector:
     @property
     def ssh_client(self):
         try:
+            if not self._ssh_client:
+                self._ssh_client = self.connect_to_hpc_nhr_frontend_server(host=HPC_NHR_CLUSTERS["EmmyPhase2"]["host"])
             # Note: This extra check is required against aggressive
             # Firewalls that ignore the keepalive option!
             self._ssh_client.get_transport().send_ignore()

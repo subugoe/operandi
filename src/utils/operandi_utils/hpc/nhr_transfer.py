@@ -19,6 +19,8 @@ class NHRTransfer(NHRConnector):
     @property
     def sftp_client(self):
         try:
+            if not self._sftp_client:
+                self._sftp_client = self.ssh_client.open_sftp()
             # Note: This extra check is required against aggressive
             # Firewalls that ignore the keepalive option!
             self._sftp_client.get_transport().send_ignore()
