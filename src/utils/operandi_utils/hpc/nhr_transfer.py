@@ -18,6 +18,7 @@ class NHRTransfer(NHRConnector):
         self._sftp_client = None
         self._sftp_reconnect_tries = 5
         self._sftp_reconnect_tries_remaining = self._sftp_reconnect_tries
+        _ = self.sftp_client  # forces a connection
 
     @property
     def sftp_client(self):

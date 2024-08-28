@@ -12,6 +12,7 @@ class NHRExecutor(NHRConnector):
     def __init__(self) -> None:
         logger = getLogger(name=self.__class__.__name__)
         super().__init__(logger)
+        _ = self.ssh_client  # forces a connection
 
     # Execute blocking commands and wait for an output and return code
     def execute_blocking(self, command, timeout=None, environment=None):
