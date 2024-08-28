@@ -38,10 +38,18 @@ class NHRConnector:
 
     @property
     def ssh_client(self):
-        if not self._ssh_client:
-            # TODO: Make the sub cluster option selectable
+        try:
+            # Note: This extra check is required against aggressive
+            # Firewalls that ignore the keepalive option!
+            self._ssh_client.get_transport().send_ignore()
+        except Exception as error:
+            self.logger.warning(f"SSH client error: {error}")
+            if self._ssh_client:
+                self._ssh_client.close()
+                self._ssh_client = None
+            self.logger.info(f"Reconnecting the SSH client")
             self._ssh_client = self.connect_to_hpc_nhr_frontend_server(host=HPC_NHR_CLUSTERS["EmmyPhase2"]["host"])
-            # self._ssh_client.get_transport().set_keepalive(30)
+            self._ssh_client.get_transport().set_keepalive(30)
         return self._ssh_client
 
     @staticmethod
