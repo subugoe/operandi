@@ -87,7 +87,7 @@ class NHRTransfer(NHRConnector):
     def put_slurm_workspace(self, local_src_slurm_zip: str, workflow_job_id: str) -> str:
         self.logger.info(f"Workflow job id to be used: {workflow_job_id}")
         hpc_dst_slurm_zip = join(self.slurm_workspaces_dir, f"{workflow_job_id}.zip")
-        self.sftp_client()  # Force reconnect of the SFTP Client
+        _ = self.sftp_client  # Force reconnect of the SFTP Client
         self.put_file(local_src=local_src_slurm_zip, remote_dst=hpc_dst_slurm_zip)
         self.logger.info(f"Put file from local src: {local_src_slurm_zip}, to remote dst: {hpc_dst_slurm_zip}")
         self.logger.info(f"Leaving put_slurm_workspace, returning: {hpc_dst_slurm_zip}")
@@ -128,7 +128,7 @@ class NHRTransfer(NHRConnector):
         get_src = join(self.slurm_workspaces_dir, workflow_job_id, f"{workflow_job_id}.zip")
         get_dst = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
 
-        self.sftp_client()  # Force reconnect of the SFTP Client
+        _ = self.sftp_client  # Force reconnect of the SFTP Client
         self._get_file_with_retries(remote_src=get_src, local_dst=get_dst)
         self.logger.info(f"Got workflow job zip file from src: {get_src}, to dst: {get_dst}")
 
