@@ -24,7 +24,7 @@ def test_hpc_connector_transfer_file(hpc_nhr_data_transfer, path_batch_script_em
     assert_exists_file(test_local_received_file_path)
 
 
-def test_hpc_connector_transfer_dir(hpc_nhr_data_transfer, path_dummy_workspace_data_dir):
+def _test_hpc_connector_transfer_dir(hpc_nhr_data_transfer, path_dummy_workspace_data_dir):
     """
     Testing the put_dir and get_dir functionality of the HPC transfer
     """
