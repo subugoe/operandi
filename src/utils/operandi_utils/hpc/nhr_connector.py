@@ -66,8 +66,6 @@ class NHRConnector:
 
         return self._ssh_client
 
-
-
     @staticmethod
     def check_keyfile_existence(key_path: Path):
         if not key_path.exists():

@@ -45,8 +45,7 @@ class NHRTransfer(NHRConnector):
             return self.sftp_client  # recursive call to itself to try again
         return self._sftp_client
         """
-
-        return self._ssh_client
+        return self._sftp_client
 
     def create_slurm_workspace_zip(
         self, ocrd_workspace_dir: str, workflow_job_id: str, nextflow_script_path: str,
