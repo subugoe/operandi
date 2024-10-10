@@ -62,7 +62,7 @@ process ocrd_tesserocr_recognize {
         val output_group
     script:
     """
-    ${params.singularity_wrapper} tesserocr-recognize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P segmentation_level region -P textequiv_level word -P find_tables true -P model deu
+    ${params.singularity_wrapper} ocrd-tesserocr-recognize -U ${params.mets_socket} -w ${params.workspace_dir} -m ${params.mets} --page-id ${page_range} -I ${input_group} -O ${output_group} -P segmentation_level region -P textequiv_level word -P find_tables true -P model deu
     """
 }
 
