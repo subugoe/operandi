@@ -77,7 +77,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
         "workflow_args": {
             "workspace_id": workspace_id,
             "input_file_grp": input_file_grp,
-            "remove_file_grps": ",".join(remove_file_grps_list_odem),
+            "remove_file_grps": ",".join(remove_file_grps_list_sbb),
             "mets_name": DEFAULT_METS_BASENAME
         },
         "sbatch_args": {"partition": HPC_NHR_JOB_TEST_PARTITION, "cpus": 8, "ram": 32}
