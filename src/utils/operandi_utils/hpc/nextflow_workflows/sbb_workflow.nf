@@ -91,5 +91,5 @@ workflow {
         ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
         split_page_ranges(ch_range_multipliers)
         ocrd_tesserocr_recognize(split_page_ranges.out[0], split_page_ranges.out[1], params.input_file_group, "OCR-D-OCR")
-        merging_mets(ocrd_tesserocr_recognize.out[0], ocrd_cis_ocropy_binarize.out[1])
+        merging_mets(ocrd_tesserocr_recognize.out[0], ocrd_tesserocr_recognize.out[1])
 }
