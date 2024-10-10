@@ -66,8 +66,11 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
         "OCR-D-SEG-BLOCK-TESSERACT", "OCR-D-SEGMENT-REPAIR", "OCR-D-CLIP", "OCR-D-SEGMENT-OCROPY", "OCR-D-DEWARP"
     ]
 
+    # Nothing really to be removed - there are just 2 file groups and they are to be preserved
+    remove_file_grps_list_sbb = []
+
     # Post workflow job
-    workflow_id = "odem_workflow"
+    workflow_id = "sbb_workflow"
     input_file_grp = DEFAULT_FILE_GRP
     req_data = {
         "workflow_id": workflow_id,
