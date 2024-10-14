@@ -185,3 +185,17 @@ def remove_file_groups_with_handling(
         message = "Failed to parse the file groups to be removed"
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+
+def check_if_file_group_exists_with_handling(logger, db_workspace, file_group: str) -> bool:
+    try:
+        resolver = Resolver()
+        workspace = resolver.workspace_from_url(
+            mets_url=db_workspace.workspace_mets_path, clobber_mets=False, mets_basename=db_workspace.mets_basename,
+            download=False)
+        if file_group in workspace.mets.file_groups:
+            return True
+        return False
+    except Exception as error:
+        message = f"Failed to check existence of a file group: {file_group}"
+        logger.error(f"{message}, error: {error}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)

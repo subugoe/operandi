@@ -23,7 +23,7 @@ from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowR
 from .constants import ServerApiTags
 from .workflow_utils import (
     get_db_workflow_job_with_handling, get_db_workflow_with_handling, nf_script_uses_mets_server_with_handling)
-from .workspace_utils import get_db_workspace_with_handling
+from .workspace_utils import check_if_file_group_exists_with_handling, get_db_workspace_with_handling
 from .user import RouterUser
 
 
@@ -302,7 +302,11 @@ class RouterWorkflow:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
         # Check the availability and readiness of the workspace to be used
-        await get_db_workspace_with_handling(self.logger, workspace_id=workspace_id)
+        db_workspace = await get_db_workspace_with_handling(self.logger, workspace_id=workspace_id)
+        if not check_if_file_group_exists_with_handling(self.logger, db_workspace, input_file_grp):
+            message = f"The file group `{input_file_grp}` does not exist in the workspace: {db_workspace.workspace_id}"
+            self.logger.error(f"{message}")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
         # Check the availability of the workflow to be used
         await get_db_workflow_with_handling(self.logger, workflow_id=workflow_id)
