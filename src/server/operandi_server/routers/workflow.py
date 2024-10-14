@@ -76,10 +76,11 @@ class RouterWorkflow:
             Get the state of a job identified with `workflow_id` and `job_id`.
             One of the following job states is returned:
             1) QUEUED - The workflow job is queued for execution.
-            2) RUNNING - The workflow job is currently running.
-            3) FAILED - The workflow job has failed.
-            4) SUCCESS - The workflow job has finished successfully.
-            5) UNSET - The workflow job state was not set yet.
+            2) PENDING - The workflow job is currently waiting for HPC resources
+            3) RUNNING - The workflow job is currently running in the HPC environment.
+            4) FAILED - The workflow job has failed.
+            5) SUCCESS - The workflow job has finished successfully.
+            6) UNSET - The workflow job state was not set yet.
             """,
             response_model=WorkflowJobRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
