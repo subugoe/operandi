@@ -4,19 +4,20 @@ from .models import DBWorkflowJob
 
 
 async def db_create_workflow_job(
-    job_id: str, job_dir: str, job_state: StateJob, workflow_id: str, workspace_id: str
+    job_id: str, job_dir: str, job_state: StateJob, workflow_id: str, workspace_id: str, details: str = "Workflow-Job"
 ) -> DBWorkflowJob:
     db_workflow_job = DBWorkflowJob(
-        job_id=job_id, job_dir=job_dir, job_state=job_state, workflow_id=workflow_id, workspace_id=workspace_id)
+        job_id=job_id, job_dir=job_dir, job_state=job_state, workflow_id=workflow_id, workspace_id=workspace_id,
+        details=details)
     await db_workflow_job.save()
     return db_workflow_job
 
 
 @call_sync
 async def sync_db_create_workflow_job(
-    job_id: str, job_dir: str, job_state: StateJob, workflow_id: str, workspace_id: str
+    job_id: str, job_dir: str, job_state: StateJob, workflow_id: str, workspace_id: str, details: str = "Workflow-Job"
 ) -> DBWorkflowJob:
-    return await db_create_workflow_job(job_id, job_dir, job_state, workflow_id, workspace_id)
+    return await db_create_workflow_job(job_id, job_dir, job_state, workflow_id, workspace_id, details)
 
 
 async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
@@ -55,6 +56,8 @@ async def db_update_workflow_job(find_job_id: str, **kwargs) -> DBWorkflowJob:
             db_workflow_job.hpc_slurm_job_id = value
         elif key == "deleted":
             db_workflow_job.deleted = value
+        elif key == "details":
+            db_workflow_job.details = value
         else:
             raise ValueError(f"Field not updatable: {key}")
     await db_workflow_job.save()

@@ -109,6 +109,7 @@ class RouterWorkflow:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
 
     async def insert_production_workflows(self, production_workflows_dir: Path = get_nf_workflows_dir()):
+        wf_detail = "Workflow provided by the Operandi Server"
         for path in production_workflows_dir.iterdir():
             if not path.is_file():
                 continue
@@ -123,7 +124,7 @@ class RouterWorkflow:
             uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
             await db_create_workflow(
                 workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-                workflow_script_base=path.name, uses_mets_server=uses_mets_server)
+                workflow_script_base=path.name, uses_mets_server=uses_mets_server, details=wf_detail)
             self.production_workflows.append(workflow_id)
 
     async def list_workflows(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
@@ -152,7 +153,8 @@ class RouterWorkflow:
         return FileResponse(path=nf_path, filename=f"{workflow_id}.nf", media_type="application/nextflow-file")
 
     async def upload_workflow_script(
-        self, nextflow_script: UploadFile, auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, nextflow_script: UploadFile, details: str = "Nextflow workflow",
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkflowRsrc:
         """
         Curl equivalent:
@@ -170,12 +172,13 @@ class RouterWorkflow:
         uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
         await db_create_workflow(
             workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server)
+            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details)
         workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
-        return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
+        return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url, description=details)
 
     async def update_workflow_script(
-        self, nextflow_script: UploadFile, workflow_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, nextflow_script: UploadFile, workflow_id: str, details: str = "Nextflow workflow",
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkflowRsrc:
         """
         Curl equivalent:
@@ -204,7 +207,7 @@ class RouterWorkflow:
         uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
         await db_create_workflow(
             workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server)
+            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details)
         workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
         return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
 
@@ -273,7 +276,7 @@ class RouterWorkflow:
 
     async def submit_to_rabbitmq_queue(
         self, workflow_id: str, workflow_args: WorkflowArguments, sbatch_args: SbatchArguments,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        details: str = "Workflow job", auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
         user_action = await self.user_authenticator.user_login(auth)
         user_account_type = user_action.account_type
@@ -327,7 +330,8 @@ class RouterWorkflow:
 
         self.logger.info("Saving the workflow job to the database")
         await db_create_workflow_job(
-            job_id=job_id, job_dir=job_dir, job_state=job_state, workspace_id=workspace_id, workflow_id=workflow_id)
+            job_id=job_id, job_dir=job_dir, job_state=job_state, workspace_id=workspace_id, workflow_id=workflow_id,
+            details=details)
 
         self._push_job_to_rabbitmq(
             user_type=user_account_type, workflow_id=workflow_id, workspace_id=workspace_id, job_id=job_id,
@@ -337,7 +341,7 @@ class RouterWorkflow:
         return WorkflowJobRsrc.create(
             job_id=job_id, job_url=job_url, workflow_id=workflow_id, workflow_url=workflow_url,
             workspace_id=workspace_id, workspace_url=workspace_url, ws_state=ws_state,
-            job_state=job_state
+            job_state=job_state, description=details
         )
 
     def _push_job_to_rabbitmq(
@@ -362,12 +366,10 @@ class RouterWorkflow:
         # Send the message to a queue based on the user type
         if user_type == "HARVESTER":
             self.logger.info(f"Pushing to the RabbitMQ queue for the harvester: {RABBITMQ_QUEUE_HARVESTER}")
-            self.rmq_publisher.publish_to_queue(
-                queue_name=RABBITMQ_QUEUE_HARVESTER, message=encoded_workflow_message)
+            self.rmq_publisher.publish_to_queue(queue_name=RABBITMQ_QUEUE_HARVESTER, message=encoded_workflow_message)
         elif user_type == "ADMIN" or user_type == "USER":
             self.logger.info(f"Pushing to the RabbitMQ queue for the users: {RABBITMQ_QUEUE_USERS}")
-            self.rmq_publisher.publish_to_queue(
-                queue_name=RABBITMQ_QUEUE_USERS, message=encoded_workflow_message)
+            self.rmq_publisher.publish_to_queue(queue_name=RABBITMQ_QUEUE_USERS, message=encoded_workflow_message)
         else:
             account_types = ["USER", "HARVESTER", "ADMIN"]
             message = f"The user account type is not valid: {user_type}. Must be one of: {account_types}"

@@ -11,65 +11,86 @@ from .helpers_asserts import assert_local_dir_workspace, assert_local_dir_worksp
 
 
 def _test_post_workspace_url(operandi, auth, db_workspaces):
+    ws_detail = "Test url workspace - https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
     mets_url = "https://content.staatsbibliothek-berlin.de/dc/PPN631277528.mets.xml"
     # Separate with `,` to add a second file group to be preserved, e.g., `DEFAULT,MAX`
     preserve_file_grps = "DEFAULT"
-    req_url = f"/import_external_workspace?mets_url={mets_url}&preserve_file_grps={preserve_file_grps}"
-
+    req_url = (
+        f"/import_external_workspace"
+        f"?mets_url={mets_url}"
+        f"&preserve_file_grps={preserve_file_grps}"
+        f"&details={ws_detail}"
+    )
     response = operandi.post(url=req_url, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
     assert_local_dir_workspace(workspace_id)
     db_workspace = db_workspaces.find_one({"workspace_id": workspace_id})
     assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
+    assert db_workspace["details"] == ws_detail
 
 
 def test_post_workspace_zip(operandi, auth, db_workspaces, bytes_dummy_workspace):
-    response = operandi.post(url="/workspace", files={"workspace": bytes_dummy_workspace}, auth=auth)
+    ws_detail = "Test dummy workspace"
+    response = operandi.post(
+        url=f"/workspace?details={ws_detail}", files={"workspace": bytes_dummy_workspace}, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
     assert_local_dir_workspace(workspace_id)
     db_workspace = db_workspaces.find_one({"workspace_id": workspace_id})
     assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
+    assert db_workspace["details"] == ws_detail
 
 
 def test_post_workspace_zip_different_mets(operandi, auth, db_workspaces, bytes_ws_different_mets):
-    response = operandi.post(url="/workspace", files={"workspace": bytes_ws_different_mets}, auth=auth)
+    ws_detail = "Test different mets basename workspace"
+    response = operandi.post(
+        url=f"/workspace?details={ws_detail}", files={"workspace": bytes_ws_different_mets}, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
     assert_local_dir_workspace(workspace_id)
     db_workspace = db_workspaces.find_one({"workspace_id": workspace_id})
     assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
+    assert db_workspace["details"] == ws_detail
 
 
 def test_put_workspace_zip(operandi, auth, db_workspaces, bytes_dummy_workspace, bytes_ws_different_mets):
     put_workspace_id = "put_workspace_id"
+    ws_detail = "Test workspace"
+    ws_detail_put = "Test put workspace"
     req_url = f"/workspace/{put_workspace_id}"
 
     # The first put request creates a new workspace
-    response = operandi.put(url=req_url, files={"workspace": bytes_dummy_workspace}, auth=auth)
+    response = operandi.put(
+        url=f"{req_url}?details={ws_detail}", files={"workspace": bytes_dummy_workspace}, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
     assert_local_dir_workspace(workspace_id)
     db_workspace = db_workspaces.find_one({"workspace_id": workspace_id})
     assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
+    assert db_workspace["details"] == ws_detail
 
     ocrd_identifier1 = db_workspace["ocrd_identifier"]
     assert ocrd_identifier1, "Failed to extract ocrd identifier 1"
+    ws_detail1 = db_workspace["details"]
 
     # The second put request replaces the previously created workspace
-    response = operandi.put(url=req_url, files={"workspace": bytes_ws_different_mets}, auth=auth)
+    response = operandi.put(
+        url=f"{req_url}?details={ws_detail_put}", files={"workspace": bytes_ws_different_mets}, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workspace_id = response.json()['resource_id']
     assert_local_dir_workspace(workspace_id)
     db_workspace = db_workspaces.find_one({"workspace_id": workspace_id})
     assert_exists_db_resource(db_workspace, resource_key="workspace_id", resource_id=workspace_id)
+    assert db_workspace["details"] == ws_detail_put
 
     ocrd_identifier2 = db_workspace["ocrd_identifier"]
     assert ocrd_identifier2, "Failed to extract ocrd identifier 2"
+    ws_detail2 = db_workspace["details"]
     assert ocrd_identifier1 != ocrd_identifier2, \
         f"Ocrd identifiers should not, but match: {ocrd_identifier1} == {ocrd_identifier2}"
-
+    assert ws_detail1 != ws_detail2, \
+        f"Workspace details should not, but match: {ws_detail1} == {ws_detail2}"
 
 def test_delete_workspace(operandi, auth, db_workspaces, bytes_ws_different_mets):
     # Post a workspace

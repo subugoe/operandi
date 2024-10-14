@@ -1,5 +1,6 @@
 from typing import Optional
 from beanie import Document
+from datetime import datetime
 
 from operandi_utils.constants import AccountTypes, StateJob, StateJobSlurm, StateWorkspace
 
@@ -9,13 +10,14 @@ class DBHPCSlurmJob(Document):
     Model to store an HPC slurm job in the MongoDB
 
     Attributes:
-        workflow_job_id             the id of the workflow job
-        hpc_slurm_job_id            the id of the Slurm job that runs this workflow job
-        hpc_slurm_job_state         the state of the slurm job inside the HPC
-        hpc_batch_script_path       path of the batch script inside the HPC
-        hpc_slurm_workspace_path    path of the slurm workspace inside the HPC
-        deleted                     whether this record is deleted by the user
-                                    (still available in the DB itself)
+        workflow_job_id             Unique id of the workflow job
+        hpc_slurm_job_id            Unique id of the slurm job executing the current workflow job in the HPC
+        hpc_slurm_job_state         The state of the slurm job inside the HPC
+        hpc_batch_script_path       Full path of the batch script inside the HPC
+        hpc_slurm_workspace_path    Full path of the slurm workspace inside the HPC
+        deleted                     Whether the entry has been deleted locally from the server
+        datetime                    Shows the created date time of the entry
+        details                     Extra user specified details about this entry
     """
     workflow_job_id: str
     hpc_slurm_job_id: str
@@ -23,6 +25,8 @@ class DBHPCSlurmJob(Document):
     hpc_batch_script_path: Optional[str]
     hpc_slurm_workspace_path: Optional[str]
     deleted: bool = False
+    datetime = datetime.now()
+    details: Optional[str]
 
     class Settings:
         name = "hpc_slurm_jobs"
@@ -37,7 +41,10 @@ class DBUserAccount(Document):
         encrypted_pass: The encrypted password of the user
         salt:           Random salt value used when encrypting the password
         approved_user:  Whether the user is approved by the admin
-        account_type:   The type of the account: administrator, user, or harvester
+        account_type:   The type of the account, any of the `AccountTypes`
+        deleted:        Whether the entry has been deleted locally from the server
+        datetime        Shows the created date time of the entry
+        details         Extra user specified details about this entry
 
     By default, the registered user's account is not validated.
     An admin must manually validate the account by assigning True value.
@@ -48,6 +55,8 @@ class DBUserAccount(Document):
     account_type: str = "UNSET"
     approved_user: bool = False
     deleted: bool = False
+    datetime = datetime.now()
+    details: Optional[str]
 
     class Settings:
         name = "user_accounts"
@@ -58,13 +67,14 @@ class DBWorkflow(Document):
     Model to store a workflow in the mongo-database.
 
     Attributes:
-        workflow_id             id of the workflow
-        workflow_dir            dir of the workflow
-        workflow_script_base    the name of the nextflow script file
-        workflow_script_path    the full path of the workflow script
-        uses_mets_server        whether the NF script forwards requests to a workpsace mets server
-        deleted                 whether this record is deleted by the user
-                                (still available in the DB itself)
+        workflow_id             Unique id of the workflow
+        workflow_dir            Workflow directory full path on the server
+        workflow_script_base    The name of the nextflow script file
+        workflow_script_path    Nextflow workflow file full path on the server
+        uses_mets_server        Whether the NF script forwards requests to a workspace mets server
+        deleted                 Whether the entry has been deleted locally from the server
+        datetime                Shows the created date time of the entry
+        details                 Extra user specified details about this entry
     """
     workflow_id: str
     workflow_dir: str
@@ -72,6 +82,8 @@ class DBWorkflow(Document):
     workflow_script_path: str
     uses_mets_server: bool
     deleted: bool = False
+    datetime = datetime.now()
+    details: Optional[str]
 
     class Settings:
         name = "workflows"
@@ -82,16 +94,17 @@ class DBWorkflowJob(Document):
     Model to store a Workflow-Job in the MongoDB.
 
     Attributes:
-        job_id              the workflow job's id
-        job_dir             the path of the workflow job dir
-        job_state           current state of the workflow job
-        workflow_id         id of the workflow the job is executing
-        workspace_id        id of the workspace on which this job is running
-        workflow_dir        dir of the workflow id
-        workspace_dir       dir of the workspace id
-        hpc_slurm_job_id    the id of the Slurm job that runs this workflow job
-        deleted             whether this record is deleted by the user
-                            (still available in the DB itself)
+        job_id              Unique id of the workflow job
+        job_dir             Workflow job directory full path on the server
+        job_state           The state of the workflow job inside the server
+        workflow_id         Unique id of the workflow used by the workflow job
+        workspace_id        Unique id of the workspace used by the workflow job
+        workflow_dir        Workflow directory full path on the server used by the workflow job
+        workspace_dir       Workspace directory full path on the server used by the workflow job
+        hpc_slurm_job_id    Unique id of the slurm job executing the current workflow job in the HPC
+        deleted             Whether the entry has been deleted locally from the server
+        datetime            Shows the created date time of the entry
+        details             Extra user specified details about this entry
     """
     job_id: str
     job_dir: str
@@ -102,6 +115,8 @@ class DBWorkflowJob(Document):
     workspace_dir: Optional[str]
     hpc_slurm_job_id: Optional[str]
     deleted: bool = False
+    datetime = datetime.now()
+    details: Optional[str]
 
     class Settings:
         name = "workflow_jobs"
@@ -114,13 +129,19 @@ class DBWorkspace(Document):
     Information to handle workspaces and from bag-info.txt are stored here.
 
     Attributes:
+        workspace_id                Unique id of the workspace
+        workspace_dir               Workspace directory full path on the server
+        workspace_mets_path         Workspace mets file full path on the server
         pages_amount                The amount of the physical pages, used for creating page ranges
+        state                       Whether the workspace is currently being processed or not
         ocrd_identifier             Ocrd-Identifier (mandatory)
         bagit_profile_identifier    BagIt-Profile-Identifier (mandatory)
         ocrd_base_version_checksum  Ocrd-Base-Version-Checksum (mandatory)
         mets_basename               Alternative name to the default "mets.xml"
-        bag_info_adds               bag-info.txt can also (optionally) contain additional
-                                    key-value-pairs which are saved here
+        bag_info_adds               Bag-info.txt can also contain additional key-value-pairs which are saved here
+        deleted                     Whether the entry has been deleted locally from the server
+        datetime                    Shows the created date time of the entry
+        details                     Extra user specified details about this entry
     """
     workspace_id: str
     workspace_dir: str
@@ -133,6 +154,8 @@ class DBWorkspace(Document):
     mets_basename: Optional[str]
     bag_info_adds: Optional[dict]
     deleted: bool = False
+    datetime = datetime.now()
+    details: Optional[str]
 
     class Settings:
         name = "workspaces"

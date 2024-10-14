@@ -4,7 +4,8 @@ from .models import DBWorkflow
 
 # TODO: This also updates to satisfy the PUT method in the Workflow Manager - fix this
 async def db_create_workflow(
-    workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str, uses_mets_server: bool
+    workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str, uses_mets_server: bool,
+    details: str = "Workflow"
 ) -> DBWorkflow:
     try:
         db_workflow = await db_get_workflow(workflow_id)
@@ -12,20 +13,22 @@ async def db_create_workflow(
         db_workflow = DBWorkflow(
             workflow_id=workflow_id, workflow_dir=workflow_dir,
             workflow_script_base=workflow_script_base, workflow_script_path=workflow_script_path,
-            uses_mets_server=uses_mets_server)
+            uses_mets_server=uses_mets_server, details=details)
     else:
         db_workflow.workflow_id = workflow_id
         db_workflow.workflow_dir = workflow_dir
         db_workflow.workflow_script_base = workflow_script_base
         db_workflow.workflow_script_path = workflow_script_path
         db_workflow.uses_mets_server = uses_mets_server
+        db_workflow.details = details
     await db_workflow.save()
     return db_workflow
 
 
 @call_sync
 async def sync_db_create_workflow(
-    workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str, uses_mets_server: bool
+    workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str, uses_mets_server: bool,
+    details: str = "Workflow"
 ) -> DBWorkflow:
     return await db_create_workflow(
         workflow_id, workflow_dir, workflow_script_base, workflow_script_path, uses_mets_server)
