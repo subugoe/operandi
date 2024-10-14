@@ -61,6 +61,7 @@ class AccountTypes(str, Enum):
 class StateJob(str, Enum):
     FAILED = "FAILED"
     QUEUED = "QUEUED"
+    PENDING = "PENDING"
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     TRANSFERRING_TO_HPC = "TRANSFERRING_TO_HPC"
@@ -72,6 +73,8 @@ class StateJob(str, Enum):
         if StateJobSlurm.is_state_success(slurm_job_state):
             return StateJob.SUCCESS
         if StateJobSlurm.is_state_waiting(slurm_job_state):
+            return StateJob.PENDING
+        if StateJobSlurm.is_state_running(slurm_job_state):
             return StateJob.RUNNING
         if StateJobSlurm.is_state_fail(slurm_job_state):
             return StateJob.FAILED
@@ -106,7 +109,7 @@ class StateJobSlurm(str, Enum):
     def failing_states() -> List[StateJobSlurm]:
         return [StateJobSlurm.BOOT_FAIL, StateJobSlurm.CANCELLED, StateJobSlurm.DEADLINE, StateJobSlurm.FAILED,
                 StateJobSlurm.NODE_FAIL, StateJobSlurm.OUT_OF_MEMORY, StateJobSlurm.PREEMPTED, StateJobSlurm.REVOKED,
-                StateJobSlurm.TIMEOUT]
+                StateJobSlurm.TIMEOUT, StateJobSlurm.SUSPENDED]
 
     @staticmethod
     def success_states() -> List[StateJobSlurm]:
@@ -114,8 +117,11 @@ class StateJobSlurm(str, Enum):
 
     @staticmethod
     def waiting_states() -> List[StateJobSlurm]:
-        return [StateJobSlurm.RUNNING, StateJobSlurm.PENDING, StateJobSlurm.COMPLETING, StateJobSlurm.REQUEUED,
-                StateJobSlurm.RESIZING, StateJobSlurm.SUSPENDED]
+        return [StateJobSlurm.PENDING, StateJobSlurm.COMPLETING, StateJobSlurm.REQUEUED, StateJobSlurm.RESIZING]
+
+    @staticmethod
+    def running_states() -> List[StateJobSlurm]:
+        return [StateJobSlurm.RUNNING]
 
     @staticmethod
     def is_state_fail(slurm_job_state: str) -> bool:
@@ -130,6 +136,12 @@ class StateJobSlurm(str, Enum):
         return False
 
     @staticmethod
+    def is_state_running(slurm_job_state: str) -> bool:
+        if slurm_job_state in StateJobSlurm.running_states():
+            return True
+        return False
+
+    @staticmethod
     def is_state_success(slurm_job_state: str) -> bool:
         if slurm_job_state in StateJobSlurm.success_states():
             return True
@@ -139,6 +151,7 @@ class StateJobSlurm(str, Enum):
 class StateWorkspace(str, Enum):
     RUNNING = "RUNNING"
     QUEUED = "QUEUED"
+    PENDING = "PENDING"
     READY = "READY"
     TRANSFERRING_TO_HPC = "TRANSFERRING_TO_HPC"
     TRANSFERRING_FROM_HPC = "TRANSFERRING_FROM_HPC"
