@@ -1,8 +1,7 @@
+from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import Optional
-
 from operandi_utils.hpc.constants import HPC_NHR_JOB_DEFAULT_PARTITION
-
 from ..constants import DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME
 
 class Resource(BaseModel):
@@ -10,6 +9,7 @@ class Resource(BaseModel):
     resource_url: str = Field(..., description="URL of this thing")
     description: str = Field(..., description="Description of the thing")
     created_by_user: str = Field(..., description="The user who created that resource")
+    datetime: datetime
 
     class Config:
         allow_population_by_field_name = True

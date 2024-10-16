@@ -1,3 +1,4 @@
+from datetime import datetime
 from operandi_utils import call_sync
 from .models import DBWorkflow
 
@@ -17,7 +18,8 @@ async def db_create_workflow(
             workflow_script_path=workflow_script_path,
             uses_mets_server=uses_mets_server,
             details=details,
-            created_by_user=created_by_user
+            created_by_user=created_by_user,
+            datetime=datetime.now()
         )
     else:
         db_workflow.workflow_id = workflow_id

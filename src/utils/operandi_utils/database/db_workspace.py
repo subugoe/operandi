@@ -1,7 +1,5 @@
+from datetime import datetime
 from os.path import join
-
-from docutils.nodes import description
-
 from operandi_utils import call_sync
 from operandi_utils.constants import StateWorkspace
 from .models import DBWorkspace
@@ -40,7 +38,8 @@ async def db_create_workspace(
             ocrd_base_version_checksum=ocrd_base_version_checksum,
             bag_info_adds=bag_info,
             details=details,
-            created_by_user=created_by_user
+            created_by_user=created_by_user,
+            datetime=datetime.now()
         )
     else:
         db_workspace.workspace_dir = workspace_dir

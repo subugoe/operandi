@@ -1,3 +1,4 @@
+from datetime import datetime
 from operandi_utils import call_sync
 from operandi_utils.constants import StateJob
 from .models import DBWorkflowJob
@@ -9,7 +10,7 @@ async def db_create_workflow_job(
 ) -> DBWorkflowJob:
     db_workflow_job = DBWorkflowJob(
         job_id=job_id, job_dir=job_dir, job_state=job_state, workflow_id=workflow_id, workspace_id=workspace_id,
-        details=details, created_by_user=created_by_user)
+        details=details, created_by_user=created_by_user, datetime=datetime.now())
     await db_workflow_job.save()
     return db_workflow_job
 

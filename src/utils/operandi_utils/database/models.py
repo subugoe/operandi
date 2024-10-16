@@ -1,7 +1,6 @@
 from typing import Optional
 from beanie import Document
 from datetime import datetime
-
 from operandi_utils.constants import AccountTypes, StateJob, StateJobSlurm, StateWorkspace
 
 
