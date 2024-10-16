@@ -11,9 +11,14 @@ async def db_create_workflow(
         db_workflow = await db_get_workflow(workflow_id)
     except RuntimeError:
         db_workflow = DBWorkflow(
-            workflow_id=workflow_id, workflow_dir=workflow_dir,
-            workflow_script_base=workflow_script_base, workflow_script_path=workflow_script_path,
-            uses_mets_server=uses_mets_server, details=details)
+            workflow_id=workflow_id,
+            workflow_dir=workflow_dir,
+            workflow_script_base=workflow_script_base,
+            workflow_script_path=workflow_script_path,
+            uses_mets_server=uses_mets_server,
+            details=details,
+            created_by_user=created_by_user
+        )
     else:
         db_workflow.workflow_id = workflow_id
         db_workflow.workflow_dir = workflow_dir

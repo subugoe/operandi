@@ -10,3 +10,6 @@ class PYDiscovery(BaseModel):
     ocrd_all_version: str = Field(
         default="Ocrd all version not detected", description="Git tag of the ocrd_all version implemented")
     has_docker: bool = Field(default=False, description="Whether the OCR-D executables run in a Docker container")
+
+    class Config:
+        allow_population_by_field_name = True

@@ -7,14 +7,13 @@ from shutil import make_archive, copyfile
 from tempfile import mkdtemp
 from typing import List
 
-from docutils.nodes import description
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils import get_nf_workflows_dir
 from operandi_utils.constants import AccountTypes, StateJob, StateWorkspace
-from operandi_utils.database import db_create_workflow, db_create_workflow_job, db_update_workspace
+from operandi_utils.database import db_create_workflow, db_create_workflow_job, db_get_workflow, db_update_workspace
 from operandi_utils.rabbitmq import (
     get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
 from operandi_server.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
@@ -141,7 +140,8 @@ class RouterWorkflow:
         response = []
         for workflow in workflows:
             wf_id, wf_url = workflow
-            response.append(WorkflowRsrc.create(workflow_id=wf_id, workflow_url=wf_url))
+            db_workflow = await db_get_workflow(workflow_id=wf_id)
+            response.append(WorkflowRsrc.from_db_workflow(db_workflow, workflow_url=wf_url))
         return response
 
     async def download_workflow_script(
@@ -153,8 +153,11 @@ class RouterWorkflow:
         """
         await self.user_authenticator.user_login(auth)
         db_workflow = await get_db_workflow_with_handling(self.logger, workflow_id=workflow_id)
-        nf_path = db_workflow.workflow_script_path
-        return FileResponse(path=nf_path, filename=f"{workflow_id}.nf", media_type="application/nextflow-file")
+        return FileResponse(
+            path=db_workflow.workflow_script_path,
+            filename=f"{workflow_id}.nf",
+            media_type="application/nextflow-file"
+        )
 
     async def upload_workflow_script(
         self, nextflow_script: UploadFile, details: str = "Nextflow workflow",
@@ -174,13 +177,12 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
-        await db_create_workflow(
+        db_workflow = await db_create_workflow(
             workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
             workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details,
             created_by_user=auth.username)
-        workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
-        return WorkflowRsrc.create(
-            workflow_id=workflow_id, workflow_url=workflow_url, description=details, created_by_user=auth.username)
+        return WorkflowRsrc.from_db_workflow(
+            db_workflow, workflow_url=get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id))
 
     async def update_workflow_script(
         self, nextflow_script: UploadFile, workflow_id: str, details: str = "Nextflow workflow",
@@ -211,13 +213,12 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
-        await db_create_workflow(
+        db_workflow = await db_create_workflow(
             workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
             workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details,
             created_by_user=auth.username)
-        workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
-        return WorkflowRsrc.create(
-            workflow_id=workflow_id, workflow_url=workflow_url, description=details, created_by_user=auth.username)
+        return WorkflowRsrc.from_db_workflow(
+            db_workflow, workflow_url=get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id))
 
     async def get_workflow_job_status(
         self, workflow_id: str, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
@@ -232,6 +233,9 @@ class RouterWorkflow:
         workspace_id = db_wf_job.workspace_id
         db_workspace = await get_db_workspace_with_handling(
             self.logger, workspace_id=workspace_id, check_ready=False, check_deleted=True, check_local_existence=True)
+        workflow_id = db_wf_job.workflow_id
+        db_workflow = await get_db_workflow_with_handling(
+            self.logger, workflow_id=workflow_id, check_deleted=False, check_local_existence=False)
 
         if db_wf_job.job_state != StateJob.FAILED and db_wf_job.job_state != StateJob.SUCCESS:
             await self._push_status_request_to_rabbitmq(job_id=job_id)
@@ -239,18 +243,15 @@ class RouterWorkflow:
         # TODO: Fix that by getting rid of the FileManager module
         try:
             wf_job_url = get_resource_url(SERVER_WORKFLOW_JOBS_ROUTER, resource_id=db_wf_job.job_id)
-            workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, resource_id=db_wf_job.workflow_id)
+            workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
             workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
         except Exception as error:
             message = f"Failed to locate the job resource"
             self.logger.exception(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return WorkflowJobRsrc.create(
-            job_id=job_id, job_url=wf_job_url, workflow_id=workflow_id, workflow_url=workflow_url,
-            workspace_id=workspace_id, workspace_url=workspace_url, ws_state=db_workspace.state,
-            job_state=db_wf_job.job_state, description=db_wf_job.details, created_by_user=db_wf_job.created_by_user
-        )
+        return WorkflowJobRsrc.from_db_workflow_job(
+            db_wf_job, wf_job_url, db_workflow, workflow_url, db_workspace, workspace_url)
 
     async def download_workflow_job_logs(
         self, background_tasks: BackgroundTasks, workflow_id: str, job_id: str,
@@ -317,7 +318,7 @@ class RouterWorkflow:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
         # Check the availability of the workflow to be used
-        await get_db_workflow_with_handling(self.logger, workflow_id=workflow_id)
+        db_workflow = await get_db_workflow_with_handling(self.logger, workflow_id=workflow_id)
 
         try:
             # Create job request parameters
@@ -338,10 +339,10 @@ class RouterWorkflow:
 
         ws_state = StateWorkspace.QUEUED
         self.logger.info(f"Updating the state to {ws_state} of: {workspace_id}")
-        await db_update_workspace(find_workspace_id=workspace_id, state=ws_state)
+        db_workspace = await db_update_workspace(find_workspace_id=workspace_id, state=ws_state)
 
         self.logger.info("Saving the workflow job to the database")
-        await db_create_workflow_job(
+        db_wf_job = await db_create_workflow_job(
             job_id=job_id, job_dir=job_dir, job_state=job_state, workspace_id=workspace_id, workflow_id=workflow_id,
             details=details, created_by_user=auth.username)
 
@@ -349,11 +350,10 @@ class RouterWorkflow:
             user_type=user_account_type, workflow_id=workflow_id, workspace_id=workspace_id, job_id=job_id,
             input_file_grp=input_file_grp, remove_file_grps=remove_file_grps, partition=partition, cpus=cpus, ram=ram
         )
-
-        return WorkflowJobRsrc.create(
-            job_id=job_id, job_url=job_url, workflow_id=workflow_id, workflow_url=workflow_url,
-            workspace_id=workspace_id, workspace_url=workspace_url, ws_state=ws_state,
-            job_state=job_state, description=details, created_by_user=auth.username
+        return WorkflowJobRsrc.from_db_workflow_job(
+            db_workflow_job=db_wf_job, workflow_job_url=job_url,
+            db_workflow=db_workflow, workflow_url=workflow_url,
+            db_workspace=db_workspace, workspace_url=workspace_url
         )
 
     def _push_job_to_rabbitmq(

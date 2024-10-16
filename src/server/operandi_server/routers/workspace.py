@@ -2,8 +2,7 @@ from logging import getLogger
 from os import unlink
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Union
-from venv import create
+from typing import List
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
@@ -88,14 +87,12 @@ class RouterWorkspace:
         for workspace in workspaces:
             ws_id, ws_url = workspace
             db_workspace = await db_get_workspace(workspace_id=ws_id)
-            response.append(WorkspaceRsrc.create(
-                workspace_id=ws_id, workspace_url=ws_url, state=db_workspace.state,
-                description=db_workspace.details, created_by_user=db_workspace.created_by_user))
+            response.append(WorkspaceRsrc.from_db_workspace(db_workspace, workspace_url=ws_url))
         return response
 
     async def download_workspace(
         self, background_tasks: BackgroundTasks, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
-    ) -> Union[WorkspaceRsrc, FileResponse]:
+    ) -> FileResponse:
         """
         Curl equivalent:
         `curl -X GET SERVER_ADDR/workspace/{workspace_id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
@@ -140,14 +137,11 @@ class RouterWorkspace:
         bag_info = extract_bag_info_with_handling(self.logger, bag_dst=bag_dest, ws_dir=workspace_dir)
         Path(bag_dest).unlink()  # Remove the created zip bag
         pages_amount = extract_pages_with_handling(self.logger, bag_info, workspace_dir)
-        ws_state = StateWorkspace.READY
-        await db_create_workspace(
+        db_workspace = await db_create_workspace(
             workspace_id=workspace_id, workspace_dir=workspace_dir, pages_amount=pages_amount, bag_info=bag_info,
-            state=ws_state, details=details, created_by_user=auth.username)
-        workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, workspace_id)
-        return WorkspaceRsrc.create(
-            workspace_id=workspace_id, workspace_url=workspace_url, description=details, state=ws_state,
-            created_by_user=auth.username)
+            state=StateWorkspace.READY, details=details, created_by_user=auth.username)
+        return WorkspaceRsrc.from_db_workspace(
+            db_workspace, workspace_url=get_resource_url(SERVER_WORKSPACES_ROUTER, workspace_id))
 
     async def upload_workspace(
         self, workspace: UploadFile, details: str = f"Workspace uploaded as an OCRD zip format",
@@ -172,14 +166,11 @@ class RouterWorkspace:
         bag_info = extract_bag_info_with_handling(self.logger, bag_dst=bag_dest, ws_dir=ws_dir)
         Path(bag_dest).unlink()  # Remove the created zip bag
         pages_amount = extract_pages_with_handling(self.logger, bag_info, ws_dir)
-        ws_state = StateWorkspace.READY
-        await db_create_workspace(
-            workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, bag_info=bag_info, state=ws_state,
-            details=details, created_by_user=auth.username)
-        ws_url = get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id)
-        return WorkspaceRsrc.create(
-            workspace_id=ws_id, workspace_url=ws_url, description=details, state=ws_state,
-            created_by_user=auth.username)
+        db_workspace = await db_create_workspace(
+            workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, bag_info=bag_info,
+            state=StateWorkspace.READY, details=details, created_by_user=auth.username)
+        return WorkspaceRsrc.from_db_workspace(
+            db_workspace, workspace_url=get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id))
 
     async def put_workspace(
         self, workspace: UploadFile, workspace_id: str, details: str = f"Workspace uploaded as an OCRD zip format",
@@ -220,14 +211,11 @@ class RouterWorkspace:
         bag_info = extract_bag_info_with_handling(self.logger, bag_dst=bag_dest, ws_dir=ws_dir)
         Path(bag_dest).unlink()
         pages_amount = extract_pages_with_handling(self.logger, bag_info, ws_dir)
-        ws_state = StateWorkspace.READY
-        await db_create_workspace(
-            workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, bag_info=bag_info, state=ws_state,
-            details=details, created_by_user=auth.username)
-        ws_url = get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id)
-        return WorkspaceRsrc.create(
-            workspace_id=ws_id, workspace_url=ws_url, description=details, state=ws_state,
-            created_by_user=auth.username)
+        db_workspace = await db_create_workspace(
+            workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, bag_info=bag_info,
+            state=StateWorkspace.READY, details=details, created_by_user=auth.username)
+        return WorkspaceRsrc.from_db_workspace(
+            db_workspace, workspace_url=get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id))
 
     async def delete_workspace(
         self, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
@@ -249,9 +237,7 @@ class RouterWorkspace:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
 
         await db_update_workspace(find_workspace_id=workspace_id, deleted=True)
-        return WorkspaceRsrc.create(
-            workspace_id=workspace_id, workspace_url=deleted_workspace_url, state=db_workspace.state,
-            description=db_workspace.details, created_by_user=db_workspace.created_by_user)
+        return WorkspaceRsrc.from_db_workspace(db_workspace, workspace_url=deleted_workspace_url)
 
     async def remove_file_group_from_workspace(
         self, workspace_id: str, remove_file_grps: str, recursive: bool = True, force: bool = True,
@@ -265,5 +251,5 @@ class RouterWorkspace:
         remove_file_groups_with_handling(
             self.logger, db_workspace=db_workspace, file_groups=file_grps_to_remove, recursive=recursive, force=force
         )
-        workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
-        return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=workspace_url, state=db_workspace.state)
+        return WorkspaceRsrc.from_db_workspace(
+            db_workspace, workspace_url=get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id))
