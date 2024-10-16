@@ -67,14 +67,11 @@ class JobStatusWorker:
             raise Exception(f"The worker failed, reason: {e}")
 
     def __download_results_from_hpc(self, job_id: str, job_dir: str, workspace_id: str, workspace_dir: str) -> None:
-        sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_FROM_HPC)
-        sync_db_update_workflow_job(find_job_id=job_id, job_state=StateJob.TRANSFERRING_FROM_HPC)
         self.hpc_io_transfer.get_and_unpack_slurm_workspace(ocrd_workspace_dir=workspace_dir, workflow_job_dir=job_dir)
+
         self.log.info(f"Transferred slurm workspace from hpc path")
         # Delete the result dir from the HPC home folder
         # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
-        sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
-        sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
 
     def __handle_hpc_and_workflow_states(
         self, hpc_slurm_job_db: DBHPCSlurmJob, workflow_job_db: DBWorkflowJob, workspace_db: DBWorkspace
@@ -103,12 +100,17 @@ class JobStatusWorker:
         if old_job_state != new_job_state:
             self.log.info(f"Workflow job id: {job_id}, old state: {old_job_state}, new state: {new_job_state}")
             if new_job_state == StateJob.SUCCESS:
+                sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_FROM_HPC)
+                sync_db_update_workflow_job(find_job_id=job_id, job_state=StateJob.TRANSFERRING_FROM_HPC)
                 self.__download_results_from_hpc(
                     job_id=job_id, job_dir=job_dir, workspace_id=workspace_id, workspace_dir=workspace_dir)
+                self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
+                sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
+                sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
             if new_job_state == StateJob.FAILED:
-                ws_state = StateWorkspace.READY
-                self.log.info(f"Setting new workspace state `{ws_state}` of workspace_id: {workspace_id}")
-                sync_db_update_workspace(find_workspace_id=workspace_id, state=ws_state)
+                self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
+                sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
+                sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.FAILED)
 
         self.log.info(f"Latest slurm job state: {new_slurm_job_state}")
         self.log.info(f"Latest workflow job state: {new_job_state}")
