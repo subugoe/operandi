@@ -4,6 +4,7 @@ import signal
 from os import getpid, getppid, setsid
 from sys import exit
 
+from ocrd import Resolver
 from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
 from operandi_utils.constants import LOG_LEVEL_WORKER, StateJob, StateWorkspace
 from operandi_utils.database import (
@@ -66,9 +67,8 @@ class JobStatusWorker:
             self.log.error(f"The worker failed, reason: {e}")
             raise Exception(f"The worker failed, reason: {e}")
 
-    def __download_results_from_hpc(self, job_id: str, job_dir: str, workspace_id: str, workspace_dir: str) -> None:
+    def __download_results_from_hpc(self, job_dir: str, workspace_dir: str) -> None:
         self.hpc_io_transfer.get_and_unpack_slurm_workspace(ocrd_workspace_dir=workspace_dir, workflow_job_dir=job_dir)
-
         self.log.info(f"Transferred slurm workspace from hpc path")
         # Delete the result dir from the HPC home folder
         # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
@@ -96,16 +96,27 @@ class JobStatusWorker:
         # Convert the slurm job state to operandi workflow job state
         new_job_state = StateJob.convert_from_slurm_job(slurm_job_state=new_slurm_job_state)
 
+        # TODO: Refactor this block of code since nothing is downloaded from the HPC when job fails.
         # If there has been a change of operandi workflow state, update it
         if old_job_state != new_job_state:
             self.log.info(f"Workflow job id: {job_id}, old state: {old_job_state}, new state: {new_job_state}")
             if new_job_state == StateJob.SUCCESS:
                 sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_FROM_HPC)
                 sync_db_update_workflow_job(find_job_id=job_id, job_state=StateJob.TRANSFERRING_FROM_HPC)
-                self.__download_results_from_hpc(
-                    job_id=job_id, job_dir=job_dir, workspace_id=workspace_id, workspace_dir=workspace_dir)
+                self.__download_results_from_hpc(job_dir=job_dir,workspace_dir=workspace_dir)
+
+                # TODO: Find a better way to do the update - consider callbacks to Operandi Server
+                try:
+                    workspace = Resolver().workspace_from_url(
+                        mets_url=workspace_db.workspace_mets_path, clobber_mets=False,
+                        mets_basename=workspace_db.mets_basename, download=False)
+                    updated_file_groups = workspace.mets.file_groups
+                except Exception as error:
+                    self.log.error(f"Failed to extract the processed file groups: {error}")
+                    updated_file_groups = ["CORRUPTED FILE GROUPS"]
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
-                sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
+                sync_db_update_workspace(
+                    find_workspace_id=workspace_id, state=StateWorkspace.READY, file_groups=updated_file_groups)
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
             if new_job_state == StateJob.FAILED:
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")

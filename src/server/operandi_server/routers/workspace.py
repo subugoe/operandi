@@ -88,8 +88,8 @@ class RouterWorkspace:
         for workspace in workspaces:
             ws_id, ws_url = workspace
             db_workspace = await db_get_workspace(workspace_id=ws_id)
-            file_groups = extract_file_groups_from_db_model_with_handling(self.logger, db_workspace)
-            db_workspace = await db_update_workspace(find_workspace_id=ws_id, file_groups=file_groups)
+            # file_groups = extract_file_groups_from_db_model_with_handling(self.logger, db_workspace)
+            # db_workspace = await db_update_workspace(find_workspace_id=ws_id, file_groups=file_groups)
             response.append(WorkspaceRsrc.from_db_workspace(db_workspace))
         return response
 
