@@ -45,7 +45,8 @@ class RouterUser:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=self.auth_headers, detail=message)
         return PYUserAction(account_type=account_type, action="Successfully logged!", email=email)
 
-    async def user_register(self, email: str, password: str, account_type: str = "USER") -> PYUserAction:
+    async def user_register(
+        self, email: str, password: str, account_type: str = "USER", details: str = "User Account") -> PYUserAction:
         """
         Used for registration.
         There are 3 account types:
@@ -66,7 +67,8 @@ class RouterUser:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers=self.auth_headers, detail=message)
         try:
-            await register_user(email=email, password=password, account_type=account_type, approved_user=False)
+            await register_user(
+                email=email, password=password, account_type=account_type, approved_user=False, details=details)
         except RegistrationError as error:
             message = f"User failed to register: {email}, reason: {error}"
             self.logger.error(f"{message}")

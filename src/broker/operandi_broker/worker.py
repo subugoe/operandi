@@ -138,11 +138,11 @@ class Worker:
             self.__handle_message_failure(interruption=False, set_ws_ready=True)
             return
 
-        job_state = StateJob.RUNNING
+        job_state = StateJob.PENDING
         self.log.info(f"Setting new job state `{job_state}` of job_id: {self.current_message_job_id}")
         sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=job_state)
 
-        ws_state = StateWorkspace.RUNNING
+        ws_state = StateWorkspace.PENDING
         self.log.info(f"Setting new workspace state `{ws_state}` of workspace_id: {self.current_message_ws_id}")
         sync_db_update_workspace(find_workspace_id=self.current_message_ws_id, state=ws_state)
 

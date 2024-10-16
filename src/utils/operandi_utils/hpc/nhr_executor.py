@@ -132,6 +132,9 @@ class NHRExecutor(NHRConnector):
             if StateJobSlurm.is_state_waiting(slurm_job_state):
                 self.logger.info(f"Slurm job state is in: {StateJobSlurm.waiting_states()}")
                 continue
+            if StateJobSlurm.is_state_running(slurm_job_state):
+                self.logger.info(f"Slurm job state is in: {StateJobSlurm.running_states()}")
+                continue
             if StateJobSlurm.is_state_fail(slurm_job_state):
                 self.logger.info(f"Slurm job state is in: {StateJobSlurm.failing_states()}")
                 return False

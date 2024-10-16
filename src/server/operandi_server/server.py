@@ -124,7 +124,7 @@ class OperandiServer(FastAPI):
         if default_admin_user and default_admin_pass:
             await create_user_if_not_available(
                 username=default_admin_user, password=default_admin_pass,
-                account_type="ADMIN", approved_user=True
+                account_type="ADMIN", approved_user=True, details="Default admin account"
             )
             self.log.info(f"Configured default server admin account")
 
@@ -132,6 +132,6 @@ class OperandiServer(FastAPI):
         if default_harvester_user and default_harvester_pass:
             await create_user_if_not_available(
                 username=default_harvester_user, password=default_harvester_pass,
-                account_type="HARVESTER", approved_user=True
+                account_type="HARVESTER", approved_user=True, details="Default harvester account"
             )
             self.log.info(f"Configured default harvester account")

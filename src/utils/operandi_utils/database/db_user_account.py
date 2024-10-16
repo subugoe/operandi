@@ -4,19 +4,22 @@ from .models import DBUserAccount
 
 
 async def db_create_user_account(
-    email: str, encrypted_pass: str, salt: str, account_type: str = "USER", approved_user: bool = False
+    email: str, encrypted_pass: str, salt: str, account_type: str = "USER", approved_user: bool = False,
+    details: str = "User Account"
 ) -> DBUserAccount:
     user_account = DBUserAccount(
-        email=email, encrypted_pass=encrypted_pass, salt=salt, account_type=account_type, approved_user=approved_user)
+        email=email, encrypted_pass=encrypted_pass, salt=salt, account_type=account_type, approved_user=approved_user,
+        details=details)
     await user_account.save()
     return user_account
 
 
 @call_sync
 async def sync_db_create_user_account(
-    email: str, encrypted_pass: str, salt: str, account_type: str = "USER", approved_user: bool = False
+    email: str, encrypted_pass: str, salt: str, account_type: str = "USER", approved_user: bool = False,
+    details: str = "User Account"
 ) -> DBUserAccount:
-    return await db_create_user_account(email, encrypted_pass, salt, account_type, approved_user)
+    return await db_create_user_account(email, encrypted_pass, salt, account_type, approved_user, details)
 
 
 async def db_get_user_account(email: str) -> DBUserAccount:
@@ -49,6 +52,8 @@ async def db_update_user_account(find_email: str, **kwargs) -> DBUserAccount:
             db_user_account.approved_user = value
         elif key == "deleted":
             db_user_account.deleted = value
+        elif key == "details":
+            db_user_account.details = value
         else:
             raise ValueError(f"Field not updatable: {key}")
     await db_user_account.save()

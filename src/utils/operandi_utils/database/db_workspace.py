@@ -1,3 +1,5 @@
+from typing import List
+from datetime import datetime
 from os.path import join
 from operandi_utils import call_sync
 from operandi_utils.constants import StateWorkspace
@@ -6,8 +8,9 @@ from .models import DBWorkspace
 
 # TODO: This also updates to satisfy the PUT method in the Workspace Manager - fix this
 async def db_create_workspace(
-    workspace_id: str, workspace_dir: str, pages_amount: int, bag_info: dict,
-    state: StateWorkspace = StateWorkspace.UNSET, default_mets_basename: str = "mets.xml"
+    workspace_id: str, workspace_dir: str, pages_amount: int, file_groups: List[str], bag_info: dict,
+    state: StateWorkspace = StateWorkspace.UNSET, default_mets_basename: str = "mets.xml",
+    details: str = "Workspace", created_by_user: str = ""
 ) -> DBWorkspace:
     bag_info = dict(bag_info)
     mets_basename = default_mets_basename
@@ -29,32 +32,40 @@ async def db_create_workspace(
             workspace_dir=workspace_dir,
             workspace_mets_path=workspace_mets_path,
             pages_amount=pages_amount,
+            file_groups=file_groups,
             state=state,
             mets_basename=mets_basename,
             ocrd_identifier=ocrd_identifier,
             bagit_profile_identifier=bagit_profile_identifier,
             ocrd_base_version_checksum=ocrd_base_version_checksum,
-            bag_info_adds=bag_info
+            bag_info_adds=bag_info,
+            details=details,
+            created_by_user=created_by_user,
+            datetime=datetime.now()
         )
     else:
         db_workspace.workspace_dir = workspace_dir
         db_workspace.workspace_mets_path = workspace_mets_path
         db_workspace.mets_basename = mets_basename
         db_workspace.pages_amount = pages_amount
+        db_workspace.file_groups = file_groups
         db_workspace.ocrd_identifier = ocrd_identifier
         db_workspace.bagit_profile_identifier = bagit_profile_identifier
         db_workspace.ocrd_base_version_checksum = ocrd_base_version_checksum
         db_workspace.bag_info_adds = bag_info
+        db_workspace.details = details
+        db_workspace.created_by_user = created_by_user
     await db_workspace.save()
     return db_workspace
 
 
 @call_sync
 async def sync_db_create_workspace(
-    workspace_id: str, workspace_dir: str, pages_amount: int, bag_info: dict,
-    state: StateWorkspace = StateWorkspace.UNSET
+    workspace_id: str, workspace_dir: str, pages_amount: int, file_groups: List[str], bag_info: dict,
+    state: StateWorkspace = StateWorkspace.UNSET, details: str = "Workspace", created_by_user: str = ""
 ) -> DBWorkspace:
-    return await db_create_workspace(workspace_id, workspace_dir, pages_amount, bag_info, state)
+    return await db_create_workspace(
+        workspace_id, workspace_dir, pages_amount, file_groups, bag_info, state, details, created_by_user)
 
 
 async def db_get_workspace(workspace_id: str) -> DBWorkspace:
@@ -83,6 +94,8 @@ async def db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorkspace:
             db_workspace.workspace_mets_path = value
         elif key == "pages_amount":
             db_workspace.pages_amount = value
+        elif key == "file_groups":
+            db_workspace.file_groups = value
         elif key == "state":
             db_workspace.state = value
         elif key == "ocrd_identifier":
@@ -97,6 +110,10 @@ async def db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorkspace:
             db_workspace.bag_info_adds = value
         elif key == "deleted":
             db_workspace.deleted = value
+        elif key == "details":
+            db_workspace.details = value
+        elif key == "created_by_user":
+            db_workspace.created_by_user = value
         else:
             raise ValueError(f"Field not updatable: {key}")
     await db_workspace.save()
