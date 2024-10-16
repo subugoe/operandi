@@ -21,7 +21,6 @@ from operandi_utils.database.models import DBWorkspace
 def get_ocrd_workspace_physical_pages(mets_path: str) -> List[str]:
     return Resolver().workspace_from_url(mets_url=mets_path).mets.physical_pages
 
-
 def extract_pages_with_handling(logger, bag_info: dict, ws_dir: str) -> int:
     mets_basename = DEFAULT_METS_BASENAME
     if "Ocrd-Mets" in bag_info:
@@ -34,6 +33,21 @@ def extract_pages_with_handling(logger, bag_info: dict, ws_dir: str) -> int:
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
     return pages_amount
+
+def get_ocrd_workspace_file_groups(mets_path: str) -> List[str]:
+    return Resolver().workspace_from_url(mets_url=mets_path).mets.file_groups
+
+def extract_file_groups_with_handling(logger, bag_info: dict, ws_dir: str) -> List[str]:
+    mets_basename = DEFAULT_METS_BASENAME
+    if "Ocrd-Mets" in bag_info:
+        mets_basename = bag_info.get("Ocrd-Mets")
+    try:
+        file_groups = get_ocrd_workspace_file_groups(mets_path=join(ws_dir, mets_basename))
+    except Exception as error:
+        message = "Failed to extract file groups"
+        logger.error(f"{message}, error: {error}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+    return file_groups
 
 
 def create_workspace_bag(db_workspace) -> Union[str, None]:
@@ -170,7 +184,7 @@ def parse_file_groups_with_handling(logger, file_groups: str) -> List[str]:
 
 def remove_file_groups_with_handling(
     logger, db_workspace, file_groups: List[str], recursive: bool = True, force: bool = True
-):
+) -> List[str]:
     try:
         resolver = Resolver()
         # Create an OCR-D Workspace from a remote mets URL
@@ -181,21 +195,24 @@ def remove_file_groups_with_handling(
         for file_group in file_groups:
             workspace.remove_file_group(file_group, recursive=recursive, force=force)
         workspace.save_mets()
+        return workspace.mets.file_groups
     except Exception as error:
         message = "Failed to parse the file groups to be removed"
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
 
-def check_if_file_group_exists_with_handling(logger, db_workspace, file_group: str) -> bool:
+def extract_file_groups_from_db_model_with_handling(logger, db_workspace) -> List[str]:
     try:
         resolver = Resolver()
         workspace = resolver.workspace_from_url(
             mets_url=db_workspace.workspace_mets_path, clobber_mets=False, mets_basename=db_workspace.mets_basename,
             download=False)
-        if file_group in workspace.mets.file_groups:
-            return True
-        return False
+        return workspace.mets.file_groups
     except Exception as error:
-        message = f"Failed to check existence of a file group: {file_group}"
+        message = f"Failed to extract file groups for: {db_workspace.workspace_id}"
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+
+def check_if_file_group_exists_with_handling(logger, db_workspace, file_group: str) -> bool:
+    file_groups = extract_file_groups_from_db_model_with_handling(logger, db_workspace)
+    return file_group in file_groups

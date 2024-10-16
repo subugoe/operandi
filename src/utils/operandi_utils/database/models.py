@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from beanie import Document
 from datetime import datetime
 from operandi_utils.constants import AccountTypes, StateJob, StateJobSlurm, StateWorkspace
@@ -136,6 +136,7 @@ class DBWorkspace(Document):
         workspace_dir               Workspace directory full path on the server
         workspace_mets_path         Workspace mets file full path on the server
         pages_amount                The amount of the physical pages, used for creating page ranges
+        file_groups                 The list of available file groups
         state                       Whether the workspace is currently being processed or not
         ocrd_identifier             Ocrd-Identifier (mandatory)
         bagit_profile_identifier    BagIt-Profile-Identifier (mandatory)
@@ -151,6 +152,7 @@ class DBWorkspace(Document):
     workspace_dir: str
     workspace_mets_path: str
     pages_amount: int
+    file_groups: List[str]
     state: StateWorkspace = StateWorkspace.UNSET
     ocrd_identifier: Optional[str]
     bagit_profile_identifier: Optional[str]
