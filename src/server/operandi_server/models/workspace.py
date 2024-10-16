@@ -1,5 +1,7 @@
 from operandi_utils.constants import StateWorkspace
 from operandi_utils.database.models import DBWorkspace
+from operandi_server.constants import SERVER_WORKSPACES_ROUTER
+from operandi_server.files_manager import get_resource_url
 from .base import Resource
 
 
@@ -12,8 +14,11 @@ class WorkspaceRsrc(Resource):
     state: StateWorkspace = StateWorkspace.UNSET
 
     @staticmethod
-    def from_db_workspace(db_workspace: DBWorkspace, workspace_url: str):
+    def from_db_workspace(db_workspace: DBWorkspace):
         return WorkspaceRsrc(
-            resource_id=db_workspace.workspace_id, resource_url=workspace_url, description=db_workspace.details,
-            state=db_workspace.state, created_by_user=db_workspace.created_by_user
+            resource_id=db_workspace.workspace_id,
+            resource_url=get_resource_url(SERVER_WORKSPACES_ROUTER, db_workspace.workspace_id),
+            description=db_workspace.details,
+            state=db_workspace.state,
+            created_by_user=db_workspace.created_by_user
         )

@@ -87,7 +87,7 @@ class RouterWorkspace:
         for workspace in workspaces:
             ws_id, ws_url = workspace
             db_workspace = await db_get_workspace(workspace_id=ws_id)
-            response.append(WorkspaceRsrc.from_db_workspace(db_workspace, workspace_url=ws_url))
+            response.append(WorkspaceRsrc.from_db_workspace(db_workspace))
         return response
 
     async def download_workspace(
@@ -140,8 +140,7 @@ class RouterWorkspace:
         db_workspace = await db_create_workspace(
             workspace_id=workspace_id, workspace_dir=workspace_dir, pages_amount=pages_amount, bag_info=bag_info,
             state=StateWorkspace.READY, details=details, created_by_user=auth.username)
-        return WorkspaceRsrc.from_db_workspace(
-            db_workspace, workspace_url=get_resource_url(SERVER_WORKSPACES_ROUTER, workspace_id))
+        return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def upload_workspace(
         self, workspace: UploadFile, details: str = f"Workspace uploaded as an OCRD zip format",
@@ -169,8 +168,7 @@ class RouterWorkspace:
         db_workspace = await db_create_workspace(
             workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, bag_info=bag_info,
             state=StateWorkspace.READY, details=details, created_by_user=auth.username)
-        return WorkspaceRsrc.from_db_workspace(
-            db_workspace, workspace_url=get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id))
+        return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def put_workspace(
         self, workspace: UploadFile, workspace_id: str, details: str = f"Workspace uploaded as an OCRD zip format",
@@ -214,8 +212,7 @@ class RouterWorkspace:
         db_workspace = await db_create_workspace(
             workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, bag_info=bag_info,
             state=StateWorkspace.READY, details=details, created_by_user=auth.username)
-        return WorkspaceRsrc.from_db_workspace(
-            db_workspace, workspace_url=get_resource_url(SERVER_WORKSPACES_ROUTER, ws_id))
+        return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def delete_workspace(
         self, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
@@ -225,9 +222,11 @@ class RouterWorkspace:
         `curl -X DELETE SERVER_ADDR/workspace/{workspace_id}`
         """
         await self.user_authenticator.user_login(auth)
-        db_workspace = await get_db_workspace_with_handling(
+        await get_db_workspace_with_handling(
             self.logger, workspace_id, check_ready=True, check_deleted=True, check_local_existence=True)
 
+        db_workspace = await db_update_workspace(find_workspace_id=workspace_id, deleted=True)
+        workspace_rsrc = WorkspaceRsrc.from_db_workspace(db_workspace)
         try:
             deleted_workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
             delete_resource_dir(SERVER_WORKSPACES_ROUTER, workspace_id)
@@ -235,9 +234,7 @@ class RouterWorkspace:
             message = f"Non-existing local entry workspace_id: {workspace_id}"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
-
-        await db_update_workspace(find_workspace_id=workspace_id, deleted=True)
-        return WorkspaceRsrc.from_db_workspace(db_workspace, workspace_url=deleted_workspace_url)
+        return workspace_rsrc
 
     async def remove_file_group_from_workspace(
         self, workspace_id: str, remove_file_grps: str, recursive: bool = True, force: bool = True,
@@ -251,5 +248,4 @@ class RouterWorkspace:
         remove_file_groups_with_handling(
             self.logger, db_workspace=db_workspace, file_groups=file_grps_to_remove, recursive=recursive, force=force
         )
-        return WorkspaceRsrc.from_db_workspace(
-            db_workspace, workspace_url=get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id))
+        return WorkspaceRsrc.from_db_workspace(db_workspace)

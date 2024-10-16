@@ -141,7 +141,7 @@ class RouterWorkflow:
         for workflow in workflows:
             wf_id, wf_url = workflow
             db_workflow = await db_get_workflow(workflow_id=wf_id)
-            response.append(WorkflowRsrc.from_db_workflow(db_workflow, workflow_url=wf_url))
+            response.append(WorkflowRsrc.from_db_workflow(db_workflow))
         return response
 
     async def download_workflow_script(
@@ -181,8 +181,7 @@ class RouterWorkflow:
             workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
             workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details,
             created_by_user=auth.username)
-        return WorkflowRsrc.from_db_workflow(
-            db_workflow, workflow_url=get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id))
+        return WorkflowRsrc.from_db_workflow(db_workflow)
 
     async def update_workflow_script(
         self, nextflow_script: UploadFile, workflow_id: str, details: str = "Nextflow workflow",
@@ -217,8 +216,7 @@ class RouterWorkflow:
             workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
             workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details,
             created_by_user=auth.username)
-        return WorkflowRsrc.from_db_workflow(
-            db_workflow, workflow_url=get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id))
+        return WorkflowRsrc.from_db_workflow(db_workflow)
 
     async def get_workflow_job_status(
         self, workflow_id: str, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
@@ -251,7 +249,7 @@ class RouterWorkflow:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return WorkflowJobRsrc.from_db_workflow_job(
-            db_wf_job, wf_job_url, db_workflow, workflow_url, db_workspace, workspace_url)
+            db_workflow_job=db_wf_job, db_workflow=db_workflow, db_workspace=db_workspace)
 
     async def download_workflow_job_logs(
         self, background_tasks: BackgroundTasks, workflow_id: str, job_id: str,
@@ -351,10 +349,7 @@ class RouterWorkflow:
             input_file_grp=input_file_grp, remove_file_grps=remove_file_grps, partition=partition, cpus=cpus, ram=ram
         )
         return WorkflowJobRsrc.from_db_workflow_job(
-            db_workflow_job=db_wf_job, workflow_job_url=job_url,
-            db_workflow=db_workflow, workflow_url=workflow_url,
-            db_workspace=db_workspace, workspace_url=workspace_url
-        )
+            db_workflow_job=db_wf_job, db_workflow=db_workflow, db_workspace=db_workspace)
 
     def _push_job_to_rabbitmq(
         self, user_type: str, workflow_id: str, workspace_id: str, job_id: str, input_file_grp: str,
