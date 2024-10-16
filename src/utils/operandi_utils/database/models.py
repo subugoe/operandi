@@ -75,6 +75,7 @@ class DBWorkflow(Document):
         deleted                 Whether the entry has been deleted locally from the server
         datetime                Shows the created date time of the entry
         details                 Extra user specified details about this entry
+        created_by_user         Which user has created the entry
     """
     workflow_id: str
     workflow_dir: str
@@ -84,6 +85,7 @@ class DBWorkflow(Document):
     deleted: bool = False
     datetime = datetime.now()
     details: Optional[str]
+    created_by_user: Optional[str]
 
     class Settings:
         name = "workflows"
@@ -105,6 +107,7 @@ class DBWorkflowJob(Document):
         deleted             Whether the entry has been deleted locally from the server
         datetime            Shows the created date time of the entry
         details             Extra user specified details about this entry
+        created_by_user     Which user has created the entry
     """
     job_id: str
     job_dir: str
@@ -117,6 +120,7 @@ class DBWorkflowJob(Document):
     deleted: bool = False
     datetime = datetime.now()
     details: Optional[str]
+    created_by_user: Optional[str]
 
     class Settings:
         name = "workflow_jobs"
@@ -142,6 +146,7 @@ class DBWorkspace(Document):
         deleted                     Whether the entry has been deleted locally from the server
         datetime                    Shows the created date time of the entry
         details                     Extra user specified details about this entry
+        created_by_user             Which user has created the entry
     """
     workspace_id: str
     workspace_dir: str
@@ -156,6 +161,7 @@ class DBWorkspace(Document):
     deleted: bool = False
     datetime = datetime.now()
     details: Optional[str]
+    created_by_user: Optional[str]
 
     class Settings:
         name = "workspaces"

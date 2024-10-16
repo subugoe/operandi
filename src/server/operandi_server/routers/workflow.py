@@ -6,6 +6,8 @@ from pathlib import Path
 from shutil import make_archive, copyfile
 from tempfile import mkdtemp
 from typing import List
+
+from docutils.nodes import description
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -125,7 +127,8 @@ class RouterWorkflow:
             uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
             await db_create_workflow(
                 workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-                workflow_script_base=path.name, uses_mets_server=uses_mets_server, details=wf_detail)
+                workflow_script_base=path.name, uses_mets_server=uses_mets_server, details=wf_detail,
+                created_by_user="Operandi Server")
             self.production_workflows.append(workflow_id)
 
     async def list_workflows(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
@@ -173,9 +176,11 @@ class RouterWorkflow:
         uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
         await db_create_workflow(
             workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details)
+            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details,
+            created_by_user=auth.username)
         workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
-        return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url, description=details)
+        return WorkflowRsrc.create(
+            workflow_id=workflow_id, workflow_url=workflow_url, description=details, created_by_user=auth.username)
 
     async def update_workflow_script(
         self, nextflow_script: UploadFile, workflow_id: str, details: str = "Nextflow workflow",
@@ -208,9 +213,11 @@ class RouterWorkflow:
         uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
         await db_create_workflow(
             workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details)
+            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details,
+            created_by_user=auth.username)
         workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, workflow_id)
-        return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
+        return WorkflowRsrc.create(
+            workflow_id=workflow_id, workflow_url=workflow_url, description=details, created_by_user=auth.username)
 
     async def get_workflow_job_status(
         self, workflow_id: str, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
@@ -242,7 +249,7 @@ class RouterWorkflow:
         return WorkflowJobRsrc.create(
             job_id=job_id, job_url=wf_job_url, workflow_id=workflow_id, workflow_url=workflow_url,
             workspace_id=workspace_id, workspace_url=workspace_url, ws_state=db_workspace.state,
-            job_state=db_wf_job.job_state
+            job_state=db_wf_job.job_state, description=db_wf_job.details, created_by_user=db_wf_job.created_by_user
         )
 
     async def download_workflow_job_logs(
@@ -336,7 +343,7 @@ class RouterWorkflow:
         self.logger.info("Saving the workflow job to the database")
         await db_create_workflow_job(
             job_id=job_id, job_dir=job_dir, job_state=job_state, workspace_id=workspace_id, workflow_id=workflow_id,
-            details=details)
+            details=details, created_by_user=auth.username)
 
         self._push_job_to_rabbitmq(
             user_type=user_account_type, workflow_id=workflow_id, workspace_id=workspace_id, job_id=job_id,
@@ -346,7 +353,7 @@ class RouterWorkflow:
         return WorkflowJobRsrc.create(
             job_id=job_id, job_url=job_url, workflow_id=workflow_id, workflow_url=workflow_url,
             workspace_id=workspace_id, workspace_url=workspace_url, ws_state=ws_state,
-            job_state=job_state, description=details
+            job_state=job_state, description=details, created_by_user=auth.username
         )
 
     def _push_job_to_rabbitmq(

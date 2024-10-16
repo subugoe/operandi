@@ -9,12 +9,17 @@ class WorkflowRsrc(Resource):
     # resource_id: (str) - inherited from Resource
     # resource_url: (str) - inherited from Resource
     # description: (str) - inherited from Resource
+    created_by_user: Optional[str]
 
     @staticmethod
-    def create(workflow_id: str, workflow_url: str, description: str = None):
+    def create(workflow_id: str, workflow_url: str, description: str = None, created_by_user: str = None):
         if not description:
             description = "Workflow"
-        return WorkflowRsrc(resource_id=workflow_id, resource_url=workflow_url, description=description)
+        if not created_by_user:
+            created_by_user = ""
+        return WorkflowRsrc(
+            resource_id=workflow_id, resource_url=workflow_url, description=description,
+            created_by_user=created_by_user)
 
 
 class WorkflowJobRsrc(Job):
@@ -25,17 +30,21 @@ class WorkflowJobRsrc(Job):
     # job_state: (JobState)  - inherited from Job
     workflow_rsrc: Optional[WorkflowRsrc]
     workspace_rsrc: Optional[WorkspaceRsrc]
+    created_by_user: Optional[str]
 
     @staticmethod
     def create(
         job_id: str, job_url: str, workflow_id: str, workflow_url: str, workspace_id: str, workspace_url: str,
-        ws_state: StateWorkspace = StateWorkspace.UNSET, job_state: StateJob = StateJob.UNSET, description: str = None
+        ws_state: StateWorkspace = StateWorkspace.UNSET, job_state: StateJob = StateJob.UNSET, description: str = None,
+        created_by_user: str = None
     ):
         if not description:
             description = "Workflow-Job"
+        if not created_by_user:
+            created_by_user = ""
         workflow_rsrc = WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
         workspace_rsrc = WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=workspace_url, state=ws_state)
         return WorkflowJobRsrc(
             resource_id=job_id, resource_url=job_url, description=description, job_state=job_state,
-            workflow_rsrc=workflow_rsrc, workspace_rsrc=workspace_rsrc,
+            workflow_rsrc=workflow_rsrc, workspace_rsrc=workspace_rsrc, created_by_user=created_by_user
         )

@@ -11,7 +11,7 @@ from .models import DBWorkspace
 async def db_create_workspace(
     workspace_id: str, workspace_dir: str, pages_amount: int, bag_info: dict,
     state: StateWorkspace = StateWorkspace.UNSET, default_mets_basename: str = "mets.xml",
-    details: str = "Workspace"
+    details: str = "Workspace", created_by_user: str = ""
 ) -> DBWorkspace:
     bag_info = dict(bag_info)
     mets_basename = default_mets_basename
@@ -39,7 +39,8 @@ async def db_create_workspace(
             bagit_profile_identifier=bagit_profile_identifier,
             ocrd_base_version_checksum=ocrd_base_version_checksum,
             bag_info_adds=bag_info,
-            details=details
+            details=details,
+            created_by_user=created_by_user
         )
     else:
         db_workspace.workspace_dir = workspace_dir
@@ -51,6 +52,7 @@ async def db_create_workspace(
         db_workspace.ocrd_base_version_checksum = ocrd_base_version_checksum
         db_workspace.bag_info_adds = bag_info
         db_workspace.details = details
+        db_workspace.created_by_user = created_by_user
     await db_workspace.save()
     return db_workspace
 
@@ -58,9 +60,10 @@ async def db_create_workspace(
 @call_sync
 async def sync_db_create_workspace(
     workspace_id: str, workspace_dir: str, pages_amount: int, bag_info: dict,
-    state: StateWorkspace = StateWorkspace.UNSET, details: str = "Workspace"
+    state: StateWorkspace = StateWorkspace.UNSET, details: str = "Workspace", created_by_user: str = ""
 ) -> DBWorkspace:
-    return await db_create_workspace(workspace_id, workspace_dir, pages_amount, bag_info, state, details)
+    return await db_create_workspace(
+        workspace_id, workspace_dir, pages_amount, bag_info, state, details, created_by_user)
 
 
 async def db_get_workspace(workspace_id: str) -> DBWorkspace:
@@ -105,6 +108,8 @@ async def db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorkspace:
             db_workspace.deleted = value
         elif key == "details":
             db_workspace.details = value
+        elif key == "created_by_user":
+            db_workspace.created_by_user = value
         else:
             raise ValueError(f"Field not updatable: {key}")
     await db_workspace.save()
