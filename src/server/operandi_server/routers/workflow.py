@@ -112,10 +112,13 @@ class RouterWorkflow:
 
     async def insert_production_workflows(self, production_workflows_dir: Path = get_nf_workflows_dir()):
         wf_detail = "Workflow provided by the Operandi Server"
+        self.logger.info(f"Inserting production workflows for Operandi from: {production_workflows_dir}")
         for path in production_workflows_dir.iterdir():
             if not path.is_file():
+                self.logger.info(f"Skipping non-file path: {path}")
                 continue
             if path.suffix != '.nf':
+                self.logger.info(f"Skipping non .nf extension file path: {path}")
                 continue
             # path.stem -> file_name
             # path.name -> file_name.ext
@@ -124,6 +127,7 @@ class RouterWorkflow:
             nf_script_dest = join(workflow_dir, path.name)
             copyfile(src=path, dst=nf_script_dest)
             uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
+            self.logger.info(f"Inserting: {workflow_id}, uses_mets_server: {uses_mets_server}, script path: {nf_script_dest}")
             await db_create_workflow(
                 workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
                 workflow_script_base=path.name, uses_mets_server=uses_mets_server, details=wf_detail,
