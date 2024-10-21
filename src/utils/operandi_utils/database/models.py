@@ -4,6 +4,63 @@ from datetime import datetime
 from operandi_utils.constants import AccountTypes, StateJob, StateJobSlurm, StateWorkspace
 
 
+class DBUserAccount(Document):
+    """
+    Model to store a user account in the database
+
+    Attributes:
+        institution_id  Unique id of the institution the user belongs to
+        user_id:        Unique id of the user
+        email:          The e-mail address of the user
+        encrypted_pass: The encrypted password of the user
+        salt:           Random salt value used when encrypting the password
+        approved_user:  Whether the user is approved by the admin
+        account_type:   The type of the account, any of the `AccountTypes`
+        deleted:        Whether the entry has been deleted locally from the server
+        datetime        Shows the created date time of the entry
+        details         Extra user specified details about this entry
+
+    By default, the registered user's account is not validated.
+    An admin must manually validate the account by assigning True value.
+    """
+    institution_id: str
+    user_id: str
+    email: str
+    encrypted_pass: str
+    salt: str
+    account_type: str = "UNSET"
+    approved_user: bool = False
+    deleted: bool = False
+    datetime = datetime.now()
+    details: Optional[str]
+
+    class Settings:
+        name = "user_accounts"
+
+class ProcessingStatistics(Document):
+    """
+    Model to store a user account in the database
+
+    Attributes:
+        institution_id:     Unique id of the institution the user belongs to
+        user_id: Unique     id of the user
+        pages_uploaded:     Total amount of pages uploaded in a workspace
+        pages_submitted:    Total amount of submitted pages in workflow jobs
+        pages_succeed:      Total amount of successfully processed pages
+        pages_cancel:       Total amount of cancelled pages
+        pages_failed:       Total amount of failed pages
+    """
+    institution_id: str
+    user_id: str
+    pages_uploaded: int = 0
+    pages_submitted: int = 0
+    pages_succeed: int = 0
+    pages_cancel: int = 0
+    pages_failed: int = 0
+
+    class Settings:
+        name = "processing_statistics"
+
 class DBHPCSlurmJob(Document):
     """
     Model to store an HPC slurm job in the MongoDB
@@ -17,6 +74,7 @@ class DBHPCSlurmJob(Document):
         deleted                     Whether the entry has been deleted locally from the server
         datetime                    Shows the created date time of the entry
         details                     Extra user specified details about this entry
+        created_by_user             Which user id has created the entry
     """
     workflow_job_id: str
     hpc_slurm_job_id: str
@@ -26,40 +84,10 @@ class DBHPCSlurmJob(Document):
     deleted: bool = False
     datetime = datetime.now()
     details: Optional[str]
+    created_by_user: Optional[str]
 
     class Settings:
         name = "hpc_slurm_jobs"
-
-
-class DBUserAccount(Document):
-    """
-    Model to store a user account in the database
-
-    Attributes:
-        email:          The e-mail address of the user
-        encrypted_pass: The encrypted password of the user
-        salt:           Random salt value used when encrypting the password
-        approved_user:  Whether the user is approved by the admin
-        account_type:   The type of the account, any of the `AccountTypes`
-        deleted:        Whether the entry has been deleted locally from the server
-        datetime        Shows the created date time of the entry
-        details         Extra user specified details about this entry
-
-    By default, the registered user's account is not validated.
-    An admin must manually validate the account by assigning True value.
-    """
-    email: str
-    encrypted_pass: str
-    salt: str
-    account_type: str = "UNSET"
-    approved_user: bool = False
-    deleted: bool = False
-    datetime = datetime.now()
-    details: Optional[str]
-
-    class Settings:
-        name = "user_accounts"
-
 
 class DBWorkflow(Document):
     """
@@ -74,7 +102,7 @@ class DBWorkflow(Document):
         deleted                 Whether the entry has been deleted locally from the server
         datetime                Shows the created date time of the entry
         details                 Extra user specified details about this entry
-        created_by_user         Which user has created the entry
+        created_by_user         Which user id has created the entry
     """
     workflow_id: str
     workflow_dir: str
@@ -106,7 +134,7 @@ class DBWorkflowJob(Document):
         deleted             Whether the entry has been deleted locally from the server
         datetime            Shows the created date time of the entry
         details             Extra user specified details about this entry
-        created_by_user     Which user has created the entry
+        created_by_user     Which user id has created the entry
     """
     job_id: str
     job_dir: str
@@ -146,7 +174,7 @@ class DBWorkspace(Document):
         deleted                     Whether the entry has been deleted locally from the server
         datetime                    Shows the created date time of the entry
         details                     Extra user specified details about this entry
-        created_by_user             Which user has created the entry
+        created_by_user             Which user id has created the entry
     """
     workspace_id: str
     workspace_dir: str
