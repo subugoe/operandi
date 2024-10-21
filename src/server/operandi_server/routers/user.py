@@ -22,8 +22,14 @@ class RouterUser:
         )
         self.router.add_api_route(
             path="/user/register",
-            endpoint=self.user_register, methods=["GET"], status_code=status.HTTP_201_CREATED,
+            endpoint=self.user_register, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Register a user with their e-mail and password",
+            response_model=PYUserAction, response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        self.router.add_api_route(
+            path="/user_stats",
+            endpoint=self.user_processing_stats, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get user account statistics of the current account",
             response_model=PYUserAction, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
@@ -77,3 +83,6 @@ class RouterUser:
         action = f"Successfully registered a new account: {email}. " \
                  f"Please contact the OCR-D team to get your account validated before use."
         return PYUserAction(account_type=account_type, action=action, email=email)
+
+    async def user_processing_stats(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+        pass
