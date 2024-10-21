@@ -1,13 +1,15 @@
-from operandi_utils import call_sync
+from operandi_utils import call_sync, generate_id
 from ..constants import AccountTypes
 from .models import DBUserAccount
 
 
 async def db_create_user_account(
-    email: str, encrypted_pass: str, salt: str, account_type: str = "USER", approved_user: bool = False,
-    details: str = "User Account"
+    institution_id: str, email: str, encrypted_pass: str, salt: str, account_type: str = "USER",
+    approved_user: bool = False, details: str = "User Account"
 ) -> DBUserAccount:
     user_account = DBUserAccount(
+        institution_id=institution_id,
+        user_id=generate_id(),
         email=email,
         encrypted_pass=encrypted_pass,
         salt=salt,
@@ -21,10 +23,11 @@ async def db_create_user_account(
 
 @call_sync
 async def sync_db_create_user_account(
-    email: str, encrypted_pass: str, salt: str, account_type: str = "USER", approved_user: bool = False,
-    details: str = "User Account"
+    institution_id: str, email: str, encrypted_pass: str, salt: str, account_type: str = "USER",
+    approved_user: bool = False, details: str = "User Account"
 ) -> DBUserAccount:
-    return await db_create_user_account(email, encrypted_pass, salt, account_type, approved_user, details)
+    return await db_create_user_account(
+        institution_id, email, encrypted_pass, salt, account_type, approved_user, details)
 
 
 async def db_get_user_account(email: str) -> DBUserAccount:
@@ -45,7 +48,9 @@ async def db_update_user_account(find_email: str, **kwargs) -> DBUserAccount:
     for key, value in kwargs.items():
         if key not in model_keys:
             raise ValueError(f"Field not available: {key}")
-        if key == "email":
+        if key == "institution_id":
+            db_user_account.institution_id = value
+        elif key == "email":
             db_user_account.email = value
         elif key == "encrypted_pass":
             db_user_account.encrypted_pass = value

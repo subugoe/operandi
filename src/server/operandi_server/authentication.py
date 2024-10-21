@@ -9,8 +9,8 @@ from operandi_utils.database.db_processing_statistics import db_create_processin
 
 
 async def create_user_if_not_available(
-    username: str, password: str, account_type: str, approved_user: bool = False, details: str = "User Account",
-    institution_id: str = "No institution"
+    username: str, password: str, account_type: str, institution_id: str, approved_user: bool = False,
+    details: str = "User Account"
 ):
     # If the account is not available in the DB, create it
     try:
@@ -37,8 +37,8 @@ async def authenticate_user(email: str, password: str) -> str:
 
 
 async def register_user(
-    email: str, password: str, account_type: str, approved_user: bool = False,
-    details: str = "User Account", institution_id: str = "No institution"
+    email: str, password: str, account_type: str, institution_id: str, approved_user: bool = False,
+    details: str = "User Account"
 ):
     salt, encrypted_password = encrypt_password(password)
     try:
@@ -46,10 +46,10 @@ async def register_user(
     except RuntimeError:
         # No user existing with the provided e-mail, register
         db_user_account = await db_create_user_account(
-            email=email, encrypted_pass=encrypted_password, salt=salt, account_type=account_type,
-            approved_user=approved_user, details=details)
+            institution_id=institution_id, email=email, encrypted_pass=encrypted_password, salt=salt,
+            account_type=account_type, approved_user=approved_user, details=details)
         db_processing_stats = await db_create_processing_stats(
-            institution_id=institution_id, user_id=db_user_account.user_id)
+            institution_id=db_user_account.institution_id, user_id=db_user_account.user_id)
         return
     raise RegistrationError(f"Another user is already registered with email: {email}")
 
