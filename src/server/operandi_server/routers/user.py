@@ -52,7 +52,9 @@ class RouterUser:
         return PYUserAction(account_type=account_type, action="Successfully logged!", email=email)
 
     async def user_register(
-        self, email: str, password: str, account_type: str = "USER", details: str = "User Account") -> PYUserAction:
+        self, email: str, password: str, institution_id: str, account_type: str = "USER",
+        details: str = "User Account"
+    ) -> PYUserAction:
         """
         Used for registration.
         There are 3 account types:
@@ -74,7 +76,9 @@ class RouterUser:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers=self.auth_headers, detail=message)
         try:
             await register_user(
-                email=email, password=password, account_type=account_type, approved_user=False, details=details)
+                email=email, password=password, account_type=account_type, approved_user=False, details=details,
+                institution_id=institution_id
+            )
         except RegistrationError as error:
             message = f"User failed to register: {email}, reason: {error}"
             self.logger.error(f"{message}")

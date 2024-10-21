@@ -5,10 +5,13 @@ from typing import Tuple
 from operandi_utils.constants import AccountTypes
 from operandi_utils.database import db_create_user_account, db_get_user_account
 from operandi_server.exceptions import AuthenticationError, RegistrationError
+from operandi_utils.database.db_processing_statistics import db_create_processing_stats
 
 
 async def create_user_if_not_available(
-    username: str, password: str, account_type: str, approved_user: bool = False, details: str = "User Account"):
+    username: str, password: str, account_type: str, approved_user: bool = False, details: str = "User Account",
+    institution_id: str = "No institution"
+):
     # If the account is not available in the DB, create it
     try:
         await authenticate_user(username, password)
@@ -16,7 +19,8 @@ async def create_user_if_not_available(
         # TODO: Note that this account is never removed from
         #  the DB automatically in the current implementation
         await register_user(
-            email=username, password=password, account_type=account_type, approved_user=approved_user, details=details)
+            email=username, password=password, account_type=account_type, approved_user=approved_user, details=details,
+            institution_id=institution_id)
 
 
 async def authenticate_user(email: str, password: str) -> str:
@@ -33,15 +37,19 @@ async def authenticate_user(email: str, password: str) -> str:
 
 
 async def register_user(
-    email: str, password: str, account_type: str, approved_user: bool = False, details: str = "User Account"):
+    email: str, password: str, account_type: str, approved_user: bool = False,
+    details: str = "User Account", institution_id: str = "No institution"
+):
     salt, encrypted_password = encrypt_password(password)
     try:
         await db_get_user_account(email)
     except RuntimeError:
         # No user existing with the provided e-mail, register
-        await db_create_user_account(
+        db_user_account = await db_create_user_account(
             email=email, encrypted_pass=encrypted_password, salt=salt, account_type=account_type,
             approved_user=approved_user, details=details)
+        db_processing_stats = await db_create_processing_stats(
+            institution_id=institution_id, user_id=db_user_account.user_id)
         return
     raise RegistrationError(f"Another user is already registered with email: {email}")
 

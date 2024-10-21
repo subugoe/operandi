@@ -37,7 +37,7 @@ class DBUserAccount(Document):
     class Settings:
         name = "user_accounts"
 
-class ProcessingStatistics(Document):
+class DBProcessingStatistics(Document):
     """
     Model to store a user account in the database
 

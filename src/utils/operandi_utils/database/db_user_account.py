@@ -8,8 +8,13 @@ async def db_create_user_account(
     details: str = "User Account"
 ) -> DBUserAccount:
     user_account = DBUserAccount(
-        email=email, encrypted_pass=encrypted_pass, salt=salt, account_type=account_type, approved_user=approved_user,
-        details=details)
+        email=email,
+        encrypted_pass=encrypted_pass,
+        salt=salt,
+        account_type=account_type,
+        approved_user=approved_user,
+        details=details
+    )
     await user_account.save()
     return user_account
 
