@@ -1,6 +1,6 @@
 __all__ = [
-  "cli",
-  "OperandiServer",
+    "cli",
+    "OperandiServer",
 ]
 
 from .cli import cli

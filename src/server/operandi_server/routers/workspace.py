@@ -8,13 +8,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, 
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_utils.constants import StateWorkspace
+from operandi_utils.constants import ServerApiTag, StateWorkspace
 from operandi_utils.database import db_create_workspace, db_get_workspace, db_update_workspace
 from operandi_server.constants import SERVER_WORKSPACES_ROUTER, DEFAULT_METS_BASENAME
 from operandi_server.files_manager import (
     create_resource_dir, delete_resource_dir, get_all_resources_url, get_resource_url, receive_resource)
 from operandi_server.models import WorkspaceRsrc
-from .constants import ServerApiTags
 from .workspace_utils import (
     create_workspace_bag,
     create_workspace_bag_from_remote_url,
@@ -33,7 +32,7 @@ class RouterWorkspace:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.workspace")
         self.user_authenticator = RouterUser()
-        self.router = APIRouter(tags=[ServerApiTags.WORKSPACE])
+        self.router = APIRouter(tags=[ServerApiTag.WORKSPACE])
         self.router.add_api_route(
             path="/workspace",
             endpoint=self.list_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,

@@ -9,7 +9,7 @@ except ImportError:
     from importlib_metadata import distribution as get_distribution
 
 __all__ = [
-    "AccountTypes",
+    "AccountType",
     "LOG_FORMAT",
     "LOG_LEVEL_BROKER",
     "LOG_LEVEL_HARVESTER",
@@ -22,6 +22,7 @@ __all__ = [
     "OLA_HD_USER",
     "OLA_HD_PASSWORD",
     "OPERANDI_VERSION",
+    "ServerApiTag",
     "StateJob",
     "StateJobSlurm",
     "StateWorkspace",
@@ -50,12 +51,20 @@ OLA_HD_PASSWORD = "JW24G.xR"
 OPERANDI_VERSION = get_distribution("operandi_utils").version
 
 
-# TODO: Still unused due to the need of changing all existing DB entries. Adapt it.
-class AccountTypes(str, Enum):
+class AccountType(str, Enum):
     ADMIN = "ADMIN"
     HARVESTER = "HARVESTER"
+    MACHINE = "MACHINE"
     USER = "USER"
     UNSET = "UNSET"
+
+
+class ServerApiTag(str, Enum):
+    ADMIN = "admin"
+    DISCOVERY = "discovery"
+    USER = "user"
+    WORKFLOW = "workflow"
+    WORKSPACE = "workspace"
 
 
 class StateJob(str, Enum):

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from beanie import Document
 from datetime import datetime
-from operandi_utils.constants import AccountTypes, StateJob, StateJobSlurm, StateWorkspace
+from operandi_utils.constants import AccountType, StateJob, StateJobSlurm, StateWorkspace
 
 
 class DBUserAccount(Document):
@@ -28,7 +28,7 @@ class DBUserAccount(Document):
     email: str
     encrypted_pass: str
     salt: str
-    account_type: str = "UNSET"
+    account_type: AccountType = AccountType.UNSET
     approved_user: bool = False
     deleted: bool = False
     datetime = datetime.now()

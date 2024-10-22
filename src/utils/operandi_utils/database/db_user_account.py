@@ -1,10 +1,10 @@
 from operandi_utils import call_sync, generate_id
-from ..constants import AccountTypes
+from ..constants import AccountType
 from .models import DBUserAccount
 
 
 async def db_create_user_account(
-    institution_id: str, email: str, encrypted_pass: str, salt: str, account_type: str = "USER",
+    institution_id: str, email: str, encrypted_pass: str, salt: str, account_type: AccountType = AccountType.USER,
     approved_user: bool = False, details: str = "User Account"
 ) -> DBUserAccount:
     user_account = DBUserAccount(
@@ -23,7 +23,7 @@ async def db_create_user_account(
 
 @call_sync
 async def sync_db_create_user_account(
-    institution_id: str, email: str, encrypted_pass: str, salt: str, account_type: str = "USER",
+    institution_id: str, email: str, encrypted_pass: str, salt: str, account_type: AccountType = AccountType.USER,
     approved_user: bool = False, details: str = "User Account"
 ) -> DBUserAccount:
     return await db_create_user_account(

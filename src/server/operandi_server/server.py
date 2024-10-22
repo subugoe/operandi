@@ -6,7 +6,7 @@ from uvicorn import run
 from fastapi import FastAPI, status
 
 from operandi_utils import get_log_file_path_prefix, reconfigure_all_loggers, verify_database_uri
-from operandi_utils.constants import AccountTypes, LOG_LEVEL_SERVER, OPERANDI_VERSION
+from operandi_utils.constants import AccountType, LOG_LEVEL_SERVER, OPERANDI_VERSION
 from operandi_utils.database import db_initiate_database
 from operandi_utils import safe_init_logging
 
@@ -125,7 +125,7 @@ class OperandiServer(FastAPI):
         self.log.info(f"Configuring default server admin account")
         if default_admin_user and default_admin_pass:
             await create_user_if_not_available(
-                username=default_admin_user, password=default_admin_pass, account_type="ADMIN",
+                username=default_admin_user, password=default_admin_pass, account_type=AccountType.ADMIN,
                 institution_id="GWDG Goettingen", approved_user=True, details="Default admin account"
             )
             self.log.info(f"Configured default server admin account")
@@ -133,7 +133,7 @@ class OperandiServer(FastAPI):
         self.log.info(f"Configuring default harvester account")
         if default_harvester_user and default_harvester_pass:
             await create_user_if_not_available(
-                username=default_harvester_user, password=default_harvester_pass, account_type="HARVESTER",
+                username=default_harvester_user, password=default_harvester_pass, account_type=AccountType.HARVESTER,
                 institution_id="SUB Goettingen", approved_user=True, details="Default harvester account"
             )
             self.log.info(f"Configured default harvester account")

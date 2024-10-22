@@ -2,10 +2,9 @@ from logging import getLogger
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_utils.constants import AccountTypes
+from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_server.exceptions import AuthenticationError, RegistrationError
 from operandi_server.models import PYUserAction
-from .constants import ServerApiTags
 from .user_utils import authenticate_user, register_user
 
 
@@ -13,7 +12,7 @@ class RouterUser:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.user")
         self.auth_headers = {"WWW-Authenticate": "Basic"}
-        self.router = APIRouter(tags=[ServerApiTags.USER])
+        self.router = APIRouter(tags=[ServerApiTag.USER])
         self.router.add_api_route(
             path="/user/login",
             endpoint=self.user_login, methods=["GET"], status_code=status.HTTP_200_OK,
@@ -52,7 +51,7 @@ class RouterUser:
         return PYUserAction(email=email, account_type=account_type, action="Successfully logged!")
 
     async def user_register(
-        self, email: str, password: str, institution_id: str, account_type: str = "USER",
+        self, email: str, password: str, institution_id: str, account_type: AccountType = AccountType.USER,
         details: str = "User Account"
     ) -> PYUserAction:
         """
@@ -68,9 +67,8 @@ class RouterUser:
         Curl equivalent:
         `curl -X POST SERVER_ADDR/user/register email=example@gmail.com password=example_pass account_type=user`
         """
-        account_types = ["USER", "HARVESTER", "ADMIN"]
-        if account_type not in account_types:
-            message = f"Wrong account type. Must be one of: {account_types}"
+        if account_type not in AccountType:
+            message = f"Wrong account type. Must be one of: {AccountType}"
             self.logger.error(f"{message}")
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers=self.auth_headers, detail=message)

@@ -2,7 +2,7 @@ from hashlib import sha512
 from random import random
 from typing import Tuple
 
-from operandi_utils.constants import AccountTypes
+from operandi_utils.constants import AccountType
 from operandi_utils.database import db_create_processing_stats, db_create_user_account, db_get_user_account
 from operandi_server.exceptions import AuthenticationError, RegistrationError
 
@@ -37,7 +37,7 @@ async def authenticate_user(email: str, password: str) -> str:
 
 
 async def register_user(
-    email: str, password: str, account_type: str, institution_id: str, approved_user: bool = False,
+    email: str, password: str, account_type: AccountType, institution_id: str, approved_user: bool = False,
     details: str = "User Account"
 ):
     salt, encrypted_password = encrypt_password(password)

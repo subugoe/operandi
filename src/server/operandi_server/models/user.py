@@ -1,9 +1,11 @@
 from pydantic import BaseModel, Field
+from operandi_utils.constants import AccountType
 from operandi_utils.database.models import DBUserAccount
+
 
 class PYUserAction(BaseModel):
     email: str = Field(..., description="Email linked to this User")
-    account_type: str = Field(..., description="The type of this user")
+    account_type: AccountType = Field(AccountType.UNSET, description="The type of this user")
     action: str = Field(..., description="Description of the user action")
 
     class Config:

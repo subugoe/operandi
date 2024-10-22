@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils import get_nf_workflows_dir
-from operandi_utils.constants import AccountTypes, StateJob, StateWorkspace
+from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateWorkspace
 from operandi_utils.database import db_create_workflow, db_create_workflow_job, db_get_workflow, db_update_workspace
 from operandi_utils.rabbitmq import (
     get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
@@ -21,7 +21,6 @@ from operandi_server.files_manager import (
     create_resource_dir, delete_resource_dir, get_all_resources_url, get_resource_local, get_resource_url,
     receive_resource)
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
-from .constants import ServerApiTags
 from .workflow_utils import (
     get_db_workflow_job_with_handling, get_db_workflow_with_handling, nf_script_uses_mets_server_with_handling)
 from .workspace_utils import check_if_file_group_exists_with_handling, get_db_workspace_with_handling
@@ -40,7 +39,7 @@ class RouterWorkflow:
         self.rmq_publisher = get_connection_publisher(enable_acks=True)
         self.logger.info(f"RMQPublisher connected")
 
-        self.router = APIRouter(tags=[ServerApiTags.WORKFLOW])
+        self.router = APIRouter(tags=[ServerApiTag.WORKFLOW])
         self.router.add_api_route(
             path=f"/workflow", endpoint=self.list_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get a list of existing nextflow workflows.",
@@ -101,10 +100,9 @@ class RouterWorkflow:
         try:
             job_status_message = {"job_id": f"{job_id}"}
             self.logger.debug(f"Encoding the job status RabbitMQ message: {job_status_message}")
-            encoded_workflow_message = dumps(job_status_message).encode(encoding="utf-8")
+            encoded_wf_message = dumps(job_status_message).encode(encoding="utf-8")
             self.logger.debug(f"Pushing to the RabbitMQ queue for job statuses: {RABBITMQ_QUEUE_JOB_STATUSES}")
-            self.rmq_publisher.publish_to_queue(
-                queue_name=RABBITMQ_QUEUE_JOB_STATUSES, message=encoded_workflow_message)
+            self.rmq_publisher.publish_to_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, message=encoded_wf_message)
         except Exception as error:
             message = "Failed to push status request to RabbitMQ"
             self.logger.error(f"{message}, error: {error}")
@@ -356,7 +354,7 @@ class RouterWorkflow:
             db_workflow_job=db_wf_job, db_workflow=db_workflow, db_workspace=db_workspace)
 
     def _push_job_to_rabbitmq(
-        self, user_type: str, workflow_id: str, workspace_id: str, job_id: str, input_file_grp: str,
+        self, user_type: AccountType, workflow_id: str, workspace_id: str, job_id: str, input_file_grp: str,
         remove_file_grps: str, partition: str, cpus: int, ram: int
     ):
         # Create the message to be sent to the RabbitMQ queue
@@ -375,14 +373,13 @@ class RouterWorkflow:
         encoded_workflow_message = dumps(workflow_processing_message).encode(encoding="utf-8")
 
         # Send the message to a queue based on the user type
-        if user_type == "HARVESTER":
+        if user_type == AccountType.HARVESTER:
             self.logger.info(f"Pushing to the RabbitMQ queue for the harvester: {RABBITMQ_QUEUE_HARVESTER}")
             self.rmq_publisher.publish_to_queue(queue_name=RABBITMQ_QUEUE_HARVESTER, message=encoded_workflow_message)
-        elif user_type == "ADMIN" or user_type == "USER":
+        elif user_type == AccountType.ADMIN or user_type == AccountType.USER:
             self.logger.info(f"Pushing to the RabbitMQ queue for the users: {RABBITMQ_QUEUE_USERS}")
             self.rmq_publisher.publish_to_queue(queue_name=RABBITMQ_QUEUE_USERS, message=encoded_workflow_message)
         else:
-            account_types = ["USER", "HARVESTER", "ADMIN"]
-            message = f"The user account type is not valid: {user_type}. Must be one of: {account_types}"
+            message = f"The user account type is not valid: {user_type}. Must be one of: {AccountType}"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)

@@ -2,9 +2,8 @@ from logging import getLogger
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_utils.utils import send_bag_to_ola_hd
-from operandi_server.models import PYUserAction
-from .constants import ServerApiTags
 from .user import RouterUser
 from .workspace_utils import create_workspace_bag, get_db_workspace_with_handling, validate_bag_with_handling
 
@@ -13,7 +12,7 @@ class RouterAdminPanel:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.user")
         self.user_authenticator = RouterUser()
-        self.router = APIRouter(tags=[ServerApiTags.ADMIN])
+        self.router = APIRouter(tags=[ServerApiTag.ADMIN])
         self.router.add_api_route(
             path="/admin/push_to_ola_hd",
             endpoint=self.push_to_ola_hd, methods=["POST"], status_code=status.HTTP_201_CREATED,
@@ -22,7 +21,7 @@ class RouterAdminPanel:
 
     async def push_to_ola_hd(self, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         user_action = await self.user_authenticator.user_login(auth)
-        if user_action.account_type != "ADMIN":
+        if user_action.account_type != AccountType.ADMIN:
             message = f"Admin privileges required for the endpoint"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)

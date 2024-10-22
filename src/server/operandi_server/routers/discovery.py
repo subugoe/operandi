@@ -7,8 +7,8 @@ from psutil import virtual_memory
 from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from operandi_utils.constants import ServerApiTag
 from operandi_server.models import PYDiscovery
-from .constants import ServerApiTags
 from .user import RouterUser
 
 
@@ -17,7 +17,7 @@ class RouterDiscovery:
         self.logger = getLogger("operandi_server.routers.discovery")
         self.user_authenticator = RouterUser()
 
-        self.router = APIRouter(tags=[ServerApiTags.DISCOVERY])
+        self.router = APIRouter(tags=[ServerApiTag.DISCOVERY])
         self.router.add_api_route(
             path="/discovery",
             endpoint=self.discovery, methods=["GET"], status_code=status.HTTP_200_OK,
