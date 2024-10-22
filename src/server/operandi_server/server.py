@@ -8,11 +8,13 @@ from fastapi import FastAPI, status
 from operandi_utils import get_log_file_path_prefix, reconfigure_all_loggers, verify_database_uri
 from operandi_utils.constants import AccountTypes, LOG_LEVEL_SERVER, OPERANDI_VERSION
 from operandi_utils.database import db_initiate_database
-from operandi_server.authentication import create_user_if_not_available
+from operandi_utils import safe_init_logging
+
 from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKFLOWS_ROUTER, SERVER_WORKSPACES_ROUTER
 from operandi_server.files_manager import create_resource_base_dir
 from operandi_server.routers import RouterAdminPanel, RouterDiscovery, RouterUser, RouterWorkflow, RouterWorkspace
-from operandi_utils import safe_init_logging
+from operandi_server.routers.user_utils import create_user_if_not_available
+
 
 
 class OperandiServer(FastAPI):

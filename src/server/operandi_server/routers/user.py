@@ -3,10 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import AccountTypes
-from operandi_server.authentication import authenticate_user, register_user
 from operandi_server.exceptions import AuthenticationError, RegistrationError
 from operandi_server.models import PYUserAction
 from .constants import ServerApiTags
+from .user_utils import authenticate_user, register_user
 
 
 class RouterUser:
@@ -49,7 +49,7 @@ class RouterUser:
             message = f"Invalid login credentials or unapproved account."
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=self.auth_headers, detail=message)
-        return PYUserAction(account_type=account_type, action="Successfully logged!", email=email)
+        return PYUserAction(email=email, account_type=account_type, action="Successfully logged!")
 
     async def user_register(
         self, email: str, password: str, institution_id: str, account_type: str = "USER",
@@ -86,7 +86,7 @@ class RouterUser:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers=self.auth_headers, detail=message)
         action = f"Successfully registered a new account: {email}. " \
                  f"Please contact the OCR-D team to get your account validated before use."
-        return PYUserAction(account_type=account_type, action=action, email=email)
+        return PYUserAction(email=email, account_type=account_type, action=action)
 
     async def user_processing_stats(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         pass

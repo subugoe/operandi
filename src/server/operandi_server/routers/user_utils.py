@@ -3,9 +3,9 @@ from random import random
 from typing import Tuple
 
 from operandi_utils.constants import AccountTypes
-from operandi_utils.database import db_create_user_account, db_get_user_account
+from operandi_utils.database import db_create_processing_stats, db_create_user_account, db_get_user_account
 from operandi_server.exceptions import AuthenticationError, RegistrationError
-from operandi_utils.database.db_processing_statistics import db_create_processing_stats
+
 
 
 async def create_user_if_not_available(

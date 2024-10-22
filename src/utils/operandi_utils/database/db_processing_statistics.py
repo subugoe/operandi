@@ -27,7 +27,7 @@ async def db_get_processing_stats(user_id: str) -> DBProcessingStatistics:
 
 
 @call_sync
-async def db_get_processing_stats(user_id: str) -> DBProcessingStatistics:
+async def sync_db_get_processing_stats(user_id: str) -> DBProcessingStatistics:
     return await db_get_processing_stats(user_id)
 
 
