@@ -90,6 +90,12 @@ class RouterWorkflow:
             summary="Download the logs zip of a job identified with `workflow_id` and `job_id`.",
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
+        self.router.add_api_route(
+            path="/workflow/{workflow_id}/{job_id}/hpc-log",
+            endpoint=self.download_workflow_job_hpc_log, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Download the slurm job log file of the `job_id`.",
+            response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
+        )
 
     def __del__(self):
         if self.rmq_publisher:
@@ -282,6 +288,29 @@ class RouterWorkflow:
         job_archive_path = make_archive(base_name=f"{tempdir}/{job_id}", format="zip", root_dir=wf_job_local)
         background_tasks.add_task(unlink, job_archive_path)
         return FileResponse(path=job_archive_path, filename=f"{job_id}.zip", media_type="application/zip")
+
+    async def download_workflow_job_hpc_log(
+        self, workflow_id: str, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+        await self.user_authenticator.user_login(auth)
+        await self._push_status_request_to_rabbitmq(job_id=job_id)
+
+        db_wf_job = await get_db_workflow_job_with_handling(self.logger, job_id=job_id, check_local_existence=True)
+        job_state = db_wf_job.job_state
+        if job_state != StateJob.SUCCESS and job_state != StateJob.FAILED:
+            message = f"Cannot download logs of a job unless it succeeds or fails: {job_id}"
+            self.logger.exception(message)
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+
+        try:
+            wf_job_local = get_resource_local(SERVER_WORKFLOW_JOBS_ROUTER, resource_id=db_wf_job.job_id)
+        except FileNotFoundError as error:
+            message = f"Failed to locate the workflow job resource zip"
+            self.logger.exception(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        slurm_job_log = f"slurm-job-{db_wf_job.hpc_slurm_job_id}.txt"
+        return FileResponse(
+            path=Path(wf_job_local, slurm_job_log), filename=slurm_job_log, media_type="application/text")
 
     async def submit_to_rabbitmq_queue(
         self, workflow_id: str, workflow_args: WorkflowArguments, sbatch_args: SbatchArguments,
