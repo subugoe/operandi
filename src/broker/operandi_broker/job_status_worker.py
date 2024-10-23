@@ -130,9 +130,9 @@ class JobStatusWorker:
                     find_workspace_id=workspace_id, state=StateWorkspace.READY, file_groups=updated_file_groups)
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
                 db_stats = sync_db_increase_processing_stats(
-                    find_user_id=user_id, pages_failed=db_workspace.pages_amount)
-                self.log.error(f"Increasing `pages_succeed` stat by {db_workspace.pages_amount}")
-                self.log.error(f"Total amount of `pages_succeed` stat: {db_stats.pages_succeed}")
+                    find_user_id=user_id, pages_succeed=db_workspace.pages_amount)
+                self.log.info(f"Increasing `pages_succeed` stat by {db_workspace.pages_amount}")
+                self.log.info(f"Total amount of `pages_succeed` stat: {db_stats.pages_succeed}")
             if new_job_state == StateJob.FAILED:
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
                 db_workspace = sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
