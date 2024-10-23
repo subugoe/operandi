@@ -49,7 +49,7 @@ async def db_increase_processing_stats(find_user_id: str, **kwargs) -> DBProcess
         elif key == "pages_cancel":
             db_processing_stats.pages_cancel += value
         elif key == "pages_failed":
-            db_processing_stats.failed = +value
+            db_processing_stats.pages_failed = +value
         elif key == "pages_downloaded":
             db_processing_stats.pages_downloaded = +value
         else:
