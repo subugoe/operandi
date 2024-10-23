@@ -13,7 +13,9 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils import get_nf_workflows_dir
 from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateWorkspace
-from operandi_utils.database import db_create_workflow, db_create_workflow_job, db_get_workflow, db_update_workspace
+from operandi_utils.database import (
+    db_create_workflow, db_create_workflow_job, db_get_workflow, db_update_workspace,
+    db_increase_processing_stats_with_handling)
 from operandi_utils.rabbitmq import (
     get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
 from operandi_server.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
@@ -316,8 +318,8 @@ class RouterWorkflow:
         self, workflow_id: str, workflow_args: WorkflowArguments, sbatch_args: SbatchArguments,
         details: str = "Workflow job", auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
-        user_action = await self.user_authenticator.user_login(auth)
-        user_account_type = user_action.account_type
+        py_user_action = await self.user_authenticator.user_login(auth)
+        user_account_type = py_user_action.account_type
 
         try:
             partition = sbatch_args.partition
@@ -379,6 +381,8 @@ class RouterWorkflow:
             user_type=user_account_type, workflow_id=workflow_id, workspace_id=workspace_id, job_id=job_id,
             input_file_grp=input_file_grp, remove_file_grps=remove_file_grps, partition=partition, cpus=cpus, ram=ram
         )
+        await db_increase_processing_stats_with_handling(
+            self.logger, find_user_id=py_user_action.user_id, pages_submitted=db_workspace.pages_amount)
         return WorkflowJobRsrc.from_db_workflow_job(
             db_workflow_job=db_wf_job, db_workflow=db_workflow, db_workspace=db_workspace)
 
