@@ -43,7 +43,7 @@ class DBProcessingStatistics(Document):
 
     Attributes:
         institution_id:     Unique id of the institution the user belongs to
-        user_id: Unique     id of the user
+        user_id:            Unique id of the user to whom the statistics belong to
         pages_uploaded:     Total amount of pages uploaded as a workspace to the server
         pages_submitted:    Total amount of submitted pages in workflow jobs
         pages_succeed:      Total amount of successfully processed pages
@@ -68,6 +68,7 @@ class DBHPCSlurmJob(Document):
     Model to store an HPC slurm job in the MongoDB
 
     Attributes:
+        user_id                     Unique id of the user who created the entry
         workflow_job_id             Unique id of the workflow job
         hpc_slurm_job_id            Unique id of the slurm job executing the current workflow job in the HPC
         hpc_slurm_job_state         The state of the slurm job inside the HPC
@@ -76,8 +77,8 @@ class DBHPCSlurmJob(Document):
         deleted                     Whether the entry has been deleted locally from the server
         datetime                    Shows the created date time of the entry
         details                     Extra user specified details about this entry
-        created_by_user             Which user id has created the entry
     """
+    user_id: str
     workflow_job_id: str
     hpc_slurm_job_id: str
     hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET
@@ -86,7 +87,6 @@ class DBHPCSlurmJob(Document):
     deleted: bool = False
     datetime = datetime.now()
     details: Optional[str]
-    created_by_user: Optional[str]
 
     class Settings:
         name = "hpc_slurm_jobs"
@@ -96,6 +96,7 @@ class DBWorkflow(Document):
     Model to store a workflow in the mongo-database.
 
     Attributes:
+        user_id                 Unique id of the user who created the entry
         workflow_id             Unique id of the workflow
         workflow_dir            Workflow directory full path on the server
         workflow_script_base    The name of the nextflow script file
@@ -104,8 +105,8 @@ class DBWorkflow(Document):
         deleted                 Whether the entry has been deleted locally from the server
         datetime                Shows the created date time of the entry
         details                 Extra user specified details about this entry
-        created_by_user         Which user id has created the entry
     """
+    user_id: str
     workflow_id: str
     workflow_dir: str
     workflow_script_base: str
@@ -114,7 +115,6 @@ class DBWorkflow(Document):
     deleted: bool = False
     datetime = datetime.now()
     details: Optional[str]
-    created_by_user: Optional[str]
 
     class Settings:
         name = "workflows"
@@ -125,6 +125,7 @@ class DBWorkflowJob(Document):
     Model to store a Workflow-Job in the MongoDB.
 
     Attributes:
+        user_id             Unique id of the user who created the entry
         job_id              Unique id of the workflow job
         job_dir             Workflow job directory full path on the server
         job_state           The state of the workflow job inside the server
@@ -136,8 +137,8 @@ class DBWorkflowJob(Document):
         deleted             Whether the entry has been deleted locally from the server
         datetime            Shows the created date time of the entry
         details             Extra user specified details about this entry
-        created_by_user     Which user id has created the entry
     """
+    user_id: str
     job_id: str
     job_dir: str
     workflow_id: str
@@ -149,7 +150,6 @@ class DBWorkflowJob(Document):
     deleted: bool = False
     datetime = datetime.now()
     details: Optional[str]
-    created_by_user: Optional[str]
 
     class Settings:
         name = "workflow_jobs"
@@ -162,6 +162,7 @@ class DBWorkspace(Document):
     Information to handle workspaces and from bag-info.txt are stored here.
 
     Attributes:
+        user_id                     Unique id of the user who created the entry
         workspace_id                Unique id of the workspace
         workspace_dir               Workspace directory full path on the server
         workspace_mets_path         Workspace mets file full path on the server
@@ -178,6 +179,7 @@ class DBWorkspace(Document):
         details                     Extra user specified details about this entry
         created_by_user             Which user id has created the entry
     """
+    user_id: str
     workspace_id: str
     workspace_dir: str
     workspace_mets_path: str
@@ -192,7 +194,6 @@ class DBWorkspace(Document):
     deleted: bool = False
     datetime = datetime.now()
     details: Optional[str]
-    created_by_user: Optional[str]
 
     class Settings:
         name = "workspaces"
