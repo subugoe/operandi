@@ -18,6 +18,7 @@ __all__ = [
     "db_get_workflow_job",
     "db_get_workspace",
     "db_increase_processing_stats",
+    "db_increase_processing_stats_with_handling",
     "db_initiate_database",
     "db_update_hpc_slurm_job",
     "db_update_user_account",
@@ -94,6 +95,7 @@ from .db_processing_statistics import (
     db_create_processing_stats,
     db_get_processing_stats,
     db_increase_processing_stats,
+    db_increase_processing_stats_with_handling,
     sync_db_create_processing_stats,
     sync_db_get_processing_stats,
     sync_db_increase_processing_stats

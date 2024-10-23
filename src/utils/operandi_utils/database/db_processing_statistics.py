@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 from operandi_utils import call_sync
 from .models import DBProcessingStatistics
 
@@ -56,6 +57,14 @@ async def db_increase_processing_stats(find_user_id: str, **kwargs) -> DBProcess
     await db_processing_stats.save()
     return db_processing_stats
 
+async def db_increase_processing_stats_with_handling(logger, find_user_id: str, **kwargs) -> DBProcessingStatistics:
+    try:
+        db_processing_stats = await db_increase_processing_stats(find_user_id=find_user_id, **kwargs)
+    except Exception as error:
+        message = f"Failed to update processing statistics. Please contact the administrator, error: {error}"
+        logger.error(message)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+    return db_processing_stats
 
 @call_sync
 async def sync_db_increase_processing_stats(find_user_id: str, **kwargs) -> DBProcessingStatistics:
