@@ -1,6 +1,6 @@
 from logging import getLogger
-from os import environ, listdir, makedirs, remove, symlink
-from os.path import dirname, isdir, split
+from os import listdir, makedirs, symlink
+from os.path import isdir, split
 from pathlib import Path
 from shutil import rmtree, copytree
 from stat import S_ISDIR
@@ -130,6 +130,16 @@ class NHRTransfer(NHRConnector):
                 sleep(sleep_time)
                 continue
 
+    def _download_slurm_job_log_file(self, slurm_job_id: str, local_wf_job_dir: Path) -> Path:
+        workflow_job_id = Path(local_wf_job_dir).name
+        get_src = Path(self.slurm_workspaces_dir, workflow_job_id, f"slurm-job-{slurm_job_id}.txt")
+        get_dst = Path(local_wf_job_dir, f"slurm-job-{slurm_job_id}.txt")
+        self.logger.info(f"Downloading slurm job log from HPC source: {get_src}")
+        self.logger.info(f"Downloading slurm job log to local destination: {get_dst}")
+        self._download_file_with_retries(remote_src=get_src, local_dst=get_dst)
+        self.logger.info(f"Successfully downloaded slurm job log to: {get_dst}")
+        return get_dst
+
     def _download_workflow_job_zip(self, local_wf_job_dir: Path) -> Path:
         workflow_job_id = Path(local_wf_job_dir).name
         get_src = Path(self.slurm_workspaces_dir, workflow_job_id, f"{workflow_job_id}.zip")
@@ -181,7 +191,7 @@ class NHRTransfer(NHRConnector):
             Path(unpack_src).unlink(missing_ok=True)
             self.logger.info(f"Removed the temp workspace zip: {unpack_src}")
 
-    def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: Path, workflow_job_dir: Path):
+    def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: Path, workflow_job_dir: Path, slurm_job_id: str):
         _ = self.sftp_client  # Force reconnect of the SFTP Client
         wf_job_zip_path = self._download_workflow_job_zip(local_wf_job_dir=workflow_job_dir)
         self._unzip_workflow_job_dir(wf_job_zip_path, workflow_job_dir, True)
@@ -195,6 +205,8 @@ class NHRTransfer(NHRConnector):
 
         ws_zip_path = self._download_workspace_zip(ocrd_workspace_dir, workflow_job_dir)
         self._unzip_workspace_dir(ws_zip_path, ocrd_workspace_dir)
+
+        self._download_slurm_job_log_file(slurm_job_id, workflow_job_dir)
 
         # Remove the workspace dir from the local workflow job dir,
         # and then create a symlink of the workspace dir inside the

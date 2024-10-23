@@ -68,9 +68,9 @@ class JobStatusWorker:
             self.log.error(f"The worker failed, reason: {e}")
             raise Exception(f"The worker failed, reason: {e}")
 
-    def __download_results_from_hpc(self, job_dir: str, workspace_dir: str) -> None:
+    def __download_results_from_hpc(self, job_dir: str, workspace_dir: str, slurm_job_id: str) -> None:
         self.hpc_io_transfer.get_and_unpack_slurm_workspace(
-            ocrd_workspace_dir=Path(workspace_dir), workflow_job_dir=Path(job_dir))
+            ocrd_workspace_dir=Path(workspace_dir), workflow_job_dir=Path(job_dir), slurm_job_id=slurm_job_id)
         self.log.info(f"Transferred slurm workspace from hpc path")
         # Delete the result dir from the HPC home folder
         # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
@@ -106,7 +106,8 @@ class JobStatusWorker:
             if new_job_state == StateJob.SUCCESS:
                 sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_FROM_HPC)
                 sync_db_update_workflow_job(find_job_id=job_id, job_state=StateJob.TRANSFERRING_FROM_HPC)
-                self.__download_results_from_hpc(job_dir=job_dir, workspace_dir=workspace_dir)
+                self.__download_results_from_hpc(
+                    job_dir=job_dir, workspace_dir=workspace_dir, slurm_job_id=hpc_slurm_job_db.hpc_slurm_job_id)
 
                 # TODO: Find a better way to do the update - consider callbacks to Operandi Server
                 try:

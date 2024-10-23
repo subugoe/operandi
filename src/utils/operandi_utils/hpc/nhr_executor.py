@@ -52,7 +52,7 @@ class NHRExecutor(NHRConnector):
         # SBATCH arguments passed to the batch script
         command += f" {partition}"
         command += f" {job_deadline_time}"
-        command += f" {self.project_root_dir}/slurm-job-%J.txt"
+        command += f" {self.slurm_workspaces_dir}/{workflow_job_id}/slurm-job-%J.txt"
         command += f" {cpus}"
         command += f" {ram}G"
         command += f" {qos}"
