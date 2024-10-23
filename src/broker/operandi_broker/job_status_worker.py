@@ -80,6 +80,9 @@ class JobStatusWorker:
     ):
         old_slurm_job_state = hpc_slurm_job_db.hpc_slurm_job_state
         new_slurm_job_state = self.hpc_executor.check_slurm_job_state(slurm_job_id=hpc_slurm_job_db.hpc_slurm_job_id)
+        # TODO: Reconsider this
+        # if not new_slurm_job_state:
+        #   return
 
         user_id = workspace_db.user_id
         job_id = workflow_job_db.job_id
