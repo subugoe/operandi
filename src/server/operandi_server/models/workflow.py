@@ -46,7 +46,7 @@ class WorkflowJobRsrc(Resource):
     @staticmethod
     def from_db_workflow_job(db_workflow_job: DBWorkflowJob, db_workflow: DBWorkflow, db_workspace: DBWorkspace):
         return WorkflowJobRsrc(
-            user_id=db_workflow.user_id,
+            user_id=db_workflow_job.user_id,
             resource_id=db_workflow_job.job_id,
             resource_url=get_resource_url(SERVER_WORKFLOW_JOBS_ROUTER, db_workflow_job.job_id),
             description=db_workflow_job.details,
