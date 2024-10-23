@@ -30,20 +30,32 @@ async def sync_db_create_user_account(
         institution_id, email, encrypted_pass, salt, account_type, approved_user, details)
 
 
-async def db_get_user_account(email: str) -> DBUserAccount:
-    db_user_account = await DBUserAccount.find_one(DBUserAccount.email == email)
+async def db_get_user_account(user_id: str) -> DBUserAccount:
+    db_user_account = await DBUserAccount.find_one(DBUserAccount.user_id == user_id)
     if not db_user_account:
-        raise RuntimeError(f"No DB user account entry found for e-mail: {email}")
+        raise RuntimeError(f"No DB user account entry found for user_id: {user_id}")
     return db_user_account
 
 
 @call_sync
-async def sync_db_get_user_account(email: str) -> DBUserAccount:
+async def sync_db_get_user_account(user_id: str) -> DBUserAccount:
+    return await db_get_user_account(user_id)
+
+
+async def db_get_user_account_with_email(email: str) -> DBUserAccount:
+    db_user_account = await DBUserAccount.find_one(DBUserAccount.email == email)
+    if not db_user_account:
+        raise RuntimeError(f"No DB user account entry found for email: {email}")
+    return db_user_account
+
+
+@call_sync
+async def sync_db_get_user_account_with_email(email: str) -> DBUserAccount:
     return await db_get_user_account(email)
 
 
-async def db_update_user_account(find_email: str, **kwargs) -> DBUserAccount:
-    db_user_account = await db_get_user_account(email=find_email)
+async def db_update_user_account(user_id: str, **kwargs) -> DBUserAccount:
+    db_user_account = await db_get_user_account(user_id=user_id)
     model_keys = list(db_user_account.__dict__.keys())
     for key, value in kwargs.items():
         if key not in model_keys:
@@ -71,5 +83,5 @@ async def db_update_user_account(find_email: str, **kwargs) -> DBUserAccount:
 
 
 @call_sync
-async def sync_db_update_user_account(find_email: str, **kwargs) -> DBUserAccount:
-    return await db_update_user_account(find_email=find_email, **kwargs)
+async def sync_db_update_user_account(user_id: str, **kwargs) -> DBUserAccount:
+    return await db_update_user_account(user_id=user_id, **kwargs)

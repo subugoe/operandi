@@ -34,13 +34,13 @@ class OperandiServer(FastAPI):
         if not local_server_url:
             raise ValueError("Environment variable not set: OPERANDI_SERVER_URL_LOCAL")
 
-        self.log = getLogger("operandi_server.server")
+        self.logger = getLogger("operandi_server.server")
         self.live_server_url = live_server_url
         self.local_server_url = local_server_url
 
         try:
             self.db_url = verify_database_uri(db_url)
-            self.log.debug(f'Verified MongoDB URL: {db_url}')
+            self.logger.debug(f'Verified MongoDB URL: {db_url}')
             self.rabbitmq_url = rabbitmq_url
         except ValueError as e:
             raise ValueError(e)
@@ -72,8 +72,8 @@ class OperandiServer(FastAPI):
         run(self, host=host, port=int(port))
 
     async def startup_event(self):
-        self.log.info(f"Operandi local server url: {self.local_server_url}")
-        self.log.info(f"Operandi live server url: {self.live_server_url}")
+        self.logger.info(f"Operandi local server url: {self.local_server_url}")
+        self.logger.info(f"Operandi live server url: {self.live_server_url}")
 
         # TODO: Recheck this again...
         safe_init_logging()
@@ -96,7 +96,7 @@ class OperandiServer(FastAPI):
 
     async def shutdown_event(self):
         # TODO: Gracefully shutdown and clean things here if needed
-        self.log.info(f"The Operandi Server is shutting down.")
+        self.logger.info(f"The Operandi Server is shutting down.")
 
     async def home(self):
         message = f"The home page of the {self.title}"
@@ -122,18 +122,28 @@ class OperandiServer(FastAPI):
         default_harvester_user = environ.get("OPERANDI_HARVESTER_DEFAULT_USERNAME", None)
         default_harvester_pass = environ.get("OPERANDI_HARVESTER_DEFAULT_PASSWORD", None)
 
-        self.log.info(f"Configuring default server admin account")
+        self.logger.info(f"Configuring default server admin account")
         if default_admin_user and default_admin_pass:
             await create_user_if_not_available(
-                username=default_admin_user, password=default_admin_pass, account_type=AccountType.ADMIN,
-                institution_id="GWDG Goettingen", approved_user=True, details="Default admin account"
+                self.logger,
+                username=default_admin_user,
+                password=default_admin_pass,
+                account_type=AccountType.ADMIN,
+                institution_id="GWDG Goettingen",
+                approved_user=True,
+                details="Default admin account"
             )
-            self.log.info(f"Configured default server admin account")
+            self.logger.info(f"Inserted default server account credentials")
 
-        self.log.info(f"Configuring default harvester account")
+        self.logger.info(f"Configuring default harvester account")
         if default_harvester_user and default_harvester_pass:
             await create_user_if_not_available(
-                username=default_harvester_user, password=default_harvester_pass, account_type=AccountType.HARVESTER,
-                institution_id="SUB Goettingen", approved_user=True, details="Default harvester account"
+                self.logger,
+                username=default_harvester_user,
+                password=default_harvester_pass,
+                account_type=AccountType.HARVESTER,
+                institution_id="SUB Goettingen",
+                approved_user=True,
+                details="Default harvester account"
             )
-            self.log.info(f"Configured default harvester account")
+            self.logger.info(f"Inserted default harvester account credentials")
