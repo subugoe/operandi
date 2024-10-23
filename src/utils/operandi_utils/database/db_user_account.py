@@ -1,3 +1,4 @@
+from datetime import datetime
 from operandi_utils import call_sync, generate_id
 from ..constants import AccountType
 from .models import DBUserAccount
@@ -15,6 +16,7 @@ async def db_create_user_account(
         salt=salt,
         account_type=account_type,
         approved_user=approved_user,
+        datetime=datetime.now(),
         details=details
     )
     await user_account.save()

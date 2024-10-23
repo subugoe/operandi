@@ -9,8 +9,15 @@ async def db_create_workflow_job(
     details: str = "Workflow-Job"
 ) -> DBWorkflowJob:
     db_workflow_job = DBWorkflowJob(
-        user_id=user_id, job_id=job_id, job_dir=job_dir, job_state=job_state, workflow_id=workflow_id,
-        workspace_id=workspace_id, details=details, datetime=datetime.now())
+        user_id=user_id,
+        job_id=job_id,
+        job_dir=job_dir,
+        job_state=job_state,
+        workflow_id=workflow_id,
+        workspace_id=workspace_id,
+        datetime=datetime.now(),
+        details=details
+    )
     await db_workflow_job.save()
     return db_workflow_job
 

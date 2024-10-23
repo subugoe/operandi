@@ -177,7 +177,6 @@ class DBWorkspace(Document):
         deleted                     Whether the entry has been deleted locally from the server
         datetime                    Shows the created date time of the entry
         details                     Extra user specified details about this entry
-        created_by_user             Which user id has created the entry
     """
     user_id: str
     workspace_id: str

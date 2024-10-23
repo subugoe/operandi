@@ -40,8 +40,8 @@ async def db_create_workspace(
             bagit_profile_identifier=bagit_profile_identifier,
             ocrd_base_version_checksum=ocrd_base_version_checksum,
             bag_info_adds=bag_info,
-            details=details,
-            datetime=datetime.now()
+            datetime=datetime.now(),
+            details=details
         )
     else:
         db_workspace.user_id = user_id

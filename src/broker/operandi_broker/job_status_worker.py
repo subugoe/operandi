@@ -81,8 +81,7 @@ class JobStatusWorker:
         old_slurm_job_state = hpc_slurm_job_db.hpc_slurm_job_state
         new_slurm_job_state = self.hpc_executor.check_slurm_job_state(slurm_job_id=hpc_slurm_job_db.hpc_slurm_job_id)
 
-        # TODO: created_by_user currently holds an e-mail not an id, fix that
-        user_id = workspace_db.created_by_user
+        user_id = workspace_db.user_id
         job_id = workflow_job_db.job_id
         job_dir = workflow_job_db.job_dir
         old_job_state = workflow_job_db.job_state
@@ -105,6 +104,7 @@ class JobStatusWorker:
         # If there has been a change of operandi workflow state, update it
         if old_job_state != new_job_state:
             self.log.info(f"Workflow job id: {job_id}, old state: {old_job_state}, new state: {new_job_state}")
+            # TODO: Simplify SUCCESS and FAILED duplications
             if new_job_state == StateJob.SUCCESS:
                 sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_FROM_HPC)
                 sync_db_update_workflow_job(find_job_id=job_id, job_state=StateJob.TRANSFERRING_FROM_HPC)

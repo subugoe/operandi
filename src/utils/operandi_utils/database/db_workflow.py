@@ -18,8 +18,8 @@ async def db_create_workflow(
             workflow_script_base=workflow_script_base,
             workflow_script_path=workflow_script_path,
             uses_mets_server=uses_mets_server,
-            details=details,
-            datetime=datetime.now()
+            datetime=datetime.now(),
+            details=details
         )
     else:
         db_workflow.user_id = user_id
