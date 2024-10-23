@@ -9,7 +9,8 @@ from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import ServerApiTag, StateWorkspace
-from operandi_utils.database import db_create_workspace, db_get_workspace, db_update_workspace
+from operandi_utils.database import (
+    db_create_workspace, db_get_workspace, db_update_workspace, db_increase_processing_stats_with_handling)
 from operandi_server.constants import SERVER_WORKSPACES_ROUTER, DEFAULT_METS_BASENAME
 from operandi_server.files_manager import (
     create_resource_dir, delete_resource_dir, get_all_resources_url, get_resource_url, receive_resource)
@@ -23,7 +24,7 @@ from .workspace_utils import (
     validate_bag_with_handling,
     get_db_workspace_with_handling,
     parse_file_groups_with_handling,
-    remove_file_groups_with_handling, extract_file_groups_from_db_model_with_handling
+    remove_file_groups_with_handling
 )
 from .user import RouterUser
 
@@ -99,7 +100,7 @@ class RouterWorkspace:
         Curl equivalent:
         `curl -X GET SERVER_ADDR/workspace/{workspace_id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
         """
-        await self.user_authenticator.user_login(auth)
+        py_user_action = await self.user_authenticator.user_login(auth)
         db_workspace = await get_db_workspace_with_handling(
             self.logger, workspace_id, check_ready=True, check_deleted=True, check_local_existence=True)
 
@@ -112,6 +113,10 @@ class RouterWorkspace:
         except Exception as error:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
+
+        await db_increase_processing_stats_with_handling(
+            self.logger, find_user_id=py_user_action.user_id, pages_downloaded=db_workspace.pages_amount)
+
         background_tasks.add_task(unlink, bag_path)
         return FileResponse(path=bag_path, filename=f"{workspace_id}.ocrd.zip", media_type="application/ocrd+zip")
 
@@ -119,7 +124,7 @@ class RouterWorkspace:
         self, mets_url: str, preserve_file_grps: str, mets_basename: str = DEFAULT_METS_BASENAME,
         details: str = f"Workspace imported from a mets file url", auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkspaceRsrc:
-        await self.user_authenticator.user_login(auth)
+        py_user_action = await self.user_authenticator.user_login(auth)
         file_grps_to_preserve = parse_file_groups_with_handling(self.logger, file_groups=preserve_file_grps)
         workspace_id, workspace_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
 
@@ -143,6 +148,10 @@ class RouterWorkspace:
         db_workspace = await db_create_workspace(
             workspace_id=workspace_id, workspace_dir=workspace_dir, pages_amount=pages_amount, file_groups=file_groups,
             bag_info=bag_info, state=StateWorkspace.READY, details=details, created_by_user=auth.username)
+
+        await db_increase_processing_stats_with_handling(
+            self.logger, find_user_id=py_user_action.user_id, pages_uploaded=db_workspace.pages_amount)
+
         return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def upload_workspace(
@@ -153,7 +162,7 @@ class RouterWorkspace:
         Curl equivalent:
         `curl -X POST SERVER_ADDR/workspace -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
         """
-        await self.user_authenticator.user_login(auth)
+        py_user_action = await self.user_authenticator.user_login(auth)
         ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER, resource_id=None)
         bag_dest = f"{ws_dir}.zip"
         try:
@@ -172,6 +181,8 @@ class RouterWorkspace:
         db_workspace = await db_create_workspace(
             workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, file_groups=file_groups,
             bag_info=bag_info, state=StateWorkspace.READY, details=details, created_by_user=auth.username)
+        await db_increase_processing_stats_with_handling(
+            self.logger, find_user_id=py_user_action.user_id, pages_uploaded=db_workspace.pages_amount)
         return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def put_workspace(
@@ -183,7 +194,7 @@ class RouterWorkspace:
         `curl -X PUT SERVER_ADDR/workspace/{workspace_id}
         -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
         """
-        await self.user_authenticator.user_login(auth)
+        py_user_action = await self.user_authenticator.user_login(auth)
         try:
             await db_get_workspace(workspace_id=workspace_id)
             # Note: This check raises HTTP errors on RuntimeError for
@@ -217,6 +228,8 @@ class RouterWorkspace:
         db_workspace = await db_create_workspace(
             workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, file_groups=file_groups,
             bag_info=bag_info, state=StateWorkspace.READY, details=details, created_by_user=auth.username)
+        await db_increase_processing_stats_with_handling(
+            self.logger, find_user_id=py_user_action.user_id, pages_uploaded=db_workspace.pages_amount)
         return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def delete_workspace(
