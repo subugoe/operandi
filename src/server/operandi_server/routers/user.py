@@ -3,8 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import AccountType, ServerApiTag
+from operandi_utils.database import db_get_processing_stats, db_get_user_account_with_email
 from operandi_server.exceptions import AuthenticationError
 from operandi_server.models import PYUserAction
+from operandi_utils.database.models import DBProcessingStatistics
 from .user_utils import user_auth, user_register_with_handling
 
 
@@ -25,10 +27,10 @@ class RouterUser:
             response_model=PYUserAction, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
-            path="/user_stats",
+            path="/user/processing_stats",
             endpoint=self.user_processing_stats, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get user account statistics of the current account",
-            response_model=PYUserAction, response_model_exclude_unset=True, response_model_exclude_none=True
+            response_model=DBProcessingStatistics, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
     async def user_login(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYUserAction:
@@ -76,4 +78,7 @@ class RouterUser:
         return PYUserAction.from_db_user_account(action=action, db_user_account=db_user_account)
 
     async def user_processing_stats(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        pass
+        await self.user_login(auth)
+        db_user_account = await db_get_user_account_with_email(email=auth.username)
+        db_processing_stats = await db_get_processing_stats(db_user_account.user_id)
+        return db_processing_stats

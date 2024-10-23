@@ -10,15 +10,15 @@ from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
 from operandi_utils.constants import LOG_LEVEL_WORKER, StateJob, StateWorkspace
 from operandi_utils.database import (
     DBHPCSlurmJob, DBWorkflowJob, DBWorkspace,
-    sync_db_initiate_database, sync_db_get_hpc_slurm_job, sync_db_get_workflow_job, sync_db_get_workspace,
-    sync_db_update_hpc_slurm_job, sync_db_update_workflow_job, sync_db_update_workspace)
+    sync_db_increase_processing_stats, sync_db_initiate_database, sync_db_get_hpc_slurm_job, sync_db_get_workflow_job,
+    sync_db_get_workspace, sync_db_update_hpc_slurm_job, sync_db_update_workflow_job, sync_db_update_workspace)
 from operandi_utils.hpc import NHRExecutor, NHRTransfer
 from operandi_utils.rabbitmq import get_connection_consumer
 
 
 class JobStatusWorker:
     def __init__(self, db_url, rabbitmq_url, queue_name, tunnel_port_executor, tunnel_port_transfer, test_sbatch=False):
-        self.log = getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
+        self.log = getLogger(f"operandi_broker.job_status_worker[{getpid()}].{queue_name}")
         self.queue_name = queue_name
         self.log_file_path = f"{get_log_file_path_prefix(module_type='worker')}_{queue_name}.log"
         self.test_sbatch = test_sbatch
@@ -81,6 +81,8 @@ class JobStatusWorker:
         old_slurm_job_state = hpc_slurm_job_db.hpc_slurm_job_state
         new_slurm_job_state = self.hpc_executor.check_slurm_job_state(slurm_job_id=hpc_slurm_job_db.hpc_slurm_job_id)
 
+        # TODO: created_by_user currently holds an e-mail not an id, fix that
+        user_id = workspace_db.created_by_user
         job_id = workflow_job_db.job_id
         job_dir = workflow_job_db.job_dir
         old_job_state = workflow_job_db.job_state
@@ -119,13 +121,22 @@ class JobStatusWorker:
                     self.log.error(f"Failed to extract the processed file groups: {error}")
                     updated_file_groups = ["CORRUPTED FILE GROUPS"]
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
-                sync_db_update_workspace(
+
+                db_workspace = sync_db_update_workspace(
                     find_workspace_id=workspace_id, state=StateWorkspace.READY, file_groups=updated_file_groups)
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
+                db_stats = sync_db_increase_processing_stats(
+                    find_user_id=user_id, pages_failed=db_workspace.pages_amount)
+                self.log.error(f"Increasing `pages_succeed` stat by {db_workspace.pages_amount}")
+                self.log.error(f"Total amount of `pages_succeed` stat: {db_stats.pages_succeed}")
             if new_job_state == StateJob.FAILED:
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
-                sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
+                db_workspace = sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.FAILED)
+                db_stats = sync_db_increase_processing_stats(
+                    find_user_id=user_id, pages_failed=db_workspace.pages_amount)
+                self.log.error(f"Increasing `pages_failed` stat by {db_workspace.pages_amount}")
+                self.log.error(f"Total amount of `pages_failed` stat: {db_stats.pages_failed}")
 
         self.log.info(f"Latest slurm job state: {new_slurm_job_state}")
         self.log.info(f"Latest workflow job state: {new_job_state}")

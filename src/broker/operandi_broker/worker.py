@@ -9,8 +9,8 @@ from sys import exit
 from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
 from operandi_utils.constants import LOG_LEVEL_WORKER, StateJob, StateWorkspace
 from operandi_utils.database import (
-    sync_db_initiate_database, sync_db_get_workflow, sync_db_get_workspace, sync_db_create_hpc_slurm_job,
-    sync_db_update_workflow_job, sync_db_update_workspace)
+    sync_db_increase_processing_stats, sync_db_initiate_database, sync_db_get_workflow, sync_db_get_workspace,
+    sync_db_create_hpc_slurm_job, sync_db_update_workflow_job, sync_db_update_workspace)
 from operandi_utils.hpc import NHRExecutor, NHRTransfer
 from operandi_utils.hpc.constants import (
     HPC_BATCH_SUBMIT_WORKFLOW_JOB, HPC_JOB_DEADLINE_TIME_REGULAR, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_SHORT,
@@ -35,6 +35,7 @@ class Worker:
 
         # Currently consumed message related parameters
         self.current_message_delivery_tag = None
+        self.current_message_user_id = None
         self.current_message_ws_id = None
         self.current_message_wf_id = None
         self.current_message_job_id = None
@@ -86,6 +87,7 @@ class Worker:
         try:
             consumed_message = loads(body)
             self.log.info(f"Consumed message: {consumed_message}")
+            self.current_message_user_id = consumed_message["user_id"]
             self.current_message_ws_id = consumed_message["workspace_id"]
             self.current_message_wf_id = consumed_message["workflow_id"]
             self.current_message_job_id = consumed_message["job_id"]
@@ -233,6 +235,10 @@ class Worker:
                 use_mets_server=use_mets_server, file_groups_to_remove=file_groups_to_remove, cpus=cpus, ram=ram,
                 job_deadline_time=job_deadline_time, partition=partition, qos=qos)
         except Exception as error:
+            db_stats = sync_db_increase_processing_stats(
+                find_user_id=self.current_message_user_id, pages_failed=ws_pages_amount)
+            self.log.error(f"Increasing `pages_failed` stat by {ws_pages_amount}")
+            self.log.error(f"Total amount of `pages_failed` stat: {db_stats.pages_failed}")
             raise Exception(f"Triggering slurm job failed: {error}")
 
         try:

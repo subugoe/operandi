@@ -47,18 +47,18 @@ class DBProcessingStatistics(Document):
         pages_uploaded:     Total amount of pages uploaded as a workspace to the server
         pages_submitted:    Total amount of submitted pages in workflow jobs
         pages_succeed:      Total amount of successfully processed pages
-        pages_cancel:       Total amount of cancelled pages
         pages_failed:       Total amount of failed pages
         pages_downloaded:   Total amount of pages downloaded as a workspace from the server
+        pages_cancel:       Total amount of cancelled pages
     """
     institution_id: str
     user_id: str
     pages_uploaded: int = 0
     pages_submitted: int = 0
     pages_succeed: int = 0
-    pages_cancel: int = 0
     pages_failed: int = 0
     pages_downloaded: int = 0
+    pages_cancel: int = 0
 
     class Settings:
         name = "processing_statistics"

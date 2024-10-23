@@ -378,8 +378,9 @@ class RouterWorkflow:
             details=details, created_by_user=auth.username)
 
         self._push_job_to_rabbitmq(
-            user_type=user_account_type, workflow_id=workflow_id, workspace_id=workspace_id, job_id=job_id,
-            input_file_grp=input_file_grp, remove_file_grps=remove_file_grps, partition=partition, cpus=cpus, ram=ram
+            user_id=py_user_action.user_id, user_type=user_account_type, workflow_id=workflow_id,
+            workspace_id=workspace_id, job_id=job_id, input_file_grp=input_file_grp,
+            remove_file_grps=remove_file_grps, partition=partition, cpus=cpus, ram=ram
         )
         await db_increase_processing_stats_with_handling(
             self.logger, find_user_id=py_user_action.user_id, pages_submitted=db_workspace.pages_amount)
@@ -387,12 +388,13 @@ class RouterWorkflow:
             db_workflow_job=db_wf_job, db_workflow=db_workflow, db_workspace=db_workspace)
 
     def _push_job_to_rabbitmq(
-        self, user_type: AccountType, workflow_id: str, workspace_id: str, job_id: str, input_file_grp: str,
-        remove_file_grps: str, partition: str, cpus: int, ram: int
+        self, user_id: str, user_type: AccountType, workflow_id: str, workspace_id: str, job_id: str,
+        input_file_grp: str, remove_file_grps: str, partition: str, cpus: int, ram: int
     ):
         # Create the message to be sent to the RabbitMQ queue
         self.logger.info("Creating a workflow job RabbitMQ message")
         workflow_processing_message = {
+            "user_id": f"{user_id}",
             "workflow_id": f"{workflow_id}",
             "workspace_id": f"{workspace_id}",
             "job_id": f"{job_id}",
