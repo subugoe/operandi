@@ -8,9 +8,9 @@ from .models import DBWorkspace
 
 # TODO: This also updates to satisfy the PUT method in the Workspace Manager - fix this
 async def db_create_workspace(
-    workspace_id: str, workspace_dir: str, pages_amount: int, file_groups: List[str], bag_info: dict,
+    user_id: str, workspace_id: str, workspace_dir: str, pages_amount: int, file_groups: List[str], bag_info: dict,
     state: StateWorkspace = StateWorkspace.UNSET, default_mets_basename: str = "mets.xml",
-    details: str = "Workspace", created_by_user: str = ""
+    details: str = "Workspace"
 ) -> DBWorkspace:
     bag_info = dict(bag_info)
     mets_basename = default_mets_basename
@@ -28,6 +28,7 @@ async def db_create_workspace(
         db_workspace = await db_get_workspace(workspace_id)
     except RuntimeError:
         db_workspace = DBWorkspace(
+            user_id=user_id,
             workspace_id=workspace_id,
             workspace_dir=workspace_dir,
             workspace_mets_path=workspace_mets_path,
@@ -40,10 +41,10 @@ async def db_create_workspace(
             ocrd_base_version_checksum=ocrd_base_version_checksum,
             bag_info_adds=bag_info,
             details=details,
-            created_by_user=created_by_user,
             datetime=datetime.now()
         )
     else:
+        db_workspace.user_id = user_id
         db_workspace.workspace_dir = workspace_dir
         db_workspace.workspace_mets_path = workspace_mets_path
         db_workspace.mets_basename = mets_basename
@@ -54,18 +55,17 @@ async def db_create_workspace(
         db_workspace.ocrd_base_version_checksum = ocrd_base_version_checksum
         db_workspace.bag_info_adds = bag_info
         db_workspace.details = details
-        db_workspace.created_by_user = created_by_user
     await db_workspace.save()
     return db_workspace
 
 
 @call_sync
 async def sync_db_create_workspace(
-    workspace_id: str, workspace_dir: str, pages_amount: int, file_groups: List[str], bag_info: dict,
-    state: StateWorkspace = StateWorkspace.UNSET, details: str = "Workspace", created_by_user: str = ""
+    user_id: str, workspace_id: str, workspace_dir: str, pages_amount: int, file_groups: List[str], bag_info: dict,
+    state: StateWorkspace = StateWorkspace.UNSET, details: str = "Workspace"
 ) -> DBWorkspace:
     return await db_create_workspace(
-        workspace_id, workspace_dir, pages_amount, file_groups, bag_info, state, details, created_by_user)
+        user_id, workspace_id, workspace_dir, pages_amount, file_groups, bag_info, state, details)
 
 
 async def db_get_workspace(workspace_id: str) -> DBWorkspace:
@@ -112,8 +112,6 @@ async def db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorkspace:
             db_workspace.deleted = value
         elif key == "details":
             db_workspace.details = value
-        elif key == "created_by_user":
-            db_workspace.created_by_user = value
         else:
             raise ValueError(f"Field not updatable: {key}")
     await db_workspace.save()

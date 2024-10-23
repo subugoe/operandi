@@ -5,42 +5,41 @@ from .models import DBWorkflow
 
 # TODO: This also updates to satisfy the PUT method in the Workflow Manager - fix this
 async def db_create_workflow(
-    workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str, uses_mets_server: bool,
-    details: str = "Workflow", created_by_user: str = ""
+    user_id: str, workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str,
+    uses_mets_server: bool, details: str = "Workflow"
 ) -> DBWorkflow:
     try:
         db_workflow = await db_get_workflow(workflow_id)
     except RuntimeError:
         db_workflow = DBWorkflow(
+            user_id=user_id,
             workflow_id=workflow_id,
             workflow_dir=workflow_dir,
             workflow_script_base=workflow_script_base,
             workflow_script_path=workflow_script_path,
             uses_mets_server=uses_mets_server,
             details=details,
-            created_by_user=created_by_user,
             datetime=datetime.now()
         )
     else:
+        db_workflow.user_id = user_id
         db_workflow.workflow_id = workflow_id
         db_workflow.workflow_dir = workflow_dir
         db_workflow.workflow_script_base = workflow_script_base
         db_workflow.workflow_script_path = workflow_script_path
         db_workflow.uses_mets_server = uses_mets_server
         db_workflow.details = details
-        db_workflow.created_by_user = created_by_user
     await db_workflow.save()
     return db_workflow
 
 
 @call_sync
 async def sync_db_create_workflow(
-    workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str, uses_mets_server: bool,
-    details: str = "Workflow", created_by_user: str = ""
+    user_id: str, workflow_id: str, workflow_dir: str, workflow_script_base: str, workflow_script_path: str,
+    uses_mets_server: bool, details: str = "Workflow"
 ) -> DBWorkflow:
     return await db_create_workflow(
-        workflow_id, workflow_dir, workflow_script_base, workflow_script_path, uses_mets_server, details,
-        created_by_user)
+        user_id, workflow_id, workflow_dir, workflow_script_base, workflow_script_path, uses_mets_server, details)
 
 
 async def db_get_workflow(workflow_id: str) -> DBWorkflow:
@@ -75,8 +74,6 @@ async def db_update_workflow(find_workflow_id: str, **kwargs) -> DBWorkflow:
             db_workflow.deleted = value
         elif key == "details":
             db_workflow.details = value
-        elif key == "created_by_user":
-            db_workflow.created_by_user = value
         else:
             raise ValueError(f"Field not updatable: {key}")
     await db_workflow.save()

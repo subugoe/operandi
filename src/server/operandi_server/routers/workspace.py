@@ -145,13 +145,12 @@ class RouterWorkspace:
         Path(bag_dest).unlink()  # Remove the created zip bag
         pages_amount = extract_pages_with_handling(self.logger, bag_info, workspace_dir)
         file_groups = extract_file_groups_with_handling(self.logger, bag_info, workspace_dir)
+
+        user_id = py_user_action.user_id
         db_workspace = await db_create_workspace(
-            workspace_id=workspace_id, workspace_dir=workspace_dir, pages_amount=pages_amount, file_groups=file_groups,
-            bag_info=bag_info, state=StateWorkspace.READY, details=details, created_by_user=auth.username)
-
-        await db_increase_processing_stats_with_handling(
-            self.logger, find_user_id=py_user_action.user_id, pages_uploaded=db_workspace.pages_amount)
-
+            user_id=user_id, workspace_id=workspace_id, workspace_dir=workspace_dir, pages_amount=pages_amount,
+            file_groups=file_groups, bag_info=bag_info, state=StateWorkspace.READY, details=details)
+        await db_increase_processing_stats_with_handling(self.logger, find_user_id=user_id, pages_uploaded=pages_amount)
         return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def upload_workspace(
@@ -178,11 +177,12 @@ class RouterWorkspace:
         Path(bag_dest).unlink()  # Remove the created zip bag
         pages_amount = extract_pages_with_handling(self.logger, bag_info, ws_dir)
         file_groups = extract_file_groups_with_handling(self.logger, bag_info, ws_dir)
+
+        user_id = py_user_action.user_id
         db_workspace = await db_create_workspace(
-            workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, file_groups=file_groups,
-            bag_info=bag_info, state=StateWorkspace.READY, details=details, created_by_user=auth.username)
-        await db_increase_processing_stats_with_handling(
-            self.logger, find_user_id=py_user_action.user_id, pages_uploaded=db_workspace.pages_amount)
+            user_id=user_id, workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount,
+            file_groups=file_groups, bag_info=bag_info, state=StateWorkspace.READY, details=details)
+        await db_increase_processing_stats_with_handling(self.logger, find_user_id=user_id, pages_uploaded=pages_amount)
         return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def put_workspace(
@@ -225,11 +225,12 @@ class RouterWorkspace:
         Path(bag_dest).unlink()
         pages_amount = extract_pages_with_handling(self.logger, bag_info, ws_dir)
         file_groups = extract_file_groups_with_handling(self.logger, bag_info, ws_dir)
+
+        user_id = py_user_action.user_id
         db_workspace = await db_create_workspace(
-            workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount, file_groups=file_groups,
-            bag_info=bag_info, state=StateWorkspace.READY, details=details, created_by_user=auth.username)
-        await db_increase_processing_stats_with_handling(
-            self.logger, find_user_id=py_user_action.user_id, pages_uploaded=db_workspace.pages_amount)
+            user_id=user_id, workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount,
+            file_groups=file_groups, bag_info=bag_info, state=StateWorkspace.READY, details=details)
+        await db_increase_processing_stats_with_handling(self.logger, find_user_id=user_id, pages_uploaded=pages_amount)
         return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def delete_workspace(

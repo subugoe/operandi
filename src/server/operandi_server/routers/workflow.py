@@ -135,9 +135,9 @@ class RouterWorkflow:
             uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
             self.logger.info(f"Inserting: {workflow_id}, uses_mets_server: {uses_mets_server}, script path: {nf_script_dest}")
             await db_create_workflow(
+                user_id="Operandi Server",
                 workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-                workflow_script_base=path.name, uses_mets_server=uses_mets_server, details=wf_detail,
-                created_by_user="Operandi Server")
+                workflow_script_base=path.name, uses_mets_server=uses_mets_server, details=wf_detail)
             self.production_workflows.append(workflow_id)
 
     async def list_workflows(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
@@ -177,7 +177,7 @@ class RouterWorkflow:
         Curl equivalent:
         `curl -X POST SERVER_ADDR/workflow -F nextflow_script=example.nf`
         """
-        await self.user_authenticator.user_login(auth)
+        py_user_action = await self.user_authenticator.user_login(auth)
         workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=None)
         nf_script_dest = join(workflow_dir, nextflow_script.filename)
         try:
@@ -188,9 +188,9 @@ class RouterWorkflow:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
         db_workflow = await db_create_workflow(
-            workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details,
-            created_by_user=auth.username)
+            user_id=py_user_action.user_id, workflow_id=workflow_id, workflow_dir=workflow_dir,
+            workflow_script_path=nf_script_dest, workflow_script_base=nextflow_script.filename,
+            uses_mets_server=uses_mets_server, details=details)
         return WorkflowRsrc.from_db_workflow(db_workflow)
 
     async def update_workflow_script(
@@ -201,7 +201,7 @@ class RouterWorkflow:
         Curl equivalent:
         `curl -X PUT SERVER_ADDR/workflow/{workflow_id} -F nextflow_script=example.nf`
         """
-        await self.user_authenticator.user_login(auth)
+        py_user_action = await self.user_authenticator.user_login(auth)
         if workflow_id in self.production_workflows:
             message = f"Production workflow cannot be replaced. Tried to replace: {workflow_id}"
             self.logger.error(message)
@@ -223,9 +223,9 @@ class RouterWorkflow:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
         db_workflow = await db_create_workflow(
-            workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-            workflow_script_base=nextflow_script.filename, uses_mets_server=uses_mets_server, details=details,
-            created_by_user=auth.username)
+            user_id=py_user_action.user_id, workflow_id=workflow_id, workflow_dir=workflow_dir,
+            workflow_script_path=nf_script_dest, workflow_script_base=nextflow_script.filename,
+            uses_mets_server=uses_mets_server, details=details)
         return WorkflowRsrc.from_db_workflow(db_workflow)
 
     async def get_workflow_job_status(
@@ -374,8 +374,8 @@ class RouterWorkflow:
 
         self.logger.info("Saving the workflow job to the database")
         db_wf_job = await db_create_workflow_job(
-            job_id=job_id, job_dir=job_dir, job_state=job_state, workspace_id=workspace_id, workflow_id=workflow_id,
-            details=details, created_by_user=auth.username)
+            user_id=py_user_action.user_id, job_id=job_id, job_dir=job_dir, job_state=job_state,
+            workspace_id=workspace_id, workflow_id=workflow_id, details=details)
 
         self._push_job_to_rabbitmq(
             user_id=py_user_action.user_id, user_type=user_account_type, workflow_id=workflow_id,

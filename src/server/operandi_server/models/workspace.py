@@ -7,6 +7,7 @@ from .base import Resource
 
 class WorkspaceRsrc(Resource):
     # Local variables:
+    # used_id: (str) - inherited from Resource
     # resource_id: (str) - inherited from Resource
     # resource_url: (str) - inherited from Resource
     # description: (str) - inherited from Resource
@@ -27,13 +28,13 @@ class WorkspaceRsrc(Resource):
     @staticmethod
     def from_db_workspace(db_workspace: DBWorkspace):
         return WorkspaceRsrc(
+            user_id=db_workspace.user_id,
             resource_id=db_workspace.workspace_id,
             resource_url=get_resource_url(SERVER_WORKSPACES_ROUTER, db_workspace.workspace_id),
             description=db_workspace.details,
             pages_amount=db_workspace.pages_amount,
             file_groups=db_workspace.file_groups,
             state=db_workspace.state,
-            created_by_user=db_workspace.created_by_user,
             datetime=db_workspace.datetime,
             ocrd_identifier=db_workspace.ocrd_identifier,
             bagit_profile_identifier=db_workspace.bagit_profile_identifier,

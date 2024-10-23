@@ -3,17 +3,18 @@ from .models import DBHPCSlurmJob
 
 
 async def db_create_hpc_slurm_job(
-    workflow_job_id: str, hpc_slurm_job_id: str, hpc_batch_script_path: str, hpc_slurm_workspace_path: str,
-    hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET, details: str = "HPCSlurmJob", created_by_user: str = ""
+    user_id: str, workflow_job_id: str, hpc_slurm_job_id: str, hpc_batch_script_path: str,
+    hpc_slurm_workspace_path: str, hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET,
+    details: str = "HPCSlurmJob"
 ) -> DBHPCSlurmJob:
     db_hpc_slurm_job = DBHPCSlurmJob(
+        user_id=user_id,
         workflow_job_id=workflow_job_id,
         hpc_slurm_job_id=hpc_slurm_job_id,
         hpc_batch_script_path=hpc_batch_script_path,
         hpc_slurm_workspace_path=hpc_slurm_workspace_path,
         hpc_slurm_job_state=hpc_slurm_job_state,
         details=details,
-        created_by_user=created_by_user
     )
     await db_hpc_slurm_job.save()
     return db_hpc_slurm_job
@@ -21,12 +22,12 @@ async def db_create_hpc_slurm_job(
 
 @call_sync
 async def sync_db_create_hpc_slurm_job(
-    workflow_job_id: str, hpc_slurm_job_id: str, hpc_batch_script_path: str, hpc_slurm_workspace_path: str,
-    hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET, details: str = "HPCSlurmJob", created_by_user: str = ""
+    user_id: str, workflow_job_id: str, hpc_slurm_job_id: str, hpc_batch_script_path: str, hpc_slurm_workspace_path: str,
+    hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET, details: str = "HPCSlurmJob"
 ) -> DBHPCSlurmJob:
     return await db_create_hpc_slurm_job(
-        workflow_job_id, hpc_slurm_job_id, hpc_batch_script_path, hpc_slurm_workspace_path, hpc_slurm_job_state,
-        details, created_by_user)
+        user_id, workflow_job_id, hpc_slurm_job_id, hpc_batch_script_path, hpc_slurm_workspace_path,
+        hpc_slurm_job_state, details)
 
 
 async def db_get_hpc_slurm_job(workflow_job_id: str) -> DBHPCSlurmJob:
@@ -61,8 +62,6 @@ async def db_update_hpc_slurm_job(find_workflow_job_id: str, **kwargs) -> DBHPCS
             db_hpc_slurm_job.deleted = value
         elif key == "details":
             db_hpc_slurm_job.details = value
-        elif key == "created_by_user":
-            db_hpc_slurm_job.created_by_user = value
         else:
             raise ValueError(f"Field not updatable: {key}")
     await db_hpc_slurm_job.save()

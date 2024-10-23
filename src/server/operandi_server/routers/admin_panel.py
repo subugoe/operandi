@@ -20,8 +20,8 @@ class RouterAdminPanel:
         )
 
     async def push_to_ola_hd(self, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        user_action = await self.user_authenticator.user_login(auth)
-        if user_action.account_type != AccountType.ADMIN:
+        py_user_action = await self.user_authenticator.user_login(auth)
+        if py_user_action.account_type != AccountType.ADMIN:
             message = f"Admin privileges required for the endpoint"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)

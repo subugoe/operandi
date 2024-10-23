@@ -5,10 +5,10 @@ from operandi_utils.hpc.constants import HPC_NHR_JOB_DEFAULT_PARTITION
 from ..constants import DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME
 
 class Resource(BaseModel):
-    resource_id: str = Field(..., description="ID of this thing")
-    resource_url: str = Field(..., description="URL of this thing")
-    description: str = Field(..., description="Description of the thing")
-    created_by_user: str = Field(..., description="The user who created that resource")
+    user_id: str = Field(..., description="The unique id of the user who created the resource")
+    resource_id: str = Field(..., description="The unique id of the resource")
+    resource_url: str = Field(..., description="The unique URL of the resource")
+    description: str = Field(..., description="The description of the resource")
     datetime: datetime
 
     class Config:
