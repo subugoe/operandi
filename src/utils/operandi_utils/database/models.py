@@ -44,11 +44,12 @@ class DBProcessingStatistics(Document):
     Attributes:
         institution_id:     Unique id of the institution the user belongs to
         user_id: Unique     id of the user
-        pages_uploaded:     Total amount of pages uploaded in a workspace
+        pages_uploaded:     Total amount of pages uploaded as a workspace to the server
         pages_submitted:    Total amount of submitted pages in workflow jobs
         pages_succeed:      Total amount of successfully processed pages
         pages_cancel:       Total amount of cancelled pages
         pages_failed:       Total amount of failed pages
+        pages_downloaded:   Total amount of pages downloaded as a workspace from the server
     """
     institution_id: str
     user_id: str
@@ -57,6 +58,7 @@ class DBProcessingStatistics(Document):
     pages_succeed: int = 0
     pages_cancel: int = 0
     pages_failed: int = 0
+    pages_downloaded: int = 0
 
     class Settings:
         name = "processing_statistics"

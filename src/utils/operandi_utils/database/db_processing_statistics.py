@@ -49,6 +49,8 @@ async def db_increase_processing_stats(find_user_id: str, **kwargs) -> DBProcess
             db_processing_stats.pages_cancel += value
         elif key == "pages_failed":
             db_processing_stats.failed = +value
+        elif key == "pages_downloaded":
+            db_processing_stats.pages_downloaded = +value
         else:
             raise ValueError(f"Field not updatable: {key}")
     await db_processing_stats.save()
