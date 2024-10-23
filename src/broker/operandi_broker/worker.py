@@ -3,6 +3,7 @@ from logging import getLogger
 import signal
 from os import getpid, getppid, setsid
 from os.path import join
+from pathlib import Path
 from sys import exit
 
 from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
@@ -106,9 +107,9 @@ class Worker:
             workflow_db = sync_db_get_workflow(self.current_message_wf_id)
             workspace_db = sync_db_get_workspace(self.current_message_ws_id)
 
-            workflow_script_path = workflow_db.workflow_script_path
+            workflow_script_path = Path(workflow_db.workflow_script_path)
             nf_uses_mets_server = workflow_db.uses_mets_server
-            workspace_dir = workspace_db.workspace_dir
+            workspace_dir = Path(workspace_db.workspace_dir)
             mets_basename = workspace_db.mets_basename
             ws_pages_amount = workspace_db.pages_amount
             if not mets_basename:
@@ -195,8 +196,8 @@ class Worker:
 
     # TODO: This should be further refined, currently it's just everything in one place
     def prepare_and_trigger_slurm_job(
-        self, workflow_job_id: str, workspace_id: str, workspace_dir: str, workspace_base_mets: str,
-        workflow_script_path: str, input_file_grp: str, nf_process_forks: int, ws_pages_amount: int,
+        self, workflow_job_id: str, workspace_id: str, workspace_dir: Path, workspace_base_mets: str,
+        workflow_script_path: Path, input_file_grp: str, nf_process_forks: int, ws_pages_amount: int,
         use_mets_server: bool, file_groups_to_remove: str, cpus: int, ram: int, partition: str
     ) -> str:
         if self.test_sbatch:

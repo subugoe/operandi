@@ -1,6 +1,6 @@
 from logging import getLogger
 from os import environ, listdir, makedirs, remove, symlink
-from os.path import dirname, join, isdir, split
+from os.path import dirname, isdir, split
 from pathlib import Path
 from shutil import rmtree, copytree
 from stat import S_ISDIR
@@ -15,6 +15,7 @@ class NHRTransfer(NHRConnector):
     def __init__(self) -> None:
         logger = getLogger(name=self.__class__.__name__)
         super().__init__(logger)
+        self._operandi_data_root = ""
         self._sftp_client = None
         self._sftp_reconnect_tries = 5
         self._sftp_reconnect_tries_remaining = self._sftp_reconnect_tries
@@ -49,9 +50,9 @@ class NHRTransfer(NHRConnector):
         return self._sftp_client
 
     def create_slurm_workspace_zip(
-        self, ocrd_workspace_dir: str, workflow_job_id: str, nextflow_script_path: str,
+        self, ocrd_workspace_dir: Path, workflow_job_id: str, nextflow_script_path: Path,
         tempdir_prefix: str = "slurm_workspace-"
-    ) -> str:
+    ) -> Path:
         self.logger.info(f"Entering pack_slurm_workspace")
         self.logger.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
         self.logger.info(f"workflow_job_id: {workflow_job_id}")
@@ -59,34 +60,34 @@ class NHRTransfer(NHRConnector):
         self.logger.info(f"tempdir_prefix: {tempdir_prefix}")
 
         # Parse the nextflow file name from the script path
-        nextflow_filename = nextflow_script_path.split('/')[-1]
+        nextflow_filename = nextflow_script_path.name
         self.logger.info(f"Nextflow file name to be used: {nextflow_filename}")
         # Parse the ocrd workspace id from the dir path
-        ocrd_workspace_id = ocrd_workspace_dir.split('/')[-1]
+        ocrd_workspace_id = ocrd_workspace_dir.name
         self.logger.info(f"OCR-D workspace id to be used: {ocrd_workspace_id}")
 
         tempdir = mkdtemp(prefix=tempdir_prefix)
         self.logger.info(f"Created a temp dir name: {tempdir}")
-        temp_workflow_job_dir = join(tempdir, workflow_job_id)
+        temp_workflow_job_dir = Path(tempdir, workflow_job_id)
         makedirs(temp_workflow_job_dir)
         self.logger.info(f"Created a slurm workspace dir: {temp_workflow_job_dir}")
 
-        dst_script_path = join(temp_workflow_job_dir, nextflow_filename)
+        dst_script_path = Path(temp_workflow_job_dir, nextflow_filename)
         symlink(src=nextflow_script_path, dst=dst_script_path)
         self.logger.info(f"Symlink created from src: {nextflow_script_path}, to dst: {dst_script_path}")
 
-        dst_workspace_path = join(temp_workflow_job_dir, ocrd_workspace_id)
+        dst_workspace_path = Path(temp_workflow_job_dir, ocrd_workspace_id)
         copytree(src=ocrd_workspace_dir, dst=dst_workspace_path)
         self.logger.info(f"Copied tree from src: {ocrd_workspace_dir}, to dst: {dst_workspace_path}")
 
-        dst_zip_path = f"{temp_workflow_job_dir}.zip"
+        dst_zip_path = Path(f"{temp_workflow_job_dir}.zip")
         make_zip_archive(source=temp_workflow_job_dir, destination=dst_zip_path)
         self.logger.info(f"Zip archive created from src: {temp_workflow_job_dir}, to dst: {dst_zip_path}")
         return dst_zip_path
 
-    def put_slurm_workspace(self, local_src_slurm_zip: str, workflow_job_id: str) -> str:
+    def put_slurm_workspace(self, local_src_slurm_zip: Path, workflow_job_id: str) -> Path:
         self.logger.info(f"Workflow job id to be used: {workflow_job_id}")
-        hpc_dst_slurm_zip = join(self.slurm_workspaces_dir, f"{workflow_job_id}.zip")
+        hpc_dst_slurm_zip = Path(self.slurm_workspaces_dir, f"{workflow_job_id}.zip")
         _ = self.sftp_client  # Force reconnect of the SFTP Client
         self.put_file(local_src=local_src_slurm_zip, remote_dst=hpc_dst_slurm_zip)
         self.logger.info(f"Put file from local src: {local_src_slurm_zip}, to remote dst: {hpc_dst_slurm_zip}")
@@ -95,9 +96,9 @@ class NHRTransfer(NHRConnector):
         return hpc_dst_slurm_zip
 
     def pack_and_put_slurm_workspace(
-        self, ocrd_workspace_dir: str, workflow_job_id: str, nextflow_script_path: str,
+        self, ocrd_workspace_dir: Path, workflow_job_id: str, nextflow_script_path: Path,
         tempdir_prefix: str = "slurm_workspace-"
-    ) -> Tuple[str, str]:
+    ) -> Tuple[Path, Path]:
         self.logger.info(f"Entering put_slurm_workspace")
         self.logger.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
         self.logger.info(f"workflow_job_id: {workflow_job_id}")
@@ -114,80 +115,13 @@ class NHRTransfer(NHRConnector):
         Path(local_src_slurm_zip).unlink(missing_ok=True)
         return local_src_slurm_zip, hpc_dst
 
-    def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: str, workflow_job_dir: str):
-        self.logger.info(f"Entering get_and_unpack_slurm_workspace")
-        self.logger.info(f"ocrd_workspace_dir: {ocrd_workspace_dir}")
-        self.logger.info(f"workflow_job_dir: {workflow_job_dir}")
-
-        # Parse the ocrd workspace id from the dir path
-        ocrd_workspace_id = ocrd_workspace_dir.split('/')[-1]
-        self.logger.info(f"OCR-D workspace id to be used: {ocrd_workspace_id}")
-        workflow_job_id = workflow_job_dir.split('/')[-1]
-        self.logger.info(f"Workflow job id to be used: {workflow_job_id}")
-
-        get_src = join(self.slurm_workspaces_dir, workflow_job_id, f"{workflow_job_id}.zip")
-        get_dst = join(Path(workflow_job_dir).parent.absolute(), f"{workflow_job_id}.zip")
-
-        _ = self.sftp_client  # Force reconnect of the SFTP Client
-        self._get_file_with_retries(remote_src=get_src, local_dst=get_dst)
-        self.logger.info(f"Got workflow job zip file from src: {get_src}, to dst: {get_dst}")
-
-        unpack_src = get_dst
-        unpack_dst = workflow_job_dir
-        try:
-            unpack_zip_archive(source=unpack_src, destination=unpack_dst)
-        except Exception as error:
-            raise Exception(
-                f"Error when unpacking workflow job zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}")
-        self.logger.info(f"Unpacked workflow job zip from src: {unpack_src}, to dst: {unpack_dst}")
-
-        # Remove the temporary workflow job zip
-        Path(unpack_src).unlink(missing_ok=True)
-        self.logger.info(f"Removed the temp workflow job zip: {unpack_src}")
-
-        # Remove the workspace dir from the local storage,
-        # before transferring the results to avoid potential
-        # overwrite errors or duplications
-        rmtree(ocrd_workspace_dir, ignore_errors=True)
-        self.logger.info(f"Removed tree dirs: {ocrd_workspace_dir}")
-
-        get_src = join(self.slurm_workspaces_dir, workflow_job_id, ocrd_workspace_id, f"{ocrd_workspace_id}.zip")
-        get_dst = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
-        self._get_file_with_retries(remote_src=get_src, local_dst=get_dst)
-        self.logger.info(f"Got workspace zip file from src: {get_src}, to dst: {get_dst}")
-
-        unpack_src = join(Path(ocrd_workspace_dir).parent.absolute(), f"{ocrd_workspace_id}.zip")
-        unpack_dst = ocrd_workspace_dir
-        try:
-            unpack_zip_archive(source=unpack_src, destination=unpack_dst)
-        except Exception as error:
-            raise Exception(
-                f"Error when unpacking workspace zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}")
-        self.logger.info(f"Unpacked workspace zip from src: {unpack_src}, to dst: {unpack_dst}")
-
-        # Remove the temporary workspace zip
-        Path(unpack_src).unlink(missing_ok=True)
-        self.logger.info(f"Removed the temp workspace zip: {unpack_src}")
-
-        # Remove the workspace dir from the local workflow job dir,
-        # and. Then create a symlink of the workspace dir inside the
-        # workflow job dir
-        workspace_dir_in_workflow_job = join(workflow_job_dir, ocrd_workspace_id)
-        try:
-            symlink(src=ocrd_workspace_dir, dst=workspace_dir_in_workflow_job, target_is_directory=True)
-        except Exception as error:
-            raise Exception(
-                f"Error when symlink: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}")
-        self.logger.info(f"Symlinked from src: {ocrd_workspace_dir}, to dst: {workspace_dir_in_workflow_job}")
-        self.logger.info(f"Leaving get_and_unpack_slurm_workspace")
-
-    def _get_file_with_retries(self, remote_src, local_dst, try_times: int = 100, sleep_time: int = 3):
+    def _download_file_with_retries(self, remote_src, local_dst, try_times: int = 100, sleep_time: int = 3):
         if try_times < 0 or sleep_time < 0:
             raise ValueError("Negative value passed as a parameter for time")
         tries = try_times
         while tries > 0:
             try:
-                self.get_file(remote_src=remote_src, local_dst=local_dst)
+                self.get_file(remote_src=str(remote_src), local_dst=str(local_dst))
                 break
             except Exception as error:
                 tries -= 1
@@ -195,6 +129,84 @@ class NHRTransfer(NHRConnector):
                     raise Exception(f"Error getting zip file: {error}, remote_src:{remote_src}, local_dst:{local_dst}")
                 sleep(sleep_time)
                 continue
+
+    def _download_workflow_job_zip(self, local_wf_job_dir: Path) -> Path:
+        workflow_job_id = Path(local_wf_job_dir).name
+        get_src = Path(self.slurm_workspaces_dir, workflow_job_id, f"{workflow_job_id}.zip")
+        get_dst = Path(local_wf_job_dir.parent.absolute(), f"{workflow_job_id}.zip")
+        self.logger.info(f"Downloading workflow job zip from HPC source: {get_src}")
+        self.logger.info(f"Downloading workflow job zip to local destination: {get_dst}")
+        self._download_file_with_retries(remote_src=get_src, local_dst=get_dst)
+        self.logger.info(f"Successfully downloaded zip of workflow job id: {workflow_job_id}")
+        return get_dst
+
+    def _unzip_workflow_job_dir(self, local_wf_job_zip: Path, local_wf_job_dir: Path, remove_zip: bool = True) -> Path:
+        unpack_src = local_wf_job_zip
+        unpack_dst = local_wf_job_dir
+        self.logger.info(f"Unzipping source workflow job zip path: {unpack_src}")
+        self.logger.info(f"Unzipping workflow job zip to destination: {unpack_dst}")
+        try:
+            unpack_zip_archive(source=unpack_src, destination=unpack_dst)
+        except Exception as error:
+            raise Exception(
+                f"Error when unpacking workflow job zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}")
+        self.logger.info(f"Unpacked workflow job zip from src: {unpack_src}, to dst: {unpack_dst}")
+        if remove_zip:
+            Path(unpack_src).unlink(missing_ok=True)
+            self.logger.info(f"Removed the temp workflow job zip: {unpack_src}")
+        return unpack_dst
+
+    def _download_workspace_zip(self, local_ocrd_ws_dir: Path, local_wf_job_dir: Path) -> Path:
+        workflow_job_id = Path(local_wf_job_dir).name
+        workspace_id = Path(local_ocrd_ws_dir).name
+        get_src = Path(self.slurm_workspaces_dir, workflow_job_id, workspace_id, f"{workspace_id}.zip")
+        get_dst = Path(local_ocrd_ws_dir.parent.absolute(), f"{workspace_id}.zip")
+        self.logger.info(f"Downloading workspace zip from HPC source: {get_src}")
+        self.logger.info(f"Downloading workspace zip to local destination: {get_dst}")
+        self._download_file_with_retries(remote_src=get_src, local_dst=get_dst)
+        self.logger.info(f"Successfully downloaded zip of workspace id: {workspace_id}")
+        return get_dst
+
+    def _unzip_workspace_dir(self, local_ws_dir_zip: Path, local_ocrd_ws_dir: Path, remove_zip: bool = True):
+        unpack_src = local_ws_dir_zip
+        unpack_dst = local_ocrd_ws_dir
+        try:
+            unpack_zip_archive(source=unpack_src, destination=unpack_dst)
+        except Exception as error:
+            raise Exception(
+                f"Error when unpacking workspace zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}")
+        self.logger.info(f"Unpacked workspace zip from src: {unpack_src}, to dst: {unpack_dst}")
+
+        if remove_zip:
+            Path(unpack_src).unlink(missing_ok=True)
+            self.logger.info(f"Removed the temp workspace zip: {unpack_src}")
+
+    def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: Path, workflow_job_dir: Path):
+        _ = self.sftp_client  # Force reconnect of the SFTP Client
+        wf_job_zip_path = self._download_workflow_job_zip(local_wf_job_dir=workflow_job_dir)
+        self._unzip_workflow_job_dir(wf_job_zip_path, workflow_job_dir, True)
+
+        # TODO: This is still not optimal. Consider to back up instead of removing before downloading.
+        # Remove the workspace dir from the local storage,
+        # before transferring the results to avoid potential
+        # overwrite errors or duplications
+        rmtree(ocrd_workspace_dir, ignore_errors=True)
+        self.logger.info(f"Removed tree dirs: {ocrd_workspace_dir}")
+
+        ws_zip_path = self._download_workspace_zip(ocrd_workspace_dir, workflow_job_dir)
+        self._unzip_workspace_dir(ws_zip_path, ocrd_workspace_dir)
+
+        # Remove the workspace dir from the local workflow job dir,
+        # and then create a symlink of the workspace dir inside the
+        # workflow job dir
+        workspace_dir_in_workflow_job = Path(workflow_job_dir, ocrd_workspace_dir.name)
+        try:
+            symlink(src=ocrd_workspace_dir, dst=workspace_dir_in_workflow_job, target_is_directory=True)
+        except Exception as error:
+            raise Exception(
+                f"Error when symlink: {error}, src: {ocrd_workspace_dir}, dst: {workspace_dir_in_workflow_job}")
+        self.logger.info(f"Symlinked from src: {ocrd_workspace_dir}, to dst: {workspace_dir_in_workflow_job}")
+        self.logger.info(f"Leaving get_and_unpack_slurm_workspace")
 
     def mkdir_p(self, remote_path, mode=0o766):
         if remote_path == '/':
@@ -213,7 +225,7 @@ class NHRTransfer(NHRConnector):
 
     def get_file(self, remote_src, local_dst):
         makedirs(name=Path(local_dst).parent.absolute(), exist_ok=True)
-        self._sftp_client.get(remotepath=remote_src, localpath=local_dst)
+        self._sftp_client.get(remotepath=str(remote_src), localpath=str(local_dst))
 
     def get_dir(self, remote_src, local_dst, mode=0o766):
         """
@@ -222,17 +234,17 @@ class NHRTransfer(NHRConnector):
         All subdirectories in source are created under destination.
         """
         makedirs(name=local_dst, mode=mode, exist_ok=True)
-        for item in self._sftp_client.listdir(remote_src):
-            item_src = join(remote_src, item)
-            item_dst = join(local_dst, item)
-            if S_ISDIR(self._sftp_client.lstat(item_src).st_mode):
+        for item in self._sftp_client.listdir(str(remote_src)):
+            item_src = Path(remote_src, item)
+            item_dst = Path(local_dst, item)
+            if S_ISDIR(self._sftp_client.lstat(str(item_src)).st_mode):
                 self.get_dir(remote_src=item_src, local_dst=item_dst, mode=mode)
             else:
                 self.get_file(remote_src=item_src, local_dst=item_dst)
 
     def put_file(self, local_src, remote_dst):
         self.mkdir_p(remote_path=str(Path(remote_dst).parent.absolute()))
-        self._sftp_client.put(localpath=local_src, remotepath=remote_dst)
+        self._sftp_client.put(localpath=str(local_src), remotepath=str(remote_dst))
 
     def put_dir(self, local_src, remote_dst, mode=0o766):
         """
@@ -240,12 +252,12 @@ class NHRTransfer(NHRConnector):
         The remote destination directory needs to exist.
         All subdirectories in source are created under destination.
         """
-        self.mkdir_p(remote_path=remote_dst, mode=mode)
-        for item in listdir(local_src):
-            item_src = join(local_src, item)
-            item_dst = join(remote_dst, item)
+        self.mkdir_p(remote_path=str(remote_dst), mode=mode)
+        for item in listdir(str(local_src)):
+            item_src = Path(local_src, item)
+            item_dst = Path(remote_dst, item)
             if isdir(item_src):
                 self.put_dir(local_src=item_src, remote_dst=item_dst, mode=mode)
             else:
-                self._sftp_client.chdir(remote_dst)
+                self._sftp_client.chdir(str(remote_dst))
                 self.put_file(local_src=item_src, remote_dst=item_dst)

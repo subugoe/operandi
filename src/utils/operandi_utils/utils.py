@@ -106,7 +106,7 @@ def make_zip_archive(source, destination) -> None:
     name = base.split('.')[0]
     zip_format = base.split('.')[1]
     archive_from = dirname(source)
-    archive_to = basename(source.strip(sep))
+    archive_to = basename(str(source).strip(sep))
     make_archive(base_name=name, format=zip_format, root_dir=archive_from, base_dir=archive_to)
     move(src=f"{name}.{zip_format}", dst=destination)
 

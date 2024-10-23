@@ -2,6 +2,7 @@ from json import loads
 from logging import getLogger
 import signal
 from os import getpid, getppid, setsid
+from pathlib import Path
 from sys import exit
 
 from ocrd import Resolver
@@ -68,7 +69,8 @@ class JobStatusWorker:
             raise Exception(f"The worker failed, reason: {e}")
 
     def __download_results_from_hpc(self, job_dir: str, workspace_dir: str) -> None:
-        self.hpc_io_transfer.get_and_unpack_slurm_workspace(ocrd_workspace_dir=workspace_dir, workflow_job_dir=job_dir)
+        self.hpc_io_transfer.get_and_unpack_slurm_workspace(
+            ocrd_workspace_dir=Path(workspace_dir), workflow_job_dir=Path(job_dir))
         self.log.info(f"Transferred slurm workspace from hpc path")
         # Delete the result dir from the HPC home folder
         # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
@@ -76,9 +78,8 @@ class JobStatusWorker:
     def __handle_hpc_and_workflow_states(
         self, hpc_slurm_job_db: DBHPCSlurmJob, workflow_job_db: DBWorkflowJob, workspace_db: DBWorkspace
     ):
-        hpc_slurm_job_id = hpc_slurm_job_db.hpc_slurm_job_id
         old_slurm_job_state = hpc_slurm_job_db.hpc_slurm_job_state
-        new_slurm_job_state = self.hpc_executor.check_slurm_job_state(slurm_job_id=hpc_slurm_job_id)
+        new_slurm_job_state = self.hpc_executor.check_slurm_job_state(slurm_job_id=hpc_slurm_job_db.hpc_slurm_job_id)
 
         job_id = workflow_job_db.job_id
         job_dir = workflow_job_db.job_dir
@@ -90,7 +91,9 @@ class JobStatusWorker:
         # If there has been a change of slurm job state, update it
         if old_slurm_job_state != new_slurm_job_state:
             self.log.info(
-                f"Slurm job: {hpc_slurm_job_id}, old state: {old_slurm_job_state}, new state: {new_slurm_job_state}")
+                f"Slurm job: {hpc_slurm_job_db.hpc_slurm_job_id}, "
+                f"old state: {old_slurm_job_state}, "
+                f"new state: {new_slurm_job_state}")
             sync_db_update_hpc_slurm_job(find_workflow_job_id=job_id, hpc_slurm_job_state=new_slurm_job_state)
 
         # Convert the slurm job state to operandi workflow job state
@@ -103,7 +106,7 @@ class JobStatusWorker:
             if new_job_state == StateJob.SUCCESS:
                 sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_FROM_HPC)
                 sync_db_update_workflow_job(find_job_id=job_id, job_state=StateJob.TRANSFERRING_FROM_HPC)
-                self.__download_results_from_hpc(job_dir=job_dir,workspace_dir=workspace_dir)
+                self.__download_results_from_hpc(job_dir=job_dir, workspace_dir=workspace_dir)
 
                 # TODO: Find a better way to do the update - consider callbacks to Operandi Server
                 try:
