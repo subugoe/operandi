@@ -10,11 +10,12 @@ from typing import List
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from starlette.status import HTTP_404_NOT_FOUND
 
 from operandi_utils import get_nf_workflows_dir
 from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateWorkspace
 from operandi_utils.database import (
-    db_create_workflow, db_create_workflow_job, db_get_workflow, db_update_workspace,
+    db_create_workflow, db_create_workflow_job, db_get_hpc_slurm_job, db_get_workflow, db_update_workspace,
     db_increase_processing_stats_with_handling)
 from operandi_utils.rabbitmq import (
     get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
@@ -310,9 +311,13 @@ class RouterWorkflow:
             self.logger.exception(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        slurm_job_log = f"slurm-job-{db_wf_job.hpc_slurm_job_id}.txt"
-        return FileResponse(
-            path=Path(wf_job_local, slurm_job_log), filename=slurm_job_log, media_type="application/text")
+        db_hpc_slurm_job = await db_get_hpc_slurm_job(workflow_job_id=db_wf_job.job_id)
+        slurm_job_log = f"slurm-job-{db_hpc_slurm_job.hpc_slurm_job_id}.txt"
+        slurm_job_log_path = Path(wf_job_local, slurm_job_log)
+        if not slurm_job_log_path.exists():
+            message = f"No slurm job log file was found for job id: {job_id}"
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=message)
+        return FileResponse(path=slurm_job_log_path, filename=slurm_job_log, media_type="application/text")
 
     async def submit_to_rabbitmq_queue(
         self, workflow_id: str, workflow_args: WorkflowArguments, sbatch_args: SbatchArguments,

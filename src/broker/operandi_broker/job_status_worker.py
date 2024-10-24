@@ -131,14 +131,17 @@ class JobStatusWorker:
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
                 db_stats = sync_db_increase_processing_stats(
                     find_user_id=user_id, pages_succeed=db_workspace.pages_amount)
+                self.hpc_io_transfer.download_slurm_job_log_file(hpc_slurm_job_db.hpc_slurm_job_id, job_dir)
                 self.log.info(f"Increasing `pages_succeed` stat by {db_workspace.pages_amount}")
                 self.log.info(f"Total amount of `pages_succeed` stat: {db_stats.pages_succeed}")
             if new_job_state == StateJob.FAILED:
+                # TODO: Download the hpc log file here as well
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
                 db_workspace = sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.FAILED)
                 db_stats = sync_db_increase_processing_stats(
                     find_user_id=user_id, pages_failed=db_workspace.pages_amount)
+                self.hpc_io_transfer.download_slurm_job_log_file(hpc_slurm_job_db.hpc_slurm_job_id, job_dir)
                 self.log.error(f"Increasing `pages_failed` stat by {db_workspace.pages_amount}")
                 self.log.error(f"Total amount of `pages_failed` stat: {db_stats.pages_failed}")
 

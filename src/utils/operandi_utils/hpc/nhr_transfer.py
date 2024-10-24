@@ -130,7 +130,7 @@ class NHRTransfer(NHRConnector):
                 sleep(sleep_time)
                 continue
 
-    def _download_slurm_job_log_file(self, slurm_job_id: str, local_wf_job_dir: Path) -> Path:
+    def download_slurm_job_log_file(self, slurm_job_id: str, local_wf_job_dir: Path) -> Path:
         workflow_job_id = Path(local_wf_job_dir).name
         get_src = Path(self.slurm_workspaces_dir, workflow_job_id, f"slurm-job-{slurm_job_id}.txt")
         get_dst = Path(local_wf_job_dir, f"slurm-job-{slurm_job_id}.txt")
@@ -205,8 +205,6 @@ class NHRTransfer(NHRConnector):
 
         ws_zip_path = self._download_workspace_zip(ocrd_workspace_dir, workflow_job_dir)
         self._unzip_workspace_dir(ws_zip_path, ocrd_workspace_dir)
-
-        self._download_slurm_job_log_file(slurm_job_id, workflow_job_dir)
 
         # Remove the workspace dir from the local workflow job dir,
         # and then create a symlink of the workspace dir inside the
