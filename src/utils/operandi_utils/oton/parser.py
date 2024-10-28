@@ -3,8 +3,6 @@ import logging
 from shlex import split as shlex_split
 from typing import List, Optional, Tuple
 
-from isort.core import process
-
 from ocrd_utils import parse_json_string_or_file, set_json_key_value_overrides
 from operandi_utils.oton.constants import OCRD_ALL_JSON, OTON_LOG_LEVEL, OTON_LOG_FORMAT
 
