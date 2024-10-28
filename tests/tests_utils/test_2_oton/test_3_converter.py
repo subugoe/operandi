@@ -16,8 +16,7 @@ def test_conversion_wo_docker():
 
     input_path = 'tests/assets/workflows_oton/workflow1.txt'
     output_path = 'tests/assets/workflows_oton/test_output_nextflow1.txt'
-
-    Converter().convert_OtoN(input_path=input_path, output_path=output_path, dockerized=True)
+    Converter().convert_oton_env_docker(input_path=input_path, output_path=output_path)
 
     expected_workflow = """workflow {
             main:
@@ -50,7 +49,7 @@ def test_conversion_with_docker():
     input_path = 'tests/assets/workflows_oton/workflow1.txt'
     output_path = 'tests/assets/workflows_oton/test_output_nextflow1_docker1.txt'
 
-    Converter().convert_OtoN(input_path=input_path, output_path=output_path, dockerized=True)
+    Converter().convert_oton_env_docker(input_path=input_path, output_path=output_path)
     expected = """${params.docker_command} ocrd-cis-ocropy-binarize -m ${mets_file} -I ${input_file_grp} -O ${output_file_grp}"""
 
     with open(output_path, mode='r', encoding='utf-8') as fp:
@@ -66,7 +65,7 @@ def test_models_volume_for_docker():
     input_path = 'tests/assets/workflows_oton/workflow1.txt'
     output_path = 'tests/assets/workflows_oton/test_output_nextflow1_docker2.txt'
 
-    Converter().convert_OtoN(input_path=input_path, output_path=output_path, dockerized=True)
+    Converter().convert_oton_env_docker(input_path=input_path, output_path=output_path)
     expected = "docker run --rm -u \\$(id -u) -v $params.docker_volume -v $params.docker_models -w $params.docker_pwd -- $params.docker_image"
     with open(output_path, mode='r', encoding='utf-8') as fp:
         wf = fp.read()

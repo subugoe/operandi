@@ -126,7 +126,7 @@ jobs:
       - name: run utils tests
         run: |
           export $(shell sed 's/=.*//' ${{ env.ENV_FILE }})
-          pytest -p no:cacheprovider tests/tests_utils/test_*.py -v
+          pytest -p no:cacheprovider tests/tests_utils/test_*/test_*.py -v
 
       - name: run broker tests
         run: |

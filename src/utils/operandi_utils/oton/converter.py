@@ -7,7 +7,7 @@ class Converter:
         pass
 
     @staticmethod
-    def convert_OtoN(input_path: str, output_path: str, dockerized: bool = False):
+    def _convert_OtoN(input_path: str, output_path: str, dockerized: bool = False):
         validator = OCRDValidator()
         validator.validate(input_path)
 
@@ -20,3 +20,15 @@ class Converter:
         nf_file_executable.nf_lines_parameters[3] = nf_file_executable.nf_lines_parameters[3].replace("null", f"{first_file_grps}")
         nf_file_executable.build_main_workflow(nf_processes)
         nf_file_executable.produce_nextflow_file(output_path)
+
+    @staticmethod
+    def convert_oton_env_local(input_path: str, output_path: str):
+        Converter._convert_OtoN(input_path, output_path, dockerized=False)
+
+    @staticmethod
+    def convert_oton_env_docker(input_path: str, output_path: str):
+        Converter._convert_OtoN(input_path, output_path, dockerized=True)
+
+    @staticmethod
+    def convert_oton_env_apptainer(input_path: str, output_path: str):
+        pass

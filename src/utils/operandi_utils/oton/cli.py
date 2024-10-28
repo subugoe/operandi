@@ -18,13 +18,16 @@ def cli():
 def convert(input_path: str, output_path: str, dockerized: bool):
     print(f"Converting from: {input_path}")
     print(f"Converting to: {output_path}")
-    Converter().convert_OtoN(input_path, output_path, dockerized)
-    print("Conversion was successful!")
+    if dockerized:
+        Converter().convert_oton_env_docker(input_path, output_path)
+        print("Success: Converting workflow from ocrd process to Nextflow with docker processor calls")
+    else:
+        Converter().convert_oton_env_local(input_path, output_path)
+        print("Success: Converting workflow from ocrd process to Nextflow with local processor calls")
 
 
 @cli.command("validate", help="Validate an OCR-D workflow txt file.")
-@click.option('-I', '--input_path', show_default=True,
-              help='Path to the OCR-D workflow file to be validated.')
+@click.option('-I', '--input_path', show_default=True, help='Path to the OCR-D workflow file to be validated.')
 def validate(input_path: str):
     OCRDValidator().validate(input_path)
     print(f"Validating: {input_path}")
