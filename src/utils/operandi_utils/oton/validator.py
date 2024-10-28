@@ -13,7 +13,7 @@ from .utils import read_from_file
 
 from .constants import OCRD_ALL_JSON, OTON_LOG_LEVEL, OTON_LOG_FORMAT
 
-__all__ = ["ProcessorCallArguments", "validate_file_path", "validate_ocrd_process_command"]
+__all__ = ["OCRDValidator", "ProcessorCallArguments", "validate_file_path", "validate_ocrd_process_command"]
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.getLevelName(OTON_LOG_LEVEL))

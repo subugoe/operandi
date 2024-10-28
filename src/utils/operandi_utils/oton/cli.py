@@ -1,6 +1,6 @@
 import click
 from .converter import Converter
-from .validators.ocrd_validator import OCRDValidator
+from .validator import OCRDValidator
 
 
 @click.group()

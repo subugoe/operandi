@@ -3,13 +3,8 @@ from typing import List, Tuple
 
 from ..validator import ProcessorCallArguments
 from ..constants import (
-    DIR_IN,
-    DIR_OUT,
-    METS_FILE,
-
-    OTON_LOG_FORMAT,
-    OTON_LOG_LEVEL,
-
+    DIR_IN, DIR_OUT, METS_FILE,
+    OTON_LOG_FORMAT, OTON_LOG_LEVEL,
     REPR_DOCKER_COMMAND,
     REPR_DOCKER_IMAGE,
     REPR_DOCKER_MODELS,

@@ -43,6 +43,7 @@ def call_sync(func):
         if iscoroutine(result):
             return get_event_loop().run_until_complete(result)
         return result
+
     return func_wrapper
 
 

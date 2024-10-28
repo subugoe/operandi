@@ -18,9 +18,7 @@ class NextflowBlockWorkflow:
 
         previous_nfp = None
         for nfp in self.nf_processes:
-            nfp_0 = nfp[0]
-            nfp_1 = nfp[1]
-            nfp_2 = nfp[2]
+            nfp_0, nfp_1, nfp_2 = nfp[0], nfp[1], nfp[2]
             if previous_nfp is None:
                 representation += f'{SPACES}{SPACES}{nfp_0}({PARAMS_KEY_METS_PATH}, {PARAMS_KEY_INPUT_FILE_GRP}, {nfp_2})\n'
             else:
