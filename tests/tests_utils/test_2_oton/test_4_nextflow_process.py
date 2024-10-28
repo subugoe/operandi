@@ -1,4 +1,4 @@
-from operandi_utils.oton.models import NextflowBlockProcess
+from operandi_utils.oton.nf_block_process import NextflowBlockProcess
 from operandi_utils.oton.validator import OCRDValidator
 
 

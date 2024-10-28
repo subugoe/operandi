@@ -1,4 +1,4 @@
-from operandi_utils.oton.models import NextflowFileExecutable
+from operandi_utils.oton.nf_file_executable import NextflowFileExecutable
 from operandi_utils.oton.validator import OCRDValidator
 
 
