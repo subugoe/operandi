@@ -1,6 +1,6 @@
 import logging
-from ..validator import ProcessorCallArguments
-from ..constants import OTON_LOG_LEVEL, OTON_LOG_FORMAT, PH_DIR_IN, PH_DIR_OUT, PH_METS_FILE, PH_DOCKER_COMMAND, SPACES
+from operandi_utils.oton.validator import ProcessorCallArguments
+from operandi_utils.oton.constants import OTON_LOG_LEVEL, OTON_LOG_FORMAT, PH_DIR_IN, PH_DIR_OUT, PH_METS_FILE, PH_DOCKER_COMMAND, SPACES
 
 
 class NextflowBlockProcess:

@@ -1,7 +1,7 @@
 import logging
 from typing import List, Tuple
 
-from .constants import OTON_LOG_FORMAT, OTON_LOG_LEVEL
+from operandi_utils.oton.constants import OTON_LOG_FORMAT, OTON_LOG_LEVEL
 
 __all__ = ["read_from_file"]
 

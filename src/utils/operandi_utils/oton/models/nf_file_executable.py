@@ -1,8 +1,8 @@
 import logging
 from typing import List, Tuple
 
-from ..validator import ProcessorCallArguments
-from ..constants import (
+from operandi_utils.oton.validator import ProcessorCallArguments
+from operandi_utils.oton.constants import (
     DIR_IN, DIR_OUT, METS_FILE,
     OTON_LOG_FORMAT, OTON_LOG_LEVEL,
     REPR_DOCKER_COMMAND,

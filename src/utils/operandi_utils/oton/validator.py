@@ -9,9 +9,9 @@ from shlex import split as shlex_split
 from ocrd_validators import ParameterValidator
 from ocrd_utils import parse_json_string_or_file, set_json_key_value_overrides
 
-from .utils import read_from_file
+from operandi_utils.oton.constants import OCRD_ALL_JSON, OTON_LOG_LEVEL, OTON_LOG_FORMAT
+from operandi_utils.oton.utils import read_from_file
 
-from .constants import OCRD_ALL_JSON, OTON_LOG_LEVEL, OTON_LOG_FORMAT
 
 __all__ = ["OCRDValidator", "ProcessorCallArguments", "validate_file_path", "validate_ocrd_process_command"]
 

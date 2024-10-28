@@ -1,6 +1,6 @@
 import logging
 from typing import List
-from ..constants import OTON_LOG_LEVEL, OTON_LOG_FORMAT, PARAMS_KEY_METS_PATH, PARAMS_KEY_INPUT_FILE_GRP, SPACES
+from operandi_utils.oton.constants import OTON_LOG_LEVEL, OTON_LOG_FORMAT, PARAMS_KEY_METS_PATH, PARAMS_KEY_INPUT_FILE_GRP, SPACES
 
 
 class NextflowBlockWorkflow:

@@ -1,5 +1,5 @@
-from .models import NextflowFileExecutable
-from .validator import OCRDValidator
+from operandi_utils.oton.models import NextflowFileExecutable
+from operandi_utils.oton.validator import OCRDValidator
 
 
 class Converter:
