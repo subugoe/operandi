@@ -1,0 +1,4 @@
+ocrd process \
+    "dinglehopper -I OCR-D-GT-SEG-BLOCK,OCR-D-OCR -O OCR-D-EVAL-SEG-BLOCK" \
+    "dinglehopper -I OCR-D-GT-SEG-LINE,OCR-D-OCR -O OCR-D-EVAL-SEG-LINE" \
+    "dinglehopper -I OCR-D-GT-SEG-PAGE,OCR-D-OCR -O OCR-D-EVAL-SEG-PAGE"

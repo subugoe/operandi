@@ -17,8 +17,9 @@ setup(
         'operandi_utils',
         'operandi_utils.database',
         'operandi_utils.hpc',
+        'operandi_utils.oton',
         'operandi_utils.rabbitmq'
     ],
-    package_data={'': ['batch_scripts/*.sh', 'nextflow_workflows/*.nf']},
+    package_data={'': ['batch_scripts/*.sh', 'nextflow_workflows/*.nf', 'ocrd_all_tool.json']},
     install_requires=install_requires
 )
