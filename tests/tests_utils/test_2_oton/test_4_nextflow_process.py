@@ -8,11 +8,11 @@ def test_line_append():
     """
     input_path = 'tests/assets/workflows_oton/workflow4.txt'
     validator = OCRDValidator()
-    validator.validate(input_path)
+    list_processor_call_arguments = validator.validate(input_path)
 
     result = []
-    for ocrd_command in validator.processors:
-        index_pos = validator.processors.index(ocrd_command)
+    for ocrd_command in list_processor_call_arguments:
+        index_pos = list_processor_call_arguments.index(ocrd_command)
         nextflow_process = NextflowBlockProcess(ocrd_command, index_pos, dockerized=False)
         result.append(nextflow_process.nf_process_name)
 

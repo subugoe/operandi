@@ -1,13 +1,12 @@
 import logging
 from typing import List
-from operandi_utils.oton.constants import OTON_LOG_LEVEL, OTON_LOG_FORMAT, PARAMS_KEY_METS_PATH, PARAMS_KEY_INPUT_FILE_GRP, SPACES
+from operandi_utils.oton.constants import OTON_LOG_LEVEL, PARAMS_KEY_METS_PATH, PARAMS_KEY_INPUT_FILE_GRP, SPACES
 
 
 class NextflowBlockWorkflow:
     def __init__(self, workflow_name: str, nf_processes: List[str]):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.getLevelName(OTON_LOG_LEVEL))
-        logging.basicConfig(format=OTON_LOG_FORMAT)
 
         self.workflow_name = workflow_name
         self.nf_processes: List[str] = nf_processes

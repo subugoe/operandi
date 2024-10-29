@@ -1,13 +1,12 @@
 import logging
 from operandi_utils.oton.validator import ProcessorCallArguments
-from operandi_utils.oton.constants import OTON_LOG_LEVEL, OTON_LOG_FORMAT, PH_DIR_IN, PH_DIR_OUT, PH_METS_FILE, PH_DOCKER_COMMAND, SPACES
+from operandi_utils.oton.constants import OTON_LOG_LEVEL, PH_DIR_IN, PH_DIR_OUT, PH_METS_FILE, PH_DOCKER_COMMAND, SPACES
 
 
 class NextflowBlockProcess:
     def __init__(self, processor_call_arguments: ProcessorCallArguments, index_pos: int, dockerized: bool = False):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.getLevelName(OTON_LOG_LEVEL))
-        logging.basicConfig(format=OTON_LOG_FORMAT)
 
         self.dockerized = dockerized
         self.nf_process_name = processor_call_arguments.executable.replace('-', '_') + "_" + str(index_pos)

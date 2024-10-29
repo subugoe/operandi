@@ -1,4 +1,4 @@
-from operandi_utils.oton.parser import OCRDParser, ProcessorCallArguments
+from operandi_utils.oton.parser import OCRDParser
 
 processor_command = "calamari-recognize -I OCR-D-IN1,OCR-D-IN2 -O OCR-D-OCR -P checkpoint_dir qurator-gt4histocr-1.0"
 test_sample_lines = [
@@ -17,25 +17,29 @@ test_sample_lines2 = [
 ]
 
 def test_purify_line_with_slash():
-    purified_line = OCRDParser.purify_line(test_sample_lines[0])
+    ocrd_parser = OCRDParser()
+    purified_line = ocrd_parser.purify_line(test_sample_lines[0])
     assert processor_command == purified_line
-    purified_line = OCRDParser.purify_line(test_sample_lines2[0])
+    purified_line = ocrd_parser.purify_line(test_sample_lines2[0])
     assert processor_command2 == purified_line
 
 def test_purify_line_without_slash():
-    purified_line = OCRDParser.purify_line(test_sample_lines[1])
+    ocrd_parser = OCRDParser()
+    purified_line = ocrd_parser.purify_line(test_sample_lines[1])
     assert processor_command == purified_line
-    purified_line = OCRDParser.purify_line(test_sample_lines2[1])
+    purified_line = ocrd_parser.purify_line(test_sample_lines2[1])
     assert processor_command2 == purified_line
 
 def test_purify_line_with_whitespaces_and_slash():
-    purified_line = OCRDParser.purify_line(test_sample_lines[2])
+    ocrd_parser = OCRDParser()
+    purified_line = ocrd_parser.purify_line(test_sample_lines[2])
     assert processor_command == purified_line
-    purified_line = OCRDParser.purify_line(test_sample_lines2[2])
+    purified_line = ocrd_parser.purify_line(test_sample_lines2[2])
     assert processor_command2 == purified_line
 
 def test_purify_line_with_whitespaces_and_without_slash():
-    purified_line = OCRDParser.purify_line(test_sample_lines[3])
+    ocrd_parser = OCRDParser()
+    purified_line = ocrd_parser.purify_line(test_sample_lines[3])
     assert processor_command == purified_line
-    purified_line = OCRDParser.purify_line(test_sample_lines2[3])
+    purified_line = ocrd_parser.purify_line(test_sample_lines2[3])
     assert processor_command2 == purified_line
