@@ -1,6 +1,7 @@
 import logging
 from operandi_utils.oton.validator import ProcessorCallArguments
-from operandi_utils.oton.constants import OTON_LOG_LEVEL, PH_DIR_IN, PH_DIR_OUT, PH_METS_FILE, PH_DOCKER_COMMAND, SPACES
+from operandi_utils.oton.constants import (
+    OTON_LOG_LEVEL, PH_DIR_IN, PH_DIR_OUT, PH_METS_FILE, PH_ENV_WRAPPER, SPACES)
 
 
 class NextflowBlockProcess:
@@ -45,7 +46,7 @@ class NextflowBlockProcess:
         representation += f'{SPACES}script:\n'
         representation += f'{SPACES}{SPACES}"""\n'
         if self.dockerized:
-            representation += f'{SPACES}{SPACES}{PH_DOCKER_COMMAND} {self.ocrd_command_bash}\n'
+            representation += f'{SPACES}{SPACES}{PH_ENV_WRAPPER} {self.ocrd_command_bash}\n'
         else:
             representation += f'{SPACES}{SPACES}{self.ocrd_command_bash}\n'
         representation += f'{SPACES}{SPACES}"""\n'

@@ -10,17 +10,20 @@ def clean_up(path):
         os.remove(path)
 
 
-def test_conversion_wo_docker():
+def test_conversion_with_env_local():
     """E2E test for an OCR-D workflow conversion using native ocrd_all
     """
     oton_converter = OTONConverter()
     input_path = 'tests/assets/workflows_oton/workflow1.txt'
     output_path = 'tests/assets/workflows_oton/test_output_nextflow1.txt'
-    oton_converter.convert_oton_env_docker(input_path=input_path, output_path=output_path)
+    nextflow_file_class = oton_converter.convert_oton_env_local(input_path=input_path, output_path=output_path)
+    assert 'params.input_file_group = "OCR-D-IMG"' in nextflow_file_class.nf_lines_parameters
+    assert 'params.mets_path = "null"' in nextflow_file_class.nf_lines_parameters
+    assert 'params.workspace_dir = "null"' in nextflow_file_class.nf_lines_parameters
 
     expected_workflow = """workflow {
             main:
-                ocrd_cis_ocropy_binarize_0(params.mets_path, params.input_file_grp, "OCR-D-BIN")
+                ocrd_cis_ocropy_binarize_0(params.mets_path, params.input_file_group, "OCR-D-BIN")
                 ocrd_anybaseocr_crop_1(ocrd_cis_ocropy_binarize_0.out, "OCR-D-BIN", "OCR-D-CROP")
                 ocrd_skimage_binarize_2(ocrd_anybaseocr_crop_1.out, "OCR-D-CROP", "OCR-D-BIN2")
                 ocrd_skimage_denoise_3(ocrd_skimage_binarize_2.out, "OCR-D-BIN2", "OCR-D-BIN-DENOISE")
@@ -41,7 +44,7 @@ def test_conversion_wo_docker():
     assert expected_normalized in no_spaces_result
 
 
-def test_conversion_with_docker():
+def test_conversion_with_env_docker():
     """E2E test for an OCR-D workflow conversion using the Docker flag.
     We test for success by looking for an exemplary line that is executed by Docker.
     """
@@ -50,25 +53,10 @@ def test_conversion_with_docker():
     output_path = 'tests/assets/workflows_oton/test_output_nextflow1_docker1.txt'
 
     oton_converter = OTONConverter()
-    oton_converter.convert_oton_env_docker(input_path=input_path, output_path=output_path)
-    expected = """${params.docker_command} ocrd-cis-ocropy-binarize -m ${mets_file} -I ${input_file_grp} -O ${output_file_grp}"""
+    nextflow_file_class = oton_converter.convert_oton_env_docker(input_path=input_path, output_path=output_path)
 
-    with open(output_path, mode='r', encoding='utf-8') as fp:
-        wf = fp.read()
-    # clean_up(output_path)
-    assert expected in wf
+    expected = '${params.env_wrapper} ocrd-cis-ocropy-binarize -m ${mets_file} -I ${input_file_group} -O ${output_file_group}'
 
-
-def test_models_volume_for_docker():
-    """E2E test for a Docker-base OCR-D workflow conversion with a models' directory.
-    We test if the resulting NextFlow script has a volume for mounting the text detection models."""
-
-    input_path = 'tests/assets/workflows_oton/workflow1.txt'
-    output_path = 'tests/assets/workflows_oton/test_output_nextflow1_docker2.txt'
-
-    oton_converter = OTONConverter()
-    oton_converter.convert_oton_env_docker(input_path=input_path, output_path=output_path)
-    expected = "docker run --rm -u \\$(id -u) -v $params.docker_volume -v $params.docker_models -w $params.docker_pwd -- $params.docker_image"
     with open(output_path, mode='r', encoding='utf-8') as fp:
         wf = fp.read()
     # clean_up(output_path)

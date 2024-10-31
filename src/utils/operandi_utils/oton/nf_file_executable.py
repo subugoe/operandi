@@ -5,16 +5,10 @@ from operandi_utils.oton.validator import ProcessorCallArguments
 from operandi_utils.oton.constants import (
     DIR_IN, DIR_OUT, METS_FILE,
     OTON_LOG_LEVEL,
-    REPR_DOCKER_COMMAND,
-    REPR_DOCKER_IMAGE,
-    REPR_DOCKER_MODELS,
-    REPR_DOCKER_MODELS_DIR,
-    REPR_DOCKER_PWD,
-    REPR_DOCKER_VOLUME,
-    REPR_METS_PATH,
+    REPR_ENV_WRAPPER,
     REPR_INPUT_FILE_GRP,
-    REPR_MODELS_PATH,
-    REPR_WORKSPACE_PATH
+    REPR_METS_PATH,
+    REPR_WORKSPACE_DIR
 )
 from operandi_utils.oton.nf_block_process import NextflowBlockProcess
 from operandi_utils.oton.nf_block_workflow import NextflowBlockWorkflow
@@ -33,8 +27,9 @@ class NextflowFileExecutable:
         self.nf_lines_parameters.append('nextflow.enable.dsl = 2')
         self.nf_lines_parameters.append('')
 
-        self.nf_lines_parameters.append(REPR_METS_PATH)
         self.nf_lines_parameters.append(REPR_INPUT_FILE_GRP)
+        self.nf_lines_parameters.append(REPR_METS_PATH)
+        self.nf_lines_parameters.append(REPR_WORKSPACE_DIR)
 
         self.nf_lines_parameters.append('')
 
@@ -42,17 +37,11 @@ class NextflowFileExecutable:
         self.nf_lines_parameters.append('nextflow.enable.dsl = 2')
         self.nf_lines_parameters.append('')
 
-        self.nf_lines_parameters.append(REPR_METS_PATH)
         self.nf_lines_parameters.append(REPR_INPUT_FILE_GRP)
+        self.nf_lines_parameters.append(REPR_METS_PATH)
+        self.nf_lines_parameters.append(REPR_WORKSPACE_DIR)
 
-        self.nf_lines_parameters.append(REPR_WORKSPACE_PATH)
-        self.nf_lines_parameters.append(REPR_DOCKER_PWD)
-        self.nf_lines_parameters.append(REPR_DOCKER_VOLUME)
-        self.nf_lines_parameters.append(REPR_DOCKER_MODELS_DIR)
-        self.nf_lines_parameters.append(REPR_MODELS_PATH)
-        self.nf_lines_parameters.append(REPR_DOCKER_MODELS)
-        self.nf_lines_parameters.append(REPR_DOCKER_IMAGE)
-        self.nf_lines_parameters.append(REPR_DOCKER_COMMAND)
+        self.nf_lines_parameters.append(REPR_ENV_WRAPPER)
 
         self.nf_lines_parameters.append('')
 
