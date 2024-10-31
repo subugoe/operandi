@@ -20,8 +20,8 @@ class NextflowFileExecutable:
         self.logger.setLevel(logging.getLevelName(OTON_LOG_LEVEL))
 
         self.nf_lines_parameters = []
-        self.nf_lines_processes = []
-        self.nf_lines_workflow = []
+        self.nf_blocks_process: List[NextflowBlockProcess] = []
+        self.nf_blocks_workflow: List[NextflowBlockWorkflow] = []
 
     def build_parameters_local(self):
         self.nf_lines_parameters.append('nextflow.enable.dsl = 2')
@@ -54,12 +54,12 @@ class NextflowFileExecutable:
         index = 0
         for processor in ocrd_processor:
             nf_process_block = NextflowBlockProcess(processor, index, False)
-            nf_process_block.add_directive('maxForks 1')
-            nf_process_block.add_input_param(f'path {METS_FILE}')
-            nf_process_block.add_input_param(f'val {DIR_IN}')
-            nf_process_block.add_input_param(f'val {DIR_OUT}')
-            nf_process_block.add_output_param(f'path {METS_FILE}')
-            self.nf_lines_processes.append(nf_process_block.file_representation())
+            nf_process_block.add_directive(directive='maxForks', value='1')
+            nf_process_block.add_parameter_input(parameter=METS_FILE, parameter_type='path')
+            nf_process_block.add_parameter_input(parameter=DIR_IN, parameter_type='val')
+            nf_process_block.add_parameter_input(parameter=DIR_OUT, parameter_type='val')
+            nf_process_block.add_parameter_output(parameter=METS_FILE, parameter_type='path')
+            self.nf_blocks_process.append(nf_process_block)
 
             # Take the input_file_grp of the first processor and change the value of the
             # REPR_INPUT_FILE_GRP to set the desired file group as default
@@ -78,12 +78,12 @@ class NextflowFileExecutable:
         index = 0
         for processor in ocrd_processor:
             nf_process_block = NextflowBlockProcess(processor, index, True)
-            nf_process_block.add_directive('maxForks 1')
-            nf_process_block.add_input_param(f'path {METS_FILE}')
-            nf_process_block.add_input_param(f'val {DIR_IN}')
-            nf_process_block.add_input_param(f'val {DIR_OUT}')
-            nf_process_block.add_output_param(f'path {METS_FILE}')
-            self.nf_lines_processes.append(nf_process_block.file_representation())
+            nf_process_block.add_directive(directive='maxForks', value='1')
+            nf_process_block.add_parameter_input(parameter=METS_FILE, parameter_type='path')
+            nf_process_block.add_parameter_input(parameter=DIR_IN, parameter_type='val')
+            nf_process_block.add_parameter_input(parameter=DIR_OUT, parameter_type='val')
+            nf_process_block.add_parameter_output(parameter=METS_FILE, parameter_type='path')
+            self.nf_blocks_process.append(nf_process_block)
 
             # Take the input_file_grp of the first processor and change the value of the
             # REPR_INPUT_FILE_GRP to set the desired file group as default
@@ -102,14 +102,14 @@ class NextflowFileExecutable:
 
     def build_main_workflow(self, nf_processes: List[str]):
         nf_workflow_block = NextflowBlockWorkflow("main", nf_processes)
-        self.nf_lines_workflow.append(nf_workflow_block.file_representation())
+        self.nf_blocks_workflow.append(nf_workflow_block)
 
     def produce_nextflow_file(self, output_path: str):
         # Write Nextflow line tokens to an output file
         with open(output_path, mode='w', encoding='utf-8') as nextflow_file:
             for nextflow_line in self.nf_lines_parameters:
                 nextflow_file.write(f'{nextflow_line}\n')
-            for nextflow_line in self.nf_lines_processes:
-                nextflow_file.write(f'{nextflow_line}\n')
-            for nextflow_line in self.nf_lines_workflow:
-                nextflow_file.write(f'{nextflow_line}\n')
+            for block in self.nf_blocks_process:
+                nextflow_file.write(f'{block.file_representation()}\n')
+            for block in self.nf_blocks_workflow:
+                nextflow_file.write(f'{block.file_representation()}\n')

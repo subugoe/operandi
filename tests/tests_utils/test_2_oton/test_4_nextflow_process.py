@@ -13,7 +13,7 @@ def test_line_append():
     result = []
     for ocrd_command in list_processor_call_arguments:
         index_pos = list_processor_call_arguments.index(ocrd_command)
-        nextflow_process = NextflowBlockProcess(ocrd_command, index_pos, dockerized=False)
+        nextflow_process = NextflowBlockProcess(ocrd_command, index_pos, env_wrapper=False)
         result.append(nextflow_process.nf_process_name)
 
     expected = [
