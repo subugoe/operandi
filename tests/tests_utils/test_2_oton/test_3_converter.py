@@ -1,4 +1,4 @@
-from operandi_utils.oton.converter import OTONConverter
+from operandi_utils.oton.oton_converter import OTONConverter
 from re import sub
 import os
 

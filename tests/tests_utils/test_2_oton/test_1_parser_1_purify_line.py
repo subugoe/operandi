@@ -1,4 +1,4 @@
-from operandi_utils.oton.parser import OCRDParser
+from operandi_utils.oton.ocrd_parser import OCRDParser
 
 processor_command = "calamari-recognize -I OCR-D-IN1,OCR-D-IN2 -O OCR-D-OCR -P checkpoint_dir qurator-gt4histocr-1.0"
 test_sample_lines = [

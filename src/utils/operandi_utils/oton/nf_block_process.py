@@ -1,31 +1,22 @@
-import logging
-from operandi_utils.oton.validator import ProcessorCallArguments
-from operandi_utils.oton.constants import (
-    OTON_LOG_LEVEL, PH_DIR_IN, PH_DIR_OUT, PH_METS_FILE, PH_ENV_WRAPPER, SPACES)
+from logging import getLevelName, getLogger
+from operandi_utils.oton.ocrd_validator import ProcessorCallArguments
+from operandi_utils.oton.constants import OTON_LOG_LEVEL, PH_ENV_WRAPPER, SPACES
 
 
 class NextflowBlockProcess:
     def __init__(self, processor_call_arguments: ProcessorCallArguments, index_pos: int, env_wrapper: bool = False):
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.getLevelName(OTON_LOG_LEVEL))
+        self.logger = getLogger(__name__)
+        self.logger.setLevel(getLevelName(OTON_LOG_LEVEL))
 
+        self.processor_call_arguments: ProcessorCallArguments = processor_call_arguments
+        self.env_wrapper: bool = env_wrapper
+        self.nf_process_name: str = processor_call_arguments.executable.replace('-', '_') + "_" + str(index_pos)
         self.directives = {}
         self.input_params = {}
         self.output_params = {}
 
-        self.env_wrapper = env_wrapper
-        self.nf_process_name = processor_call_arguments.executable.replace('-', '_') + "_" + str(index_pos)
-        self.repr_in_workflow = [
-            self.nf_process_name,
-            f'"{processor_call_arguments.input_file_grps}"',
-            f'"{processor_call_arguments.output_file_grps}"'
-        ]
-
-        processor_call_arguments.input_file_grps = PH_DIR_IN
-        processor_call_arguments.output_file_grps = PH_DIR_OUT
-        processor_call_arguments.mets_file_path = PH_METS_FILE
-
-        self.ocrd_command_bash = f'{processor_call_arguments}'
+        self.ocrd_command_bash = processor_call_arguments.dump_bash_form()
+        self.ocrd_command_bash_placeholders = processor_call_arguments.dump_bash_form_with_placeholders()
 
     def add_directive(self, directive: str, value: str):
         if directive in self.directives:
@@ -51,7 +42,6 @@ class NextflowBlockProcess:
 
     def dump_parameters_input(self) -> str:
         dump = ''
-        dump += f'{SPACES}input:\n'
         for key, value in self.input_params.items():
             dump += f'{SPACES}{SPACES}{value} {key}\n'
         dump += '\n'
@@ -59,7 +49,6 @@ class NextflowBlockProcess:
 
     def dump_parameters_output(self) -> str:
         dump = ''
-        dump += f'{SPACES}output:\n'
         for key, value in self.output_params.items():
             dump += f'{SPACES}{SPACES}{value} {key}\n'
         dump += '\n'
@@ -67,12 +56,11 @@ class NextflowBlockProcess:
 
     def dump_script(self) -> str:
         dump = ''
-        dump += f'{SPACES}script:\n'
         dump += f'{SPACES}{SPACES}"""\n'
         dump += f'{SPACES}{SPACES}'
         if self.env_wrapper:
             dump += f'{PH_ENV_WRAPPER} '
-        dump += f'{self.ocrd_command_bash}\n'
+        dump += f'{self.ocrd_command_bash_placeholders}\n'
         dump += f'{SPACES}{SPACES}"""\n'
         return dump
 
@@ -80,9 +68,9 @@ class NextflowBlockProcess:
         representation = f'process {self.nf_process_name}'
         representation += ' {\n'
         representation += self.dump_directives()
-        representation += self.dump_parameters_input()
-        representation += self.dump_parameters_output()
-        representation += self.dump_script()
+        representation += f'{SPACES}input:\n{self.dump_parameters_input()}'
+        representation += f'{SPACES}output:\n{self.dump_parameters_output()}'
+        representation += f'{SPACES}script:\n{self.dump_script()}'
         representation += '}\n'
         self.logger.debug(f"\n{representation}")
         return representation

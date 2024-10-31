@@ -1,6 +1,6 @@
 import click
-from operandi_utils.oton.converter import OTONConverter
-from operandi_utils.oton.validator import OCRDValidator
+from operandi_utils.oton.oton_converter import OTONConverter
+from operandi_utils.oton.ocrd_validator import OCRDValidator
 
 
 @click.group()

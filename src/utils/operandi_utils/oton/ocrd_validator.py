@@ -5,7 +5,7 @@ from typing import List
 
 from ocrd_validators import ParameterValidator
 from operandi_utils.oton.constants import OTON_LOG_LEVEL
-from operandi_utils.oton.parser import OCRDParser, ProcessorCallArguments
+from operandi_utils.oton.ocrd_parser import OCRDParser, ProcessorCallArguments
 
 
 class OCRDValidator:
@@ -19,7 +19,7 @@ class OCRDValidator:
         ocrd_process_command, processor_tasks = self.ocrd_parser.read_from_file(input_file)
         self.validate_ocrd_process_command(ocrd_process_command)
 
-        list_processor_call_arguments = []
+        list_processor_call_arguments: List[ProcessorCallArguments] = []
         for processor_arguments in processor_tasks:
             processor_call_arguments: ProcessorCallArguments = self.ocrd_parser.parse_arguments(processor_arguments)
             list_processor_call_arguments.append(processor_call_arguments)

@@ -1,56 +1,16 @@
-import json
-import logging
+from logging import getLevelName, getLogger
 from shlex import split as shlex_split
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from ocrd_utils import parse_json_string_or_file, set_json_key_value_overrides
-from operandi_utils.oton.constants import OCRD_ALL_JSON, OTON_LOG_LEVEL
-
-
-# This class is based on ocrd.task_sequence.ProcessorTask
-class ProcessorCallArguments:
-    def __init__(
-        self,
-        executable: str,
-        input_file_grps: Optional[str] = None,
-        output_file_grps: Optional[str] = None,
-        parameters: Optional[dict] = None,
-        mets_file_path: str = "./mets.xml"
-    ):
-        if not executable:
-            raise ValueError(f"Missing executable name")
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.getLevelName(OTON_LOG_LEVEL))
-
-        self.executable = f'ocrd-{executable}'
-        self.mets_file_path = mets_file_path
-        self.input_file_grps = input_file_grps
-        self.output_file_grps = output_file_grps
-        self.parameters = parameters if parameters else {}
-        self.ocrd_tool_json = OCRD_ALL_JSON.get(self.executable, None)
-
-    def __str__(self):
-        str_repr = f"{self.executable} -m {self.mets_file_path} -I {self.input_file_grps} -O {self.output_file_grps}"
-        if self.parameters:
-            str_repr += f" -p '{json.dumps(self.parameters)}'"
-        return str_repr
-
-    def self_validate(self):
-        if not self.ocrd_tool_json:
-            self.logger.error(f"Ocrd tool JSON of '{self.executable}' not found!")
-            raise ValueError(f"Ocrd tool JSON of '{self.executable}' not found!")
-        if not self.input_file_grps:
-            self.logger.error(f"Processor '{self.executable}' requires 'input_file_grp' but none was provided.")
-            raise ValueError(f"Processor '{self.executable}' requires 'input_file_grp' but none was provided.")
-        if 'output_file_grp' in self.ocrd_tool_json and not self.output_file_grps:
-            self.logger.error(f"Processor '{self.executable}' requires 'output_file_grp' but none was provided.")
-            raise ValueError(f"Processor '{self.executable}' requires 'output_file_grp' but none was provided.")
+from operandi_utils.oton.constants import OTON_LOG_LEVEL
+from operandi_utils.oton.process_call_arguments import ProcessorCallArguments
 
 
 class OCRDParser:
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.getLevelName(OTON_LOG_LEVEL))
+        self.logger = getLogger(__name__)
+        self.logger.setLevel(getLevelName(OTON_LOG_LEVEL))
 
     def parse_arguments(self, processor_arguments) -> ProcessorCallArguments:
         tokens = shlex_split(processor_arguments)

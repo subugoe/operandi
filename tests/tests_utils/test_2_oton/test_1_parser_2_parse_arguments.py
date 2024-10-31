@@ -1,4 +1,4 @@
-from operandi_utils.oton.parser import OCRDParser, ProcessorCallArguments
+from operandi_utils.oton.ocrd_parser import OCRDParser, ProcessorCallArguments
 
 
 def test_parse_arguments_basic():

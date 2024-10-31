@@ -1,5 +1,5 @@
 from operandi_utils.oton.nf_block_process import NextflowBlockProcess
-from operandi_utils.oton.validator import OCRDValidator
+from operandi_utils.oton.ocrd_validator import OCRDValidator
 
 
 def test_line_append():
