@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
-from operandi_utils.constants import OPERANDI_VERSION
 
 install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='operandi_utils',
-    version=OPERANDI_VERSION,
+    version='2.17.0',
     description='OPERANDI - Utils',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

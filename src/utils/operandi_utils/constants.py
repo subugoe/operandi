@@ -48,7 +48,7 @@ OLA_HD_BAG_ENDPOINT = "http://141.5.99.53/api/bag"
 OLA_HD_USER = "admin"
 OLA_HD_PASSWORD = "JW24G.xR"
 
-OPERANDI_VERSION = '2.17.0'
+OPERANDI_VERSION = get_distribution("operandi_utils").version
 
 
 class AccountType(str, Enum):
