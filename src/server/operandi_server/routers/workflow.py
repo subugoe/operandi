@@ -17,6 +17,7 @@ from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateW
 from operandi_utils.database import (
     db_create_workflow, db_create_workflow_job, db_get_hpc_slurm_job, db_get_workflow, db_update_workspace,
     db_increase_processing_stats_with_handling)
+from operandi_utils.oton.converter import OTONConverter
 from operandi_utils.rabbitmq import (
     get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
 from operandi_server.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
@@ -98,6 +99,14 @@ class RouterWorkflow:
             endpoint=self.download_workflow_job_hpc_log, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download the slurm job log file of the `job_id`.",
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
+        )
+        # Added by Faizan
+        self.router.add_api_route(
+            path="/convert_workflow",
+            endpoint=self.convert_txt_to_nextflow,
+            methods=["POST"],
+            status_code=status.HTTP_200_OK,
+            summary="Upload a text file containing a workflow in ocrd process format and convert it to a Nextflow script in the desired format (local/docker)"
         )
 
     def __del__(self):
@@ -423,3 +432,38 @@ class RouterWorkflow:
             message = f"The user account type is not valid: {user_type}. Must be one of: {AccountType}"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+
+    # Added by Faizan
+    async def convert_txt_to_nextflow(self,
+                                      file: UploadFile,
+                                      dockerized: bool,
+                                      auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+
+        # Authenticate the user
+        await self.user_authenticator.user_login(auth)
+
+        # Define upload directory
+        upload_dir = Path("/tmp/uploaded_files")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save the uploaded file to the server
+        file_path = upload_dir / "tmp.txt"
+        with open(file_path, "wb") as buffer:
+            buffer.write(await file.read())
+
+        # Create the output Nextflow file path
+        output_file = file_path.with_suffix(".nf")
+        # Use the Converter's convert_OtoN function instead of directly calling OCRDValidator
+        converter = OTONConverter()
+        try:
+            # Call the conversion function (this will also perform validation inside)
+            if dockerized:
+                converter.convert_oton_env_docker(str(file_path), str(output_file))
+            else:
+                converter.convert_oton_env_local(str(file_path), str(output_file))
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+        # Return the generated Nextflow (.nf) file as a response
+
+        return FileResponse(output_file, filename=output_file.name)
