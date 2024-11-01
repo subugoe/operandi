@@ -205,4 +205,4 @@ def test_convert_txt_to_nextflow_docker_success(operandi, auth):
     nf_file_content = response.content.decode('utf-8')
     # Verify the status code and content
     assert_response_status_code(response.status_code, expected_floor=2)
-    assert "docker" in nf_file_content
+    assert "params.env_wrapper" in nf_file_content
