@@ -1,6 +1,7 @@
 __all__ = [
     "DEFAULT_FILE_GRP",
     "DEFAULT_METS_BASENAME",
+    "SERVER_OTON_CONVERSIONS",
     "SERVER_WORKFLOW_JOBS_ROUTER",
     "SERVER_WORKFLOWS_ROUTER",
     "SERVER_WORKSPACES_ROUTER"
@@ -8,6 +9,7 @@ __all__ = [
 
 DEFAULT_FILE_GRP: str = "DEFAULT"
 DEFAULT_METS_BASENAME: str = "mets.xml"
+SERVER_OTON_CONVERSIONS: str = "oton_conversions"
 SERVER_WORKFLOW_JOBS_ROUTER: str = "workflow_jobs"
 SERVER_WORKFLOWS_ROUTER: str = "workflows"
 SERVER_WORKSPACES_ROUTER: str = "workspaces"

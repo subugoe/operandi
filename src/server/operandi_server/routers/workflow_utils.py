@@ -54,3 +54,7 @@ async def nf_script_uses_mets_server_with_handling(
         message = "Failed to identify whether a mets server is used or not in the provided Nextflow workflow."
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+
+
+async def convert_oton_with_handling():
+    pass

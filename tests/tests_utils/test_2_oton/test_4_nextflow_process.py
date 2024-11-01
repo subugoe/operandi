@@ -6,7 +6,7 @@ def test_line_append():
     """Tests if each NextFlow function appends a number to the processor name
     distinguish processor calls
     """
-    input_path = 'tests/assets/workflows_oton/workflow4.txt'
+    input_path = 'tests/assets/oton/workflow4.txt'
     validator = OCRDValidator()
     list_processor_call_arguments = validator.validate(input_path)
 

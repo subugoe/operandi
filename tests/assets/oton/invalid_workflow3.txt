@@ -1,0 +1,4 @@
+ocrd process \
+    cis-ocropy-binarize -I OCR-D-IMG -O OCR-D-BIN \
+    anybaseocr-crop -I OCR-D-BIN -O \
+    skimage-denoise -I OCR-D-CROP -O OCR-D-BIN-DENOISE -P level-of-operation page

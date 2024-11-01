@@ -20,13 +20,18 @@ from operandi_utils.database import (
 from operandi_utils.oton import OTONConverter
 from operandi_utils.rabbitmq import (
     get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
-from operandi_server.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
+from operandi_server.constants import (
+    SERVER_OTON_CONVERSIONS, SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER)
 from operandi_server.files_manager import (
     create_resource_dir, delete_resource_dir, get_all_resources_url, get_resource_local, get_resource_url,
     receive_resource)
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
 from .workflow_utils import (
-    get_db_workflow_job_with_handling, get_db_workflow_with_handling, nf_script_uses_mets_server_with_handling)
+    convert_oton_with_handling,
+    get_db_workflow_job_with_handling,
+    get_db_workflow_with_handling,
+    nf_script_uses_mets_server_with_handling
+)
 from .workspace_utils import check_if_file_group_exists_with_handling, get_db_workspace_with_handling
 from .user import RouterUser
 
@@ -105,8 +110,11 @@ class RouterWorkflow:
             path="/convert_workflow",
             endpoint=self.convert_txt_to_nextflow,
             methods=["POST"],
-            status_code=status.HTTP_200_OK,
-            summary="Upload a text file containing a workflow in ocrd process format and convert it to a Nextflow script in the desired format (local/docker)"
+            status_code=status.HTTP_201_CREATED,
+            summary="""
+            Upload a text file containing a workflow in ocrd process format and
+            convert it to a Nextflow script in the desired format (local/docker)
+            """
         )
 
     def __del__(self):
@@ -434,36 +442,42 @@ class RouterWorkflow:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
 
     # Added by Faizan
-    async def convert_txt_to_nextflow(self,
-                                      file: UploadFile,
-                                      dockerized: bool,
-                                      auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-
+    async def convert_txt_to_nextflow(
+        self, txt_file: UploadFile, environment: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    ):
         # Authenticate the user
         await self.user_authenticator.user_login(auth)
 
-        # Define upload directory
-        upload_dir = Path("/tmp/uploaded_files")
-        upload_dir.mkdir(parents=True, exist_ok=True)
+        environments = ["local", "docker", "apptainer"]
+        if environment not in environments:
+            message = f"Unknown environment value: {environment}. Must be one of: {environments}"
+            self.logger.error(message)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
-        # Save the uploaded file to the server
-        file_path = upload_dir / "tmp.txt"
-        with open(file_path, "wb") as buffer:
-            buffer.write(await file.read())
+        oton_id, oton_dir = create_resource_dir(SERVER_OTON_CONVERSIONS, resource_id=None)
+        ocrd_process_txt = join(oton_dir, f"ocrd_process_input.txt")
+        nf_script_dest = join(oton_dir, f"nextflow_output.nf")
 
-        # Create the output Nextflow file path
-        output_file = file_path.with_suffix(".nf")
+        try:
+            await receive_resource(file=txt_file, resource_dst=ocrd_process_txt)
+        except Exception as error:
+            message = "Failed to receive the workflow resource"
+            self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
         # Use the Converter's convert_OtoN function instead of directly calling OCRDValidator
         converter = OTONConverter()
         try:
             # Call the conversion function (this will also perform validation inside)
-            if dockerized:
-                converter.convert_oton_env_docker(str(file_path), str(output_file))
-            else:
-                converter.convert_oton_env_local(str(file_path), str(output_file))
+            if environment == "local":
+                converter.convert_oton_env_local(str(ocrd_process_txt), str(nf_script_dest))
+            elif environment == "docker":
+                converter.convert_oton_env_docker(str(ocrd_process_txt), str(nf_script_dest))
+            elif environment == "apptainer":
+                converter.convert_oton_env_apptainer(str(ocrd_process_txt), str(nf_script_dest))
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
         # Return the generated Nextflow (.nf) file as a response
 
-        return FileResponse(output_file, filename=output_file.name)
+        return FileResponse(nf_script_dest, filename=f'{oton_id}.nf')

@@ -73,8 +73,9 @@ class OCRDValidator:
             processor_args.parameters = deepcopy(backup_curr_params)
         return report
 
-    def validate_ocrd_process_command(self, line: str):
+    def validate_ocrd_process_command(self, line: str) -> bool:
         expected = 'ocrd process'
         if line != expected:
             self.logger.error(f"Invalid first line. Expected: '{expected}', got: '{line}'")
             raise ValueError(f"Invalid first line. Expected: '{expected}', got: '{line}'")
+        return True

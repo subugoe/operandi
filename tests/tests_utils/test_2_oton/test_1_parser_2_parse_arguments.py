@@ -1,8 +1,7 @@
-from operandi_utils.oton.ocrd_parser import OCRDParser, ProcessorCallArguments
+from operandi_utils.oton import ProcessorCallArguments
 
 
-def test_parse_arguments_basic():
-    ocrd_parser = OCRDParser()
+def test_basic(ocrd_parser):
     processor_command: str = "cis-ocropy-binarize -I OCR-D-IMG -O OCR-D-BIN"
     processor_call_arguments: ProcessorCallArguments = ocrd_parser.parse_arguments(processor_command)
     assert processor_call_arguments.executable == "ocrd-cis-ocropy-binarize"
@@ -12,8 +11,7 @@ def test_parse_arguments_basic():
     assert processor_call_arguments.parameters == {}
 
 
-def test_parse_arguments_basic_with_mets():
-    ocrd_parser = OCRDParser()
+def test_basic_with_mets(ocrd_parser):
     processor_command: str = """cis-ocropy-binarize -m "/dummy/path" -I OCR-D-IMG -O OCR-D-BIN"""
     processor_call_arguments: ProcessorCallArguments = ocrd_parser.parse_arguments(processor_command)
     assert processor_call_arguments.executable == "ocrd-cis-ocropy-binarize"
@@ -23,8 +21,7 @@ def test_parse_arguments_basic_with_mets():
     assert processor_call_arguments.parameters == {}
 
 
-def test_parse_arguments_with_params_separated():
-    ocrd_parser = OCRDParser()
+def test_with_params_separated(ocrd_parser):
     processor_command: str = """
     calamari-recognize -I OCR-D-INPUT -O OCR-D-OCR -P checkpoint_dir qurator-gt4histocr-1.0 -P dummy dummy
     """
@@ -36,8 +33,7 @@ def test_parse_arguments_with_params_separated():
     assert processor_call_arguments.parameters == {"checkpoint_dir": "qurator-gt4histocr-1.0", "dummy": "dummy"}
 
 
-def test_parse_arguments_with_params_clustered():
-    ocrd_parser = OCRDParser()
+def test_with_params_clustered(ocrd_parser):
     processor_command: str = """
     calamari-recognize -I OCR-D-INPUT -O OCR-D-OCR -p '{"checkpoint_dir": "qurator-gt4histocr-1.0", "dummy": "dummy"}'
     """
