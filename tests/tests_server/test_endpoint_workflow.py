@@ -1,5 +1,6 @@
-import io
+from io import BytesIO
 from tests.helpers_asserts import assert_exists_db_resource
+from tests.constants import WORKFLOW_DUMMY_TEXT
 from .helpers_asserts import assert_local_dir_workflow, assert_response_status_code
 
 
@@ -114,24 +115,16 @@ def _test_run_operandi_workflow():
 # This is already implemented as a part of the harvester full cycle test
 def _test_running_workflow_job_status():
     pass
-# Added by Faizan
 
+
+# Added by Faizan
 def test_convert_txt_to_nextflow_success(operandi, auth):
     """
     Test the successful conversion of a text file to a Nextflow (.nf) file.
     """
-    dummy_text = """ocrd process \n
-     "cis-ocropy-binarize -I OCR-D-IMG -O OCR-D-BIN" \n
-     "anybaseocr-crop -I OCR-D-BIN -O OCR-D-CROP" \n
-     "skimage-binarize -I OCR-D-CROP -O OCR-D-BIN2 -P method li" \n
-     "skimage-denoise -I OCR-D-BIN2 -O OCR-D-BIN-DENOISE -P level-of-operation page" \n
-     "tesserocr-deskew -I OCR-D-BIN-DENOISE -O OCR-D-BIN-DENOISE-DESKEW -P operation_level page" \n
-     "cis-ocropy-segment -I OCR-D-BIN-DENOISE-DESKEW -O OCR-D-SEG -P level-of-operation page" \n
-     "cis-ocropy-dewarp -I OCR-D-SEG -O OCR-D-SEG-LINE-RESEG-DEWARP" \n
-     "calamari-recognize -I OCR-D-SEG-LINE-RESEG-DEWARP -O OCR-D-OCR -P checkpoint_dir qurator-gt4histocr-1.0\""""
 
     # Convert the dummy text to bytes and create an in-memory file-like object
-    dummy_file = io.BytesIO(dummy_text.encode('utf-8'))
+    dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     file_tuple = ("dummy.txt", dummy_file, "text/plain")
 
     # Simulate uploading the text file for conversion via POST
@@ -152,7 +145,7 @@ def test_convert_txt_to_nextflow_auth_failure(operandi):
     Test the conversion process when authentication fails.
     """
     dummy_text = "Some dummy text"
-    dummy_file = io.BytesIO(dummy_text.encode('utf-8'))
+    dummy_file = BytesIO(dummy_text.encode('utf-8'))
     file_tuple = ("dummy.txt", dummy_file, "text/plain")
 
     # Simulate uploading the text file without valid credentials
@@ -174,7 +167,7 @@ def test_convert_txt_to_nextflow_validator_failure(operandi, auth):
     """
     # Providing an invalid text input to trigger the ValueError in the conversion
     invalid_text = "Invalid ocrd process text"
-    dummy_file = io.BytesIO(invalid_text.encode('utf-8'))
+    dummy_file = BytesIO(invalid_text.encode('utf-8'))
     file_tuple = ("invalid.txt", dummy_file, "text/plain")
 
     # Simulate uploading the invalid file
@@ -194,18 +187,9 @@ def test_convert_txt_to_nextflow_docker_success(operandi, auth):
     """
     Test the successful conversion of a text file to a Nextflow (.nf) file.
     """
-    dummy_text = """ocrd process \n
-     "cis-ocropy-binarize -I OCR-D-IMG -O OCR-D-BIN" \n
-     "anybaseocr-crop -I OCR-D-BIN -O OCR-D-CROP" \n
-     "skimage-binarize -I OCR-D-CROP -O OCR-D-BIN2 -P method li" \n
-     "skimage-denoise -I OCR-D-BIN2 -O OCR-D-BIN-DENOISE -P level-of-operation page" \n
-     "tesserocr-deskew -I OCR-D-BIN-DENOISE -O OCR-D-BIN-DENOISE-DESKEW -P operation_level page" \n
-     "cis-ocropy-segment -I OCR-D-BIN-DENOISE-DESKEW -O OCR-D-SEG -P level-of-operation page" \n
-     "cis-ocropy-dewarp -I OCR-D-SEG -O OCR-D-SEG-LINE-RESEG-DEWARP" \n
-     "calamari-recognize -I OCR-D-SEG-LINE-RESEG-DEWARP -O OCR-D-OCR -P checkpoint_dir qurator-gt4histocr-1.0\""""
 
     # Convert the dummy text to bytes and create an in-memory file-like object
-    dummy_file = io.BytesIO(dummy_text.encode('utf-8'))
+    dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     file_tuple = ("dummy.txt", dummy_file, "text/plain")
 
     # Simulate uploading the text file for conversion via POST
