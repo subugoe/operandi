@@ -17,7 +17,7 @@ from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateW
 from operandi_utils.database import (
     db_create_workflow, db_create_workflow_job, db_get_hpc_slurm_job, db_get_workflow, db_update_workspace,
     db_increase_processing_stats_with_handling)
-from operandi_utils.oton.converter import OTONConverter
+from operandi_utils.oton import OTONConverter
 from operandi_utils.rabbitmq import (
     get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
 from operandi_server.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER
