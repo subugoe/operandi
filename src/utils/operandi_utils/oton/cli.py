@@ -13,17 +13,21 @@ def cli():
               show_default=True, help='Path to the OCR-D workflow file to be converted.')
 @click.option('-O', '--output_path', type=click.Path(dir_okay=False, writable=True),
               show_default=True, help='Path of the Nextflow workflow script to be generated.')
-@click.option('-D', '--dockerized', is_flag=True,
-              help='If set, then the dockerized variant of the Nextflow script is generated.')
-def convert(input_path: str, output_path: str, dockerized: bool):
+@click.option('-E', '--environment', type=str, default="local",
+              help='The environment of the output Nextflow file. One of: local, docker, apptainer.')
+def convert(input_path: str, output_path: str, environment: str):
     print(f"Converting from: {input_path}")
     print(f"Converting to: {output_path}")
-    if dockerized:
-        OTONConverter().convert_oton_env_docker(input_path, output_path)
-        print("Success: Converting workflow from ocrd process to Nextflow with docker processor calls")
-    else:
+    if environment == "local":
         OTONConverter().convert_oton_env_local(input_path, output_path)
-        print("Success: Converting workflow from ocrd process to Nextflow with local processor calls")
+    elif environment == "docker":
+        OTONConverter().convert_oton_env_docker(input_path, output_path)
+    elif environment == "apptainer":
+        OTONConverter().convert_oton_env_apptainer(input_path, output_path)
+    else:
+        print("Unspecified environment type. Must be one of: local, docker, apptainer.")
+        exit(1)
+    print(f"Success: Converting workflow from ocrd process to Nextflow with {environment} processor calls")
 
 
 @cli.command("validate", help="Validate an OCR-D workflow txt file.")

@@ -25,7 +25,8 @@ __all__ = [
     "REPR_INPUT_FILE_GRP",
     "REPR_METS_PATH",
     "REPR_WORKSPACE_DIR",
-    "SPACES"
+    "SPACES",
+    "WORKFLOW_COMMENT"
 ]
 
 OCRD_ALL_JSON_FILE = resource_filename(__name__, 'ocrd_all_tool.json')

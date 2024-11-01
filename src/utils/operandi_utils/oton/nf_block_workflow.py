@@ -10,28 +10,27 @@ class NextflowBlockWorkflow:
         self.logger.setLevel(getLevelName(OTON_LOG_LEVEL))
 
         self.workflow_name = workflow_name
-        self.nf_blocks_process: List[NextflowBlockProcess] = nf_processes
+        self.workflow_calls: List[str] = []
+        self.produce_workflow_calls(nf_processes)
+
+    def produce_workflow_calls(self, nf_blocks_process: List[NextflowBlockProcess]):
+        previous_nfp = None
+        for block_process in nf_blocks_process:
+            in_file_grps = block_process.processor_call_arguments.input_file_grps
+            out_file_grps = block_process.processor_call_arguments.output_file_grps
+            workflow_call = f"{block_process.nf_process_name}("
+            if previous_nfp is None:
+                workflow_call += f'{PARAMS_KEY_METS_PATH}, {PARAMS_KEY_INPUT_FILE_GRP}, "{out_file_grps}"'
+            else:
+                workflow_call += f'{previous_nfp}.out, "{in_file_grps}", "{out_file_grps}"'
+            workflow_call += ")\n"
+            previous_nfp = block_process.nf_process_name
+            self.workflow_calls.append(workflow_call)
 
     def file_representation(self):
         representation = 'workflow {\n'
         representation += f'{SPACES}{self.workflow_name}:\n'
-
-        self.logger.info(self.nf_blocks_process)
-
-        previous_nfp = None
-        for nfp in self.nf_blocks_process:
-            nfp_1 = nfp.processor_call_arguments.input_file_grps
-            nfp_2 = nfp.processor_call_arguments.output_file_grps
-            representation += f'{SPACES}{SPACES}{nfp.nf_process_name}('
-            if previous_nfp is None:
-                representation += f'{PARAMS_KEY_METS_PATH}, {PARAMS_KEY_INPUT_FILE_GRP}, "{nfp_2}")'
-            else:
-                representation += f'{previous_nfp}.out, "{nfp_1}", "{nfp_2}")'
-            representation += f'\n'
-            previous_nfp = nfp.nf_process_name
-
+        for workflow_call in self.workflow_calls:
+            representation += f"{SPACES}{SPACES}{workflow_call}"
         representation += '}'
-
-        self.logger.debug(f"\n{representation}")
-        self.logger.info(f"Successfully created Nextflow Workflow: {self.workflow_name}")
         return representation

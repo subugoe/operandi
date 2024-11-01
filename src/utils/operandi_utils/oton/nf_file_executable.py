@@ -1,5 +1,5 @@
 from logging import getLevelName, getLogger
-from typing import List, Tuple
+from typing import List
 
 from operandi_utils.oton.ocrd_validator import ProcessorCallArguments
 from operandi_utils.oton.constants import (
@@ -42,13 +42,20 @@ class NextflowFileExecutable:
         self.nf_lines_parameters.append(REPR_INPUT_FILE_GRP)
         self.nf_lines_parameters.append(REPR_METS_PATH)
         self.nf_lines_parameters.append(REPR_WORKSPACE_DIR)
-
         self.nf_lines_parameters.append(REPR_ENV_WRAPPER)
 
         self.nf_lines_parameters.append('')
 
     def build_parameters_apptainer(self):
-        raise NotImplemented("This feature is not implemented yet!")
+        self.nf_lines_parameters.append('nextflow.enable.dsl = 2')
+        self.nf_lines_parameters.append('')
+
+        self.nf_lines_parameters.append(REPR_INPUT_FILE_GRP)
+        self.nf_lines_parameters.append(REPR_METS_PATH)
+        self.nf_lines_parameters.append(REPR_WORKSPACE_DIR)
+        self.nf_lines_parameters.append(REPR_ENV_WRAPPER)
+
+        self.nf_lines_parameters.append('')
 
     def build_nextflow_processes_local(self, ocrd_processor: List[ProcessorCallArguments]):
         index = 0
@@ -60,7 +67,6 @@ class NextflowFileExecutable:
             nf_process_block.add_parameter_input(parameter=DIR_OUT, parameter_type='val')
             nf_process_block.add_parameter_output(parameter=METS_FILE, parameter_type='path')
             self.nf_blocks_process.append(nf_process_block)
-            self.logger.info(f"Successfully created Nextflow Process: {nf_process_block.nf_process_name}")
             index += 1
 
     def build_nextflow_processes_docker(self, ocrd_processor: List[ProcessorCallArguments]):
@@ -73,11 +79,19 @@ class NextflowFileExecutable:
             nf_process_block.add_parameter_input(parameter=DIR_OUT, parameter_type='val')
             nf_process_block.add_parameter_output(parameter=METS_FILE, parameter_type='path')
             self.nf_blocks_process.append(nf_process_block)
-            self.logger.info(f"Successfully created Nextflow Process: {nf_process_block.nf_process_name}")
             index += 1
 
-    def build_nextflow_processes_apptainer(self, ocrd_processor: List[ProcessorCallArguments]) -> Tuple[List[str], str]:
-        raise NotImplemented("This feature is not implemented yet!")
+    def build_nextflow_processes_apptainer(self, ocrd_processor: List[ProcessorCallArguments]):
+        index = 0
+        for processor in ocrd_processor:
+            nf_process_block = NextflowBlockProcess(processor, index, env_wrapper=True)
+            nf_process_block.add_directive(directive='maxForks', value='1')
+            nf_process_block.add_parameter_input(parameter=METS_FILE, parameter_type='path')
+            nf_process_block.add_parameter_input(parameter=DIR_IN, parameter_type='val')
+            nf_process_block.add_parameter_input(parameter=DIR_OUT, parameter_type='val')
+            nf_process_block.add_parameter_output(parameter=METS_FILE, parameter_type='path')
+            self.nf_blocks_process.append(nf_process_block)
+            index += 1
 
     def __assign_first_file_grps_param(self):
         first_file_grps = self.nf_blocks_process[0].processor_call_arguments.input_file_grps
