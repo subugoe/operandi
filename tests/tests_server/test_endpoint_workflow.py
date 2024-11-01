@@ -131,7 +131,8 @@ def test_convert_txt_to_nextflow_success(operandi, auth):
     response = operandi.post(
         url="/convert_workflow",
         files={"file": file_tuple},
-        auth=auth
+        auth=auth,
+        params={"dockerized": "false"}
     )
     nf_file_content = response.content.decode('utf-8')
     # Verify the status code and content
@@ -152,12 +153,13 @@ def test_convert_txt_to_nextflow_auth_failure(operandi):
     response = operandi.post(
         url="/convert_workflow",
         files={"file": file_tuple},
-        auth=('invalid_user', 'invalid_password')
+        auth=('invalid_user', 'invalid_password'),
+        params={"dockerized": "false"}
     )
 
     # Verify the status code and error message for failed authentication
     assert_response_status_code(response.status_code, expected_floor=4)
-    assert response.json()["detail"] == "Invalid login credentials or unapproved account."
+    assert response.json()["detail"] == "Not found user account for email: invalid_user"
 
 
 # Added by Faizan
@@ -174,11 +176,12 @@ def test_convert_txt_to_nextflow_validator_failure(operandi, auth):
     response = operandi.post(
         url="/convert_workflow",
         files={"file": file_tuple},
-        auth=auth
+        auth=auth,
+        params={"dockerized": "false"}
     )
 
-    # Verify that the status code and error message indicate a bad request (300)
-    assert_response_status_code(response.status_code, expected_floor=3)
+    # Verify that the status code and error message indicate a bad request (400)
+    assert_response_status_code(response.status_code, expected_floor=4)
     assert "Invalid first line. Expected: 'ocrd process', got: 'Invalid ocrd process text" in response.json()["detail"]
 
 

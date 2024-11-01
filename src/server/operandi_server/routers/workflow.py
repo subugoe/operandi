@@ -438,6 +438,7 @@ class RouterWorkflow:
                                       file: UploadFile,
                                       dockerized: bool,
                                       auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+
         # Authenticate the user
         await self.user_authenticator.user_login(auth)
 
@@ -452,7 +453,6 @@ class RouterWorkflow:
 
         # Create the output Nextflow file path
         output_file = file_path.with_suffix(".nf")
-
         # Use the Converter's convert_OtoN function instead of directly calling OCRDValidator
         converter = OTONConverter()
         try:

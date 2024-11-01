@@ -48,7 +48,7 @@ class RouterUser:
             db_user_account = await user_auth(email=email, password=password)
         except AuthenticationError as error:
             self.logger.error(f"{error}")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=headers, detail=error)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=headers, detail=str(error))
         return PYUserAction.from_db_user_account(action="Successfully logged!", db_user_account=db_user_account)
 
     async def user_register(
