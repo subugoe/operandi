@@ -167,7 +167,7 @@ def test_convert_txt_to_nextflow_validator_failure(operandi, auth):
 
     response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
     assert_response_status_code(response.status_code, expected_floor=4)
-    assert "Invalid first line. Expected: 'ocrd process', got: 'Invalid ocrd process text" in response.json()["detail"]
+    assert "Failed to validate the ocrd process workflow txt file" in response.json()["detail"]
 
 
 # Added by Faizan

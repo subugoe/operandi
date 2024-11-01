@@ -17,7 +17,6 @@ from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateW
 from operandi_utils.database import (
     db_create_workflow, db_create_workflow_job, db_get_hpc_slurm_job, db_get_workflow, db_update_workspace,
     db_increase_processing_stats_with_handling)
-from operandi_utils.oton import OTONConverter
 from operandi_utils.rabbitmq import (
     get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
 from operandi_server.constants import (
@@ -30,7 +29,8 @@ from .workflow_utils import (
     convert_oton_with_handling,
     get_db_workflow_job_with_handling,
     get_db_workflow_with_handling,
-    nf_script_uses_mets_server_with_handling
+    nf_script_uses_mets_server_with_handling,
+    validate_oton_with_handling
 )
 from .workspace_utils import check_if_file_group_exists_with_handling, get_db_workspace_with_handling
 from .user import RouterUser
@@ -51,7 +51,7 @@ class RouterWorkflow:
         self.router = APIRouter(tags=[ServerApiTag.WORKFLOW])
         self.router.add_api_route(
             path=f"/workflow", endpoint=self.list_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get a list of existing nextflow workflows.",
+            summary="Get a list of existing nextflow from operandi_utils.oton import OTONConverter, OCRDValidatorworkflows.",
             response_model=List[WorkflowRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
@@ -108,13 +108,12 @@ class RouterWorkflow:
         # Added by Faizan
         self.router.add_api_route(
             path="/convert_workflow",
-            endpoint=self.convert_txt_to_nextflow,
-            methods=["POST"],
-            status_code=status.HTTP_201_CREATED,
+            endpoint=self.convert_txt_to_nextflow, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="""
             Upload a text file containing a workflow in ocrd process format and
             convert it to a Nextflow script in the desired format (local/docker)
-            """
+            """,
+            response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
 
     def __del__(self):
@@ -448,12 +447,6 @@ class RouterWorkflow:
         # Authenticate the user
         await self.user_authenticator.user_login(auth)
 
-        environments = ["local", "docker", "apptainer"]
-        if environment not in environments:
-            message = f"Unknown environment value: {environment}. Must be one of: {environments}"
-            self.logger.error(message)
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-
         oton_id, oton_dir = create_resource_dir(SERVER_OTON_CONVERSIONS, resource_id=None)
         ocrd_process_txt = join(oton_dir, f"ocrd_process_input.txt")
         nf_script_dest = join(oton_dir, f"nextflow_output.nf")
@@ -465,19 +458,6 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
-        # Use the Converter's convert_OtoN function instead of directly calling OCRDValidator
-        converter = OTONConverter()
-        try:
-            # Call the conversion function (this will also perform validation inside)
-            if environment == "local":
-                converter.convert_oton_env_local(str(ocrd_process_txt), str(nf_script_dest))
-            elif environment == "docker":
-                converter.convert_oton_env_docker(str(ocrd_process_txt), str(nf_script_dest))
-            elif environment == "apptainer":
-                converter.convert_oton_env_apptainer(str(ocrd_process_txt), str(nf_script_dest))
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-
-        # Return the generated Nextflow (.nf) file as a response
-
+        await validate_oton_with_handling(self.logger, ocrd_process_txt)
+        await convert_oton_with_handling(self.logger, environment, ocrd_process_txt, nf_script_dest)
         return FileResponse(nf_script_dest, filename=f'{oton_id}.nf')

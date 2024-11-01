@@ -10,7 +10,8 @@ from operandi_utils.constants import AccountType, LOG_LEVEL_SERVER, OPERANDI_VER
 from operandi_utils.database import db_initiate_database
 from operandi_utils import safe_init_logging
 
-from operandi_server.constants import SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKFLOWS_ROUTER, SERVER_WORKSPACES_ROUTER
+from operandi_server.constants import (
+    SERVER_OTON_CONVERSIONS, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKFLOWS_ROUTER, SERVER_WORKSPACES_ROUTER)
 from operandi_server.files_manager import create_resource_base_dir
 from operandi_server.routers import RouterAdminPanel, RouterDiscovery, RouterUser, RouterWorkflow, RouterWorkspace
 from operandi_server.routers.user_utils import create_user_if_not_available
@@ -81,6 +82,7 @@ class OperandiServer(FastAPI):
         # Reconfigure all loggers to the same format
         reconfigure_all_loggers(log_level=LOG_LEVEL_SERVER, log_file_path=log_file_path)
 
+        create_resource_base_dir(SERVER_OTON_CONVERSIONS)
         create_resource_base_dir(SERVER_WORKFLOW_JOBS_ROUTER)
         create_resource_base_dir(SERVER_WORKFLOWS_ROUTER)
         create_resource_base_dir(SERVER_WORKSPACES_ROUTER)

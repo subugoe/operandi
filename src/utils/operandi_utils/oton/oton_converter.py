@@ -7,7 +7,6 @@ class OTONConverter:
         self.ocrd_validator = OCRDValidator()
 
     def __convert_oton(self, input_path: str, output_path: str, environment: str):
-        self.ocrd_validator.validate(input_path)
         list_processor_call_arguments = self.ocrd_validator.validate(input_path)
         nf_file_executable = NextflowFileExecutable()
         if environment == "local":

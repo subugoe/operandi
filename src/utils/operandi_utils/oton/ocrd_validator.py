@@ -64,7 +64,7 @@ class OCRDValidator:
         report = ParameterValidator(processor_args.ocrd_tool_json).validate(processor_args.parameters)
         if not report.is_valid:
             self.logger.error(report.errors)
-            raise Exception(report.errors)
+            raise ValueError(report.errors)
 
         # Remove the overwritten defaults to keep the produced NF executable file less populated
         # Note: The defaults, still get overwritten in run-time

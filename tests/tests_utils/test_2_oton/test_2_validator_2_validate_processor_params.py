@@ -46,16 +46,16 @@ def test_falseness_basic(ocrd_parser, ocrd_validator):
 def test_falseness_with_params_separated(ocrd_parser, ocrd_validator):
     call_args: ProcessorCallArguments = ocrd_parser.parse_arguments(
         "cis-ocropy-binarize -I OCR-D-IMG -O OCR-D-BIN -P dpi 177.0 -P non-existing-param 0.42")
-    with raises(Exception):
+    with raises(ValueError):
         ocrd_validator.validate_processor_params(processor_args=call_args, overwrite_with_defaults=False)
-    with raises(Exception):
+    with raises(ValueError):
         ocrd_validator.validate_processor_params(processor_args=call_args, overwrite_with_defaults=True)
 
 
 def test_falseness_with_params_clustered(ocrd_parser, ocrd_validator):
     call_args: ProcessorCallArguments = ocrd_parser.parse_arguments(
         """cis-ocropy-binarize -I OCR-D-IMG -O OCR-D-BIN -p '{"dpi": 177.0, "non-existing-param": 0.42}'""")
-    with raises(Exception):
+    with raises(ValueError):
         ocrd_validator.validate_processor_params(processor_args=call_args, overwrite_with_defaults=False)
-    with raises(Exception):
+    with raises(ValueError):
         ocrd_validator.validate_processor_params(processor_args=call_args, overwrite_with_defaults=True)
