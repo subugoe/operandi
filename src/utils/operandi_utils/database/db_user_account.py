@@ -32,6 +32,17 @@ async def sync_db_create_user_account(
         institution_id, email, encrypted_pass, salt, account_type, approved_user, details)
 
 
+async def db_get_all_user_accounts() -> list[DBUserAccount]:
+    all_user_accounts = await DBUserAccount.find().to_list()
+    if not all_user_accounts:
+        raise RuntimeError("No user accounts found")
+    return all_user_accounts
+
+@call_sync
+async def sync_db_get_all_user_accounts() -> list[DBUserAccount]:
+    return await db_get_all_user_accounts()
+
+
 async def db_get_user_account(user_id: str) -> DBUserAccount:
     db_user_account = await DBUserAccount.find_one(DBUserAccount.user_id == user_id)
     if not db_user_account:
@@ -87,3 +98,4 @@ async def db_update_user_account(user_id: str, **kwargs) -> DBUserAccount:
 @call_sync
 async def sync_db_update_user_account(user_id: str, **kwargs) -> DBUserAccount:
     return await db_update_user_account(user_id=user_id, **kwargs)
+
