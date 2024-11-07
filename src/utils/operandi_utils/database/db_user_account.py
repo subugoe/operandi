@@ -1,5 +1,6 @@
 from datetime import datetime
 from operandi_utils import call_sync, generate_id
+from typing import List
 from ..constants import AccountType
 from .models import DBUserAccount
 
@@ -32,14 +33,14 @@ async def sync_db_create_user_account(
         institution_id, email, encrypted_pass, salt, account_type, approved_user, details)
 
 
-async def db_get_all_user_accounts() -> list[DBUserAccount]:
+async def db_get_all_user_accounts() -> List[DBUserAccount]:
     all_user_accounts = await DBUserAccount.find().to_list()
     if not all_user_accounts:
         raise RuntimeError("No user accounts found")
     return all_user_accounts
 
 @call_sync
-async def sync_db_get_all_user_accounts() -> list[DBUserAccount]:
+async def sync_db_get_all_user_accounts() -> List[DBUserAccount]:
     return await db_get_all_user_accounts()
 
 
