@@ -15,19 +15,19 @@ def cli():
               show_default=True, help='Path of the Nextflow workflow script to be generated.')
 @click.option('-E', '--environment', type=str, default="local",
               help='The environment of the output Nextflow file. One of: local, docker, apptainer.')
-def convert(input_path: str, output_path: str, environment: str):
+@click.option('-M', '--with_mets_server', type=bool, default=False,
+              help='Whether the Nextflow file will use a mets server or not. '
+                   'If a Mets server is not used, then splitting and merging the mets files will be used.')
+def convert(input_path: str, output_path: str, environment: str, with_mets_server):
     print(f"Converting from: {input_path}")
     print(f"Converting to: {output_path}")
-    if environment == "local":
-        OTONConverter().convert_oton_env_local(input_path, output_path)
-    elif environment == "docker":
-        OTONConverter().convert_oton_env_docker(input_path, output_path)
-    elif environment == "apptainer":
-        OTONConverter().convert_oton_env_apptainer(input_path, output_path)
-    else:
-        print("Unspecified environment type. Must be one of: local, docker, apptainer.")
+    environments = ["local", "docker", "apptainer"]
+    if environment not in environments:
+        print(f"Invalid environment value: {environment}. Must be one of: {environments}")
         exit(1)
-    print(f"Success: Converting workflow from ocrd process to Nextflow with {environment} processor calls")
+    OTONConverter().convert_oton(input_path, output_path, environment, with_mets_server)
+    print(f"Success: Converting workflow from ocrd process to Nextflow with {environment} processor calls. "
+          f"The Nextflow workflow will utilize a mets server: {with_mets_server}")
 
 
 @cli.command("validate", help="Validate an OCR-D workflow txt file.")

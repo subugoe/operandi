@@ -5,6 +5,7 @@ params.input_file_group = "OCR-D-IMG"
 params.mets_path = "null"
 params.workspace_dir = "null"
 params.pages = "null"
+params.mets_socket_path = "null"
 params.cpus = "null"
 params.ram = "null"
 params.forks = params.cpus
@@ -22,16 +23,12 @@ process split_page_ranges {
         val range_multiplier
 
     output:
-        env mets_file_chunk
         env current_range_pages
 
     script:
         """
         current_range_pages=\$(${params.env_wrapper_cmd} ocrd workspace -d ${params.workspace_dir} list-page -f comma-separated -D ${params.forks} -C ${range_multiplier})
         echo "Current range is: \$current_range_pages"
-        mets_file_chunk=\$(echo ${params.workspace_dir}/mets_${range_multiplier}.xml)
-        echo "Mets file chunk path: \$mets_file_chunk"
-        \$(${params.env_wrapper_cmd} cp -p ${params.mets_path} \$mets_file_chunk)
         """
 }
 
@@ -227,23 +224,6 @@ process ocrd_calamari_recognize_7 {
         """
 }
 
-process merging_mets {
-    debug true
-    maxForks 1
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
-
-    input:
-        val mets_file_chunk
-        val page_range
-
-    script:
-        """
-        ${params.env_wrapper_cmd} ocrd workspace -d ${params.workspace_dir} merge --force --no-copy-files ${mets_file_chunk} --page-id ${page_range}
-        ${params.env_wrapper_cmd} rm ${mets_file_chunk}
-        """
-}
-
 workflow {
     main:
         ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
@@ -256,5 +236,4 @@ workflow {
         ocrd_cis_ocropy_segment_5(ocrd_tesserocr_deskew_4.out[0], ocrd_tesserocr_deskew_4.out[1], ocrd_tesserocr_deskew_4.out[2], "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG")
         ocrd_cis_ocropy_dewarp_6(ocrd_cis_ocropy_segment_5.out[0], ocrd_cis_ocropy_segment_5.out[1], ocrd_cis_ocropy_segment_5.out[2], "OCR-D-SEG", "OCR-D-SEG-LINE-RESEG-DEWARP")
         ocrd_calamari_recognize_7(ocrd_cis_ocropy_dewarp_6.out[0], ocrd_cis_ocropy_dewarp_6.out[1], ocrd_cis_ocropy_dewarp_6.out[2], "OCR-D-SEG-LINE-RESEG-DEWARP", "OCR-D-OCR")
-        merging_mets(ocrd_calamari_recognize_7.out[0], ocrd_calamari_recognize_7.out[1])
 }

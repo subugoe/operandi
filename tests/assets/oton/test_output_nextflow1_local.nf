@@ -72,7 +72,29 @@ process ocrd_anybaseocr_crop_1 {
         """
 }
 
-process ocrd_skimage_denoise_2 {
+process ocrd_skimage_binarize_2 {
+    debug true
+    maxForks params.forks
+
+    input:
+        val mets_path
+        val page_range
+        val workspace_dir
+        val input_group
+        val output_group
+
+    output:
+        val mets_path
+        val page_range
+        val workspace_dir
+
+    script:
+        """
+        ocrd-skimage-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
+        """
+}
+
+process ocrd_skimage_denoise_3 {
     debug true
     maxForks params.forks
 
@@ -94,7 +116,7 @@ process ocrd_skimage_denoise_2 {
         """
 }
 
-process ocrd_tesserocr_deskew_3 {
+process ocrd_tesserocr_deskew_4 {
     debug true
     maxForks params.forks
 
@@ -116,7 +138,7 @@ process ocrd_tesserocr_deskew_3 {
         """
 }
 
-process ocrd_tesserocr_segment_4 {
+process ocrd_cis_ocropy_segment_5 {
     debug true
     maxForks params.forks
 
@@ -134,11 +156,11 @@ process ocrd_tesserocr_segment_4 {
 
     script:
         """
-        ocrd-tesserocr-segment -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"shrink_polygons": true}'
+        ocrd-cis-ocropy-segment -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
-process ocrd_cis_ocropy_dewarp_5 {
+process ocrd_cis_ocropy_dewarp_6 {
     debug true
     maxForks params.forks
 
@@ -160,7 +182,7 @@ process ocrd_cis_ocropy_dewarp_5 {
         """
 }
 
-process ocrd_tesserocr_recognize_6 {
+process ocrd_calamari_recognize_7 {
     debug true
     maxForks params.forks
 
@@ -178,7 +200,7 @@ process ocrd_tesserocr_recognize_6 {
 
     script:
         """
-        ocrd-tesserocr-recognize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"textequiv_level": "glyph", "overwrite_segments": true, "model": "GT4HistOCR_50000000.997_191951"}'
+        ocrd-calamari-recognize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
         """
 }
 
@@ -203,10 +225,11 @@ workflow {
         split_page_ranges(ch_range_multipliers)
         ocrd_cis_ocropy_binarize_0(split_page_ranges.out[0], split_page_ranges.out[1], params.workspace_dir, params.input_file_group "OCR-D-BIN")
         ocrd_anybaseocr_crop_1(ocrd_cis_ocropy_binarize_0.out[0], ocrd_cis_ocropy_binarize_0.out[1], ocrd_cis_ocropy_binarize_0.out[2], "OCR-D-BIN", "OCR-D-CROP")
-        ocrd_skimage_denoise_2(ocrd_anybaseocr_crop_1.out[0], ocrd_anybaseocr_crop_1.out[1], ocrd_anybaseocr_crop_1.out[2], "OCR-D-CROP", "OCR-D-BIN-DENOISE")
-        ocrd_tesserocr_deskew_3(ocrd_skimage_denoise_2.out[0], ocrd_skimage_denoise_2.out[1], ocrd_skimage_denoise_2.out[2], "OCR-D-BIN-DENOISE", "OCR-D-BIN-DENOISE-DESKEW")
-        ocrd_tesserocr_segment_4(ocrd_tesserocr_deskew_3.out[0], ocrd_tesserocr_deskew_3.out[1], ocrd_tesserocr_deskew_3.out[2], "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG")
-        ocrd_cis_ocropy_dewarp_5(ocrd_tesserocr_segment_4.out[0], ocrd_tesserocr_segment_4.out[1], ocrd_tesserocr_segment_4.out[2], "OCR-D-SEG", "OCR-D-SEG-DEWARP")
-        ocrd_tesserocr_recognize_6(ocrd_cis_ocropy_dewarp_5.out[0], ocrd_cis_ocropy_dewarp_5.out[1], ocrd_cis_ocropy_dewarp_5.out[2], "OCR-D-SEG-DEWARP", "OCR-D-OCR")
-        merging_mets(ocrd_tesserocr_recognize_6.out[0], ocrd_tesserocr_recognize_6.out[1])
+        ocrd_skimage_binarize_2(ocrd_anybaseocr_crop_1.out[0], ocrd_anybaseocr_crop_1.out[1], ocrd_anybaseocr_crop_1.out[2], "OCR-D-CROP", "OCR-D-BIN2")
+        ocrd_skimage_denoise_3(ocrd_skimage_binarize_2.out[0], ocrd_skimage_binarize_2.out[1], ocrd_skimage_binarize_2.out[2], "OCR-D-BIN2", "OCR-D-BIN-DENOISE")
+        ocrd_tesserocr_deskew_4(ocrd_skimage_denoise_3.out[0], ocrd_skimage_denoise_3.out[1], ocrd_skimage_denoise_3.out[2], "OCR-D-BIN-DENOISE", "OCR-D-BIN-DENOISE-DESKEW")
+        ocrd_cis_ocropy_segment_5(ocrd_tesserocr_deskew_4.out[0], ocrd_tesserocr_deskew_4.out[1], ocrd_tesserocr_deskew_4.out[2], "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG")
+        ocrd_cis_ocropy_dewarp_6(ocrd_cis_ocropy_segment_5.out[0], ocrd_cis_ocropy_segment_5.out[1], ocrd_cis_ocropy_segment_5.out[2], "OCR-D-SEG", "OCR-D-SEG-LINE-RESEG-DEWARP")
+        ocrd_calamari_recognize_7(ocrd_cis_ocropy_dewarp_6.out[0], ocrd_cis_ocropy_dewarp_6.out[1], ocrd_cis_ocropy_dewarp_6.out[2], "OCR-D-SEG-LINE-RESEG-DEWARP", "OCR-D-OCR")
+        merging_mets(ocrd_calamari_recognize_7.out[0], ocrd_calamari_recognize_7.out[1])
 }

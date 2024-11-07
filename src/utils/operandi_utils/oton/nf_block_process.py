@@ -1,6 +1,6 @@
 from logging import getLevelName, getLogger
 from operandi_utils.oton.ocrd_validator import ProcessorCallArguments
-from operandi_utils.oton.constants import OTON_LOG_LEVEL, PH_ENV_WRAPPER, SPACES
+from operandi_utils.oton.constants import OTON_LOG_LEVEL, PH_ENV_WRAPPER_CMD, SPACES
 
 
 class NextflowBlockProcess:
@@ -14,7 +14,7 @@ class NextflowBlockProcess:
         self.directives = {}
         self.input_params = {}
         self.output_params = {}
-
+        self.script = ""
         self.ocrd_command_bash = processor_call_arguments.dump_bash_form()
         self.ocrd_command_bash_placeholders = processor_call_arguments.dump_bash_form_with_placeholders()
 
@@ -54,23 +54,26 @@ class NextflowBlockProcess:
         dump += '\n'
         return dump
 
-    def dump_script(self) -> str:
+    def dump_script(self, local_script: bool = False) -> str:
+        if local_script:
+            return self.script
         dump = ''
         dump += f'{SPACES}{SPACES}"""\n'
         dump += f'{SPACES}{SPACES}'
         if self.env_wrapper:
-            dump += f'{PH_ENV_WRAPPER} '
+            dump += f'{PH_ENV_WRAPPER_CMD} '
         dump += f'{self.ocrd_command_bash_placeholders}\n'
         dump += f'{SPACES}{SPACES}"""\n'
         return dump
 
-    def file_representation(self):
+    def file_representation(self, local_script: bool = False):
         representation = f'process {self.nf_process_name}'
         representation += ' {\n'
         representation += self.dump_directives()
         representation += f'{SPACES}input:\n{self.dump_parameters_input()}'
-        representation += f'{SPACES}output:\n{self.dump_parameters_output()}'
-        representation += f'{SPACES}script:\n{self.dump_script()}'
+        if len(self.output_params) > 0:
+            representation += f'{SPACES}output:\n{self.dump_parameters_output()}'
+        representation += f'{SPACES}script:\n{self.dump_script(local_script=local_script)}'
         representation += '}\n'
         self.logger.debug(f"\n{representation}")
         return representation

@@ -4,61 +4,117 @@ nextflow.enable.dsl = 2
 params.input_file_group = "OCR-D-GT-SEG-BLOCK,OCR-D-OCR"
 params.mets_path = "null"
 params.workspace_dir = "null"
+params.pages = "null"
+params.forks = "4"
 
-process ocrd_dinglehopper_0 {
-    maxForks 1
+process split_page_ranges {
+    debug true
+    maxForks params.forks
 
     input:
-        path mets_file
-        val input_file_group
-        val output_file_group
+        val range_multiplier
 
     output:
-        path mets_file
+        env mets_file_chunk
+        env current_range_pages
 
     script:
         """
-        ocrd-dinglehopper -m ${mets_file} -I ${input_file_group} -O ${output_file_group}
+        current_range_pages=\$(ocrd workspace -d ${params.workspace_dir} list-page -f comma-separated -D ${params.forks} -C ${range_multiplier})
+        echo "Current range is: \$current_range_pages"
+        mets_file_chunk=\$(echo ${params.workspace_dir}/mets_${range_multiplier}.xml)
+        echo "Mets file chunk path: \$mets_file_chunk"
+        \$(cp -p ${params.mets_path} \$mets_file_chunk)
+        """
+}
+
+process ocrd_dinglehopper_0 {
+    debug true
+    maxForks params.forks
+
+    input:
+        val mets_path
+        val page_range
+        val workspace_dir
+        val input_group
+        val output_group
+
+    output:
+        val mets_path
+        val page_range
+        val workspace_dir
+
+    script:
+        """
+        ocrd-dinglehopper -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
         """
 }
 
 process ocrd_dinglehopper_1 {
-    maxForks 1
+    debug true
+    maxForks params.forks
 
     input:
-        path mets_file
-        val input_file_group
-        val output_file_group
+        val mets_path
+        val page_range
+        val workspace_dir
+        val input_group
+        val output_group
 
     output:
-        path mets_file
+        val mets_path
+        val page_range
+        val workspace_dir
 
     script:
         """
-        ocrd-dinglehopper -m ${mets_file} -I ${input_file_group} -O ${output_file_group}
+        ocrd-dinglehopper -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
         """
 }
 
 process ocrd_dinglehopper_2 {
-    maxForks 1
+    debug true
+    maxForks params.forks
 
     input:
-        path mets_file
-        val input_file_group
-        val output_file_group
+        val mets_path
+        val page_range
+        val workspace_dir
+        val input_group
+        val output_group
 
     output:
-        path mets_file
+        val mets_path
+        val page_range
+        val workspace_dir
 
     script:
         """
-        ocrd-dinglehopper -m ${mets_file} -I ${input_file_group} -O ${output_file_group}
+        ocrd-dinglehopper -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        """
+}
+
+process merging_mets {
+    debug true
+    maxForks 1
+
+    input:
+        val mets_file_chunk
+        val page_range
+
+    script:
+        """
+        ocrd workspace -d ${params.workspace_dir} merge --force --no-copy-files ${mets_file_chunk} --page-id ${page_range}
+        rm ${mets_file_chunk}
         """
 }
 
 workflow {
     main:
-        ocrd_dinglehopper_0(params.mets_path, params.input_file_group, "OCR-D-EVAL-SEG-BLOCK")
-        ocrd_dinglehopper_1(ocrd_dinglehopper_0.out, "OCR-D-GT-SEG-LINE,OCR-D-OCR", "OCR-D-EVAL-SEG-LINE")
-        ocrd_dinglehopper_2(ocrd_dinglehopper_1.out, "OCR-D-GT-SEG-PAGE,OCR-D-OCR", "OCR-D-EVAL-SEG-PAGE")
+        ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
+        split_page_ranges(ch_range_multipliers)
+        ocrd_dinglehopper_0(split_page_ranges.out[0], split_page_ranges.out[1], params.workspace_dir, params.input_file_group "OCR-D-EVAL-SEG-BLOCK")
+        ocrd_dinglehopper_1(ocrd_dinglehopper_0.out[0], ocrd_dinglehopper_0.out[1], ocrd_dinglehopper_0.out[2], "OCR-D-GT-SEG-LINE,OCR-D-OCR", "OCR-D-EVAL-SEG-LINE")
+        ocrd_dinglehopper_2(ocrd_dinglehopper_1.out[0], ocrd_dinglehopper_1.out[1], ocrd_dinglehopper_1.out[2], "OCR-D-GT-SEG-PAGE,OCR-D-OCR", "OCR-D-EVAL-SEG-PAGE")
+        merging_mets(ocrd_dinglehopper_2.out[0], ocrd_dinglehopper_2.out[1])
 }
