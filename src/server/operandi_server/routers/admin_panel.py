@@ -4,7 +4,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_server.models import PYUserInfo
 from operandi_utils.constants import AccountType, ServerApiTag
-from operandi_utils.database import db_get_all_user_accounts
+from operandi_utils.database import db_get_all_user_accounts, db_get_processing_stats
 from operandi_utils.utils import send_bag_to_ola_hd
 from .user import RouterUser
 from .workspace_utils import create_workspace_bag, get_db_workspace_with_handling, validate_bag_with_handling
@@ -24,6 +24,11 @@ class RouterAdminPanel:
             path="/admin/users",
             endpoint=self.get_users, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all registered users"
+        )
+        self.router.add_api_route(
+            path="/admin/processing_stats/{user_id}",
+            endpoint=self.get_processing_stats_for_user, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get processing stats for a specific user by user_id"
         )
 
     async def push_to_ola_hd(self, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
@@ -69,3 +74,25 @@ class RouterAdminPanel:
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                 detail="Could not retrieve users")
+
+    async def get_processing_stats_for_user(self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+        # Authenticate the admin user
+        py_user_action = await self.user_authenticator.user_login(auth)
+        if py_user_action.account_type != AccountType.ADMIN:
+            message = f"Admin privileges required for the endpoint"
+            self.logger.error(f"{message}")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+
+        # Retrieve the processing stats for the specified user
+        try:
+            db_processing_stats = await db_get_processing_stats(user_id)
+            if not db_processing_stats:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                    detail="Processing stats not found for the user")
+        except Exception as error:
+            message = f"Failed to fetch processing stats for user_id: {user_id}, error: {error}"
+            self.logger.error(message)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+
+        # Return the processing stats in the response model
+        return db_processing_stats
