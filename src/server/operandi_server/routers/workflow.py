@@ -442,7 +442,8 @@ class RouterWorkflow:
 
     # Added by Faizan
     async def convert_txt_to_nextflow(
-        self, txt_file: UploadFile, environment: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, txt_file: UploadFile, environment: str, with_mets_server: bool = True,
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
         # Authenticate the user
         await self.user_authenticator.user_login(auth)
@@ -459,5 +460,5 @@ class RouterWorkflow:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
         await validate_oton_with_handling(self.logger, ocrd_process_txt)
-        await convert_oton_with_handling(self.logger, environment, ocrd_process_txt, nf_script_dest)
+        await convert_oton_with_handling(self.logger, ocrd_process_txt, nf_script_dest, environment, with_mets_server)
         return FileResponse(nf_script_dest, filename=f'{oton_id}.nf')

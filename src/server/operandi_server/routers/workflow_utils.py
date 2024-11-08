@@ -67,7 +67,9 @@ async def validate_oton_with_handling(logger, ocrd_process_txt_path: str):
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
-async def convert_oton_with_handling(logger, environment: str, ocrd_process_txt_path: str, nf_script_dest_path: str):
+async def convert_oton_with_handling(
+    logger, ocrd_process_txt_path: str, nf_script_dest_path: str, environment: str, with_mets_server: bool
+):
     environments = ["local", "docker", "apptainer"]
     if environment not in environments:
         message = f"Unknown environment value: {environment}. Must be one of: {environments}"
@@ -75,12 +77,7 @@ async def convert_oton_with_handling(logger, environment: str, ocrd_process_txt_
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
     try:
         converter = OTONConverter()
-        if environment == "local":
-            converter.convert_oton_env_local(str(ocrd_process_txt_path), str(nf_script_dest_path))
-        elif environment == "docker":
-            converter.convert_oton_env_docker(str(ocrd_process_txt_path), str(nf_script_dest_path))
-        elif environment == "apptainer":
-            converter.convert_oton_env_apptainer(str(ocrd_process_txt_path), str(nf_script_dest_path))
+        converter.convert_oton(str(ocrd_process_txt_path), str(nf_script_dest_path), environment, with_mets_server)
     except ValueError as error:
         message = "Failed to convert ocrd process workflow to nextflow workflow"
         logger.error(f"{message}, error: {error}")

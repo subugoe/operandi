@@ -126,7 +126,7 @@ def test_convert_txt_to_nextflow_success(operandi, auth):
     # Convert the dummy text to bytes and create an in-memory file-like object
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
-    params = {"environment": "local"}
+    params = {"environment": "local", "with_mets_server": False}
 
     # Simulate uploading the text file for conversion via POST
     response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
@@ -135,7 +135,29 @@ def test_convert_txt_to_nextflow_success(operandi, auth):
     assert_response_status_code(response.status_code, expected_floor=2)
     assert "params.mets_path" in nf_file_content
     assert "params.env_wrapper" not in nf_file_content
+    assert "params.mets_socket_path" not in nf_file_content
+    assert "merging_mets" in nf_file_content
 
+
+def test_convert_txt_to_nextflow_success_with_mets_server(operandi, auth):
+    """
+    Test the successful conversion of a text file to a Nextflow (.nf) file with mets server.
+    """
+
+    # Convert the dummy text to bytes and create an in-memory file-like object
+    dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
+    files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
+    params = {"environment": "local", "with_mets_server": True}
+
+    # Simulate uploading the text file for conversion via POST
+    response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
+    nf_file_content = response.content.decode('utf-8')
+    # Verify the status code and content
+    assert_response_status_code(response.status_code, expected_floor=2)
+    assert "params.mets_path" in nf_file_content
+    assert "params.env_wrapper" not in nf_file_content
+    assert "params.mets_socket_path" in nf_file_content
+    assert "merging_mets" not in nf_file_content
 
 # Added by Faizan
 def test_convert_txt_to_nextflow_auth_failure(operandi):
@@ -145,7 +167,7 @@ def test_convert_txt_to_nextflow_auth_failure(operandi):
     dummy_text = "Some dummy text"
     dummy_file = BytesIO(dummy_text.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
-    params = {"environment": "local"}
+    params = {"environment": "local", "with_mets_server": False}
     auth = ('invalid_user', 'invalid_password')
     response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
 
@@ -163,7 +185,7 @@ def test_convert_txt_to_nextflow_validator_failure(operandi, auth):
     invalid_text = "Invalid ocrd process text"
     dummy_file = BytesIO(invalid_text.encode('utf-8'))
     files = {"txt_file": ("invalid.txt", dummy_file, "text/plain")}
-    params = {"environment": "local"}
+    params = {"environment": "local", "with_mets_server": False}
 
     response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
     assert_response_status_code(response.status_code, expected_floor=4)
@@ -179,9 +201,31 @@ def test_convert_txt_to_nextflow_docker_success(operandi, auth):
     # Convert the dummy text to bytes and create an in-memory file-like object
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
-    params = {"environment": "docker"}
+    params = {"environment": "docker", "with_mets_server": False}
 
     response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
     nf_file_content = response.content.decode('utf-8')
     assert_response_status_code(response.status_code, expected_floor=2)
+    assert "params.mets_path" in nf_file_content
     assert "params.env_wrapper" in nf_file_content
+    assert "params.mets_socket_path" not in nf_file_content
+    assert "merging_mets" in nf_file_content
+
+
+def test_convert_txt_to_nextflow_docker_success_with_mets_server(operandi, auth):
+    """
+    Test the successful conversion of a text file to a Nextflow (.nf) file with mets server.
+    """
+
+    # Convert the dummy text to bytes and create an in-memory file-like object
+    dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
+    files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
+    params = {"environment": "docker", "with_mets_server": True}
+
+    response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
+    nf_file_content = response.content.decode('utf-8')
+    assert_response_status_code(response.status_code, expected_floor=2)
+    assert "params.mets_path" in nf_file_content
+    assert "params.env_wrapper" in nf_file_content
+    assert "params.mets_socket_path" in nf_file_content
+    assert "merging_mets" not in nf_file_content
