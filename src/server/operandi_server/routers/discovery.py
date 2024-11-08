@@ -5,6 +5,7 @@ import json
 from logging import getLogger
 from os import cpu_count
 from psutil import virtual_memory
+from typing import List
 from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
@@ -45,7 +46,7 @@ class RouterDiscovery:
         )
         return response
 
-    async def get_processor_names(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> list[str]:
+    async def get_processor_names(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[str]:
         # Authenticate the user
         await self.user_authenticator.user_login(auth)
 
