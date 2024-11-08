@@ -9,8 +9,7 @@ from typing import List
 from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_utils.constants import ServerApiTag
-from operandi_utils.oton import load_ocrd_processors
+from operandi_utils.constants import ServerApiTag, OCRD_ALL_JSON
 from operandi_server.models import PYDiscovery
 from .user import RouterUser
 
@@ -52,8 +51,7 @@ class RouterDiscovery:
 
         try:
             # Load JSON and extract processor names
-            processors_data = load_ocrd_processors()
-            processor_names = list(processors_data.keys())
+            processor_names = list(OCRD_ALL_JSON.keys())
             return processor_names
 
         except FileNotFoundError:

@@ -6,8 +6,7 @@ __all__ = [
     "OTONConverter",
     "OCRDParser",
     "OCRDValidator",
-    "ProcessorCallArguments",
-    "load_ocrd_processors"
+    "ProcessorCallArguments"
 ]
 
 from .cli import cli
@@ -18,4 +17,3 @@ from .nf_file_executable import NextflowFileExecutable
 from .ocrd_parser import OCRDParser
 from .ocrd_validator import OCRDValidator
 from .process_call_arguments import ProcessorCallArguments
-from .ocrd_loader import  load_ocrd_processors
