@@ -9,7 +9,8 @@ from typing import List
 from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_utils.constants import ServerApiTag, OCRD_ALL_JSON
+from operandi_utils.constants import ServerApiTag
+from operandi_utils.oton.constants import OCRD_ALL_JSON
 from operandi_server.models import PYDiscovery
 from .user import RouterUser
 
