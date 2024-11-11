@@ -5,7 +5,7 @@ import json
 from logging import getLogger
 from os import cpu_count
 from psutil import virtual_memory
-from typing import List
+from typing import List, Dict
 from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
@@ -32,6 +32,11 @@ class RouterDiscovery:
             endpoint=self.get_processor_names, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="List OCR-D processor names"
         )
+        self.router.add_api_route(
+            path="/discovery/processor/{processor_name}",
+            endpoint=self.get_processor_info, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get information about a specific OCR-D processor"
+        )
 
     async def discovery(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYDiscovery:
         await self.user_authenticator.user_login(auth)
@@ -55,12 +60,6 @@ class RouterDiscovery:
             processor_names = list(OCRD_ALL_JSON.keys())
             return processor_names
 
-        except FileNotFoundError:
-            # Raise a 404 error if the JSON file is not found
-            raise HTTPException(
-                status_code=404,
-                detail="Processor data file not found."
-            )
 
         except json.JSONDecodeError:
             # Raise a 500 error if the JSON is invalid or cannot be parsed
@@ -76,3 +75,21 @@ class RouterDiscovery:
                 status_code=500,
                 detail="An unexpected error occurred while loading processor names."
             )
+
+    async def get_processor_info(self, processor_name: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> Dict:
+        await self.user_authenticator.user_login(auth)
+
+        try:
+            # Check if the processor name exists in the JSON
+            if processor_name not in list(OCRD_ALL_JSON.keys()):
+                raise HTTPException(status_code=404, detail=f"Processor '{processor_name}' not found.")
+
+            # Retrieve processor information as a dictionary
+            processor_info = OCRD_ALL_JSON[processor_name]
+            return processor_info
+
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=500, detail="Error decoding processor data file.")
+        except Exception as e:
+            self.logger.error(f"Error retrieving processor info for {processor_name}: {e}")
+            raise HTTPException(status_code=500, detail="An unexpected error occurred.")
