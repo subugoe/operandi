@@ -72,8 +72,8 @@ class NHRExecutor(NHRConnector):
             "use_mets_server_bash_flag": use_mets_server_bash_flag,
             "file_groups_to_remove": file_groups_to_remove
         }
-
         command += f" '{dumps(sbatch_args)}' '{dumps(regular_args)}'"
+
         self.logger.info(f"About to execute a force command: {command}")
         output, err, return_code = self.execute_blocking(command)
         self.logger.info(f"Command output: {output}")

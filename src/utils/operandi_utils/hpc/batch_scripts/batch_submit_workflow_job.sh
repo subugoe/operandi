@@ -4,28 +4,15 @@ set -e
 
 module purge
 module load jq
+module load apptainer
+module load nextflow
+# module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
 
-# Parameters are as follows:
-# S0 - This batch script
-# S1 - The scratch base for slurm workspaces
-# $2 - Workflow job id
-# $3 - Nextflow script id
-# $4 - Entry input file group
-# $5 - Workspace id
-# $6 - Mets basename - default "mets.xml"
-# $7 - CPUs for the Nextflow processes
-# $8 - RAM for the Nextflow processes
-# $9 - Amount of forks per OCR-D processor in the NF script
-# $10 - Amount of pages in the workspace
-# $11 - Boolean flag showing whether a mets server is utilized or not
-# $12 - File groups to be removed from the workspace after the processing
+hostname
+# /opt/slurm/etc/scripts/misc/slurm_resource
 
-SIF_PATH="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_all_maximum_image.sif"
-SIF_PATH_IN_NODE="${TMP_LOCAL}/ocrd_all_maximum_image.sif"
-OCRD_MODELS_DIR="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_models"
-OCRD_MODELS_DIR_IN_NODE="${TMP_LOCAL}/ocrd_models"
-OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share/ocrd-resources"
-BIND_OCRD_MODELS="${OCRD_MODELS_DIR_IN_NODE}/ocrd-resources:${OCRD_MODELS_DIR_IN_DOCKER}"
+# To submit separate jobs for each process in the NF script
+# export NXF_EXECUTOR=slurm
 
 json_args="$1"
 SCRATCH_BASE=$(echo "$json_args" | jq .scratch_base_dir | tr -d '"')
@@ -41,18 +28,12 @@ PAGES=$(echo "$json_args" | jq .ws_pages_amount | tr -d '"')
 USE_METS_SERVER=$(echo "$json_args" | jq .use_mets_server_bash_flag | tr -d '"')
 FILE_GROUPS_TO_REMOVE=$(echo "$json_args" | jq .file_groups_to_remove | tr -d '"')
 
-echo "SCRATCH_BASE: $SCRATCH_BASE"
-echo "WORKFLOW_JOB_ID: $WORKFLOW_JOB_ID"
-echo "NEXTFLOW_SCRIPT_ID: $NEXTFLOW_SCRIPT_ID"
-echo "IN_FILE_GRP: $IN_FILE_GRP"
-echo "WORKSPACE_ID: $WORKSPACE_ID"
-echo "METS_BASENAME: $METS_BASENAME"
-echo "CPUS: $CPUS"
-echo "RAM: $RAM"
-echo "FORKS: $FORKS"
-echo "PAGES: $PAGES"
-echo "USE_METS_SERVER: $USE_METS_SERVER"
-echo "FILE_GROUPS_TO_REMOVE: $FILE_GROUPS_TO_REMOVE"
+SIF_PATH="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_all_maximum_image.sif"
+SIF_PATH_IN_NODE="${TMP_LOCAL}/ocrd_all_maximum_image.sif"
+OCRD_MODELS_DIR="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_models"
+OCRD_MODELS_DIR_IN_NODE="${TMP_LOCAL}/ocrd_models"
+OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share/ocrd-resources"
+BIND_OCRD_MODELS="${OCRD_MODELS_DIR_IN_NODE}/ocrd-resources:${OCRD_MODELS_DIR_IN_DOCKER}"
 
 WORKFLOW_JOB_DIR="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 NF_SCRIPT_PATH="${WORKFLOW_JOB_DIR}/${NEXTFLOW_SCRIPT_ID}"
@@ -63,7 +44,6 @@ BIND_METS_FILE_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_BASENAME}"
 METS_SOCKET_BASENAME="mets_server.sock"
 BIND_METS_SOCKET_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_SOCKET_BASENAME}"
 
-
 echo "ocrd all SIF path: $SIF_PATH"
 echo "ocrd all SIF path node local: $SIF_PATH_IN_NODE"
 echo "Workspace dir: $WORKSPACE_DIR"
@@ -71,17 +51,6 @@ echo "Nextflow script path: $NF_SCRIPT_PATH"
 echo "Use mets server: $USE_METS_SERVER"
 echo "Used file group: $IN_FILE_GRP"
 echo "Pages: $PAGES"
-
-module load apptainer
-module load nextflow
-# module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
-
-hostname
-# /opt/slurm/etc/scripts/misc/slurm_resource
-
-# To submit separate jobs for each process in the NF script
-# export NXF_EXECUTOR=slurm
-
 
 # Define functions to be used
 check_existence_of_paths() {
@@ -159,13 +128,6 @@ unzip_workflow_job_dir() {
 }
 
 start_mets_server() {
-  # TODO: Would be better to start the mets server as an instance, but this is still broken
-  # apptainer instance start \
-  #   --bind "${BIND_WORKSPACE_DIR}" \
-  #   "${SIF_PATH_IN_NODE}" \
-  #   instance_mets_server \
-  #  ocrd workspace -U "${BIND_METS_SOCKET_PATH}" -d "${WORKSPACE_DIR_IN_DOCKER}" server start
-
   if [ "$1" == "true" ] ; then
     echo "Starting the mets server for the specific workspace in the background"
     apptainer exec \
@@ -178,12 +140,6 @@ start_mets_server() {
 }
 
 stop_mets_server() {
-  # Not supported in the HPC (the version there is <7.40)
-  # curl -X DELETE --unix-socket "${WORKSPACE_DIR}/${METS_SOCKET_BASENAME}" "http://localhost/"
-
-  # TODO Stop the instance here
-  # singularity instance stop instance_mets_server
-
   if [ "$1" == "true" ] ; then
     echo "Stopping the mets server"
     apptainer exec \
