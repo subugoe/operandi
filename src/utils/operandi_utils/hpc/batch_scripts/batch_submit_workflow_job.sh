@@ -2,6 +2,9 @@
 
 set -e
 
+module purge
+module load jq
+
 # Parameters are as follows:
 # S0 - This batch script
 # S1 - The scratch base for slurm workspaces
@@ -24,18 +27,32 @@ OCRD_MODELS_DIR_IN_NODE="${TMP_LOCAL}/ocrd_models"
 OCRD_MODELS_DIR_IN_DOCKER="/usr/local/share/ocrd-resources"
 BIND_OCRD_MODELS="${OCRD_MODELS_DIR_IN_NODE}/ocrd-resources:${OCRD_MODELS_DIR_IN_DOCKER}"
 
-SCRATCH_BASE=$1
-WORKFLOW_JOB_ID=$2
-NEXTFLOW_SCRIPT_ID=$3
-IN_FILE_GRP=$4
-WORKSPACE_ID=$5
-METS_BASENAME=$6
-CPUS=$7
-RAM=$8
-FORKS=$9
-PAGES=${10}
-USE_METS_SERVER=${11}
-FILE_GROUPS_TO_REMOVE=${12}
+json_args="$1"
+SCRATCH_BASE=$(echo "$json_args" | jq .scratch_base_dir | tr -d '"')
+WORKFLOW_JOB_ID=$(echo "$json_args" | jq .workflow_job_id | tr -d '"')
+NEXTFLOW_SCRIPT_ID=$(echo "$json_args" | jq .nextflow_script_id | tr -d '"')
+IN_FILE_GRP=$(echo "$json_args" | jq .input_file_group | tr -d '"')
+WORKSPACE_ID=$(echo "$json_args" | jq .workspace_id | tr -d '"')
+METS_BASENAME=$(echo "$json_args" | jq .mets_basename | tr -d '"')
+CPUS=$(echo "$json_args" | jq .cpus | tr -d '"')
+RAM=$(echo "$json_args" | jq .ram | tr -d '"')
+FORKS=$(echo "$json_args" | jq .nf_process_forks | tr -d '"')
+PAGES=$(echo "$json_args" | jq .ws_pages_amount | tr -d '"')
+USE_METS_SERVER=$(echo "$json_args" | jq .use_mets_server_bash_flag | tr -d '"')
+FILE_GROUPS_TO_REMOVE=$(echo "$json_args" | jq .file_groups_to_remove | tr -d '"')
+
+echo "SCRATCH_BASE: $SCRATCH_BASE"
+echo "WORKFLOW_JOB_ID: $WORKFLOW_JOB_ID"
+echo "NEXTFLOW_SCRIPT_ID: $NEXTFLOW_SCRIPT_ID"
+echo "IN_FILE_GRP: $IN_FILE_GRP"
+echo "WORKSPACE_ID: $WORKSPACE_ID"
+echo "METS_BASENAME: $METS_BASENAME"
+echo "CPUS: $CPUS"
+echo "RAM: $RAM"
+echo "FORKS: $FORKS"
+echo "PAGES: $PAGES"
+echo "USE_METS_SERVER: $USE_METS_SERVER"
+echo "FILE_GROUPS_TO_REMOVE: $FILE_GROUPS_TO_REMOVE"
 
 WORKFLOW_JOB_DIR="${SCRATCH_BASE}/${WORKFLOW_JOB_ID}"
 NF_SCRIPT_PATH="${WORKFLOW_JOB_DIR}/${NEXTFLOW_SCRIPT_ID}"
@@ -46,13 +63,6 @@ BIND_METS_FILE_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_BASENAME}"
 METS_SOCKET_BASENAME="mets_server.sock"
 BIND_METS_SOCKET_PATH="${WORKSPACE_DIR_IN_DOCKER}/${METS_SOCKET_BASENAME}"
 
-hostname
-/opt/slurm/etc/scripts/misc/slurm_resources
-
-module purge
-module load apptainer
-module load nextflow
-# module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
 
 echo "ocrd all SIF path: $SIF_PATH"
 echo "ocrd all SIF path node local: $SIF_PATH_IN_NODE"
@@ -61,6 +71,13 @@ echo "Nextflow script path: $NF_SCRIPT_PATH"
 echo "Use mets server: $USE_METS_SERVER"
 echo "Used file group: $IN_FILE_GRP"
 echo "Pages: $PAGES"
+
+module load apptainer
+module load nextflow
+# module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
+
+hostname
+# /opt/slurm/etc/scripts/misc/slurm_resource
 
 # To submit separate jobs for each process in the NF script
 # export NXF_EXECUTOR=slurm

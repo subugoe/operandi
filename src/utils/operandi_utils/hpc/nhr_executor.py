@@ -1,3 +1,4 @@
+from json import dumps
 from logging import getLogger
 from pathlib import Path
 from time import sleep
@@ -48,30 +49,31 @@ class NHRExecutor(NHRConnector):
         use_mets_server_bash_flag = "true" if use_mets_server else "false"
 
         command = f"{HPC_WRAPPER_SUBMIT_WORKFLOW_JOB}"
+        sbatch_args = {
+            "partition": partition,
+            "job_deadline_time": job_deadline_time,
+            "output_log": f"{self.slurm_workspaces_dir}/{workflow_job_id}/slurm-job-%J.txt",
+            "cpus": cpus,
+            "ram": f"{ram}G",
+            "qos": qos,
+            "batch_script_path": HPC_BATCH_SUBMIT_WORKFLOW_JOB
+        }
+        regular_args = {
+            "scratch_base_dir": self.slurm_workspaces_dir,
+            "workflow_job_id": workflow_job_id,
+            "nextflow_script_id": nextflow_script_id,
+            "input_file_group": input_file_grp,
+            "workspace_id": workspace_id,
+            "mets_basename": mets_basename,
+            "cpus": cpus,
+            "ram": ram,
+            "nf_process_forks": nf_process_forks,
+            "ws_pages_amount": ws_pages_amount,
+            "use_mets_server_bash_flag": use_mets_server_bash_flag,
+            "file_groups_to_remove": file_groups_to_remove
+        }
 
-        # SBATCH arguments passed to the batch script
-        command += f" {partition}"
-        command += f" {job_deadline_time}"
-        command += f" {self.slurm_workspaces_dir}/{workflow_job_id}/slurm-job-%J.txt"
-        command += f" {cpus}"
-        command += f" {ram}G"
-        command += f" {qos}"
-
-        # Regular arguments passed to the batch script
-        command += f" {HPC_BATCH_SUBMIT_WORKFLOW_JOB}"
-        command += f" {self.slurm_workspaces_dir}"
-        command += f" {workflow_job_id}"
-        command += f" {nextflow_script_id}"
-        command += f" {input_file_grp}"
-        command += f" {workspace_id}"
-        command += f" {mets_basename}"
-        command += f" {cpus}"
-        command += f" {ram}"
-        command += f" {nf_process_forks}"
-        command += f" {ws_pages_amount}"
-        command += f" {use_mets_server_bash_flag}"
-        command += f" {file_groups_to_remove}"
-
+        command += f" '{dumps(sbatch_args)}' '{dumps(regular_args)}'"
         self.logger.info(f"About to execute a force command: {command}")
         output, err, return_code = self.execute_blocking(command)
         self.logger.info(f"Command output: {output}")

@@ -22,12 +22,30 @@
 # $18 - Boolean flag showing whether a mets server is utilized or not
 # $19 - File groups to be removed from the workspace after the processing
 
-if [ "$6" == "48h" ] ; then
+module purge
+module load jq
+
+sbatch_args="$1"
+partition=$(echo "$sbatch_args" | jq .partition | tr -d '"')
+deadline_time=$(echo "$sbatch_args" | jq .job_deadline_time | tr -d '"')
+output=$(echo "$sbatch_args" | jq .output_log | tr -d '"')
+cpus_per_task=$(echo "$sbatch_args" | jq .cpus | tr -d '"')
+memory=$(echo "$sbatch_args" | jq .ram | tr -d '"')
+qos=$(echo "$sbatch_args" | jq .qos | tr -d '"')
+batch_script_path=$(echo "$sbatch_args" | jq .batch_script_path | tr -d '"')
+
+if [ "$qos" == "48h" ] ; then
   # QOS not set, the default of 48h is used
-  sbatch --partition="$1" --time="$2" --output="$3" --cpus-per-task="$4" --mem="$5" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}"
+  sbatch --partition="$partition" --time="$deadline_time" --output="$output" --cpus-per-task="$cpus_per_task" --mem="$memory" "$batch_script_path" "$2"
 else
-  sbatch --partition="$1" --time="$2" --output="$3" --cpus-per-task="$4" --mem="$5" --qos="$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}"
+  sbatch --partition="$partition" --time="$deadline_time" --output="$output" --cpus-per-task="$cpus_per_task" --mem="$memory" --qos="$qos" "$batch_script_path" "$2"
 fi
 
-echo "0:$0 1:$1 2:$2 3:$3 4:$4 5:$5 6:$6 7:$7 8:$8 9:$9 10:${10}"
-echo "11:${11} 12:${12} 13:${13} 14:${14} 15:${15} 16:${16} 17:${17} 18:${18} 19:${19}"
+echo "executed wrapper script: $0"
+echo "partition: $partition"
+echo "deadline_time: $deadline_time"
+echo "output: $output"
+echo "cpus_per_task: $cpus_per_task"
+echo "memory: $memory"
+echo "qos: $qos"
+echo "batch_script_path: $batch_script_path"
