@@ -1,7 +1,7 @@
 """
 module for implementing the discovery section of the api
 """
-import json
+from json import JSONDecodeError
 from logging import getLogger
 from os import cpu_count
 from psutil import virtual_memory
