@@ -61,13 +61,17 @@ class RouterDiscovery:
             return processor_names
 
 
-        except json.JSONDecodeError:
+        except JSONDecodeError as e:
             # Raise a 500 error if the JSON is invalid or cannot be parsed
+            message = f"Error decoding processor data file: {str(e)}"
+            # Log the detailed message
+            self.logger.error(message)
+            # Raise the HTTPException with the same message
             raise HTTPException(
-                status_code=500,
-                detail="Error decoding processor data file."
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=message
             )
-
+        
         except Exception as e:
             # Raise a generic 500 error for any other exceptions
             self.logger.error(f"Unexpected error while loading processors: {e}")
@@ -88,7 +92,7 @@ class RouterDiscovery:
             processor_info = OCRD_ALL_JSON[processor_name]
             return processor_info
 
-        except json.JSONDecodeError:
+        except JSONDecodeError:
             raise HTTPException(status_code=500, detail="Error decoding processor data file.")
         except Exception as e:
             self.logger.error(f"Error retrieving processor info for {processor_name}: {e}")
