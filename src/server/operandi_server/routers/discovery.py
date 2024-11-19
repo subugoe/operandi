@@ -81,7 +81,7 @@ class RouterDiscovery:
 
         try:
             # Check if the processor name exists in the JSON
-            if processor_name not in list(OCRD_ALL_JSON.keys()):
+            if processor_name not in OCRD_ALL_JSON:
                 raise HTTPException(status_code=404, detail=f"Processor '{processor_name}' not found.")
 
             # Retrieve processor information as a dictionary
