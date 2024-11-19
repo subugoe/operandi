@@ -66,14 +66,9 @@ class RouterAdminPanel:
             message = "Admin privileges required for the endpoint"
             self.logger.error(message)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
-
-        try:
-            # Fetch all users
-            users = await db_get_all_user_accounts()
-            return [PYUserInfo.from_db_user_account(user) for user in users]
-        except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                detail="Could not retrieve users")
+        
+        users = await db_get_all_user_accounts()
+        return [PYUserInfo.from_db_user_account(user) for user in users]
 
     async def get_processing_stats_for_user(self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         # Authenticate the admin user

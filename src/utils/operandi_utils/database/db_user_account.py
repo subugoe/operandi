@@ -35,8 +35,6 @@ async def sync_db_create_user_account(
 
 async def db_get_all_user_accounts() -> List[DBUserAccount]:
     all_user_accounts = await DBUserAccount.find().to_list()
-    if not all_user_accounts:
-        raise RuntimeError("No user accounts found")
     return all_user_accounts
 
 @call_sync
