@@ -82,8 +82,9 @@ class RouterAdminPanel:
         try:
             db_processing_stats = await db_get_processing_stats(user_id)
             if not db_processing_stats:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                    detail="Processing stats not found for the user")
+                message = f"Processing stats not found for the user_id: {user_id}"
+                self.logger.error(message)
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
         except Exception as error:
             message = f"Failed to fetch processing stats for user_id: {user_id}, error: {error}"
             self.logger.error(message)
