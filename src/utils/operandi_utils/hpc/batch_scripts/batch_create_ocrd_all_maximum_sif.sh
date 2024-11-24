@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition standard96:shared
+#SBATCH --partition standard96s:shared
 #SBATCH --time 2:00:00
 #SBATCH --output create_ocrd_all_sif_job-%J.txt
 #SBATCH --cpus-per-task 16

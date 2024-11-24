@@ -68,8 +68,9 @@ HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS = f"{HPC_NHR_SCRATCH_EMMY_HDD}/{HPC_DIR_BA
 
 HPC_JOB_DEADLINE_TIME_REGULAR = "48:00:00"
 HPC_JOB_DEADLINE_TIME_TEST = "00:30:00"
-HPC_NHR_JOB_DEFAULT_PARTITION = "standard96s:shared"
-HPC_NHR_JOB_TEST_PARTITION = "standard96s:shared"
+# TODO: Use again "standard96s:shared"
+HPC_NHR_JOB_DEFAULT_PARTITION = "standard96:shared"
+HPC_NHR_JOB_TEST_PARTITION = "standard96:shared"
 
 # Check here: https://docs.hpc.gwdg.de/getting_started/transition/index.html
 HPC_JOB_QOS_SHORT = "2h"
