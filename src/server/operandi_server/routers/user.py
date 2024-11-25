@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import AccountType, ServerApiTag
-from operandi_utils.database import db_get_processing_stats, db_get_user_account_with_email
+from operandi_utils.database import db_get_all_job_ids_by_user, db_get_processing_stats, db_get_user_account_with_email
 from operandi_server.exceptions import AuthenticationError
 from operandi_server.models import PYUserAction
 from operandi_utils.database.models import DBProcessingStatistics
@@ -31,6 +31,12 @@ class RouterUser:
             endpoint=self.user_processing_stats, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get user account statistics of the current account",
             response_model=DBProcessingStatistics, response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        self.router.add_api_route(
+            path="/user/workflow_jobs",
+            endpoint=self.user_workflow_jobs_id, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get all workflow jobs ids submitted by the user",
+            response_model=list[str], response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
     async def user_login(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYUserAction:
@@ -82,3 +88,12 @@ class RouterUser:
         db_user_account = await db_get_user_account_with_email(email=auth.username)
         db_processing_stats = await db_get_processing_stats(db_user_account.user_id)
         return db_processing_stats
+
+    async def user_workflow_jobs_id(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> list[str]:
+        await self.user_login(auth)
+        # Fetch user account details
+        db_user_account = await db_get_user_account_with_email(email=auth.username)
+        # Retrieve workflow jobs for the user
+        workflow_jobs = await db_get_all_job_ids_by_user(user_id=db_user_account.user_id)
+        return workflow_jobs
+
