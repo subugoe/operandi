@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from operandi_utils import call_sync
 from operandi_utils.constants import StateJob
 from .models import DBWorkflowJob
@@ -36,7 +37,7 @@ async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
         raise RuntimeError(f"No DB workflow job entry found for id: {job_id}")
     return db_workflow_job
 
-async def db_get_all_job_ids_by_user(user_id: str) -> list[str]:
+async def db_get_all_job_ids_by_user(user_id: str) -> List[str]:
     db_workflow_jobs = await DBWorkflowJob.find_many(DBWorkflowJob.user_id==user_id).to_list()
     return [job.job_id for job in db_workflow_jobs]
 
@@ -83,5 +84,5 @@ async def sync_db_update_workflow_job(find_job_id: str, **kwargs) -> DBWorkflowJ
     return await db_update_workflow_job(find_job_id=find_job_id, **kwargs)
 
 @call_sync
-async def sync_db_get_all_job_ids_by_user(user_id: str) -> list[str]:
+async def sync_db_get_all_job_ids_by_user(user_id: str) -> List[str]:
     return await db_get_all_job_ids_by_user(user_id)

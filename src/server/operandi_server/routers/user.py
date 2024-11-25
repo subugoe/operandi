@@ -1,4 +1,5 @@
 from logging import getLogger
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
@@ -36,7 +37,7 @@ class RouterUser:
             path="/user/workflow_jobs",
             endpoint=self.user_workflow_jobs_id, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workflow jobs ids submitted by the user",
-            response_model=list[str], response_model_exclude_unset=True, response_model_exclude_none=True
+            response_model=List[str], response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
     async def user_login(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYUserAction:
@@ -89,7 +90,7 @@ class RouterUser:
         db_processing_stats = await db_get_processing_stats(db_user_account.user_id)
         return db_processing_stats
 
-    async def user_workflow_jobs_id(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> list[str]:
+    async def user_workflow_jobs_id(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[str]:
         await self.user_login(auth)
         # Fetch user account details
         db_user_account = await db_get_user_account_with_email(email=auth.username)
