@@ -1,16 +1,17 @@
 from logging import getLevelName, getLogger
 from operandi_utils.oton.ocrd_validator import ProcessorCallArguments
-from operandi_utils.oton.constants import OTON_LOG_LEVEL, PH_ENV_WRAPPER_CMD, SPACES
+from operandi_utils.oton.constants import BS, OTON_LOG_LEVEL, PARAMS_KEY_ENV_WRAPPER_CMD_STEP, SPACES
 
 
 class NextflowBlockProcess:
     def __init__(self, processor_call_arguments: ProcessorCallArguments, index_pos: int, env_wrapper: bool = False):
         self.logger = getLogger(__name__)
         self.logger.setLevel(getLevelName(OTON_LOG_LEVEL))
+        self.index_pos = str(index_pos)
 
         self.processor_call_arguments: ProcessorCallArguments = processor_call_arguments
         self.env_wrapper: bool = env_wrapper
-        self.nf_process_name: str = processor_call_arguments.executable.replace('-', '_') + "_" + str(index_pos)
+        self.nf_process_name: str = processor_call_arguments.executable.replace('-', '_') + f"_{self.index_pos}"
         self.directives = {}
         self.input_params = {}
         self.output_params = {}
@@ -61,7 +62,7 @@ class NextflowBlockProcess:
         dump += f'{SPACES}{SPACES}"""\n'
         dump += f'{SPACES}{SPACES}'
         if self.env_wrapper:
-            dump += f'{PH_ENV_WRAPPER_CMD} '
+            dump += f'${BS[0]}{PARAMS_KEY_ENV_WRAPPER_CMD_STEP}{self.index_pos}{BS[1]} '
         dump += f'{self.ocrd_command_bash_placeholders}\n'
         dump += f'{SPACES}{SPACES}"""\n'
         return dump

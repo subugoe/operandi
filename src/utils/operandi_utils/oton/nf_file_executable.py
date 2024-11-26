@@ -3,15 +3,17 @@ from typing import List
 
 from operandi_utils.oton.ocrd_validator import ProcessorCallArguments
 from operandi_utils.oton.constants import (
-    DIR_IN, DIR_OUT, PAGE_RANGE, METS_PATH, WORKSPACE_DIR,
+    BS, CONST_DIR_IN, CONST_DIR_OUT, CONST_PAGE_RANGE, CONST_METS_PATH, CONST_WORKSPACE_DIR,
     OTON_LOG_LEVEL,
     PARAMS_KEY_INPUT_FILE_GRP,
-    PH_PARAMS_WORKSPACE_DIR, PH_PARAMS_METS_PATH, PH_PARAMS_FORKS,
-    PH_ENV_WRAPPER_CMD,
+    PARAMS_KEY_METS_PATH,
+    PARAMS_KEY_WORKSPACE_DIR,
+    PARAMS_KEY_ENV_WRAPPER_CMD_CORE,
+    PARAMS_KEY_ENV_WRAPPER_CMD_STEP,
     PARAMS_KEY_FORKS,
     PARAMS_KEY_CPUS_PER_FORK,
     PARAMS_KEY_RAM_PER_FORK,
-    REPR_ENV_WRAPPER_CMD,
+    REPR_ENV_WRAPPER_CMD_CORE,
     REPR_INPUT_FILE_GRP,
     REPR_METS_PATH,
     REPR_METS_SOCKET_PATH,
@@ -60,16 +62,14 @@ class NextflowFileExecutable:
             self.nf_lines_parameters.append(REPR_FORKS_NULL)
         if environment == "docker":
             self.nf_lines_parameters.append(REPR_FORKS_NULL)
-            self.nf_lines_parameters.append(REPR_ENV_WRAPPER_CMD)
+            self.nf_lines_parameters.append(REPR_ENV_WRAPPER_CMD_CORE)
         if environment == "apptainer":
             self.nf_lines_parameters.append(REPR_CPUS)
             self.nf_lines_parameters.append(REPR_RAM)
             self.nf_lines_parameters.append(REPR_FORKS)
             self.nf_lines_parameters.append(REPR_CPUS_PER_FORK)
             self.nf_lines_parameters.append(REPR_RAM_PER_FORK)
-            self.nf_lines_parameters.append(REPR_ENV_WRAPPER_CMD)
-
-        self.nf_lines_parameters.append('')
+            self.nf_lines_parameters.append(REPR_ENV_WRAPPER_CMD_CORE)
 
     # TODO: Refactor later
     def build_split_page_ranges_process(self, environment: str, with_mets_server: bool) -> NextflowBlockProcess:
@@ -91,24 +91,24 @@ class NextflowFileExecutable:
 
         PH_RANGE_MULTIPLIER = '${range_multiplier}'
         bash_cmd_ocrd_ws = (
-            f"ocrd workspace -d {PH_PARAMS_WORKSPACE_DIR} list-page -f comma-separated "
-            f"-D {PH_PARAMS_FORKS} -C {PH_RANGE_MULTIPLIER}"
+            f"ocrd workspace -d ${BS[0]}{PARAMS_KEY_WORKSPACE_DIR}{BS[1]} list-page -f comma-separated "
+            f"-D ${BS[0]}{PARAMS_KEY_FORKS}{BS[1]} -C {PH_RANGE_MULTIPLIER}"
         )
-        bash_cmd_copy_mets_chunk = f"cp -p {PH_PARAMS_METS_PATH} \\$mets_file_chunk"
+        bash_cmd_copy_mets_chunk = f"cp -p ${BS[0]}{PARAMS_KEY_METS_PATH}{BS[1]} \\$mets_file_chunk"
 
         script = f'{SPACES}{SPACES}"""\n{SPACES}{SPACES}'
         script += f"current_range_pages=\\$("
         if environment == "apptainer" or environment == "docker":
-            script += f"{PH_ENV_WRAPPER_CMD} "
+            script += f"${BS[0]}{PARAMS_KEY_ENV_WRAPPER_CMD_CORE}{BS[1]} "
         script += f"{bash_cmd_ocrd_ws})\n"
         script += f'{SPACES}{SPACES}echo "Current range is: \\$current_range_pages"\n'
 
         if not with_mets_server:
-            script += f"{SPACES}{SPACES}mets_file_chunk=\\$(echo {PH_PARAMS_WORKSPACE_DIR}/mets_{PH_RANGE_MULTIPLIER}.xml)\n"
+            script += f"{SPACES}{SPACES}mets_file_chunk=\\$(echo ${BS[0]}{PARAMS_KEY_WORKSPACE_DIR}{BS[1]}/mets_{PH_RANGE_MULTIPLIER}.xml)\n"
             script += f'{SPACES}{SPACES}echo "Mets file chunk path: \\$mets_file_chunk"\n'
             script += f"{SPACES}{SPACES}\\$("
             if environment == "apptainer" or environment == "docker":
-                script += f"{PH_ENV_WRAPPER_CMD} "
+                script += f"${BS[0]}{PARAMS_KEY_ENV_WRAPPER_CMD_CORE}{BS[1]} "
             script += f"{bash_cmd_copy_mets_chunk})\n"
         script += f'{SPACES}{SPACES}"""\n'
         block.script = script
@@ -135,15 +135,16 @@ class NextflowFileExecutable:
         PH_METS_FILE_CHUNK = "${mets_file_chunk}"
         PH_PAGE_RANGE = "${page_range}"
         bash_cmd_ocrd_ws = (
-            f"ocrd workspace -d {PH_PARAMS_WORKSPACE_DIR} merge --force --no-copy-files {PH_METS_FILE_CHUNK} "
+            f"ocrd workspace -d ${BS[0]}{PARAMS_KEY_WORKSPACE_DIR}{BS[1]} "
+            f"merge --force --no-copy-files {PH_METS_FILE_CHUNK} "
             f"--page-id {PH_PAGE_RANGE}"
         )
         script = f'{SPACES}{SPACES}"""\n{SPACES}{SPACES}'
         if environment == "apptainer" or environment == "docker":
-            script += f"{PH_ENV_WRAPPER_CMD} "
+            script += f"${BS[0]}{PARAMS_KEY_ENV_WRAPPER_CMD_CORE}{BS[1]} "
         script += f"{bash_cmd_ocrd_ws}\n{SPACES}{SPACES}"
         if environment == "apptainer" or environment == "docker":
-            script += f"{PH_ENV_WRAPPER_CMD} "
+            script += f"${BS[0]}{PARAMS_KEY_ENV_WRAPPER_CMD_CORE}{BS[1]} "
         script += f"rm {PH_METS_FILE_CHUNK}\n"
         script += f'{SPACES}{SPACES}"""\n'
         block.script = script
@@ -168,15 +169,16 @@ class NextflowFileExecutable:
                 nf_process_block.add_directive(directive='memory', value=PARAMS_KEY_RAM_PER_FORK)
 
             # Add Nextflow process parameters
-            nf_process_block.add_parameter_input(parameter=METS_PATH, parameter_type='val')
-            nf_process_block.add_parameter_input(parameter=PAGE_RANGE, parameter_type='val')
-            nf_process_block.add_parameter_input(parameter=WORKSPACE_DIR, parameter_type='val')
-            nf_process_block.add_parameter_input(parameter=DIR_IN, parameter_type='val')
-            nf_process_block.add_parameter_input(parameter=DIR_OUT, parameter_type='val')
+            nf_process_block.add_parameter_input(parameter=CONST_METS_PATH, parameter_type='val')
+            nf_process_block.add_parameter_input(parameter=CONST_PAGE_RANGE, parameter_type='val')
+            nf_process_block.add_parameter_input(parameter=CONST_WORKSPACE_DIR, parameter_type='val')
+            nf_process_block.add_parameter_input(parameter=CONST_DIR_IN, parameter_type='val')
+            nf_process_block.add_parameter_input(parameter=CONST_DIR_OUT, parameter_type='val')
 
-            nf_process_block.add_parameter_output(parameter=METS_PATH, parameter_type='val')
-            nf_process_block.add_parameter_output(parameter=PAGE_RANGE, parameter_type='val')
-            nf_process_block.add_parameter_output(parameter=WORKSPACE_DIR, parameter_type='val')
+            nf_process_block.add_parameter_output(parameter=CONST_METS_PATH, parameter_type='val')
+            nf_process_block.add_parameter_output(parameter=CONST_PAGE_RANGE, parameter_type='val')
+            nf_process_block.add_parameter_output(parameter=CONST_WORKSPACE_DIR, parameter_type='val')
+            self.nf_lines_parameters.append(f'{PARAMS_KEY_ENV_WRAPPER_CMD_STEP}{index} = "null"')
             self.nf_blocks_process.append(nf_process_block)
             index += 1
 
@@ -208,6 +210,7 @@ class NextflowFileExecutable:
             nextflow_file.write(f"{WORKFLOW_COMMENT}\n")
             for nextflow_line in self.nf_lines_parameters:
                 nextflow_file.write(f'{nextflow_line}\n')
+            nextflow_file.write("\n")
             nextflow_file.write(f'{self.nf_process_split_range.file_representation(local_script=True)}\n')
             for block in self.nf_blocks_process:
                 nextflow_file.write(f'{block.file_representation(local_script=False)}\n')

@@ -7,6 +7,14 @@ params.workspace_dir = "null"
 params.pages = "null"
 params.mets_socket_path = "null"
 params.forks = "4"
+params.env_wrapper_cmd_step0 = "null"
+params.env_wrapper_cmd_step1 = "null"
+params.env_wrapper_cmd_step2 = "null"
+params.env_wrapper_cmd_step3 = "null"
+params.env_wrapper_cmd_step4 = "null"
+params.env_wrapper_cmd_step5 = "null"
+params.env_wrapper_cmd_step6 = "null"
+params.env_wrapper_cmd_step7 = "null"
 
 process split_page_ranges {
     debug true

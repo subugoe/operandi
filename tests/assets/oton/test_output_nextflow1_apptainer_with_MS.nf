@@ -11,7 +11,15 @@ params.ram = "null"
 params.forks = params.cpus
 params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intValue()
 params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())
-params.env_wrapper_cmd = "null"
+params.env_wrapper_cmd_core = "null"
+params.env_wrapper_cmd_step0 = "null"
+params.env_wrapper_cmd_step1 = "null"
+params.env_wrapper_cmd_step2 = "null"
+params.env_wrapper_cmd_step3 = "null"
+params.env_wrapper_cmd_step4 = "null"
+params.env_wrapper_cmd_step5 = "null"
+params.env_wrapper_cmd_step6 = "null"
+params.env_wrapper_cmd_step7 = "null"
 
 process split_page_ranges {
     debug true
@@ -27,7 +35,7 @@ process split_page_ranges {
 
     script:
         """
-        current_range_pages=\$(${params.env_wrapper_cmd} ocrd workspace -d ${params.workspace_dir} list-page -f comma-separated -D ${params.forks} -C ${range_multiplier})
+        current_range_pages=\$(${params.env_wrapper_cmd_core} ocrd workspace -d ${params.workspace_dir} list-page -f comma-separated -D ${params.forks} -C ${range_multiplier})
         echo "Current range is: \$current_range_pages"
         """
 }
@@ -52,7 +60,7 @@ process ocrd_cis_ocropy_binarize_0 {
 
     script:
         """
-        ${params.env_wrapper_cmd} ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step0} ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -76,7 +84,7 @@ process ocrd_anybaseocr_crop_1 {
 
     script:
         """
-        ${params.env_wrapper_cmd} ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step1} ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -100,7 +108,7 @@ process ocrd_skimage_binarize_2 {
 
     script:
         """
-        ${params.env_wrapper_cmd} ocrd-skimage-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
+        ${params.env_wrapper_cmd_step2} ocrd-skimage-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
         """
 }
 
@@ -124,7 +132,7 @@ process ocrd_skimage_denoise_3 {
 
     script:
         """
-        ${params.env_wrapper_cmd} ocrd-skimage-denoise -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ${params.env_wrapper_cmd_step3} ocrd-skimage-denoise -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -148,7 +156,7 @@ process ocrd_tesserocr_deskew_4 {
 
     script:
         """
-        ${params.env_wrapper_cmd} ocrd-tesserocr-deskew -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
+        ${params.env_wrapper_cmd_step4} ocrd-tesserocr-deskew -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
         """
 }
 
@@ -172,7 +180,7 @@ process ocrd_cis_ocropy_segment_5 {
 
     script:
         """
-        ${params.env_wrapper_cmd} ocrd-cis-ocropy-segment -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ${params.env_wrapper_cmd_step5} ocrd-cis-ocropy-segment -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -196,7 +204,7 @@ process ocrd_cis_ocropy_dewarp_6 {
 
     script:
         """
-        ${params.env_wrapper_cmd} ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step6} ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -220,7 +228,7 @@ process ocrd_calamari_recognize_7 {
 
     script:
         """
-        ${params.env_wrapper_cmd} ocrd-calamari-recognize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
+        ${params.env_wrapper_cmd_step7} ocrd-calamari-recognize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
         """
 }
 

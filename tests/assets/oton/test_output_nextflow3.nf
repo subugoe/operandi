@@ -6,6 +6,9 @@ params.mets_path = "null"
 params.workspace_dir = "null"
 params.pages = "null"
 params.forks = "4"
+params.env_wrapper_cmd_step0 = "null"
+params.env_wrapper_cmd_step1 = "null"
+params.env_wrapper_cmd_step2 = "null"
 
 process split_page_ranges {
     debug true

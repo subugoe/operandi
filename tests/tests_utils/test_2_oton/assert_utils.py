@@ -30,8 +30,8 @@ def assert_common_features_local(nextflow_file_class):
         assert parameter in parameters, f"{parameter} is not in {parameters}"
     blocks_process = nextflow_file_class.nf_blocks_process
     for block in blocks_process:
-        assert '${params.env_wrapper_cmd}' not in block.dump_script(), \
-            "${params.env_wrapper_cmd} found but should not exist in " + f"'{block.ocrd_command_bash_placeholders}'"
+        assert 'params.env_wrapper_cmd_step' not in block.dump_script(), \
+            "params.env_wrapper_cmd_step found but should not exist in " + f"'{block.ocrd_command_bash_placeholders}'"
 
 
 def assert_common_features_docker(nextflow_file_class):
@@ -40,8 +40,8 @@ def assert_common_features_docker(nextflow_file_class):
         assert parameter in parameters, f"{parameter} is not in {parameters}"
     blocks_process = nextflow_file_class.nf_blocks_process
     for block in blocks_process:
-        assert '${params.env_wrapper_cmd}' in block.dump_script(), \
-            "${params.env_wrapper_cmd} not found but should exist in " + f"'{block.ocrd_command_bash_placeholders}'"
+        assert 'params.env_wrapper_cmd_step' in block.dump_script(), \
+            "params.env_wrapper_cmd_step not found but should exist in " + f"'{block.ocrd_command_bash_placeholders}'"
 
 
 def assert_common_features_apptainer(nextflow_file_class):
@@ -50,8 +50,8 @@ def assert_common_features_apptainer(nextflow_file_class):
         assert parameter in parameters, f"{parameter} is not in {parameters}"
     blocks_process = nextflow_file_class.nf_blocks_process
     for block in blocks_process:
-        assert '${params.env_wrapper_cmd}' in block.dump_script(), \
-            "${params.env_wrapper_cmd} not found but should exist in " + f"'{block.ocrd_command_bash_placeholders}'"
+        assert 'params.env_wrapper_cmd_step' in block.dump_script(), \
+            "params.env_wrapper_cmd_step not found but should exist in " + f"'{block.ocrd_command_bash_placeholders}'"
 
 
 def assert_compare_workflow_blocks(output_file_path, expected_wf, clean_files: bool = False):

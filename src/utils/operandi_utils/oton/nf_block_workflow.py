@@ -1,11 +1,7 @@
 from logging import getLevelName, getLogger
 from typing import List
 from operandi_utils.oton.constants import (
-    OTON_LOG_LEVEL,
-    PARAMS_KEY_WORKSPACE_DIR,
-    PARAMS_KEY_INPUT_FILE_GRP,
-    PARAMS_KEY_FORKS,
-    SPACES
+    OTON_LOG_LEVEL, PARAMS_KEY_WORKSPACE_DIR, PARAMS_KEY_INPUT_FILE_GRP, PARAMS_KEY_FORKS, SPACES
 )
 from operandi_utils.oton.nf_block_process import NextflowBlockProcess
 

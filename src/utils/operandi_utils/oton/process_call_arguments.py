@@ -2,8 +2,8 @@ from json import dumps as json_dumps
 from logging import getLevelName, getLogger
 from typing import Optional
 from operandi_utils.oton.constants import (
-    OCRD_ALL_JSON, OTON_LOG_LEVEL,
-    PH_DIR_IN, PH_DIR_OUT, PH_WORKSPACE_DIR, PH_METS_PATH, PH_METS_SOCKET_PATH, PH_PAGE_RANGE
+    BS, CONST_DIR_IN, CONST_DIR_OUT, CONST_WORKSPACE_DIR, CONST_METS_PATH, CONST_METS_SOCKET_PATH,
+    OCRD_ALL_JSON, OTON_LOG_LEVEL
 )
 
 # This class is based on ocrd.task_sequence.ProcessorTask
@@ -55,11 +55,11 @@ class ProcessorCallArguments:
         dump = ''
         dump += f'{self.executable}'
         if self.mets_socket_path:
-            dump += f' -U {PH_METS_SOCKET_PATH}'
-        dump += f' -w {PH_WORKSPACE_DIR}'
-        dump += f' -m {PH_METS_PATH}'
-        dump += f' -I {PH_DIR_IN}'
-        dump += f' -O {PH_DIR_OUT}'
+            dump += f' -U ${BS[0]}{CONST_METS_SOCKET_PATH}{BS[1]}'
+        dump += f' -w ${BS[0]}{CONST_WORKSPACE_DIR}{BS[1]}'
+        dump += f' -m ${BS[0]}{CONST_METS_PATH}{BS[1]}'
+        dump += f' -I ${BS[0]}{CONST_DIR_IN}{BS[1]}'
+        dump += f' -O ${BS[0]}{CONST_DIR_OUT}{BS[1]}'
         if self.parameters:
             dump += f" -p '{json_dumps(self.parameters)}'"
         return dump

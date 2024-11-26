@@ -118,7 +118,10 @@ PARAMETERS_LOCAL = [
 
 PARAMETERS_DOCKER = [
     'params.forks = "4"',
-    'params.env_wrapper_cmd = "null"'
+    'params.env_wrapper_cmd_core = "null"',
+    'params.env_wrapper_cmd_step0 = "null"',
+    'params.env_wrapper_cmd_step1 = "null"',
+    'params.env_wrapper_cmd_step2 = "null"',
 ]
 
 PARAMETERS_APPTAINER = [
@@ -127,5 +130,8 @@ PARAMETERS_APPTAINER = [
     'params.forks = params.cpus',
     'params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intValue()',
     'params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())',
-    'params.env_wrapper_cmd = "null"'
+    'params.env_wrapper_cmd_core = "null"',
+    'params.env_wrapper_cmd_step0 = "null"',
+    'params.env_wrapper_cmd_step1 = "null"',
+    'params.env_wrapper_cmd_step2 = "null"',
 ]
