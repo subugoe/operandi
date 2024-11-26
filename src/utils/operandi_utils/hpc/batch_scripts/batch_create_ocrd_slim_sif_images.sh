@@ -40,7 +40,6 @@ declare -a images=(
 "segment"
 "anybaseocr"
 "sbb_binarization"
-"detectron2"
 "froc"
 "pagetopdf"
 "keraslm"
@@ -48,6 +47,7 @@ declare -a images=(
 "doxa"
 "im6convert"
 "olahd-client"
+"detectron2"
 "cor-asv-ann"
 )
 
@@ -59,6 +59,9 @@ do
     fi
     echo "Building SIF of $image"
     apptainer build --disable-cache "ocrd_$image.sif" "docker://ocrd/$image:latest"
-    echo "Building complete: $APPTAINER_CACHE_DIR/ocrd_$image.sif"
+    case $? in
+      0) echo "Building complete: $APPTAINER_CACHE_DIR/ocrd_$image.sif" ;;
+      *) echo "Building failed, error code: $?" >&2 ;;
+    esac
     echo ""
 done

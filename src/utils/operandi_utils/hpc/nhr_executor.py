@@ -80,7 +80,7 @@ class NHRExecutor(NHRConnector):
         regular_args = {
             "project_base_dir": self.project_root_dir,
             "scratch_base_dir": self.slurm_workspaces_dir,
-            "ocrd_processor_images": "ocrd_all_maximum_image.sif,dummy1.sif,dummy2.sif,dummy3.sif",
+            "ocrd_processor_images": "ocrd_all_maximum_image.sif",
             "workflow_job_id": workflow_job_id,
             "workspace_id": workspace_id,
             "use_mets_server_bash_flag": use_mets_server_bash_flag,
