@@ -11,7 +11,7 @@ module purge
 module load apptainer
 
 hostname
-/opt/slurm/etc/scripts/misc/slurm_resources
+# /opt/slurm/etc/scripts/misc/slurm_resources
 
 # This sif file is generated with another batch script
 SIF_PATH="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr/ocrd_processor_sifs/ocrd_all_maximum_image.sif"

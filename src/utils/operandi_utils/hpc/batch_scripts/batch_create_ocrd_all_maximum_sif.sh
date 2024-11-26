@@ -11,7 +11,7 @@ module purge
 module load apptainer
 
 hostname
-/opt/slurm/etc/scripts/misc/slurm_resources
+# /opt/slurm/etc/scripts/misc/slurm_resources
 
 APPTAINER_TMPDIR="$LOCAL_TMPDIR"
 APPTAINER_CACHE_DIR="/mnt/lustre-emmy-hdd/projects/project_pwieder_ocr_nhr"
