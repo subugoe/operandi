@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import AccountType, ServerApiTag
-from operandi_utils.database import db_get_all_job_ids_by_user, db_get_processing_stats, db_get_user_account_with_email
+from operandi_utils.database import db_get_processing_stats, db_get_all_jobs_by_user, db_get_user_account_with_email
 from operandi_server.exceptions import AuthenticationError
 from operandi_server.models import PYUserAction, WorkflowJobRsrc
 from operandi_utils.database.models import DBProcessingStatistics
@@ -95,6 +95,6 @@ class RouterUser:
         # Fetch user account details
         db_user_account = await db_get_user_account_with_email(email=auth.username)
         # Retrieve workflow jobs for the user
-        workflow_jobs = await db_get_all_job_ids_by_user(user_id=db_user_account.user_id)
+        workflow_jobs = await db_get_all_jobs_by_user(user_id=db_user_account.user_id)
         return workflow_jobs
 

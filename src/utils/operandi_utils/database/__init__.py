@@ -17,7 +17,7 @@ __all__ = [
     "db_get_user_account_with_email",
     "db_get_workflow",
     "db_get_workflow_job",
-    "db_get_all_job_ids_by_user",
+    "db_get_all_jobs_by_user",
     "db_get_workspace",
     "db_increase_processing_stats",
     "db_increase_processing_stats_with_handling",
@@ -40,7 +40,7 @@ __all__ = [
     "sync_db_get_user_account_with_email",
     "sync_db_get_workflow",
     "sync_db_get_workflow_job",
-    "sync_db_get_all_job_ids_by_user",
+    "sync_db_get_all_jobs_by_user",
     "sync_db_get_workspace",
     "sync_db_increase_processing_stats",
     "sync_db_initiate_database",
@@ -84,11 +84,11 @@ from .db_workflow import (
 from .db_workflow_job import (
     db_create_workflow_job,
     db_get_workflow_job,
-    db_get_all_job_ids_by_user,
+    db_get_all_jobs_by_user,
     db_update_workflow_job,
     sync_db_create_workflow_job,
     sync_db_get_workflow_job,
-    sync_db_get_all_job_ids_by_user,
+    sync_db_get_all_jobs_by_user,
     sync_db_update_workflow_job
 )
 from .db_workspace import (

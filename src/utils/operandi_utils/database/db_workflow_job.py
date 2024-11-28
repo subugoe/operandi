@@ -40,7 +40,7 @@ async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
         raise RuntimeError(f"No DB workflow job entry found for id: {job_id}")
     return db_workflow_job
 
-async def db_get_all_job_ids_by_user(user_id: str) -> List[WorkflowJobRsrc]:
+async def db_get_all_jobs_by_user(user_id: str) -> List[WorkflowJobRsrc]:
     db_workflow_jobs = await DBWorkflowJob.find_many(DBWorkflowJob.user_id==user_id).to_list()
     response = []
     for db_workflow_job in db_workflow_jobs:
@@ -92,5 +92,5 @@ async def sync_db_update_workflow_job(find_job_id: str, **kwargs) -> DBWorkflowJ
     return await db_update_workflow_job(find_job_id=find_job_id, **kwargs)
 
 @call_sync
-async def sync_db_get_all_job_ids_by_user(user_id: str) -> List[WorkflowJobRsrc]:
-    return await db_get_all_job_ids_by_user(user_id)
+async def sync_db_get_all_jobs_by_user(user_id: str) -> List[WorkflowJobRsrc]:
+    return await db_get_all_jobs_by_user(user_id)
