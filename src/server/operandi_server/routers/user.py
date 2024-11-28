@@ -6,7 +6,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_utils.database import db_get_all_job_ids_by_user, db_get_processing_stats, db_get_user_account_with_email
 from operandi_server.exceptions import AuthenticationError
-from operandi_server.models import PYUserAction
+from operandi_server.models import PYUserAction, WorkflowJobRsrc
 from operandi_utils.database.models import DBProcessingStatistics
 from .user_utils import user_auth, user_register_with_handling
 
@@ -35,9 +35,9 @@ class RouterUser:
         )
         self.router.add_api_route(
             path="/user/workflow_jobs",
-            endpoint=self.user_workflow_jobs_id, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get all workflow jobs ids submitted by the user",
-            response_model=List[str], response_model_exclude_unset=True, response_model_exclude_none=True
+            endpoint=self.user_workflow_jobs, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get all workflow jobs submitted by the user",
+            response_model=List[WorkflowJobRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
     async def user_login(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYUserAction:
@@ -90,7 +90,7 @@ class RouterUser:
         db_processing_stats = await db_get_processing_stats(db_user_account.user_id)
         return db_processing_stats
 
-    async def user_workflow_jobs_id(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[str]:
+    async def user_workflow_jobs(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowJobRsrc]:
         await self.user_login(auth)
         # Fetch user account details
         db_user_account = await db_get_user_account_with_email(email=auth.username)
