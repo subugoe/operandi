@@ -3,8 +3,20 @@ from tests.helpers_asserts import assert_exists_db_resource
 from tests.constants import WORKFLOW_DUMMY_TEXT
 from .helpers_asserts import assert_local_dir_workflow, assert_response_status_code
 
+def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workflow):
+    # Post a new workflow script
+    wf_detail = "Test template workflow with mets server"
+    response = operandi.post(
+        url=f"/workflow?details={wf_detail}", files={"nextflow_script": bytes_template_workflow}, auth=auth)
+    assert_response_status_code(response.status_code, expected_floor=2)
+    workflow_id = response.json()['resource_id']
+    assert_local_dir_workflow(workflow_id)
+    db_workflow = db_workflows.find_one({"workflow_id": workflow_id})
+    assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
+    assert db_workflow["details"] == wf_detail
+    assert db_workflow["uses_mets_server"] == False
 
-def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workflow_with_ms):
+def test_post_workflow_script_with_ms(operandi, auth, db_workflows, bytes_template_workflow_with_ms):
     # Post a new workflow script
     wf_detail = "Test template workflow with mets server"
     response = operandi.post(
@@ -15,6 +27,7 @@ def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workf
     db_workflow = db_workflows.find_one({"workflow_id": workflow_id})
     assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
     assert db_workflow["details"] == wf_detail
+    assert db_workflow["uses_mets_server"] == True
 
 
 def test_put_workflow_script(
@@ -38,6 +51,7 @@ def test_put_workflow_script(
     assert workflow_path1, "Failed to extract workflow path 1"
     assert workflow_details1, "Failed to extract workflow details 1"
     assert db_workflow["details"] == wf_detail
+    assert db_workflow["uses_mets_server"] == True
 
     # The second put request replaces the previously created workflow
     files = {"nextflow_script": bytes_default_workflow_with_ms}
@@ -56,6 +70,7 @@ def test_put_workflow_script(
     assert workflow_path2, "Failed to extract workflow path 2"
     assert workflow_details2, "Failed to extract workflow details 2"
     assert db_workflow["details"] == wf_detail_put
+    assert db_workflow["uses_mets_server"] == True
 
     assert workflow_dir1 == workflow_dir2, \
         f"Workflow dir paths should match, but does not: {workflow_dir1} != {workflow_dir2}"

@@ -3,6 +3,7 @@ from logging import getLogger
 from os.path import join
 from pathlib import Path
 from time import sleep
+from typing import List
 
 from operandi_utils.constants import StateJobSlurm
 from .constants import (
@@ -37,8 +38,9 @@ class NHRExecutor(NHRConnector):
     def trigger_slurm_job(
         self, workflow_job_id: str, nextflow_script_path: Path, input_file_grp: str,
         workspace_id: str, mets_basename: str, nf_process_forks: int, ws_pages_amount: int, use_mets_server: bool,
-        file_groups_to_remove: str, cpus: int = 2, ram: int = 8, job_deadline_time: str = HPC_JOB_DEADLINE_TIME_TEST,
-        partition: str = HPC_NHR_JOB_DEFAULT_PARTITION, qos: str = HPC_JOB_QOS_DEFAULT
+        nf_executable_steps: List[str], file_groups_to_remove: str, cpus: int = 2, ram: int = 8,
+        job_deadline_time: str = HPC_JOB_DEADLINE_TIME_TEST, partition: str = HPC_NHR_JOB_DEFAULT_PARTITION,
+        qos: str = HPC_JOB_QOS_DEFAULT
     ) -> str:
         if ws_pages_amount < nf_process_forks:
             self.logger.warning(
@@ -74,7 +76,8 @@ class NHRExecutor(NHRConnector):
             hpc_nf_script_path=hpc_nf_script_path, hpc_ws_dir=hpc_workspace_dir,
             bind_ocrd_models=f"{ph_node_dir_ocrd_models}/ocrd-resources:/usr/local/share/ocrd-resources",
             ph_sif_ocrd_all=ph_node_sif_path_ocrd_all, input_file_grp=input_file_grp, mets_basename=mets_basename,
-            use_mets_server=use_mets_server, ws_pages_amount=ws_pages_amount, cpus=cpus, ram=ram, forks=nf_process_forks
+            use_mets_server=use_mets_server, nf_executable_steps=nf_executable_steps, ws_pages_amount=ws_pages_amount,
+            cpus=cpus, ram=ram, forks=nf_process_forks
         )
 
         regular_args = {
@@ -174,21 +177,27 @@ class NHRExecutor(NHRConnector):
     @staticmethod
     def cmd_nextflow_run(
         hpc_nf_script_path: str, hpc_ws_dir: str, bind_ocrd_models: str, ph_sif_ocrd_all: str, input_file_grp: str,
-        mets_basename: str, use_mets_server: bool, ws_pages_amount: int, cpus: int, ram: int, forks: int
+        mets_basename: str, use_mets_server: bool, nf_executable_steps: List[str], ws_pages_amount: int, cpus: int,
+        ram: int, forks: int
     ) -> str:
-        apptainer_cmd = f"apptainer exec --bind {hpc_ws_dir}:/ws_data --bind {bind_ocrd_models}"
-        apptainer_cmd += f" --env OCRD_METS_CACHING=false {ph_sif_ocrd_all}"
-
         nf_run_command = f"nextflow run {hpc_nf_script_path} -ansi-log false -with-report"
         nf_run_command += f" --input_file_group {input_file_grp}"
-        nf_run_command += f" --mets /ws_data/{mets_basename}"
+        nf_run_command += f" --mets_path /ws_data/{mets_basename}"
         if use_mets_server:
             nf_run_command += f" --mets_socket /ws_data/mets_server.sock"
         nf_run_command += f" --workspace_dir /ws_data"
         nf_run_command += f" --pages {ws_pages_amount}"
         # Command wrapper placeholder. Each occurrence is replaced with a single quote ' to avoid json parsing errors
+
+        # TODO: Send actual slim image apptainer cmds here instead of the sif_ocrd_all
         ph_cmd_wrapper = "PH_CMD_WRAPPER"
-        nf_run_command += f" --singularity_wrapper {ph_cmd_wrapper}{apptainer_cmd}{ph_cmd_wrapper}"
+        index = 0
+        apptainer_cmd = f"apptainer exec --bind {hpc_ws_dir}:/ws_data --bind {bind_ocrd_models}"
+        apptainer_cmd += f" --env OCRD_METS_CACHING=false {ph_sif_ocrd_all}"
+        nf_run_command += f" --env_wrapper_cmd_core {ph_cmd_wrapper}{apptainer_cmd}{ph_cmd_wrapper}"
+        for executable_step in nf_executable_steps:
+            nf_run_command += f" --env_wrapper_cmd_step{index} {ph_cmd_wrapper}{apptainer_cmd}{ph_cmd_wrapper}"
+            index += 1
         nf_run_command += f" --cpus {cpus}"
         nf_run_command += f" --ram {ram}"
         nf_run_command += f" --forks {forks}"

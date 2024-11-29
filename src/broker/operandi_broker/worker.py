@@ -5,6 +5,7 @@ from os import getpid, getppid, setsid
 from os.path import join
 from pathlib import Path
 from sys import exit
+from typing import List
 
 from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
 from operandi_utils.constants import LOG_LEVEL_WORKER, StateJob, StateWorkspace
@@ -111,6 +112,7 @@ class Worker:
 
             workflow_script_path = Path(workflow_db.workflow_script_path)
             nf_uses_mets_server = workflow_db.uses_mets_server
+            nf_executable_steps = workflow_db.executable_steps
             workspace_dir = Path(workspace_db.workspace_dir)
             mets_basename = workspace_db.mets_basename
             ws_pages_amount = workspace_db.pages_amount
@@ -132,8 +134,8 @@ class Worker:
                 workspace_dir=workspace_dir, workspace_base_mets=mets_basename,
                 workflow_script_path=workflow_script_path, input_file_grp=input_file_grp,
                 nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount, use_mets_server=nf_uses_mets_server,
-                file_groups_to_remove=remove_file_grps, cpus=slurm_job_cpus, ram=slurm_job_ram,
-                partition=slurm_job_partition
+                nf_executable_steps=nf_executable_steps, file_groups_to_remove=remove_file_grps, cpus=slurm_job_cpus,
+                ram=slurm_job_ram, partition=slurm_job_partition
             )
             self.log.info(f"The HPC slurm job was successfully submitted")
         except Exception as error:
@@ -200,7 +202,8 @@ class Worker:
     def prepare_and_trigger_slurm_job(
         self, workflow_job_id: str, workspace_id: str, workspace_dir: Path, workspace_base_mets: str,
         workflow_script_path: Path, input_file_grp: str, nf_process_forks: int, ws_pages_amount: int,
-        use_mets_server: bool, file_groups_to_remove: str, cpus: int, ram: int, partition: str
+        use_mets_server: bool, nf_executable_steps: List[str], file_groups_to_remove: str, cpus: int, ram: int,
+        partition: str
     ) -> str:
         if self.test_sbatch:
             job_deadline_time = HPC_JOB_DEADLINE_TIME_TEST
@@ -232,8 +235,9 @@ class Worker:
                 workflow_job_id=workflow_job_id, nextflow_script_path=workflow_script_path,
                 workspace_id=workspace_id, mets_basename=workspace_base_mets,
                 input_file_grp=input_file_grp, nf_process_forks=nf_process_forks, ws_pages_amount=ws_pages_amount,
-                use_mets_server=use_mets_server, file_groups_to_remove=file_groups_to_remove, cpus=cpus, ram=ram,
-                job_deadline_time=job_deadline_time, partition=partition, qos=qos)
+                use_mets_server=use_mets_server, nf_executable_steps=nf_executable_steps,
+                file_groups_to_remove=file_groups_to_remove, cpus=cpus, ram=ram, job_deadline_time=job_deadline_time,
+                partition=partition, qos=qos)
         except Exception as error:
             db_stats = sync_db_increase_processing_stats(
                 find_user_id=self.current_message_user_id, pages_failed=ws_pages_amount)

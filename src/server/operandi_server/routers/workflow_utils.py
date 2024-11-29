@@ -41,7 +41,6 @@ async def get_db_workflow_job_with_handling(logger, job_id: str, check_local_exi
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
     return db_workflow_job
 
-
 async def nf_script_uses_mets_server_with_handling(
     logger, nf_script_path: str, search_string: str = PARAMS_KEY_METS_SOCKET_PATH
 ) -> bool:
@@ -58,6 +57,33 @@ async def nf_script_uses_mets_server_with_handling(
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
+async def nf_script_executable_steps_with_handling(logger, nf_script_path: str) -> List[str]:
+    processor_executables: List[str] = []
+    try:
+        with open(nf_script_path) as nf_file:
+            line = nf_file.readline()
+            for word in line.split(' '):
+                if "ocrd-" in word:
+                    processor_executables.append(word)
+                    break
+    except Exception as error:
+        message = "Failed to identify processor executables in the provided Nextflow workflow."
+        logger.error(f"{message}, error: {error}")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+
+    """
+    apptainer_images: List[str] = []
+    try:
+        for executable in processor_executables:
+            apptainer_images.append(OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE[executable])
+    except Exception as error:
+        message = "Failed to produce apptainer image names from the processor executables list"
+        logger.error(f"{message}, error: {error}")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+    return apptainer_images
+    """
+
+    return processor_executables
 
 async def validate_oton_with_handling(logger, ocrd_process_txt_path: str):
     try:

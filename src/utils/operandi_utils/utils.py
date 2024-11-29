@@ -83,9 +83,11 @@ def is_url_responsive(url: str) -> bool:
         return False
 
 
-def get_nf_workflows_dir() -> Path:
+def get_nf_wfs_dir() -> Path:
     return Path(dirname(__file__), "hpc", "nextflow_workflows")
 
+def get_ocrd_process_wfs_dir() -> Path:
+    return Path(dirname(__file__), "hpc", "ocrd_process_workflows")
 
 def generate_id(file_ext: str = None):
     generated_id = str(uuid4())

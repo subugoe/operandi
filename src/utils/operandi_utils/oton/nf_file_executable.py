@@ -85,8 +85,7 @@ class NextflowFileExecutable:
             block.add_directive(directive='memory', value=PARAMS_KEY_RAM_PER_FORK)
 
         block.add_parameter_input(parameter="range_multiplier", parameter_type="val")
-        if not with_mets_server:
-            block.add_parameter_output(parameter="mets_file_chunk", parameter_type="env")
+        block.add_parameter_output(parameter="mets_file_chunk", parameter_type="env")
         block.add_parameter_output(parameter="current_range_pages", parameter_type="env")
 
         PH_RANGE_MULTIPLIER = '${range_multiplier}'
@@ -102,6 +101,9 @@ class NextflowFileExecutable:
             script += f"${BS[0]}{PARAMS_KEY_ENV_WRAPPER_CMD_CORE}{BS[1]} "
         script += f"{bash_cmd_ocrd_ws})\n"
         script += f'{SPACES}{SPACES}echo "Current range is: \\$current_range_pages"\n'
+
+        if with_mets_server:
+            script += f"{SPACES}{SPACES}mets_file_chunk=\\$(echo ${BS[0]}{PARAMS_KEY_METS_PATH}{BS[1]})\n"
 
         if not with_mets_server:
             script += f"{SPACES}{SPACES}mets_file_chunk=\\$(echo ${BS[0]}{PARAMS_KEY_WORKSPACE_DIR}{BS[1]}/mets_{PH_RANGE_MULTIPLIER}.xml)\n"

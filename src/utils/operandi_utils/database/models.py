@@ -102,6 +102,7 @@ class DBWorkflow(Document):
         workflow_script_base    The name of the nextflow script file
         workflow_script_path    Nextflow workflow file full path on the server
         uses_mets_server        Whether the NF script forwards requests to a workspace mets server
+        executable_steps        A list of ocrd_processor executables
         deleted                 Whether the entry has been deleted locally from the server
         datetime                Shows the created date time of the entry
         details                 Extra user specified details about this entry
@@ -112,6 +113,7 @@ class DBWorkflow(Document):
     workflow_script_base: str
     workflow_script_path: str
     uses_mets_server: bool
+    executable_steps: List[str]
     deleted: bool = False
     datetime = datetime.now()
     details: Optional[str]

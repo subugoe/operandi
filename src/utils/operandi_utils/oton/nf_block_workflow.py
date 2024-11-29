@@ -37,7 +37,7 @@ class NextflowBlockWorkflow:
             if previous_nfp is None:
                 workflow_call += (
                     f'{nf_split_page_ranges.nf_process_name}.out[0], {nf_split_page_ranges.nf_process_name}.out[1], '
-                    f'{PARAMS_KEY_WORKSPACE_DIR}, {PARAMS_KEY_INPUT_FILE_GRP} "{out_file_grps}"'
+                    f'{PARAMS_KEY_WORKSPACE_DIR}, {PARAMS_KEY_INPUT_FILE_GRP}, "{out_file_grps}"'
                 )
             else:
                 workflow_call += (

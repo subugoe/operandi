@@ -12,11 +12,12 @@ from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette.status import HTTP_404_NOT_FOUND
 
-from operandi_utils import get_nf_workflows_dir
+from operandi_utils import get_nf_wfs_dir, get_ocrd_process_wfs_dir
 from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateWorkspace
 from operandi_utils.database import (
     db_create_workflow, db_create_workflow_job, db_get_hpc_slurm_job, db_get_workflow, db_update_workspace,
     db_increase_processing_stats_with_handling)
+from operandi_utils.oton import OTONConverter
 from operandi_utils.rabbitmq import (
     get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
 from operandi_server.constants import (
@@ -30,7 +31,7 @@ from .workflow_utils import (
     get_db_workflow_job_with_handling,
     get_db_workflow_with_handling,
     nf_script_uses_mets_server_with_handling,
-    validate_oton_with_handling
+    validate_oton_with_handling, nf_script_executable_steps_with_handling
 )
 from .workspace_utils import check_if_file_group_exists_with_handling, get_db_workspace_with_handling
 from .user import RouterUser
@@ -133,10 +134,32 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
 
-    async def insert_production_workflows(self, production_workflows_dir: Path = get_nf_workflows_dir()):
+    async def produce_production_workflows(
+        self,
+        ocrd_process_wf_dir: Path = get_ocrd_process_wfs_dir(),
+        production_nf_wfs_dir: Path = get_nf_wfs_dir()
+    ):
+        oton_converter = OTONConverter()
+        for path in ocrd_process_wf_dir.iterdir():
+            if not path.is_file():
+                self.logger.info(f"Skipping non-file path: {path}")
+                continue
+            if path.suffix != '.txt':
+                self.logger.info(f"Skipping non .txt extension file path: {path}")
+                continue
+            # path.stem -> file_name
+            # path.name -> file_name.ext
+            output_path = Path(production_nf_wfs_dir, f"{path.stem}.nf")
+            oton_converter.convert_oton(
+                input_path=path, output_path=str(output_path), environment="apptainer", with_mets_server=False)
+            output_path = Path(production_nf_wfs_dir, f"{path.stem}_with_MS.nf")
+            oton_converter.convert_oton(
+                input_path=path, output_path=str(output_path), environment="apptainer", with_mets_server=True)
+
+    async def insert_production_workflows(self, production_nf_wfs_dir: Path = get_nf_wfs_dir()):
         wf_detail = "Workflow provided by the Operandi Server"
-        self.logger.info(f"Inserting production workflows for Operandi from: {production_workflows_dir}")
-        for path in production_workflows_dir.iterdir():
+        self.logger.info(f"Inserting production workflows for Operandi from: {production_nf_wfs_dir}")
+        for path in production_nf_wfs_dir.iterdir():
             if not path.is_file():
                 self.logger.info(f"Skipping non-file path: {path}")
                 continue
@@ -150,11 +173,14 @@ class RouterWorkflow:
             nf_script_dest = join(workflow_dir, path.name)
             copyfile(src=path, dst=nf_script_dest)
             uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
-            self.logger.info(f"Inserting: {workflow_id}, uses_mets_server: {uses_mets_server}, script path: {nf_script_dest}")
+            executable_steps = await nf_script_executable_steps_with_handling(self.logger, nf_script_dest)
+            self.logger.info(
+                f"Inserting: {workflow_id}, uses_mets_server: {uses_mets_server}, script path: {nf_script_dest}")
             await db_create_workflow(
                 user_id="Operandi Server",
                 workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-                workflow_script_base=path.name, uses_mets_server=uses_mets_server, details=wf_detail)
+                workflow_script_base=path.name, uses_mets_server=uses_mets_server, executable_steps=executable_steps,
+                details=wf_detail)
             self.production_workflows.append(workflow_id)
 
     async def list_workflows(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
@@ -204,10 +230,11 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
+        executable_steps = await nf_script_executable_steps_with_handling(self.logger, nf_script_dest)
         db_workflow = await db_create_workflow(
             user_id=py_user_action.user_id, workflow_id=workflow_id, workflow_dir=workflow_dir,
             workflow_script_path=nf_script_dest, workflow_script_base=nextflow_script.filename,
-            uses_mets_server=uses_mets_server, details=details)
+            uses_mets_server=uses_mets_server, executable_steps=executable_steps, details=details)
         return WorkflowRsrc.from_db_workflow(db_workflow)
 
     async def update_workflow_script(
@@ -239,10 +266,11 @@ class RouterWorkflow:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
+        executable_steps = await nf_script_executable_steps_with_handling(self.logger, nf_script_dest)
         db_workflow = await db_create_workflow(
             user_id=py_user_action.user_id, workflow_id=workflow_id, workflow_dir=workflow_dir,
             workflow_script_path=nf_script_dest, workflow_script_base=nextflow_script.filename,
-            uses_mets_server=uses_mets_server, details=details)
+            uses_mets_server=uses_mets_server, executable_steps=executable_steps, details=details)
         return WorkflowRsrc.from_db_workflow(db_workflow)
 
     async def get_workflow_job_status(
@@ -461,4 +489,4 @@ class RouterWorkflow:
 
         await validate_oton_with_handling(self.logger, ocrd_process_txt)
         await convert_oton_with_handling(self.logger, ocrd_process_txt, nf_script_dest, environment, with_mets_server)
-        return FileResponse(nf_script_dest, filename=f'{oton_id}.nf')
+        return FileResponse(nf_script_dest, filename=f'{oton_id}.nf', media_type="application/txt-file")

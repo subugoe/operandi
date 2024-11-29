@@ -18,6 +18,7 @@ __all__ = [
     "LOG_LEVEL_SERVER",
     "LOG_LEVEL_WORKER",
     "MODULE_TYPES",
+    "OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE",
     "OLA_HD_BAG_ENDPOINT",
     "OLA_HD_USER",
     "OLA_HD_PASSWORD",
@@ -167,7 +168,7 @@ class StateWorkspace(str, Enum):
     UNSET = "UNSET"
 
 # TODO: Find a more optimal way of achieving this dynamically
-OCRD_PROCESSOR_NAME_TO_IMAGE = {
+OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE = {
     "ocrd": "ocrd_core.sif",
     "ocrd-tesserocr-crop": "ocrd_tesserocr.sif",
     "ocrd-tesserocr-deskew": "ocrd_tesserocr.sif",
