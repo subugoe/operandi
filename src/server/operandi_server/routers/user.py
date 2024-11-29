@@ -113,9 +113,6 @@ class RouterUser:
             start_date: Optional[datetime] = None,
             end_date: Optional[datetime] = None
     ) -> List:
-        """
-        Retrieve all workflow jobs for a user, optionally filtered by a date range.
-        """
         await self.user_login(auth)
         # Fetch user account details
         db_user_account = await db_get_user_account_with_email(email=auth.username)
