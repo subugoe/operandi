@@ -1,5 +1,6 @@
 from logging import getLogger
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
@@ -93,12 +94,24 @@ class RouterUser:
         db_processing_stats = await db_get_processing_stats(db_user_account.user_id)
         return db_processing_stats
 
-    async def user_workflow_jobs(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List:
+    async def user_workflow_jobs(
+            self,
+            auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+            start_date: Optional[datetime] = None,
+            end_date: Optional[datetime] = None
+    ) -> List:
+        """
+        Retrieve all workflow jobs for a user, optionally filtered by a date range.
+        """
         await self.user_login(auth)
         # Fetch user account details
         db_user_account = await db_get_user_account_with_email(email=auth.username)
-        # Retrieve workflow jobs for the user
-        db_workflow_jobs = await db_get_all_jobs_by_user(user_id=db_user_account.user_id)
+        # Retrieve workflow jobs for the user with optional date filtering
+        db_workflow_jobs = await db_get_all_jobs_by_user(
+            user_id=db_user_account.user_id,
+            start_date=start_date,
+            end_date=end_date
+        )
         response = []
         for db_workflow_job in db_workflow_jobs:
             db_workflow = await db_get_workflow(db_workflow_job.workflow_id)
