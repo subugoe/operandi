@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List, Optional
 from operandi_utils import call_sync
 from .models import DBWorkflow
 
@@ -48,6 +49,22 @@ async def db_get_workflow(workflow_id: str) -> DBWorkflow:
         raise RuntimeError(f"No DB workflow entry found for id: {workflow_id}")
     return db_workflow
 
+async def db_get_all_workflows_by_user(user_id: str, start_date: Optional[datetime] = None,
+                                  end_date: Optional[datetime] = None) -> List[DBWorkflow]:
+    # Start with the user_id filter
+    query = {"user_id": user_id}
+
+    # Add date filters conditionally
+    if start_date or end_date:
+        query["datetime"] = {}
+        if start_date:
+            query["datetime"]["$gte"] = start_date
+        if end_date:
+            query["datetime"]["$lte"] = end_date
+
+    # Execute the query
+    db_workflows = await DBWorkflow.find_many(query).to_list()
+    return db_workflows
 
 @call_sync
 async def sync_db_get_workflow(workflow_id: str) -> DBWorkflow:
@@ -83,3 +100,7 @@ async def db_update_workflow(find_workflow_id: str, **kwargs) -> DBWorkflow:
 @call_sync
 async def sync_db_update_workflow(find_workflow_id: str, **kwargs) -> DBWorkflow:
     return await db_update_workflow(find_workflow_id=find_workflow_id, **kwargs)
+
+@call_sync
+async def sync_db_get_all_workflows_by_user(user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[DBWorkflow]:
+    return await db_get_all_workflows_by_user(user_id, start_date, end_date)

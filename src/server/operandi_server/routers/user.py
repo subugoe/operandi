@@ -7,10 +7,10 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_utils.database import (
     db_get_processing_stats, db_get_all_jobs_by_user, db_get_user_account_with_email,
-    db_get_workflow, db_get_workspace, db_get_all_workspaces_by_user
+    db_get_workflow, db_get_workspace, db_get_all_workspaces_by_user, db_get_all_workflows_by_user
 )
 from operandi_server.exceptions import AuthenticationError
-from operandi_server.models import PYUserAction, WorkflowJobRsrc, WorkspaceRsrc
+from operandi_server.models import PYUserAction, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.database.models import DBProcessingStatistics
 from .user_utils import user_auth, user_register_with_handling
 
@@ -47,6 +47,12 @@ class RouterUser:
             path="/user/workspaces",
             endpoint=self.user_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workspaces submitted by the user",
+            response_model=List, response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        self.router.add_api_route(
+            path="/user/workflows",
+            endpoint=self.user_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get all workflows submitted by the user",
             response_model=List, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
@@ -133,13 +139,11 @@ class RouterUser:
             start_date: Optional[datetime] = None,
             end_date: Optional[datetime] = None
     ) -> List:
-        """
-        Retrieve all workflow jobs for a user, optionally filtered by a date range.
-        """
+
         await self.user_login(auth)
         # Fetch user account details
         db_user_account = await db_get_user_account_with_email(email=auth.username)
-        # Retrieve workflow jobs for the user with optional date filtering
+        # Retrieve workspaces for the user with optional date filtering
         db_workspaces = await db_get_all_workspaces_by_user(
             user_id=db_user_account.user_id,
             start_date=start_date,
@@ -147,3 +151,22 @@ class RouterUser:
         )
 
         return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
+
+    async def user_workflows(
+            self,
+            auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+            start_date: Optional[datetime] = None,
+            end_date: Optional[datetime] = None
+    ) -> List:
+
+        await self.user_login(auth)
+        # Fetch user account details
+        db_user_account = await db_get_user_account_with_email(email=auth.username)
+        # Retrieve workflow  for the user with optional date filtering
+        db_workflows = await db_get_all_workflows_by_user(
+            user_id=db_user_account.user_id,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]
