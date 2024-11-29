@@ -56,7 +56,7 @@ def test_pack_and_put_slurm_workspace_with_ms(
     )
 
 
-def _test_hpc_connector_run_batch_script(
+def test_hpc_connector_run_batch_script(
     hpc_nhr_command_executor, hpc_nhr_data_transfer, template_workflow):
     slurm_job_id = hpc_nhr_command_executor.trigger_slurm_job(
         workflow_job_id=ID_WORKFLOW_JOB, nextflow_script_path=Path(template_workflow),

@@ -36,6 +36,7 @@ FILE_GROUPS_TO_REMOVE=$(echo "$json_args" | jq .file_groups_to_remove | tr -d '"
 WORKFLOW_JOB_DIR=$(echo "$json_args" | jq .hpc_workflow_job_dir | tr -d '"')
 WORKSPACE_DIR=$(echo "$json_args" | jq .hpc_workspace_dir | tr -d '"')
 NF_RUN_COMMAND=$(echo "$json_args" | jq .nf_run_command | tr -d '"')
+PRINT_OCRD_VERSION_COMMAND=$(echo "$json_args" | jq .print_ocrd_version_command | tr -d '"')
 START_METS_SERVER_COMMAND=$(echo "$json_args" | jq .start_mets_server_command | tr -d '"')
 STOP_METS_SERVER_COMMAND=$(echo "$json_args" | jq .stop_mets_server_command | tr -d '"')
 LIST_FILE_GROUPS_COMMAND=$(echo "$json_args" | jq .list_file_groups_command | tr -d '"')
@@ -43,19 +44,15 @@ REMOVE_FILE_GROUP_COMMAND=$(echo "$json_args" | jq .remove_file_group_command | 
 
 PROJECT_DIR_OCRD_MODELS="${PROJECT_BASE_DIR}/ocrd_models"
 PROJECT_DIR_PROCESSOR_SIFS="${PROJECT_BASE_DIR}/ocrd_processor_sifs"
-PROJECT_SIF_PATH_OCRD_ALL="${PROJECT_BASE_DIR}/ocrd_processor_sifs/ocrd_all_maximum_image.sif"
 
 NODE_DIR_OCRD_MODELS="${TMP_LOCAL}/ocrd_models"
 NODE_DIR_PROCESSOR_SIFS="${TMP_LOCAL}/ocrd_processor_sifs"
-NODE_SIF_PATH_OCRD_ALL="${TMP_LOCAL}/ocrd_processor_sifs/ocrd_all_maximum_image.sif"
 
 echo ""
 echo "Project dir ocrd models: $PROJECT_DIR_OCRD_MODELS"
 echo "Project dir processor sifs: $PROJECT_DIR_PROCESSOR_SIFS"
-echo "Project sif path ocrd all: $PROJECT_SIF_PATH_OCRD_ALL"
 echo "Node dir ocrd models: $NODE_DIR_OCRD_MODELS"
 echo "Node dir processor sifs: $NODE_DIR_PROCESSOR_SIFS"
-echo "Node sif path ocrd all: $NODE_SIF_PATH_OCRD_ALL"
 echo ""
 
 echo "Workspace dir: $WORKSPACE_DIR"
@@ -63,18 +60,19 @@ echo "Use mets server: $USE_METS_SERVER"
 
 echo ""
 echo "Nf run command with Node placeholders: $NF_RUN_COMMAND"
-NF_RUN_COMMAND="${NF_RUN_COMMAND//PH_NODE_SIF_PATH_OCRD_ALL/$NODE_SIF_PATH_OCRD_ALL}"
 NF_RUN_COMMAND="${NF_RUN_COMMAND//PH_NODE_DIR_OCRD_MODELS/$NODE_DIR_OCRD_MODELS}"
 NF_RUN_COMMAND="${NF_RUN_COMMAND//PH_CMD_WRAPPER/\'}"
+NF_RUN_COMMAND="${NF_RUN_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
 echo ""
 echo "Nf run command without placeholders: $NF_RUN_COMMAND"
 echo ""
 
-echo "Replacing ocrd core image sif placeholder of commands"
-START_METS_SERVER_COMMAND="${START_METS_SERVER_COMMAND//PH_NODE_SIF_PATH_OCRD_ALL/$NODE_SIF_PATH_OCRD_ALL}"
-STOP_METS_SERVER_COMMAND="${STOP_METS_SERVER_COMMAND//PH_NODE_SIF_PATH_OCRD_ALL/$NODE_SIF_PATH_OCRD_ALL}"
-LIST_FILE_GROUPS_COMMAND="${LIST_FILE_GROUPS_COMMAND//PH_NODE_SIF_PATH_OCRD_ALL/$NODE_SIF_PATH_OCRD_ALL}"
-REMOVE_FILE_GROUP_COMMAND="${REMOVE_FILE_GROUP_COMMAND//PH_NODE_SIF_PATH_OCRD_ALL/$NODE_SIF_PATH_OCRD_ALL}"
+echo "Replacing ocrd core NODE_DIR_PROCESSOR_SIFS"
+PRINT_OCRD_VERSION_COMMAND="${PRINT_OCRD_VERSION_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
+START_METS_SERVER_COMMAND="${START_METS_SERVER_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
+STOP_METS_SERVER_COMMAND="${STOP_METS_SERVER_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
+LIST_FILE_GROUPS_COMMAND="${LIST_FILE_GROUPS_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
+REMOVE_FILE_GROUP_COMMAND="${REMOVE_FILE_GROUP_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
 echo ""
 
 check_existence_of_dir_scratch_base(){
@@ -98,15 +96,6 @@ check_existence_of_dir_ocrd_models(){
   echo "Ocrd models directory found at: ${PROJECT_DIR_OCRD_MODELS}"
 }
 
-check_existence_of_sif_path_ocrd_all(){
-  # The SIF file of the OCR-D All docker image must be previously created
-  if [ ! -f "${PROJECT_SIF_PATH_OCRD_ALL}" ]; then
-    echo "Required ocrd_all_image sif file not found at: ${PROJECT_SIF_PATH_OCRD_ALL}"
-    exit 1
-  fi
-  echo "Required ocrd_all_image sif file found at: ${PROJECT_SIF_PATH_OCRD_ALL}"
-}
-
 check_existence_of_ocrd_processor_images_to_be_used(){
   for ocrd_image in "${ocrd_processor_images[@]}"
   do
@@ -121,7 +110,6 @@ check_existence_of_ocrd_processor_images_to_be_used(){
 check_existence_of_paths() {
   check_existence_of_dir_scratch_base
   check_existence_of_dir_ocrd_models
-  check_existence_of_sif_path_ocrd_all
   check_existence_of_ocrd_processor_images_to_be_used
 }
 
@@ -172,7 +160,7 @@ transfer_to_node_storage_processor_images(){
     fi
   done
   echo ""
-  apptainer exec "$NODE_SIF_PATH_OCRD_ALL" ocrd --version
+  eval "$PRINT_OCRD_VERSION_COMMAND"
   echo ""
 }
 
