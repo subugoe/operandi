@@ -1,9 +1,11 @@
 from fastapi import HTTPException, status
 from pathlib import Path
+from typing import List
 
 from operandi_utils.database import db_get_workflow, db_get_workflow_job
 from operandi_utils.database.models import DBWorkflow, DBWorkflowJob
 from operandi_utils.oton import OTONConverter, OCRDValidator
+from operandi_utils.oton.constants import PARAMS_KEY_METS_SOCKET_PATH
 
 
 async def get_db_workflow_with_handling(
@@ -41,7 +43,7 @@ async def get_db_workflow_job_with_handling(logger, job_id: str, check_local_exi
 
 
 async def nf_script_uses_mets_server_with_handling(
-    logger, nf_script_path: str, search_string: str = "params.mets_socket"
+    logger, nf_script_path: str, search_string: str = PARAMS_KEY_METS_SOCKET_PATH
 ) -> bool:
     try:
         with open(nf_script_path) as nf_file:
