@@ -145,7 +145,5 @@ class RouterUser:
             start_date=start_date,
             end_date=end_date
         )
-        for wk in db_workspaces:
-            print("Workspaces: ", db_workspaces)
-            print("--------------------------------------------------------------------")
+
         return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
