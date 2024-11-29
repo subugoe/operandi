@@ -134,7 +134,7 @@ def test_convert_txt_to_nextflow_success(operandi, auth):
     # Verify the status code and content
     assert_response_status_code(response.status_code, expected_floor=2)
     assert "params.mets_path" in nf_file_content
-    assert "params.env_wrapper" not in nf_file_content
+    assert "params.env_wrapper_cmd_core" not in nf_file_content
     assert "params.mets_socket_path" not in nf_file_content
     assert "merging_mets" in nf_file_content
 
@@ -155,7 +155,7 @@ def test_convert_txt_to_nextflow_success_with_mets_server(operandi, auth):
     # Verify the status code and content
     assert_response_status_code(response.status_code, expected_floor=2)
     assert "params.mets_path" in nf_file_content
-    assert "params.env_wrapper" not in nf_file_content
+    assert "params.env_wrapper_cmd_core" not in nf_file_content
     assert "params.mets_socket_path" in nf_file_content
     assert "merging_mets" not in nf_file_content
 
@@ -207,7 +207,7 @@ def test_convert_txt_to_nextflow_docker_success(operandi, auth):
     nf_file_content = response.content.decode('utf-8')
     assert_response_status_code(response.status_code, expected_floor=2)
     assert "params.mets_path" in nf_file_content
-    assert "params.env_wrapper" in nf_file_content
+    assert "params.env_wrapper_cmd_core" in nf_file_content
     assert "params.mets_socket_path" not in nf_file_content
     assert "merging_mets" in nf_file_content
 
@@ -226,6 +226,6 @@ def test_convert_txt_to_nextflow_docker_success_with_mets_server(operandi, auth)
     nf_file_content = response.content.decode('utf-8')
     assert_response_status_code(response.status_code, expected_floor=2)
     assert "params.mets_path" in nf_file_content
-    assert "params.env_wrapper" in nf_file_content
+    assert "params.env_wrapper_cmd_core" in nf_file_content
     assert "params.mets_socket_path" in nf_file_content
     assert "merging_mets" not in nf_file_content
