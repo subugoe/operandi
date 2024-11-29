@@ -149,12 +149,15 @@ class RouterWorkflow:
                 continue
             # path.stem -> file_name
             # path.name -> file_name.ext
+            self.logger.info(f"Converting to Nextflow workflow the ocrd process workflow: {path}")
             output_path = Path(production_nf_wfs_dir, f"{path.stem}.nf")
             oton_converter.convert_oton(
                 input_path=path, output_path=str(output_path), environment="apptainer", with_mets_server=False)
+            self.logger.info(f"Converted to a Nextflow file without a mets server: {output_path}")
             output_path = Path(production_nf_wfs_dir, f"{path.stem}_with_MS.nf")
             oton_converter.convert_oton(
                 input_path=path, output_path=str(output_path), environment="apptainer", with_mets_server=True)
+            self.logger.info(f"Converted to a Nextflow file with a mets server: {output_path}")
 
     async def insert_production_workflows(self, production_nf_wfs_dir: Path = get_nf_wfs_dir()):
         wf_detail = "Workflow provided by the Operandi Server"
