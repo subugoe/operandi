@@ -19,6 +19,7 @@ __all__ = [
     "db_get_workflow_job",
     "db_get_all_jobs_by_user",
     "db_get_workspace",
+    "db_get_all_workspaces_by_user",
     "db_increase_processing_stats",
     "db_increase_processing_stats_with_handling",
     "db_initiate_database",
@@ -42,6 +43,7 @@ __all__ = [
     "sync_db_get_workflow_job",
     "sync_db_get_all_jobs_by_user",
     "sync_db_get_workspace",
+    "sync_db_get_all_workspaces_by_user",
     "sync_db_increase_processing_stats",
     "sync_db_initiate_database",
     "sync_db_update_hpc_slurm_job",
@@ -94,10 +96,12 @@ from .db_workflow_job import (
 from .db_workspace import (
     db_create_workspace,
     db_get_workspace,
+    db_get_all_workspaces_by_user,
     db_update_workspace,
     sync_db_create_workspace,
     sync_db_get_workspace,
-    sync_db_update_workspace
+    sync_db_update_workspace,
+    sync_db_get_all_workspaces_by_user
 )
 from .db_processing_statistics import (
     db_create_processing_stats,

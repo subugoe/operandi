@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from os.path import join
 from operandi_utils import call_sync
@@ -75,6 +75,23 @@ async def db_get_workspace(workspace_id: str) -> DBWorkspace:
     return db_workspace
 
 
+async def db_get_all_workspaces_by_user(user_id: str, start_date: Optional[datetime] = None,
+                                  end_date: Optional[datetime] = None) -> List[DBWorkspace]:
+    # Start with the user_id filter
+    query = {"user_id": user_id}
+
+    # Add date filters conditionally
+    if start_date or end_date:
+        query["datetime"] = {}
+        if start_date:
+            query["datetime"]["$gte"] = start_date
+        if end_date:
+            query["datetime"]["$lte"] = end_date
+
+    # Execute the query
+    db_workspaces = await DBWorkspace.find_many(query).to_list()
+    return db_workspaces
+
 @call_sync
 async def sync_db_get_workspace(workspace_id: str) -> DBWorkspace:
     return await db_get_workspace(workspace_id)
@@ -121,3 +138,7 @@ async def db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorkspace:
 @call_sync
 async def sync_db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorkspace:
     return await db_update_workspace(find_workspace_id=find_workspace_id, **kwargs)
+
+@call_sync
+async def sync_db_get_all_workspaces_by_user(user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[DBWorkspace]:
+    return await db_get_all_workspaces_by_user(user_id, start_date, end_date)
