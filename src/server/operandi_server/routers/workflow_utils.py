@@ -62,10 +62,12 @@ async def nf_script_executable_steps_with_handling(logger, nf_script_path: str) 
     try:
         with open(nf_script_path) as nf_file:
             line = nf_file.readline()
-            for word in line.split(' '):
-                if "ocrd-" in word:
-                    processor_executables.append(word)
-                    break
+            while line:
+                for word in line.split(' '):
+                    if "ocrd-" in word:
+                        processor_executables.append(word)
+                        break
+                line = nf_file.readline()
     except Exception as error:
         message = "Failed to identify processor executables in the provided Nextflow workflow."
         logger.error(f"{message}, error: {error}")
@@ -82,7 +84,7 @@ async def nf_script_executable_steps_with_handling(logger, nf_script_path: str) 
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
     return apptainer_images
     """
-
+    logger.info(f"Found processor executables: {processor_executables}")
     return processor_executables
 
 async def validate_oton_with_handling(logger, ocrd_process_txt_path: str):
