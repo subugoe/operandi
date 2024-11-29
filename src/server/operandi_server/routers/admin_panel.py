@@ -4,10 +4,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_server.models import PYUserInfo, WorkflowJobRsrc, WorkspaceRsrc
+from operandi_server.models import PYUserInfo, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_utils.database import (
-    db_get_all_user_accounts, db_get_processing_stats, db_get_all_jobs_by_user, db_get_workflow, db_get_workspace, db_get_all_workspaces_by_user
+    db_get_all_user_accounts, db_get_processing_stats, db_get_all_jobs_by_user,
+    db_get_workflow, db_get_workspace, db_get_all_workspaces_by_user, db_get_all_workflows_by_user
 
 )
 from operandi_utils.utils import send_bag_to_ola_hd
@@ -44,6 +45,11 @@ class RouterAdminPanel:
             path="/admin/{user_id}/workspaces",
             endpoint=self.user_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workspaces submitted by the user identified by user_id"
+        )
+        self.router.add_api_route(
+            path="/admin/{user_id}/workflows",
+            endpoint=self.user_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get all workflows submitted by the user identified by user_id"
         )
     async def push_to_ola_hd(self, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         py_user_action = await self.user_authenticator.user_login(auth)
@@ -154,3 +160,25 @@ class RouterAdminPanel:
         )
 
         return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
+
+    async def user_workflows(
+            self,
+            user_id: str,
+            auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+            start_date: Optional[datetime] = None,
+            end_date: Optional[datetime] = None
+    ) -> List:
+        # Authenticate the admin user
+        py_user_action = await self.user_authenticator.user_login(auth)
+        if py_user_action.account_type != AccountType.ADMIN:
+            message = f"Admin privileges required for the endpoint"
+            self.logger.error(f"{message}")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+        # Retrieve workspaces for the user with optional date filtering
+        db_workflows = await db_get_all_workflows_by_user(
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]
