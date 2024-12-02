@@ -8,7 +8,7 @@ from typing import List
 from operandi_utils.constants import StateJobSlurm, OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE
 from .constants import (
     HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_DEFAULT, HPC_NHR_JOB_DEFAULT_PARTITION, HPC_BATCH_SUBMIT_WORKFLOW_JOB,
-    HPC_WRAPPER_SUBMIT_WORKFLOW_JOB, HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS
+    HPC_USE_SLIM_IMAGES, HPC_WRAPPER_SUBMIT_WORKFLOW_JOB, HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS
 )
 from .nhr_connector import NHRConnector
 
@@ -75,9 +75,7 @@ class NHRExecutor(NHRConnector):
         sif_ocrd_all = "ocrd_all_maximum_image.sif"
         sif_ocrd_core = OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE["ocrd"]
 
-        # TODO: Refactor the switch for using slim images
-        use_slim_images = False
-        if use_slim_images:
+        if HPC_USE_SLIM_IMAGES:
             ph_sif_core = f"{PH_NODE_DIR_PROCESSOR_SIFS}/{sif_ocrd_core}"
         else:
             ph_sif_core = f"{PH_NODE_DIR_PROCESSOR_SIFS}/{sif_ocrd_all}"
@@ -87,10 +85,10 @@ class NHRExecutor(NHRConnector):
             sif_core=sif_ocrd_core,
             sif_ocrd_all=sif_ocrd_all, input_file_grp=input_file_grp, mets_basename=mets_basename,
             use_mets_server=use_mets_server, nf_executable_steps=nf_executable_steps, ws_pages_amount=ws_pages_amount,
-            cpus=cpus, ram=ram, forks=nf_process_forks, use_slim_images=use_slim_images
+            cpus=cpus, ram=ram, forks=nf_process_forks, use_slim_images=HPC_USE_SLIM_IMAGES
         )
 
-        if use_slim_images:
+        if HPC_USE_SLIM_IMAGES:
             ocrd_processor_images = ",".join([OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE[exe] for exe in nf_executable_steps])
             ocrd_processor_images = f"{sif_ocrd_core},{ocrd_processor_images}"
         else:
