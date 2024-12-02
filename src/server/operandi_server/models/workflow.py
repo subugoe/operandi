@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from operandi_utils.constants import StateJob
 from operandi_utils.database.models import DBWorkflow, DBWorkflowJob, DBWorkspace
 from operandi_server.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER
@@ -14,6 +14,8 @@ class WorkflowRsrc(Resource):
     # description: (str) - inherited from Resource
     # created_by_user: (str) - inherited from Resource
     # datetime: (datetime) - inherited from Resource
+    uses_mets_server: bool
+    executable_steps: List[str]
 
     class Config:
         allow_population_by_field_name = True
@@ -25,7 +27,9 @@ class WorkflowRsrc(Resource):
             resource_id=db_workflow.workflow_id,
             resource_url=get_resource_url(SERVER_WORKFLOWS_ROUTER, db_workflow.workflow_id),
             description=db_workflow.details,
-            datetime=db_workflow.datetime
+            uses_mets_server=db_workflow.uses_mets_server,
+            executable_steps=db_workflow.executable_steps,
+            datetime=db_workflow.datetime,
         )
 
 class WorkflowJobRsrc(Resource):
