@@ -104,6 +104,9 @@ class RouterAdminPanel:
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
+        """
+        The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
+        """
         await self.auth_admin_with_handling(auth)
         db_workflow_jobs = await db_get_all_workflow_jobs_by_user(
             user_id=user_id, start_date=start_date, end_date=end_date)
@@ -118,6 +121,9 @@ class RouterAdminPanel:
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
+        """
+        The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
+        """
         await self.auth_admin_with_handling(auth)
         db_workspaces = await db_get_all_workspaces_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
         return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
@@ -126,6 +132,9 @@ class RouterAdminPanel:
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
+        """
+        The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
+        """
         await self.auth_admin_with_handling(auth)
         db_workflows = await db_get_all_workflows_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
         return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]

@@ -110,6 +110,9 @@ class RouterUser:
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
+        """
+        The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
+        """
         await self.user_login(auth)
         db_user_account = await db_get_user_account_with_email(email=auth.username)
         db_workflow_jobs = await db_get_all_workflow_jobs_by_user(
@@ -125,6 +128,9 @@ class RouterUser:
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
+        """
+        The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
+        """
         await self.user_login(auth)
         db_user_account = await db_get_user_account_with_email(email=auth.username)
         db_workspaces = await db_get_all_workspaces_by_user(
@@ -135,6 +141,9 @@ class RouterUser:
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
+        """
+        The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
+        """
         await self.user_login(auth)
         db_user_account = await db_get_user_account_with_email(email=auth.username)
         db_workflows = await db_get_all_workflows_by_user(
