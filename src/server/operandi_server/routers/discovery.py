@@ -52,46 +52,25 @@ class RouterDiscovery:
         return response
 
     async def get_processor_names(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[str]:
-        # Authenticate the user
         await self.user_authenticator.user_login(auth)
-
         try:
-            # Load JSON and extract processor names
             processor_names = list(OCRD_ALL_JSON.keys())
             return processor_names
-
-
         except JSONDecodeError as e:
-            # Raise a 500 error if the JSON is invalid or cannot be parsed
             message = f"Error decoding processor data file: {str(e)}"
-            # Log the detailed message
             self.logger.error(message)
-            # Raise the HTTPException with the same message
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=message
-            )
-        
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
         except Exception as e:
-            # Raise a generic 500 error for any other exceptions
             self.logger.error(f"Unexpected error while loading processors: {e}")
-            raise HTTPException(
-                status_code=500,
-                detail="An unexpected error occurred while loading processor names."
-            )
+            raise HTTPException(status_code=500, detail="An unexpected error occurred while loading processor names.")
 
     async def get_processor_info(self, processor_name: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> Dict:
         await self.user_authenticator.user_login(auth)
-
         try:
-            # Check if the processor name exists in the JSON
             if processor_name not in OCRD_ALL_JSON:
                 raise HTTPException(status_code=404, detail=f"Processor '{processor_name}' not found.")
-
-            # Retrieve processor information as a dictionary
             processor_info = OCRD_ALL_JSON[processor_name]
             return processor_info
-
         except JSONDecodeError:
             raise HTTPException(status_code=500, detail="Error decoding processor data file.")
         except Exception as e:

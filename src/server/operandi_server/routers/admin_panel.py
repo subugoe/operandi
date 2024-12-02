@@ -9,7 +9,6 @@ from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_utils.database import (
     db_get_all_user_accounts, db_get_processing_stats, db_get_all_jobs_by_user,
     db_get_workflow, db_get_workspace, db_get_all_workspaces_by_user, db_get_all_workflows_by_user
-
 )
 from operandi_utils.utils import send_bag_to_ola_hd
 from .user import RouterUser
@@ -81,7 +80,6 @@ class RouterAdminPanel:
         return response_message
 
     async def get_users(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        # Authenticate the user and ensure they have admin privileges
         py_user_action = await self.user_authenticator.user_login(auth)
         if py_user_action.account_type != AccountType.ADMIN:
             message = "Admin privileges required for the endpoint"
@@ -92,14 +90,11 @@ class RouterAdminPanel:
         return [PYUserInfo.from_db_user_account(user) for user in users]
 
     async def get_processing_stats_for_user(self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        # Authenticate the admin user
         py_user_action = await self.user_authenticator.user_login(auth)
         if py_user_action.account_type != AccountType.ADMIN:
             message = f"Admin privileges required for the endpoint"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
-
-        # Retrieve the processing stats for the specified user
         try:
             db_processing_stats = await db_get_processing_stats(user_id)
             if not db_processing_stats:
@@ -110,28 +105,18 @@ class RouterAdminPanel:
             message = f"Failed to fetch processing stats for user_id: {user_id}, error: {error}"
             self.logger.error(message)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
-
-        # Return the processing stats in the response model
         return db_processing_stats
+
     async def user_workflow_jobs(
-            self,
-            user_id: str,
-            auth: HTTPBasicCredentials = Depends(HTTPBasic()),
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None
+        self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
-        # Authenticate the admin user
         py_user_action = await self.user_authenticator.user_login(auth)
         if py_user_action.account_type != AccountType.ADMIN:
             message = f"Admin privileges required for the endpoint"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
-        # Retrieve workflow jobs for the user identified with user_id with optional date filtering
-        db_workflow_jobs = await db_get_all_jobs_by_user(
-            user_id=user_id,
-            start_date=start_date,
-            end_date=end_date
-        )
+        db_workflow_jobs = await db_get_all_jobs_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
         response = []
         for db_workflow_job in db_workflow_jobs:
             db_workflow = await db_get_workflow(db_workflow_job.workflow_id)
@@ -139,47 +124,26 @@ class RouterAdminPanel:
             response.append(WorkflowJobRsrc.from_db_workflow_job(db_workflow_job, db_workflow, db_workspace))
         return response
 
-
     async def user_workspaces(
-            self,
-            user_id: str,
-            auth: HTTPBasicCredentials = Depends(HTTPBasic()),
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None
+        self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
-        # Authenticate the admin user
         py_user_action = await self.user_authenticator.user_login(auth)
         if py_user_action.account_type != AccountType.ADMIN:
             message = f"Admin privileges required for the endpoint"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
-        # Retrieve workspaces for the user with optional date filtering
-        db_workspaces = await db_get_all_workspaces_by_user(
-            user_id=user_id,
-            start_date=start_date,
-            end_date=end_date
-        )
-
+        db_workspaces = await db_get_all_workspaces_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
         return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
 
     async def user_workflows(
-            self,
-            user_id: str,
-            auth: HTTPBasicCredentials = Depends(HTTPBasic()),
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None
+        self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
-        # Authenticate the admin user
         py_user_action = await self.user_authenticator.user_login(auth)
         if py_user_action.account_type != AccountType.ADMIN:
             message = f"Admin privileges required for the endpoint"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
-        # Retrieve workspaces for the user with optional date filtering
-        db_workflows = await db_get_all_workflows_by_user(
-            user_id=user_id,
-            start_date=start_date,
-            end_date=end_date
-        )
-
+        db_workflows = await db_get_all_workflows_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
         return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]

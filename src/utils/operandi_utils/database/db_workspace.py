@@ -75,20 +75,16 @@ async def db_get_workspace(workspace_id: str) -> DBWorkspace:
     return db_workspace
 
 
-async def db_get_all_workspaces_by_user(user_id: str, start_date: Optional[datetime] = None,
-                                  end_date: Optional[datetime] = None) -> List[DBWorkspace]:
-    # Start with the user_id filter
+async def db_get_all_workspaces_by_user(
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+) -> List[DBWorkspace]:
     query = {"user_id": user_id}
-
-    # Add date filters conditionally
     if start_date or end_date:
         query["datetime"] = {}
         if start_date:
             query["datetime"]["$gte"] = start_date
         if end_date:
             query["datetime"]["$lte"] = end_date
-
-    # Execute the query
     db_workspaces = await DBWorkspace.find_many(query).to_list()
     return db_workspaces
 
@@ -140,5 +136,6 @@ async def sync_db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorksp
     return await db_update_workspace(find_workspace_id=find_workspace_id, **kwargs)
 
 @call_sync
-async def sync_db_get_all_workspaces_by_user(user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[DBWorkspace]:
+async def sync_db_get_all_workspaces_by_user(
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[DBWorkspace]:
     return await db_get_all_workspaces_by_user(user_id, start_date, end_date)

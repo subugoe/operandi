@@ -56,7 +56,6 @@ class RouterUser:
             response_model=List, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
-
     async def user_login(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYUserAction:
         """
         Used for user authentication.
@@ -108,20 +107,13 @@ class RouterUser:
         return db_processing_stats
 
     async def user_workflow_jobs(
-            self,
-            auth: HTTPBasicCredentials = Depends(HTTPBasic()),
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None
+        self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
         await self.user_login(auth)
-        # Fetch user account details
         db_user_account = await db_get_user_account_with_email(email=auth.username)
-        # Retrieve workflow jobs for the user with optional date filtering
         db_workflow_jobs = await db_get_all_jobs_by_user(
-            user_id=db_user_account.user_id,
-            start_date=start_date,
-            end_date=end_date
-        )
+            user_id=db_user_account.user_id, start_date=start_date, end_date=end_date)
         response = []
         for db_workflow_job in db_workflow_jobs:
             db_workflow = await db_get_workflow(db_workflow_job.workflow_id)
@@ -129,41 +121,22 @@ class RouterUser:
             response.append(WorkflowJobRsrc.from_db_workflow_job(db_workflow_job, db_workflow, db_workspace))
         return response
 
-
     async def user_workspaces(
-            self,
-            auth: HTTPBasicCredentials = Depends(HTTPBasic()),
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None
+        self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
-
         await self.user_login(auth)
-        # Fetch user account details
         db_user_account = await db_get_user_account_with_email(email=auth.username)
-        # Retrieve workspaces for the user with optional date filtering
         db_workspaces = await db_get_all_workspaces_by_user(
-            user_id=db_user_account.user_id,
-            start_date=start_date,
-            end_date=end_date
-        )
-
+            user_id=db_user_account.user_id, start_date=start_date, end_date=end_date)
         return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
 
     async def user_workflows(
-            self,
-            auth: HTTPBasicCredentials = Depends(HTTPBasic()),
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None
+        self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
-
         await self.user_login(auth)
-        # Fetch user account details
         db_user_account = await db_get_user_account_with_email(email=auth.username)
-        # Retrieve workflow  for the user with optional date filtering
         db_workflows = await db_get_all_workflows_by_user(
-            user_id=db_user_account.user_id,
-            start_date=start_date,
-            end_date=end_date
-        )
-
+            user_id=db_user_account.user_id, start_date=start_date, end_date=end_date)
         return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]

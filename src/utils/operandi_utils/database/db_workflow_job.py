@@ -38,20 +38,16 @@ async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
     return db_workflow_job
 
 
-async def db_get_all_jobs_by_user(user_id: str, start_date: Optional[datetime] = None,
-                                  end_date: Optional[datetime] = None) -> List[DBWorkflowJob]:
-    # Start with the user_id filter
+async def db_get_all_jobs_by_user(
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+) -> List[DBWorkflowJob]:
     query = {"user_id": user_id}
-
-    # Add date filters conditionally
     if start_date or end_date:
         query["datetime"] = {}
         if start_date:
             query["datetime"]["$gte"] = start_date
         if end_date:
             query["datetime"]["$lte"] = end_date
-
-    # Execute the query
     db_workflow_jobs = await DBWorkflowJob.find_many(query).to_list()
     return db_workflow_jobs
 
@@ -98,5 +94,6 @@ async def sync_db_update_workflow_job(find_job_id: str, **kwargs) -> DBWorkflowJ
     return await db_update_workflow_job(find_job_id=find_job_id, **kwargs)
 
 @call_sync
-async def sync_db_get_all_jobs_by_user(user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[DBWorkflowJob]:
+async def sync_db_get_all_jobs_by_user(
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[DBWorkflowJob]:
     return await db_get_all_jobs_by_user(user_id, start_date, end_date)
