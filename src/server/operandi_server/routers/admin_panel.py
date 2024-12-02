@@ -7,7 +7,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from operandi_server.models import PYUserInfo, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_utils.database import (
-    db_get_all_user_accounts, db_get_processing_stats, db_get_all_jobs_by_user,
+    db_get_all_user_accounts, db_get_processing_stats, db_get_all_workflow_jobs_by_user,
     db_get_workflow, db_get_workspace, db_get_all_workspaces_by_user, db_get_all_workflows_by_user
 )
 from operandi_utils.utils import send_bag_to_ola_hd
@@ -116,7 +116,8 @@ class RouterAdminPanel:
             message = f"Admin privileges required for the endpoint"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
-        db_workflow_jobs = await db_get_all_jobs_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
+        db_workflow_jobs = await db_get_all_workflow_jobs_by_user(
+            user_id=user_id, start_date=start_date, end_date=end_date)
         response = []
         for db_workflow_job in db_workflow_jobs:
             db_workflow = await db_get_workflow(db_workflow_job.workflow_id)

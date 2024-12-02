@@ -6,7 +6,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_utils.database import (
-    db_get_processing_stats, db_get_all_jobs_by_user, db_get_user_account_with_email,
+    db_get_processing_stats, db_get_all_workflow_jobs_by_user, db_get_user_account_with_email,
     db_get_workflow, db_get_workspace, db_get_all_workspaces_by_user, db_get_all_workflows_by_user
 )
 from operandi_server.exceptions import AuthenticationError
@@ -112,7 +112,7 @@ class RouterUser:
     ) -> List:
         await self.user_login(auth)
         db_user_account = await db_get_user_account_with_email(email=auth.username)
-        db_workflow_jobs = await db_get_all_jobs_by_user(
+        db_workflow_jobs = await db_get_all_workflow_jobs_by_user(
             user_id=db_user_account.user_id, start_date=start_date, end_date=end_date)
         response = []
         for db_workflow_job in db_workflow_jobs:

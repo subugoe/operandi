@@ -38,7 +38,7 @@ async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
     return db_workflow_job
 
 
-async def db_get_all_jobs_by_user(
+async def db_get_all_workflow_jobs_by_user(
     user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
 ) -> List[DBWorkflowJob]:
     query = {"user_id": user_id}
@@ -94,6 +94,6 @@ async def sync_db_update_workflow_job(find_job_id: str, **kwargs) -> DBWorkflowJ
     return await db_update_workflow_job(find_job_id=find_job_id, **kwargs)
 
 @call_sync
-async def sync_db_get_all_jobs_by_user(
+async def sync_db_get_all_workflow_jobs_by_user(
     user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[DBWorkflowJob]:
-    return await db_get_all_jobs_by_user(user_id, start_date, end_date)
+    return await db_get_all_workflow_jobs_by_user(user_id, start_date, end_date)
