@@ -51,6 +51,7 @@ class RouterAdminPanel:
             endpoint=self.user_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workflows submitted by the user identified by user_id"
         )
+
     async def push_to_ola_hd(self, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         py_user_action = await self.user_authenticator.user_login(auth)
         if py_user_action.account_type != AccountType.ADMIN:
@@ -86,7 +87,7 @@ class RouterAdminPanel:
             message = "Admin privileges required for the endpoint"
             self.logger.error(message)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
-        
+
         users = await db_get_all_user_accounts()
         return [PYUserInfo.from_db_user_account(user) for user in users]
 

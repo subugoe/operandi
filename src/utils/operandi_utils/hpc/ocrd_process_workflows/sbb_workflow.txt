@@ -1,0 +1,2 @@
+ocrd process \
+    "tesserocr-recognize -I OCR-D-IMG -O OCR-D-OCR -P segmentation_level region -P textequiv_level word -P find_tables true -P model deu"

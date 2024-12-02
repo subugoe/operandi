@@ -1,0 +1,2 @@
+ocrd process \
+    "cis-ocropy-binarize -I OCR-D-IMG -O OCR-D-BIN"

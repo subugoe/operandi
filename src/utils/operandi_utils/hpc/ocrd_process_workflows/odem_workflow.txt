@@ -1,0 +1,11 @@
+ocrd process \
+	"cis-ocropy-binarize -I OCR-D-IMG -O OCR-D-BINPAGE -P dpi 300" \
+	"anybaseocr-crop -I OCR-D-BINPAGE -O OCR-D-SEG-PAGE-ANYOCR -P dpi 300" \
+	"cis-ocropy-denoise -I OCR-D-SEG-PAGE-ANYOCR -O OCR-D-DENOISE-OCROPY -P dpi 300" \
+	"cis-ocropy-deskew -I OCR-D-DENOISE-OCROPY -O OCR-D-DESKEW-OCROPY -P level-of-operation page" \
+	"tesserocr-segment-region -I OCR-D-DESKEW-OCROPY -O OCR-D-SEG-BLOCK-TESSERACT -P padding 5.0 -P find_tables false -P dpi 300" \
+	"segment-repair -I OCR-D-SEG-BLOCK-TESSERACT -O OCR-D-SEGMENT-REPAIR -P plausibilize true -P plausibilize_merge_min_overlap 0.7" \
+	"cis-ocropy-clip -I OCR-D-SEGMENT-REPAIR -O OCR-D-CLIP" \
+	"cis-ocropy-segment -I OCR-D-CLIP -O OCR-D-SEGMENT-OCROPY -P dpi 300" \
+	"cis-ocropy-dewarp -I OCR-D-SEGMENT-OCROPY -O OCR-D-DEWARP" \
+	"tesserocr-recognize -I OCR-D-DEWARP -O OCR-D-OCR -P model Fraktur"

@@ -6,11 +6,7 @@ params.mets_path = "null"
 params.workspace_dir = "null"
 params.pages = "null"
 params.mets_socket_path = "null"
-params.cpus = "null"
-params.ram = "null"
-params.forks = params.cpus
-params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intValue()
-params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())
+params.forks = "4"
 params.env_wrapper_cmd_core = "null"
 params.env_wrapper_cmd_step0 = "null"
 params.env_wrapper_cmd_step1 = "null"
@@ -29,11 +25,7 @@ log.info """\
     workspace_dir: ${params.workspace_dir}
     pages: ${params.pages}
     mets_socket_path: ${params.mets_socket_path}
-    cpus: ${params.cpus}
-    ram: ${params.ram}
     forks: ${params.forks}
-    cpus_per_fork: ${params.cpus_per_fork}
-    ram_per_fork: ${params.ram_per_fork}
     env_wrapper_cmd_core: ${params.env_wrapper_cmd_core}
     env_wrapper_cmd_step0: ${params.env_wrapper_cmd_step0}
     env_wrapper_cmd_step1: ${params.env_wrapper_cmd_step1}
@@ -48,8 +40,6 @@ log.info """\
 process split_page_ranges {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val range_multiplier
@@ -69,8 +59,6 @@ process split_page_ranges {
 process ocrd_cis_ocropy_binarize_0 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -93,8 +81,6 @@ process ocrd_cis_ocropy_binarize_0 {
 process ocrd_anybaseocr_crop_1 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -117,8 +103,6 @@ process ocrd_anybaseocr_crop_1 {
 process ocrd_skimage_binarize_2 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -141,8 +125,6 @@ process ocrd_skimage_binarize_2 {
 process ocrd_skimage_denoise_3 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -165,8 +147,6 @@ process ocrd_skimage_denoise_3 {
 process ocrd_tesserocr_deskew_4 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -189,8 +169,6 @@ process ocrd_tesserocr_deskew_4 {
 process ocrd_cis_ocropy_segment_5 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -213,8 +191,6 @@ process ocrd_cis_ocropy_segment_5 {
 process ocrd_cis_ocropy_dewarp_6 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -237,8 +213,6 @@ process ocrd_cis_ocropy_dewarp_6 {
 process ocrd_calamari_recognize_7 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path

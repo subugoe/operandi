@@ -33,9 +33,10 @@ class NHRConnector:
         self._ssh_reconnect_tries = 5
         self._ssh_reconnect_tries_remaining = self._ssh_reconnect_tries
         # TODO: Make the sub cluster options selectable
-        self.project_root_dir = join(HPC_NHR_CLUSTERS["EmmyPhase2"]["scratch-emmy-hdd"], project_env)
-        self.batch_scripts_dir = join(self.project_root_dir, "batch_scripts")
-        self.slurm_workspaces_dir = join(self.project_root_dir, "slurm_workspaces")
+        self.project_root_dir: str = HPC_NHR_CLUSTERS["EmmyPhase2"]["scratch-emmy-hdd"]
+        self.project_root_dir_with_env: str = join(self.project_root_dir, project_env)
+        self.batch_scripts_dir: str = join(self.project_root_dir, project_env, "batch_scripts")
+        self.slurm_workspaces_dir: str = join(self.project_root_dir, project_env, "slurm_workspaces")
 
     @property
     def ssh_client(self):

@@ -7,7 +7,7 @@ def test_basic(ocrd_parser):
     assert processor_call_arguments.executable == "ocrd-cis-ocropy-binarize"
     assert processor_call_arguments.input_file_grps == "OCR-D-IMG"
     assert processor_call_arguments.output_file_grps == "OCR-D-BIN"
-    assert processor_call_arguments.mets_file_path == "./mets.xml"
+    assert not processor_call_arguments.mets_file_path
     assert processor_call_arguments.parameters == {}
 
 
@@ -29,7 +29,7 @@ def test_with_params_separated(ocrd_parser):
     assert processor_call_arguments.executable == "ocrd-calamari-recognize"
     assert processor_call_arguments.input_file_grps == "OCR-D-INPUT"
     assert processor_call_arguments.output_file_grps == "OCR-D-OCR"
-    assert processor_call_arguments.mets_file_path == "./mets.xml"
+    assert not processor_call_arguments.mets_file_path
     assert processor_call_arguments.parameters == {"checkpoint_dir": "qurator-gt4histocr-1.0", "dummy": "dummy"}
 
 
@@ -41,5 +41,5 @@ def test_with_params_clustered(ocrd_parser):
     assert processor_call_arguments.executable == "ocrd-calamari-recognize"
     assert processor_call_arguments.input_file_grps == "OCR-D-INPUT"
     assert processor_call_arguments.output_file_grps == "OCR-D-OCR"
-    assert processor_call_arguments.mets_file_path == "./mets.xml"
+    assert not processor_call_arguments.mets_file_path
     assert processor_call_arguments.parameters == {"checkpoint_dir": "qurator-gt4histocr-1.0", "dummy": "dummy"}

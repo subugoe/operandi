@@ -5,13 +5,7 @@ params.input_file_group = "OCR-D-IMG"
 params.mets_path = "null"
 params.workspace_dir = "null"
 params.pages = "null"
-params.mets_socket_path = "null"
-params.cpus = "null"
-params.ram = "null"
-params.forks = params.cpus
-params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intValue()
-params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())
-params.env_wrapper_cmd_core = "null"
+params.forks = "4"
 params.env_wrapper_cmd_step0 = "null"
 params.env_wrapper_cmd_step1 = "null"
 params.env_wrapper_cmd_step2 = "null"
@@ -28,13 +22,7 @@ log.info """\
     mets_path: ${params.mets_path}
     workspace_dir: ${params.workspace_dir}
     pages: ${params.pages}
-    mets_socket_path: ${params.mets_socket_path}
-    cpus: ${params.cpus}
-    ram: ${params.ram}
     forks: ${params.forks}
-    cpus_per_fork: ${params.cpus_per_fork}
-    ram_per_fork: ${params.ram_per_fork}
-    env_wrapper_cmd_core: ${params.env_wrapper_cmd_core}
     env_wrapper_cmd_step0: ${params.env_wrapper_cmd_step0}
     env_wrapper_cmd_step1: ${params.env_wrapper_cmd_step1}
     env_wrapper_cmd_step2: ${params.env_wrapper_cmd_step2}
@@ -48,8 +36,6 @@ log.info """\
 process split_page_ranges {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val range_multiplier
@@ -60,17 +46,17 @@ process split_page_ranges {
 
     script:
         """
-        current_range_pages=\$(${params.env_wrapper_cmd_core} ocrd workspace -d ${params.workspace_dir} list-page -f comma-separated -D ${params.forks} -C ${range_multiplier})
+        current_range_pages=\$(ocrd workspace -d ${params.workspace_dir} list-page -f comma-separated -D ${params.forks} -C ${range_multiplier})
         echo "Current range is: \$current_range_pages"
-        mets_file_chunk=\$(echo ${params.mets_path})
+        mets_file_chunk=\$(echo ${params.workspace_dir}/mets_${range_multiplier}.xml)
+        echo "Mets file chunk path: \$mets_file_chunk"
+        \$(cp -p ${params.mets_path} \$mets_file_chunk)
         """
 }
 
 process ocrd_cis_ocropy_binarize_0 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -86,15 +72,13 @@ process ocrd_cis_ocropy_binarize_0 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step0} ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
         """
 }
 
 process ocrd_anybaseocr_crop_1 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -110,15 +94,13 @@ process ocrd_anybaseocr_crop_1 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step1} ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
         """
 }
 
 process ocrd_skimage_binarize_2 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -134,15 +116,13 @@ process ocrd_skimage_binarize_2 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step2} ocrd-skimage-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
+        ocrd-skimage-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
         """
 }
 
 process ocrd_skimage_denoise_3 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -158,15 +138,13 @@ process ocrd_skimage_denoise_3 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step3} ocrd-skimage-denoise -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ocrd-skimage-denoise -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
 process ocrd_tesserocr_deskew_4 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -182,15 +160,13 @@ process ocrd_tesserocr_deskew_4 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step4} ocrd-tesserocr-deskew -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
+        ocrd-tesserocr-deskew -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
         """
 }
 
 process ocrd_cis_ocropy_segment_5 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -206,15 +182,13 @@ process ocrd_cis_ocropy_segment_5 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step5} ocrd-cis-ocropy-segment -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ocrd-cis-ocropy-segment -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
 process ocrd_cis_ocropy_dewarp_6 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -230,15 +204,13 @@ process ocrd_cis_ocropy_dewarp_6 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step6} ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
         """
 }
 
 process ocrd_calamari_recognize_7 {
     debug true
     maxForks params.forks
-    cpus params.cpus_per_fork
-    memory params.ram_per_fork
 
     input:
         val mets_path
@@ -254,7 +226,22 @@ process ocrd_calamari_recognize_7 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step7} ocrd-calamari-recognize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
+        ocrd-calamari-recognize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
+        """
+}
+
+process merging_mets {
+    debug true
+    maxForks 1
+
+    input:
+        val mets_file_chunk
+        val page_range
+
+    script:
+        """
+        ocrd workspace -d ${params.workspace_dir} merge --force --no-copy-files ${mets_file_chunk} --page-id ${page_range}
+        rm ${mets_file_chunk}
         """
 }
 
@@ -270,4 +257,5 @@ workflow {
         ocrd_cis_ocropy_segment_5(ocrd_tesserocr_deskew_4.out[0], ocrd_tesserocr_deskew_4.out[1], ocrd_tesserocr_deskew_4.out[2], "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG")
         ocrd_cis_ocropy_dewarp_6(ocrd_cis_ocropy_segment_5.out[0], ocrd_cis_ocropy_segment_5.out[1], ocrd_cis_ocropy_segment_5.out[2], "OCR-D-SEG", "OCR-D-SEG-LINE-RESEG-DEWARP")
         ocrd_calamari_recognize_7(ocrd_cis_ocropy_dewarp_6.out[0], ocrd_cis_ocropy_dewarp_6.out[1], ocrd_cis_ocropy_dewarp_6.out[2], "OCR-D-SEG-LINE-RESEG-DEWARP", "OCR-D-OCR")
+        merging_mets(ocrd_calamari_recognize_7.out[0], ocrd_calamari_recognize_7.out[1])
 }

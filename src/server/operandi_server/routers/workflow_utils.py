@@ -1,9 +1,11 @@
 from fastapi import HTTPException, status
 from pathlib import Path
+from typing import List
 
 from operandi_utils.database import db_get_workflow, db_get_workflow_job
 from operandi_utils.database.models import DBWorkflow, DBWorkflowJob
 from operandi_utils.oton import OTONConverter, OCRDValidator
+from operandi_utils.oton.constants import PARAMS_KEY_METS_SOCKET_PATH
 
 
 async def get_db_workflow_with_handling(
@@ -39,9 +41,8 @@ async def get_db_workflow_job_with_handling(logger, job_id: str, check_local_exi
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
     return db_workflow_job
 
-
 async def nf_script_uses_mets_server_with_handling(
-    logger, nf_script_path: str, search_string: str = "params.mets_socket"
+    logger, nf_script_path: str, search_string: str = PARAMS_KEY_METS_SOCKET_PATH
 ) -> bool:
     try:
         with open(nf_script_path) as nf_file:
@@ -56,6 +57,35 @@ async def nf_script_uses_mets_server_with_handling(
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
+async def nf_script_executable_steps_with_handling(logger, nf_script_path: str) -> List[str]:
+    processor_executables: List[str] = []
+    try:
+        with open(nf_script_path) as nf_file:
+            line = nf_file.readline()
+            while line:
+                for word in line.split(' '):
+                    if "ocrd-" in word:
+                        processor_executables.append(word)
+                        break
+                line = nf_file.readline()
+    except Exception as error:
+        message = "Failed to identify processor executables in the provided Nextflow workflow."
+        logger.error(f"{message}, error: {error}")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+
+    """
+    apptainer_images: List[str] = []
+    try:
+        for executable in processor_executables:
+            apptainer_images.append(OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE[executable])
+    except Exception as error:
+        message = "Failed to produce apptainer image names from the processor executables list"
+        logger.error(f"{message}, error: {error}")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+    return apptainer_images
+    """
+    logger.info(f"Found processor executables: {processor_executables}")
+    return processor_executables
 
 async def validate_oton_with_handling(logger, ocrd_process_txt_path: str):
     try:
@@ -67,7 +97,9 @@ async def validate_oton_with_handling(logger, ocrd_process_txt_path: str):
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
-async def convert_oton_with_handling(logger, environment: str, ocrd_process_txt_path: str, nf_script_dest_path: str):
+async def convert_oton_with_handling(
+    logger, ocrd_process_txt_path: str, nf_script_dest_path: str, environment: str, with_mets_server: bool
+):
     environments = ["local", "docker", "apptainer"]
     if environment not in environments:
         message = f"Unknown environment value: {environment}. Must be one of: {environments}"
@@ -75,12 +107,7 @@ async def convert_oton_with_handling(logger, environment: str, ocrd_process_txt_
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
     try:
         converter = OTONConverter()
-        if environment == "local":
-            converter.convert_oton_env_local(str(ocrd_process_txt_path), str(nf_script_dest_path))
-        elif environment == "docker":
-            converter.convert_oton_env_docker(str(ocrd_process_txt_path), str(nf_script_dest_path))
-        elif environment == "apptainer":
-            converter.convert_oton_env_apptainer(str(ocrd_process_txt_path), str(nf_script_dest_path))
+        converter.convert_oton(str(ocrd_process_txt_path), str(nf_script_dest_path), environment, with_mets_server)
     except ValueError as error:
         message = "Failed to convert ocrd process workflow to nextflow workflow"
         logger.error(f"{message}, error: {error}")

@@ -114,6 +114,7 @@ class OperandiServer(FastAPI):
         self.include_router(RouterDiscovery().router)
         self.include_router(RouterUser().router)
         workflow_router = RouterWorkflow()
+        await workflow_router.produce_production_workflows()
         await workflow_router.insert_production_workflows()
         self.include_router(workflow_router.router)
         self.include_router(RouterWorkspace().router)

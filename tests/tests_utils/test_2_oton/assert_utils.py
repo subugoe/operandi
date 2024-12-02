@@ -2,13 +2,18 @@ from os import remove
 from os.path import isfile
 from re import sub
 
+
 from tests.assets.oton.constants import PARAMETERS_APPTAINER, PARAMETERS_COMMON, PARAMETERS_DOCKER, PARAMETERS_LOCAL
 
 
-def assert_common_features(nextflow_file_class, num_blocks_process: int, num_blocks_workflow: int):
+def assert_common_features(
+    nextflow_file_class, num_blocks_process: int, num_blocks_workflow: int, with_mets_server: bool
+):
     parameters = nextflow_file_class.nf_lines_parameters
     for parameter in PARAMETERS_COMMON:
         assert parameter in parameters
+    if with_mets_server:
+        assert parameters['params.mets_socket_path'] == '"null"', f"params.mets_socket_path is missing in {parameters}"
     blocks_process = nextflow_file_class.nf_blocks_process
     assert len(blocks_process) == num_blocks_process
     for block in blocks_process:
@@ -22,31 +27,31 @@ def assert_common_features(nextflow_file_class, num_blocks_process: int, num_blo
 def assert_common_features_local(nextflow_file_class):
     parameters = nextflow_file_class.nf_lines_parameters
     for parameter in PARAMETERS_LOCAL:
-        assert parameter in parameters
+        assert parameter in parameters, f"{parameter} is not in {parameters}"
     blocks_process = nextflow_file_class.nf_blocks_process
     for block in blocks_process:
-        assert '${params.env_wrapper}' not in block.dump_script(), \
-            "${params.env_wrapper} found but should not exist in " + f"'{block.ocrd_command_bash_placeholders}'"
+        assert 'params.env_wrapper_cmd_step' not in block.dump_script(), \
+            "params.env_wrapper_cmd_step found but should not exist in " + f"'{block.ocrd_command_bash_placeholders}'"
 
 
 def assert_common_features_docker(nextflow_file_class):
     parameters = nextflow_file_class.nf_lines_parameters
     for parameter in PARAMETERS_DOCKER:
-        assert parameter in parameters
+        assert parameter in parameters, f"{parameter} is not in {parameters}"
     blocks_process = nextflow_file_class.nf_blocks_process
     for block in blocks_process:
-        assert '${params.env_wrapper}' in block.dump_script(), \
-            "${params.env_wrapper} not found but should exist in " + f"'{block.ocrd_command_bash_placeholders}'"
+        assert 'params.env_wrapper_cmd_step' in block.dump_script(), \
+            "params.env_wrapper_cmd_step not found but should exist in " + f"'{block.ocrd_command_bash_placeholders}'"
 
 
 def assert_common_features_apptainer(nextflow_file_class):
     parameters = nextflow_file_class.nf_lines_parameters
     for parameter in PARAMETERS_APPTAINER:
-        assert parameter in parameters
+        assert parameter in parameters, f"{parameter} is not in {parameters}"
     blocks_process = nextflow_file_class.nf_blocks_process
     for block in blocks_process:
-        assert '${params.env_wrapper}' in block.dump_script(), \
-            "${params.env_wrapper} not found but should exist in " + f"'{block.ocrd_command_bash_placeholders}'"
+        assert 'params.env_wrapper_cmd_step' in block.dump_script(), \
+            "params.env_wrapper_cmd_step not found but should exist in " + f"'{block.ocrd_command_bash_placeholders}'"
 
 
 def assert_compare_workflow_blocks(output_file_path, expected_wf, clean_files: bool = False):
