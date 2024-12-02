@@ -20,11 +20,6 @@ class RouterAdminPanel:
         self.user_authenticator = RouterUser()
         self.router = APIRouter(tags=[ServerApiTag.ADMIN])
         self.router.add_api_route(
-            path="/admin/push_to_ola_hd",
-            endpoint=self.push_to_ola_hd, methods=["POST"], status_code=status.HTTP_201_CREATED,
-            summary="Push a workspace to Ola-HD service"
-        )
-        self.router.add_api_route(
             path="/admin/users",
             endpoint=self.get_users, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all registered users"
@@ -35,19 +30,24 @@ class RouterAdminPanel:
             summary="Get processing stats for a specific user by user_id"
         )
         self.router.add_api_route(
-            path="/admin/{user_id}/workflow_jobs",
+            path="/admin/workflow_jobs/{user_id}",
             endpoint=self.user_workflow_jobs, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workflow jobs submitted by the user identified by user_id"
         )
         self.router.add_api_route(
-            path="/admin/{user_id}/workspaces",
+            path="/admin/workspaces/{user_id}",
             endpoint=self.user_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workspaces submitted by the user identified by user_id"
         )
         self.router.add_api_route(
-            path="/admin/{user_id}/workflows",
+            path="/admin/workflows/{user_id}",
             endpoint=self.user_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workflows submitted by the user identified by user_id"
+        )
+        self.router.add_api_route(
+            path="/admin/push_to_ola_hd",
+            endpoint=self.push_to_ola_hd, methods=["POST"], status_code=status.HTTP_201_CREATED,
+            summary="Push a workspace to Ola-HD service"
         )
 
     async def auth_admin_with_handling(self, auth: HTTPBasicCredentials):

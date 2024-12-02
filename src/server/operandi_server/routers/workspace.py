@@ -35,16 +35,22 @@ class RouterWorkspace:
         self.user_authenticator = RouterUser()
         self.router = APIRouter(tags=[ServerApiTag.WORKSPACE])
         self.router.add_api_route(
-            path="/workspace",
-            endpoint=self.list_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get a list of existing workspaces.",
-            response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
+            path="/import_external_workspace",
+            endpoint=self.upload_workspace_from_url, methods=["POST"], status_code=status.HTTP_201_CREATED,
+            summary="Import workspace from mets url. Returns a `resource_id` associated with the uploaded workspace.",
+            response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workspace",
             endpoint=self.upload_workspace, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Import workspace as an ocrd zip. Returns a `resource_id` associated with the uploaded workspace.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        self.router.add_api_route(
+            path="/workspace",
+            endpoint=self.list_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get a list of existing workspaces.",
+            response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workspace/{workspace_id}",
@@ -62,12 +68,6 @@ class RouterWorkspace:
             path="/workspace/{workspace_id}",
             endpoint=self.delete_workspace, methods=["DELETE"], status_code=status.HTTP_200_OK,
             summary="Delete an existing workspace identified with `workspace_id`.",
-            response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
-        )
-        self.router.add_api_route(
-            path="/import_external_workspace",
-            endpoint=self.upload_workspace_from_url, methods=["POST"], status_code=status.HTTP_201_CREATED,
-            summary="Import workspace from mets url. Returns a `resource_id` associated with the uploaded workspace.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(

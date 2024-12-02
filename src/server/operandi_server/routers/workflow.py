@@ -51,9 +51,13 @@ class RouterWorkflow:
 
         self.router = APIRouter(tags=[ServerApiTag.WORKFLOW])
         self.router.add_api_route(
-            path=f"/workflow", endpoint=self.list_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get a list of existing nextflow from operandi_utils.oton import OTONConverter, OCRDValidatorworkflows.",
-            response_model=List[WorkflowRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
+            path="/convert_workflow",
+            endpoint=self.convert_txt_to_nextflow, methods=["POST"], status_code=status.HTTP_201_CREATED,
+            summary="""
+            Upload a text file containing a workflow in ocrd process format and
+            convert it to a Nextflow script in the desired format (local/docker/apptainer)
+            """,
+            response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
         self.router.add_api_route(
             path="/workflow", endpoint=self.upload_workflow_script, methods=["POST"],
@@ -63,21 +67,20 @@ class RouterWorkflow:
         )
         self.router.add_api_route(
             path="/workflow/{workflow_id}",
-            endpoint=self.download_workflow_script, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Download an existing nextflow workflow script identified with `workflow_id`.",
-            response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
-        )
-        self.router.add_api_route(
-            path="/workflow/{workflow_id}",
-            endpoint=self.update_workflow_script, methods=["PUT"], status_code=status.HTTP_201_CREATED,
-            summary="Update an existing workflow script identified with or `workflow_id` or upload a new script.",
-            response_model=WorkflowRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
-        )
-        self.router.add_api_route(
-            path="/workflow/{workflow_id}",
             endpoint=self.submit_to_rabbitmq_queue, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Run a workflow job with the specified `workflow_id` and arguments in the request body.",
             response_model=WorkflowJobRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        self.router.add_api_route(
+            path=f"/workflow", endpoint=self.list_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get a list of existing Nextflow workflows.",
+            response_model=List[WorkflowRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        self.router.add_api_route(
+            path="/workflow/{workflow_id}",
+            endpoint=self.download_workflow_script, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Download an existing nextflow workflow script identified with `workflow_id`.",
+            response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
         self.router.add_api_route(
             path="/workflow/{workflow_id}/{job_id}",
@@ -106,15 +109,11 @@ class RouterWorkflow:
             summary="Download the slurm job log file of the `job_id`.",
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
-        # Added by Faizan
         self.router.add_api_route(
-            path="/convert_workflow",
-            endpoint=self.convert_txt_to_nextflow, methods=["POST"], status_code=status.HTTP_201_CREATED,
-            summary="""
-            Upload a text file containing a workflow in ocrd process format and
-            convert it to a Nextflow script in the desired format (local/docker)
-            """,
-            response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
+            path="/workflow/{workflow_id}",
+            endpoint=self.update_workflow_script, methods=["PUT"], status_code=status.HTTP_201_CREATED,
+            summary="Update an existing workflow script identified with or `workflow_id` or upload a new script.",
+            response_model=WorkflowRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
     def __del__(self):
