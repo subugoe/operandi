@@ -105,33 +105,32 @@ workflow {
 }
 """
 
-PARAMETERS_COMMON = [
-    'nextflow.enable.dsl = 2',
-    'params.mets_path = "null"',
-    'params.workspace_dir = "null"',
-    'params.pages = "null"',
-]
+PARAMETERS_COMMON = {
+    'params.mets_path': '"null"',
+    'params.workspace_dir': '"null"',
+    'params.pages': '"null"',
+}
 
-PARAMETERS_LOCAL = [
-    'params.forks = "4"'
-]
+PARAMETERS_LOCAL = {
+    'params.forks': '"4"',
+}
 
-PARAMETERS_DOCKER = [
-    'params.forks = "4"',
-    'params.env_wrapper_cmd_core = "null"',
-    'params.env_wrapper_cmd_step0 = "null"',
-    'params.env_wrapper_cmd_step1 = "null"',
-    'params.env_wrapper_cmd_step2 = "null"',
-]
+PARAMETERS_DOCKER = {
+    'params.forks': '"4"',
+    'params.env_wrapper_cmd_core': '"null"',
+    'params.env_wrapper_cmd_step0': '"null"',
+    'params.env_wrapper_cmd_step1': '"null"',
+    'params.env_wrapper_cmd_step2': '"null"',
+}
 
-PARAMETERS_APPTAINER = [
-    'params.cpus = "null"',
-    'params.ram = "null"',
-    'params.forks = params.cpus',
-    'params.cpus_per_fork = (params.cpus.toInteger() / params.forks.toInteger()).intValue()',
-    'params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())',
-    'params.env_wrapper_cmd_core = "null"',
-    'params.env_wrapper_cmd_step0 = "null"',
-    'params.env_wrapper_cmd_step1 = "null"',
-    'params.env_wrapper_cmd_step2 = "null"',
-]
+PARAMETERS_APPTAINER = {
+    'params.cpus': '"null"',
+    'params.ram': '"null"',
+    'params.forks': 'params.cpus',
+    'params.cpus_per_fork': '(params.cpus.toInteger() / params.forks.toInteger()).intValue()',
+    'params.ram_per_fork': 'sprintf("%dGB", (params.ram.toInteger() / params.forks.toInteger()).intValue())',
+    'params.env_wrapper_cmd_core': '"null"',
+    'params.env_wrapper_cmd_step0': '"null"',
+    'params.env_wrapper_cmd_step1': '"null"',
+    'params.env_wrapper_cmd_step2': '"null"',
+}

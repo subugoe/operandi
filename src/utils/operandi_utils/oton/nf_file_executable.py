@@ -11,20 +11,12 @@ from operandi_utils.oton.constants import (
     PARAMS_KEY_ENV_WRAPPER_CMD_CORE,
     PARAMS_KEY_ENV_WRAPPER_CMD_STEP,
     PARAMS_KEY_FORKS,
+    PARAMS_KEY_PAGES,
+    PARAMS_KEY_CPUS,
     PARAMS_KEY_CPUS_PER_FORK,
+    PARAMS_KEY_RAM,
     PARAMS_KEY_RAM_PER_FORK,
-    REPR_ENV_WRAPPER_CMD_CORE,
-    REPR_INPUT_FILE_GRP,
-    REPR_METS_PATH,
-    REPR_METS_SOCKET_PATH,
-    REPR_WORKSPACE_DIR,
-    REPR_PAGES,
-    REPR_CPUS,
-    REPR_RAM,
-    REPR_FORKS,
-    REPR_FORKS_NULL,
-    REPR_CPUS_PER_FORK,
-    REPR_RAM_PER_FORK,
+    PARAMS_KEY_METS_SOCKET_PATH,
     SPACES,
     WORKFLOW_COMMENT
 )
@@ -38,7 +30,7 @@ class NextflowFileExecutable:
         self.logger.setLevel(getLevelName(OTON_LOG_LEVEL))
 
         self.supported_environments = ["local", "docker", "apptainer"]
-        self.nf_lines_parameters: List[str] = []
+        self.nf_lines_parameters = {}
         self.nf_process_split_range = None
         self.nf_process_merging_mets = None
         self.nf_blocks_process: List[NextflowBlockProcess] = []
@@ -48,28 +40,28 @@ class NextflowFileExecutable:
         if environment not in self.supported_environments:
             raise ValueError(f"Invalid environment value: {environment}. Must be one of: {self.supported_environments}")
 
-        self.nf_lines_parameters.append('nextflow.enable.dsl = 2')
-        self.nf_lines_parameters.append('')
-        self.nf_lines_parameters.append(REPR_INPUT_FILE_GRP)
-        self.nf_lines_parameters.append(REPR_METS_PATH)
-        self.nf_lines_parameters.append(REPR_WORKSPACE_DIR)
-        self.nf_lines_parameters.append(REPR_PAGES)
+        self.nf_lines_parameters[PARAMS_KEY_INPUT_FILE_GRP] = '"null"'
+        self.nf_lines_parameters[PARAMS_KEY_METS_PATH] = '"null"'
+        self.nf_lines_parameters[PARAMS_KEY_WORKSPACE_DIR] = '"null"'
+        self.nf_lines_parameters[PARAMS_KEY_PAGES] = '"null"'
 
         if with_mets_server:
-            self.nf_lines_parameters.append(REPR_METS_SOCKET_PATH)
+            self.nf_lines_parameters[PARAMS_KEY_METS_SOCKET_PATH] = '"null"'
 
         if environment == "local":
-            self.nf_lines_parameters.append(REPR_FORKS_NULL)
+            self.nf_lines_parameters[PARAMS_KEY_FORKS] = '"4"'
         if environment == "docker":
-            self.nf_lines_parameters.append(REPR_FORKS_NULL)
-            self.nf_lines_parameters.append(REPR_ENV_WRAPPER_CMD_CORE)
+            self.nf_lines_parameters[PARAMS_KEY_FORKS] = '"4"'
+            self.nf_lines_parameters[PARAMS_KEY_ENV_WRAPPER_CMD_CORE] = '"null"'
         if environment == "apptainer":
-            self.nf_lines_parameters.append(REPR_CPUS)
-            self.nf_lines_parameters.append(REPR_RAM)
-            self.nf_lines_parameters.append(REPR_FORKS)
-            self.nf_lines_parameters.append(REPR_CPUS_PER_FORK)
-            self.nf_lines_parameters.append(REPR_RAM_PER_FORK)
-            self.nf_lines_parameters.append(REPR_ENV_WRAPPER_CMD_CORE)
+            self.nf_lines_parameters[PARAMS_KEY_CPUS] = '"null"'
+            self.nf_lines_parameters[PARAMS_KEY_RAM] = '"null"'
+            self.nf_lines_parameters[PARAMS_KEY_FORKS] = f'{PARAMS_KEY_CPUS}'
+            self.nf_lines_parameters[PARAMS_KEY_CPUS_PER_FORK] = \
+                f'({PARAMS_KEY_CPUS}.toInteger() / {PARAMS_KEY_FORKS}.toInteger()).intValue()'
+            self.nf_lines_parameters[PARAMS_KEY_RAM_PER_FORK] = \
+                f'sprintf("%dGB", ({PARAMS_KEY_RAM}.toInteger() / {PARAMS_KEY_FORKS}.toInteger()).intValue())'
+            self.nf_lines_parameters[PARAMS_KEY_ENV_WRAPPER_CMD_CORE] = '"null"'
 
     # TODO: Refactor later
     def build_split_page_ranges_process(self, environment: str, with_mets_server: bool) -> NextflowBlockProcess:
@@ -180,35 +172,22 @@ class NextflowFileExecutable:
             nf_process_block.add_parameter_output(parameter=CONST_METS_PATH, parameter_type='val')
             nf_process_block.add_parameter_output(parameter=CONST_PAGE_RANGE, parameter_type='val')
             nf_process_block.add_parameter_output(parameter=CONST_WORKSPACE_DIR, parameter_type='val')
-            self.nf_lines_parameters.append(f'{PARAMS_KEY_ENV_WRAPPER_CMD_STEP}{index} = "null"')
+            self.nf_lines_parameters[f'{PARAMS_KEY_ENV_WRAPPER_CMD_STEP}{index}'] = '"null"'
             self.nf_blocks_process.append(nf_process_block)
-            index += 1
-
-    def __assign_first_file_grps_param(self):
-        first_file_grps = self.nf_blocks_process[0].processor_call_arguments.input_file_grps
-        index = 0
-        for parameter in self.nf_lines_parameters:
-            if PARAMS_KEY_INPUT_FILE_GRP in parameter:
-                self.nf_lines_parameters[index] = parameter.replace("null", first_file_grps)
-                break
             index += 1
 
     def build_log_info_prints(self) -> str:
         log_info = f'log.info """\\\n'
         log_info += f"{SPACES}OPERANDI HPC - Nextflow Workflow\n"
         log_info += f"{SPACES}===================================================\n"
-        for param in self.nf_lines_parameters:
-            if not param or "params." not in param:
-                continue
-            param_key = param[param.find(".") + 1:param.find("=") - 1]
-            log_info += f"{SPACES}{param_key}: "
-            log_info += f'${BS[0]}{param[0:param.find("=") - 1]}{BS[1]}\n'
+        for key, value in self.nf_lines_parameters.items():
+            log_info += f"{SPACES}{key[len('params.'):]}: ${BS[0]}{key}{BS[1]}\n"
         log_info += f'{SPACES}""".stripIndent()\n'
         return log_info
 
-    # TODO: Refactor later
     def build_main_workflow(self, with_mets_server: bool):
-        self.__assign_first_file_grps_param()
+        first_file_grps = self.nf_blocks_process[0].processor_call_arguments.input_file_grps
+        self.nf_lines_parameters[PARAMS_KEY_INPUT_FILE_GRP] = f'"{first_file_grps}"'
         nf_workflow_block = NextflowBlockWorkflow(
             workflow_name="main",
             nf_processes=self.nf_blocks_process,
@@ -223,8 +202,10 @@ class NextflowFileExecutable:
         # Write Nextflow line tokens to an output file
         with open(output_path, mode='w', encoding='utf-8') as nextflow_file:
             nextflow_file.write(f"{WORKFLOW_COMMENT}\n")
-            for nextflow_line in self.nf_lines_parameters:
-                nextflow_file.write(f'{nextflow_line}\n')
+            nextflow_file.write("nextflow.enable.dsl = 2\n")
+            nextflow_file.write("\n")
+            for key, value in self.nf_lines_parameters.items():
+                nextflow_file.write(f'{key} = {value}\n')
             nextflow_file.write("\n")
             nextflow_file.write(self.build_log_info_prints())
             nextflow_file.write("\n")

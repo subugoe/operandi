@@ -13,7 +13,7 @@ def assert_common_features(
     for parameter in PARAMETERS_COMMON:
         assert parameter in parameters
     if with_mets_server:
-        assert 'params.mets_socket_path = "null"' in parameters, f"params.mets_socket_path is missing in {parameters}"
+        assert parameters['params.mets_socket_path'] == '"null"', f"params.mets_socket_path is missing in {parameters}"
     blocks_process = nextflow_file_class.nf_blocks_process
     assert len(blocks_process) == num_blocks_process
     for block in blocks_process:
