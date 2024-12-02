@@ -471,14 +471,11 @@ class RouterWorkflow:
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
 
-    # Added by Faizan
     async def convert_txt_to_nextflow(
         self, txt_file: UploadFile, environment: str, with_mets_server: bool = True,
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
-        # Authenticate the user
         await self.user_authenticator.user_login(auth)
-
         oton_id, oton_dir = create_resource_dir(SERVER_OTON_CONVERSIONS, resource_id=None)
         ocrd_process_txt = join(oton_dir, f"ocrd_process_input.txt")
         nf_script_dest = join(oton_dir, f"nextflow_output.nf")
