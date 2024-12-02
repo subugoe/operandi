@@ -12,6 +12,7 @@ __all__ = [
     "db_create_workspace",
     "db_get_hpc_slurm_job",
     "db_get_processing_stats",
+    "db_get_all_user_accounts",
     "db_get_user_account",
     "db_get_user_account_with_email",
     "db_get_workflow",
@@ -33,6 +34,7 @@ __all__ = [
     "sync_db_create_workspace",
     "sync_db_get_hpc_slurm_job",
     "sync_db_get_processing_stats",
+    "sync_db_get_all_user_accounts",
     "sync_db_get_user_account",
     "sync_db_get_user_account_with_email",
     "sync_db_get_workflow",
@@ -59,9 +61,11 @@ from .db_hpc_slurm_job import (
 )
 from .db_user_account import (
     db_create_user_account,
+    db_get_all_user_accounts,
     db_get_user_account,
     db_get_user_account_with_email,
     db_update_user_account,
+    sync_db_get_all_user_accounts,
     sync_db_create_user_account,
     sync_db_get_user_account,
     sync_db_get_user_account_with_email,

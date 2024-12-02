@@ -1,5 +1,6 @@
 from datetime import datetime
 from operandi_utils import call_sync, generate_id
+from typing import List
 from ..constants import AccountType
 from .models import DBUserAccount
 
@@ -30,6 +31,15 @@ async def sync_db_create_user_account(
 ) -> DBUserAccount:
     return await db_create_user_account(
         institution_id, email, encrypted_pass, salt, account_type, approved_user, details)
+
+
+async def db_get_all_user_accounts() -> List[DBUserAccount]:
+    all_user_accounts = await DBUserAccount.find().to_list()
+    return all_user_accounts
+
+@call_sync
+async def sync_db_get_all_user_accounts() -> List[DBUserAccount]:
+    return await db_get_all_user_accounts()
 
 
 async def db_get_user_account(user_id: str) -> DBUserAccount:
@@ -87,3 +97,4 @@ async def db_update_user_account(user_id: str, **kwargs) -> DBUserAccount:
 @call_sync
 async def sync_db_update_user_account(user_id: str, **kwargs) -> DBUserAccount:
     return await db_update_user_account(user_id=user_id, **kwargs)
+
