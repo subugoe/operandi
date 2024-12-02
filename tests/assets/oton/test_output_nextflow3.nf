@@ -10,6 +10,19 @@ params.env_wrapper_cmd_step0 = "null"
 params.env_wrapper_cmd_step1 = "null"
 params.env_wrapper_cmd_step2 = "null"
 
+log.info """\
+    OPERANDI HPC - Nextflow Workflow
+    ===================================================
+    input_file_group: ${params.input_file_group}
+    mets_path: ${params.mets_path}
+    workspace_dir: ${params.workspace_dir}
+    pages: ${params.pages}
+    forks: ${params.forks}
+    env_wrapper_cmd_step0: ${params.env_wrapper_cmd_step0}
+    env_wrapper_cmd_step1: ${params.env_wrapper_cmd_step1}
+    env_wrapper_cmd_step2: ${params.env_wrapper_cmd_step2}
+    """.stripIndent()
+
 process split_page_ranges {
     debug true
     maxForks params.forks

@@ -13,6 +13,22 @@ params.ram_per_fork = sprintf("%dGB", (params.ram.toInteger() / params.forks.toI
 params.env_wrapper_cmd_core = "null"
 params.env_wrapper_cmd_step0 = "null"
 
+log.info """\
+    OPERANDI HPC - Nextflow Workflow
+    ===================================================
+    input_file_group: ${params.input_file_group}
+    mets_path: ${params.mets_path}
+    workspace_dir: ${params.workspace_dir}
+    pages: ${params.pages}
+    cpus: ${params.cpus}
+    ram: ${params.ram}
+    forks: ${params.forks}
+    cpus_per_fork: ${params.cpus_per_fork}
+    ram_per_fork: ${params.ram_per_fork}
+    env_wrapper_cmd_core: ${params.env_wrapper_cmd_core}
+    env_wrapper_cmd_step0: ${params.env_wrapper_cmd_step0}
+    """.stripIndent()
+
 process split_page_ranges {
     debug true
     maxForks params.forks

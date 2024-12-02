@@ -193,6 +193,19 @@ class NextflowFileExecutable:
                 break
             index += 1
 
+    def build_log_info_prints(self) -> str:
+        log_info = f'log.info """\\\n'
+        log_info += f"{SPACES}OPERANDI HPC - Nextflow Workflow\n"
+        log_info += f"{SPACES}===================================================\n"
+        for param in self.nf_lines_parameters:
+            if not param or "params." not in param:
+                continue
+            param_key = param[param.find(".") + 1:param.find("=") - 1]
+            log_info += f"{SPACES}{param_key}: "
+            log_info += f'${BS[0]}{param[0:param.find("=") - 1]}{BS[1]}\n'
+        log_info += f'{SPACES}""".stripIndent()\n'
+        return log_info
+
     # TODO: Refactor later
     def build_main_workflow(self, with_mets_server: bool):
         self.__assign_first_file_grps_param()
@@ -212,6 +225,8 @@ class NextflowFileExecutable:
             nextflow_file.write(f"{WORKFLOW_COMMENT}\n")
             for nextflow_line in self.nf_lines_parameters:
                 nextflow_file.write(f'{nextflow_line}\n')
+            nextflow_file.write("\n")
+            nextflow_file.write(self.build_log_info_prints())
             nextflow_file.write("\n")
             nextflow_file.write(f'{self.nf_process_split_range.file_representation(local_script=True)}\n')
             for block in self.nf_blocks_process:
