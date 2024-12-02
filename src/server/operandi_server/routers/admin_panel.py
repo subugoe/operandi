@@ -58,7 +58,7 @@ class RouterAdminPanel:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
 
     async def push_to_ola_hd(self, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        await auth_admin_with_handling(auth)
+        await self.auth_admin_with_handling(auth)
         db_workspace = await get_db_workspace_with_handling(self.logger, workspace_id=workspace_id)
         try:
             bag_dst = create_workspace_bag(db_workspace=db_workspace)
@@ -81,14 +81,13 @@ class RouterAdminPanel:
         }
         return response_message
 
-    @staticmethod
-    async def get_users(auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        await auth_admin_with_handling(auth)
+    async def get_users(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+        await self.auth_admin_with_handling(auth)
         users = await db_get_all_user_accounts()
         return [PYUserInfo.from_db_user_account(user) for user in users]
 
     async def get_processing_stats_for_user(self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        await auth_admin_with_handling(auth)
+        await self.auth_admin_with_handling(auth)
         try:
             db_processing_stats = await db_get_processing_stats(user_id)
             if not db_processing_stats:
@@ -101,12 +100,11 @@ class RouterAdminPanel:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
         return db_processing_stats
 
-    @staticmethod
     async def user_workflow_jobs(
-        user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
-        await auth_admin_with_handling(auth)
+        await self.auth_admin_with_handling(auth)
         db_workflow_jobs = await db_get_all_workflow_jobs_by_user(
             user_id=user_id, start_date=start_date, end_date=end_date)
         response = []
@@ -116,20 +114,18 @@ class RouterAdminPanel:
             response.append(WorkflowJobRsrc.from_db_workflow_job(db_workflow_job, db_workflow, db_workspace))
         return response
 
-    @staticmethod
     async def user_workspaces(
-        user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
-        await auth_admin_with_handling(auth)
+        await self.auth_admin_with_handling(auth)
         db_workspaces = await db_get_all_workspaces_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
         return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
 
-    @staticmethod
     async def user_workflows(
-        user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> List:
-        await auth_admin_with_handling(auth)
+        await self.auth_admin_with_handling(auth)
         db_workflows = await db_get_all_workflows_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
         return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]
