@@ -20,7 +20,9 @@ setup(
         'operandi_utils.oton',
         'operandi_utils.rabbitmq'
     ],
-    package_data={'': ['batch_scripts/*.sh', 'nextflow_workflows/*.nf', 'ocrd_all_tool.json']},
+    package_data={
+        '': ['batch_scripts/*.sh', 'nextflow_workflows/*.nf', 'ocrd_process_workflows/*.txt', 'ocrd_all_tool.json']
+    },
     install_requires=install_requires,
     entry_points={
         'console_scripts': [
