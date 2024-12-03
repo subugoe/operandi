@@ -41,51 +41,35 @@ async def get_db_workflow_job_with_handling(logger, job_id: str, check_local_exi
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
     return db_workflow_job
 
-async def nf_script_uses_mets_server_with_handling(
-    logger, nf_script_path: str, search_string: str = PARAMS_KEY_METS_SOCKET_PATH
-) -> bool:
-    try:
-        with open(nf_script_path) as nf_file:
-            line = nf_file.readline()
-            while line:
-                if search_string in line:
-                    return True
-                line = nf_file.readline()
-            return False
-    except Exception as error:
-        message = "Failed to identify whether a mets server is used or not in the provided Nextflow workflow."
-        logger.error(f"{message}, error: {error}")
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-
-async def nf_script_executable_steps_with_handling(logger, nf_script_path: str) -> List[str]:
+# TODO: Find a way to simplify that potentially by getting the metadata from OtoN directly
+#  However, what about user defined workflows then?
+async def nf_script_extract_metadata_with_handling(logger, nf_script_path: str) -> dict:
+    metadata = {"uses_mets_server": False}
     processor_executables: List[str] = []
+    file_groups: List[str] = []
     try:
         with open(nf_script_path) as nf_file:
             line = nf_file.readline()
             while line:
-                for word in line.split(' '):
+                if not metadata["uses_mets_server"] and PARAMS_KEY_METS_SOCKET_PATH in line:
+                    metadata["uses_mets_server"] = True
+                edited_line = line.replace(")\n", "")
+                for word in edited_line.split(' '):
                     if "ocrd-" in word:
                         processor_executables.append(word)
                         break
+                    if word.startswith('"') and word.endswith('"'):
+                        file_groups.append(word[1:-1])
+                        break
                 line = nf_file.readline()
+        metadata["executable_steps"] = processor_executables
+        metadata["producible_file_groups"] = file_groups
     except Exception as error:
-        message = "Failed to identify processor executables in the provided Nextflow workflow."
+        message = "Failed to extract the metadata of the provided Nextflow workflow."
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-
-    """
-    apptainer_images: List[str] = []
-    try:
-        for executable in processor_executables:
-            apptainer_images.append(OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE[executable])
-    except Exception as error:
-        message = "Failed to produce apptainer image names from the processor executables list"
-        logger.error(f"{message}, error: {error}")
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-    return apptainer_images
-    """
-    logger.info(f"Found processor executables: {processor_executables}")
-    return processor_executables
+    logger.info(f"Extracted Nextflow workflow metadata: {metadata}")
+    return metadata
 
 async def validate_oton_with_handling(logger, ocrd_process_txt_path: str):
     try:

@@ -74,7 +74,6 @@ def create_workspace_bag(db_workspace) -> Union[str, None]:
         workspace, ocrd_identifier=db_workspace.ocrd_identifier, dest=bag_dest, ocrd_mets=mets_basename, processes=1)
     return bag_dest
 
-
 def create_workspace_bag_from_remote_url(
     mets_url: str, workspace_id: str, bag_dest: str, mets_basename: str = DEFAULT_METS_BASENAME,
     preserve_file_grps: List[str] = None
@@ -186,10 +185,9 @@ def remove_file_groups_with_handling(
     logger, db_workspace, file_groups: List[str], recursive: bool = True, force: bool = True
 ) -> List[str]:
     try:
-        resolver = Resolver()
         # Create an OCR-D Workspace from a remote mets URL
         # without downloading the files referenced in the mets file
-        workspace = resolver.workspace_from_url(
+        workspace = Resolver().workspace_from_url(
             mets_url=db_workspace.workspace_mets_path, clobber_mets=False, mets_basename=db_workspace.mets_basename,
             download=False)
         for file_group in file_groups:
@@ -203,8 +201,7 @@ def remove_file_groups_with_handling(
 
 def extract_file_groups_from_db_model_with_handling(logger, db_workspace) -> List[str]:
     try:
-        resolver = Resolver()
-        workspace = resolver.workspace_from_url(
+        workspace = Resolver().workspace_from_url(
             mets_url=db_workspace.workspace_mets_path, clobber_mets=False, mets_basename=db_workspace.mets_basename,
             download=False)
         return workspace.mets.file_groups
@@ -216,3 +213,16 @@ def extract_file_groups_from_db_model_with_handling(logger, db_workspace) -> Lis
 def check_if_file_group_exists_with_handling(logger, db_workspace, file_group: str) -> bool:
     file_groups = extract_file_groups_from_db_model_with_handling(logger, db_workspace)
     return file_group in file_groups
+
+def find_file_groups_to_remove_with_handling(logger, db_workspace, preserve_file_grps: str) -> List[str]:
+    preserve_file_grps: List[str] = preserve_file_grps.split(',')
+    try:
+        workspace = Resolver().workspace_from_url(
+            mets_url=db_workspace.workspace_mets_path, clobber_mets=False, mets_basename=db_workspace.mets_basename,
+            download=False)
+        remove_groups = [x for x in workspace.mets.file_groups if x not in preserve_file_grps]
+    except Exception as error:
+        message = "Failed to find file groups to be removed based on the file groups to be preserved"
+        logger.error(f"{message}, error: {error}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+    return remove_groups

@@ -30,10 +30,11 @@ from .workflow_utils import (
     convert_oton_with_handling,
     get_db_workflow_job_with_handling,
     get_db_workflow_with_handling,
-    nf_script_uses_mets_server_with_handling,
-    validate_oton_with_handling, nf_script_executable_steps_with_handling
+    nf_script_extract_metadata_with_handling,
+    validate_oton_with_handling,
 )
-from .workspace_utils import check_if_file_group_exists_with_handling, get_db_workspace_with_handling
+from .workspace_utils import (
+    check_if_file_group_exists_with_handling, get_db_workspace_with_handling, find_file_groups_to_remove_with_handling)
 from .user import RouterUser
 
 
@@ -174,15 +175,15 @@ class RouterWorkflow:
                 SERVER_WORKFLOWS_ROUTER, resource_id=path.stem, exists_ok=True)
             nf_script_dest = join(workflow_dir, path.name)
             copyfile(src=path, dst=nf_script_dest)
-            uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
-            executable_steps = await nf_script_executable_steps_with_handling(self.logger, nf_script_dest)
+            nf_metadata = await nf_script_extract_metadata_with_handling(self.logger, nf_script_dest)
             self.logger.info(
-                f"Inserting: {workflow_id}, uses_mets_server: {uses_mets_server}, script path: {nf_script_dest}")
+                f"Inserting: {workflow_id}, metadata: {nf_metadata}, script path: {nf_script_dest}")
             await db_create_workflow(
                 user_id="Operandi Server",
                 workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-                workflow_script_base=path.name, uses_mets_server=uses_mets_server, executable_steps=executable_steps,
-                details=wf_detail)
+                workflow_script_base=path.name, uses_mets_server=nf_metadata["uses_mets_server"],
+                executable_steps=nf_metadata["executable_steps"],
+                producible_file_groups=nf_metadata["producible_file_groups"], details=wf_detail)
             self.production_workflows.append(workflow_id)
 
     async def list_workflows(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
@@ -231,12 +232,12 @@ class RouterWorkflow:
             message = "Failed to receive the workflow resource"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-        uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
-        executable_steps = await nf_script_executable_steps_with_handling(self.logger, nf_script_dest)
+        nf_metadata = await nf_script_extract_metadata_with_handling(self.logger, nf_script_dest)
         db_workflow = await db_create_workflow(
             user_id=py_user_action.user_id, workflow_id=workflow_id, workflow_dir=workflow_dir,
             workflow_script_path=nf_script_dest, workflow_script_base=nextflow_script.filename,
-            uses_mets_server=uses_mets_server, executable_steps=executable_steps, details=details)
+            uses_mets_server=nf_metadata["uses_mets_server"], executable_steps=nf_metadata["executable_steps"],
+            producible_file_groups=nf_metadata["producible_file_groups"], details=details)
         return WorkflowRsrc.from_db_workflow(db_workflow)
 
     async def update_workflow_script(
@@ -267,12 +268,12 @@ class RouterWorkflow:
             message = f"Failed to receive the workflow resource"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-        uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
-        executable_steps = await nf_script_executable_steps_with_handling(self.logger, nf_script_dest)
+        nf_metadata = await nf_script_extract_metadata_with_handling(self.logger, nf_script_dest)
         db_workflow = await db_create_workflow(
             user_id=py_user_action.user_id, workflow_id=workflow_id, workflow_dir=workflow_dir,
             workflow_script_path=nf_script_dest, workflow_script_base=nextflow_script.filename,
-            uses_mets_server=uses_mets_server, executable_steps=executable_steps, details=details)
+            uses_mets_server=nf_metadata["uses_mets_server"], executable_steps=nf_metadata["executable_steps"],
+            producible_file_groups=nf_metadata["producible_file_groups"], details=details)
         return WorkflowRsrc.from_db_workflow(db_workflow)
 
     async def get_workflow_job_status(
@@ -384,12 +385,18 @@ class RouterWorkflow:
         try:
             workspace_id = workflow_args.workspace_id
             input_file_grp = workflow_args.input_file_grp
-            # TODO: Verify if the file groups requested to be removed are in fact
+            # TODO: Verify if the file groups requested to be removed/preserved are in fact
             #  going to be produced in the future by the used workflow
             remove_file_grps = workflow_args.remove_file_grps
+            preserve_file_grps = workflow_args.preserve_file_grps
         except Exception as error:
             message = "Failed to parse workflow arguments"
             self.logger.error(f"{message}, error: {error}")
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+
+        if remove_file_grps and preserve_file_grps:
+            message = "`remove_file_grps` and `preserve_file_grps` fields are mutually exclusive. Provide only one."
+            self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
         # Check the availability and readiness of the workspace to be used
@@ -401,6 +408,15 @@ class RouterWorkflow:
 
         # Check the availability of the workflow to be used
         db_workflow = await get_db_workflow_with_handling(self.logger, workflow_id=workflow_id)
+        if preserve_file_grps:
+            self.logger.info(f"Finding file groups to be removed based on the reproducible/preserve file groups")
+            self.logger.info(f"preserve_file_grps: {preserve_file_grps}")
+            remove_file_grps = find_file_groups_to_remove_with_handling(self.logger, db_workspace, preserve_file_grps)
+            remove_file_grps = ",".join(remove_file_grps)
+            self.logger.info(f"remove_file_grps: {remove_file_grps}")
+            file_grps_reproducible = ",".join(db_workflow.producible_file_groups)
+            remove_file_grps += f",{file_grps_reproducible}"
+            self.logger.info(f"remove_file_grps including reproducible: {remove_file_grps}")
 
         try:
             # Create job request parameters
@@ -430,8 +446,8 @@ class RouterWorkflow:
 
         self._push_job_to_rabbitmq(
             user_id=py_user_action.user_id, user_type=user_account_type, workflow_id=workflow_id,
-            workspace_id=workspace_id, job_id=job_id, input_file_grp=input_file_grp,
-            remove_file_grps=remove_file_grps, partition=partition, cpus=cpus, ram=ram
+            workspace_id=workspace_id, job_id=job_id, input_file_grp=input_file_grp, remove_file_grps=remove_file_grps,
+            partition=partition, cpus=cpus, ram=ram
         )
         await db_increase_processing_stats_with_handling(
             self.logger, find_user_id=py_user_action.user_id, pages_submitted=db_workspace.pages_amount)
