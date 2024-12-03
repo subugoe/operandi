@@ -72,7 +72,7 @@ process ocrd_cis_ocropy_binarize_0 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step0} ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step0} ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 

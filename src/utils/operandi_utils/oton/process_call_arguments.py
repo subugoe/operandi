@@ -2,7 +2,7 @@ from json import dumps as json_dumps
 from logging import getLevelName, getLogger
 from typing import Optional
 from operandi_utils.oton.constants import (
-    BS, CONST_DIR_IN, CONST_DIR_OUT, CONST_WORKSPACE_DIR, CONST_METS_PATH, CONST_METS_SOCKET_PATH,
+    BS, CONST_DIR_IN, CONST_DIR_OUT, CONST_WORKSPACE_DIR, CONST_METS_PATH, CONST_PAGE_RANGE, CONST_METS_SOCKET_PATH,
     OCRD_ALL_JSON, OTON_LOG_LEVEL
 )
 
@@ -58,6 +58,7 @@ class ProcessorCallArguments:
             dump += f' -U ${BS[0]}{CONST_METS_SOCKET_PATH}{BS[1]}'
         dump += f' -w ${BS[0]}{CONST_WORKSPACE_DIR}{BS[1]}'
         dump += f' -m ${BS[0]}{CONST_METS_PATH}{BS[1]}'
+        dump += f' --page-id ${BS[0]}{CONST_PAGE_RANGE}{BS[1]}'
         dump += f' -I ${BS[0]}{CONST_DIR_IN}{BS[1]}'
         dump += f' -O ${BS[0]}{CONST_DIR_OUT}{BS[1]}'
         if self.parameters:
