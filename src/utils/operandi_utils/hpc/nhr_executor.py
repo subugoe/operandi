@@ -194,7 +194,7 @@ class NHRExecutor(NHRConnector):
         input_file_grp: str, mets_basename: str, use_mets_server: bool, nf_executable_steps: List[str],
         ws_pages_amount: int, cpus: int, ram: int, forks: int, use_slim_images: bool
     ) -> str:
-        nf_run_command = f"nextflow run {hpc_nf_script_path} -ansi-log false -with-report"
+        nf_run_command = f"nextflow run {hpc_nf_script_path} -ansi-log false -with-report -with-trace"
         nf_run_command += f" --input_file_group {input_file_grp}"
         nf_run_command += f" --mets_path /ws_data/{mets_basename}"
         if use_mets_server:
@@ -204,15 +204,18 @@ class NHRExecutor(NHRConnector):
 
         sif_images = [OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE[exe] for exe in nf_executable_steps]
         apptainer_cmd = f"apptainer exec --bind {hpc_ws_dir}:/ws_data --bind {bind_ocrd_models}"
-        apptainer_cmd += f" --env OCRD_METS_CACHING=false"
+        # Mets caching is disabled for the core, to avoid the cache error
+        # when mergin mets files https://github.com/OCR-D/core/issues/1297
+        apptainer_cmd_core = f"{apptainer_cmd} --env OCRD_METS_CACHING=false"
+        apptainer_cmd_step = f"{apptainer_cmd} --env OCRD_METS_CACHING=true"
         apptainer_image = sif_core if use_slim_images else sif_ocrd_all
-        core_command = f"{apptainer_cmd} {PH_NODE_DIR_PROCESSOR_SIFS}/{apptainer_image}"
+        core_command = f"{apptainer_cmd_core} {PH_NODE_DIR_PROCESSOR_SIFS}/{apptainer_image}"
         nf_run_command += f" --env_wrapper_cmd_core {PH_CMD_WRAPPER}{core_command}{PH_CMD_WRAPPER}"
 
         index = 0
         for sif_image in sif_images:
             apptainer_image = sif_image if use_slim_images else sif_ocrd_all
-            step_command = f"{apptainer_cmd} {PH_NODE_DIR_PROCESSOR_SIFS}/{apptainer_image}"
+            step_command = f"{apptainer_cmd_step} {PH_NODE_DIR_PROCESSOR_SIFS}/{apptainer_image}"
             nf_run_command += f" --env_wrapper_cmd_step{index} {PH_CMD_WRAPPER}{step_command}{PH_CMD_WRAPPER}"
             index += 1
         nf_run_command += f" --cpus {cpus}"
