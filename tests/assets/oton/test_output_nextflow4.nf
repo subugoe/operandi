@@ -82,7 +82,7 @@ process ocrd_olena_binarize_0 {
 
     script:
         """
-        ocrd-olena-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"impl": "sauvola"}'
+        ocrd-olena-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"impl": "sauvola"}'
         """
 }
 
@@ -104,7 +104,7 @@ process ocrd_anybaseocr_crop_1 {
 
     script:
         """
-        ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -126,7 +126,7 @@ process ocrd_olena_binarize_2 {
 
     script:
         """
-        ocrd-olena-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"impl": "kim"}'
+        ocrd-olena-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"impl": "kim"}'
         """
 }
 
@@ -148,7 +148,7 @@ process ocrd_cis_ocropy_denoise_3 {
 
     script:
         """
-        ocrd-cis-ocropy-denoise -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ocrd-cis-ocropy-denoise -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -170,7 +170,7 @@ process ocrd_cis_ocropy_deskew_4 {
 
     script:
         """
-        ocrd-cis-ocropy-deskew -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ocrd-cis-ocropy-deskew -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -192,7 +192,7 @@ process ocrd_tesserocr_segment_region_5 {
 
     script:
         """
-        ocrd-tesserocr-segment-region -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-tesserocr-segment-region -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -214,7 +214,7 @@ process ocrd_segment_repair_6 {
 
     script:
         """
-        ocrd-segment-repair -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"plausibilize": true}'
+        ocrd-segment-repair -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"plausibilize": true}'
         """
 }
 
@@ -236,7 +236,7 @@ process ocrd_cis_ocropy_deskew_7 {
 
     script:
         """
-        ocrd-cis-ocropy-deskew -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "region"}'
+        ocrd-cis-ocropy-deskew -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "region"}'
         """
 }
 
@@ -258,7 +258,7 @@ process ocrd_cis_ocropy_clip_8 {
 
     script:
         """
-        ocrd-cis-ocropy-clip -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "region"}'
+        ocrd-cis-ocropy-clip -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "region"}'
         """
 }
 
@@ -280,7 +280,7 @@ process ocrd_tesserocr_segment_line_9 {
 
     script:
         """
-        ocrd-tesserocr-segment-line -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-tesserocr-segment-line -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -302,7 +302,7 @@ process ocrd_segment_repair_10 {
 
     script:
         """
-        ocrd-segment-repair -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"sanitize": true}'
+        ocrd-segment-repair -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"sanitize": true}'
         """
 }
 
@@ -324,7 +324,7 @@ process ocrd_cis_ocropy_dewarp_11 {
 
     script:
         """
-        ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -346,7 +346,7 @@ process ocrd_calamari_recognize_12 {
 
     script:
         """
-        ocrd-calamari-recognize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
+        ocrd-calamari-recognize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
         """
 }
 

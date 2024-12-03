@@ -62,7 +62,7 @@ process ocrd_dinglehopper_0 {
 
     script:
         """
-        ocrd-dinglehopper -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-dinglehopper -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -84,7 +84,7 @@ process ocrd_dinglehopper_1 {
 
     script:
         """
-        ocrd-dinglehopper -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-dinglehopper -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -106,7 +106,7 @@ process ocrd_dinglehopper_2 {
 
     script:
         """
-        ocrd-dinglehopper -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-dinglehopper -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 

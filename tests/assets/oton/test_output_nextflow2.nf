@@ -70,7 +70,7 @@ process ocrd_cis_ocropy_binarize_0 {
 
     script:
         """
-        ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -92,7 +92,7 @@ process ocrd_anybaseocr_crop_1 {
 
     script:
         """
-        ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -114,7 +114,7 @@ process ocrd_skimage_denoise_2 {
 
     script:
         """
-        ocrd-skimage-denoise -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ocrd-skimage-denoise -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -136,7 +136,7 @@ process ocrd_tesserocr_deskew_3 {
 
     script:
         """
-        ocrd-tesserocr-deskew -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
+        ocrd-tesserocr-deskew -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
         """
 }
 
@@ -158,7 +158,7 @@ process ocrd_tesserocr_segment_4 {
 
     script:
         """
-        ocrd-tesserocr-segment -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"shrink_polygons": true}'
+        ocrd-tesserocr-segment -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"shrink_polygons": true}'
         """
 }
 
@@ -180,7 +180,7 @@ process ocrd_cis_ocropy_dewarp_5 {
 
     script:
         """
-        ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -202,7 +202,7 @@ process ocrd_tesserocr_recognize_6 {
 
     script:
         """
-        ocrd-tesserocr-recognize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"textequiv_level": "glyph", "overwrite_segments": true, "model": "GT4HistOCR_50000000.997_191951"}'
+        ocrd-tesserocr-recognize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"textequiv_level": "glyph", "overwrite_segments": true, "model": "GT4HistOCR_50000000.997_191951"}'
         """
 }
 

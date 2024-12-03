@@ -74,7 +74,7 @@ process ocrd_cis_ocropy_binarize_0 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step0} ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step0} ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -96,7 +96,7 @@ process ocrd_anybaseocr_crop_1 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step1} ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step1} ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -118,7 +118,7 @@ process ocrd_skimage_binarize_2 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step2} ocrd-skimage-binarize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
+        ${params.env_wrapper_cmd_step2} ocrd-skimage-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"method": "li"}'
         """
 }
 
@@ -140,7 +140,7 @@ process ocrd_skimage_denoise_3 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step3} ocrd-skimage-denoise -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ${params.env_wrapper_cmd_step3} ocrd-skimage-denoise -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -162,7 +162,7 @@ process ocrd_tesserocr_deskew_4 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step4} ocrd-tesserocr-deskew -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
+        ${params.env_wrapper_cmd_step4} ocrd-tesserocr-deskew -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
         """
 }
 
@@ -184,7 +184,7 @@ process ocrd_cis_ocropy_segment_5 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step5} ocrd-cis-ocropy-segment -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ${params.env_wrapper_cmd_step5} ocrd-cis-ocropy-segment -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -206,7 +206,7 @@ process ocrd_cis_ocropy_dewarp_6 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step6} ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step6} ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -228,7 +228,7 @@ process ocrd_calamari_recognize_7 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step7} ocrd-calamari-recognize -w ${workspace_dir} -m ${mets_path} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
+        ${params.env_wrapper_cmd_step7} ocrd-calamari-recognize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
         """
 }
 
