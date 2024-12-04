@@ -71,18 +71,16 @@ process ocrd_olena_binarize_0 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-olena-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"impl": "sauvola"}'
+        ocrd-olena-binarize -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"impl": "sauvola"}'
         """
 }
 
@@ -93,18 +91,16 @@ process ocrd_anybaseocr_crop_1 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ocrd-anybaseocr-crop -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -115,18 +111,16 @@ process ocrd_olena_binarize_2 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-olena-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"impl": "kim"}'
+        ocrd-olena-binarize -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"impl": "kim"}'
         """
 }
 
@@ -137,18 +131,16 @@ process ocrd_cis_ocropy_denoise_3 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-cis-ocropy-denoise -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ocrd-cis-ocropy-denoise -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -159,18 +151,16 @@ process ocrd_cis_ocropy_deskew_4 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-cis-ocropy-deskew -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ocrd-cis-ocropy-deskew -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -181,18 +171,16 @@ process ocrd_tesserocr_segment_region_5 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-tesserocr-segment-region -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ocrd-tesserocr-segment-region -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -203,18 +191,16 @@ process ocrd_segment_repair_6 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-segment-repair -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"plausibilize": true}'
+        ocrd-segment-repair -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"plausibilize": true}'
         """
 }
 
@@ -225,18 +211,16 @@ process ocrd_cis_ocropy_deskew_7 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-cis-ocropy-deskew -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "region"}'
+        ocrd-cis-ocropy-deskew -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "region"}'
         """
 }
 
@@ -247,18 +231,16 @@ process ocrd_cis_ocropy_clip_8 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-cis-ocropy-clip -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "region"}'
+        ocrd-cis-ocropy-clip -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "region"}'
         """
 }
 
@@ -269,18 +251,16 @@ process ocrd_tesserocr_segment_line_9 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-tesserocr-segment-line -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ocrd-tesserocr-segment-line -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -291,18 +271,16 @@ process ocrd_segment_repair_10 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-segment-repair -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"sanitize": true}'
+        ocrd-segment-repair -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"sanitize": true}'
         """
 }
 
@@ -313,18 +291,16 @@ process ocrd_cis_ocropy_dewarp_11 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ocrd-cis-ocropy-dewarp -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -335,18 +311,16 @@ process ocrd_calamari_recognize_12 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-calamari-recognize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
+        ocrd-calamari-recognize -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
         """
 }
 
@@ -369,18 +343,18 @@ workflow {
     main:
         ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
         split_page_ranges(ch_range_multipliers)
-        ocrd_olena_binarize_0(split_page_ranges.out[0], split_page_ranges.out[1], params.workspace_dir, params.input_file_group, "OCR-D-BIN")
-        ocrd_anybaseocr_crop_1(ocrd_olena_binarize_0.out[0], ocrd_olena_binarize_0.out[1], ocrd_olena_binarize_0.out[2], "OCR-D-BIN", "OCR-D-CROP")
-        ocrd_olena_binarize_2(ocrd_anybaseocr_crop_1.out[0], ocrd_anybaseocr_crop_1.out[1], ocrd_anybaseocr_crop_1.out[2], "OCR-D-CROP", "OCR-D-BIN2")
-        ocrd_cis_ocropy_denoise_3(ocrd_olena_binarize_2.out[0], ocrd_olena_binarize_2.out[1], ocrd_olena_binarize_2.out[2], "OCR-D-BIN2", "OCR-D-BIN-DENOISE")
-        ocrd_cis_ocropy_deskew_4(ocrd_cis_ocropy_denoise_3.out[0], ocrd_cis_ocropy_denoise_3.out[1], ocrd_cis_ocropy_denoise_3.out[2], "OCR-D-BIN-DENOISE", "OCR-D-BIN-DENOISE-DESKEW")
-        ocrd_tesserocr_segment_region_5(ocrd_cis_ocropy_deskew_4.out[0], ocrd_cis_ocropy_deskew_4.out[1], ocrd_cis_ocropy_deskew_4.out[2], "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG-REG")
-        ocrd_segment_repair_6(ocrd_tesserocr_segment_region_5.out[0], ocrd_tesserocr_segment_region_5.out[1], ocrd_tesserocr_segment_region_5.out[2], "OCR-D-SEG-REG", "OCR-D-SEG-REPAIR")
-        ocrd_cis_ocropy_deskew_7(ocrd_segment_repair_6.out[0], ocrd_segment_repair_6.out[1], ocrd_segment_repair_6.out[2], "OCR-D-SEG-REPAIR", "OCR-D-SEG-REG-DESKEW")
-        ocrd_cis_ocropy_clip_8(ocrd_cis_ocropy_deskew_7.out[0], ocrd_cis_ocropy_deskew_7.out[1], ocrd_cis_ocropy_deskew_7.out[2], "OCR-D-SEG-REG-DESKEW", "OCR-D-SEG-REG-DESKEW-CLIP")
-        ocrd_tesserocr_segment_line_9(ocrd_cis_ocropy_clip_8.out[0], ocrd_cis_ocropy_clip_8.out[1], ocrd_cis_ocropy_clip_8.out[2], "OCR-D-SEG-REG-DESKEW-CLIP", "OCR-D-SEG-LINE")
-        ocrd_segment_repair_10(ocrd_tesserocr_segment_line_9.out[0], ocrd_tesserocr_segment_line_9.out[1], ocrd_tesserocr_segment_line_9.out[2], "OCR-D-SEG-LINE", "OCR-D-SEG-REPAIR-LINE")
-        ocrd_cis_ocropy_dewarp_11(ocrd_segment_repair_10.out[0], ocrd_segment_repair_10.out[1], ocrd_segment_repair_10.out[2], "OCR-D-SEG-REPAIR-LINE", "OCR-D-SEG-LINE-RESEG-DEWARP")
-        ocrd_calamari_recognize_12(ocrd_cis_ocropy_dewarp_11.out[0], ocrd_cis_ocropy_dewarp_11.out[1], ocrd_cis_ocropy_dewarp_11.out[2], "OCR-D-SEG-LINE-RESEG-DEWARP", "OCR-D-OCR")
+        ocrd_olena_binarize_0(split_page_ranges.out[0], split_page_ranges.out[1], params.input_file_group, "OCR-D-BIN")
+        ocrd_anybaseocr_crop_1(ocrd_olena_binarize_0.out[0], ocrd_olena_binarize_0.out[1], "OCR-D-BIN", "OCR-D-CROP")
+        ocrd_olena_binarize_2(ocrd_anybaseocr_crop_1.out[0], ocrd_anybaseocr_crop_1.out[1], "OCR-D-CROP", "OCR-D-BIN2")
+        ocrd_cis_ocropy_denoise_3(ocrd_olena_binarize_2.out[0], ocrd_olena_binarize_2.out[1], "OCR-D-BIN2", "OCR-D-BIN-DENOISE")
+        ocrd_cis_ocropy_deskew_4(ocrd_cis_ocropy_denoise_3.out[0], ocrd_cis_ocropy_denoise_3.out[1], "OCR-D-BIN-DENOISE", "OCR-D-BIN-DENOISE-DESKEW")
+        ocrd_tesserocr_segment_region_5(ocrd_cis_ocropy_deskew_4.out[0], ocrd_cis_ocropy_deskew_4.out[1], "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG-REG")
+        ocrd_segment_repair_6(ocrd_tesserocr_segment_region_5.out[0], ocrd_tesserocr_segment_region_5.out[1], "OCR-D-SEG-REG", "OCR-D-SEG-REPAIR")
+        ocrd_cis_ocropy_deskew_7(ocrd_segment_repair_6.out[0], ocrd_segment_repair_6.out[1], "OCR-D-SEG-REPAIR", "OCR-D-SEG-REG-DESKEW")
+        ocrd_cis_ocropy_clip_8(ocrd_cis_ocropy_deskew_7.out[0], ocrd_cis_ocropy_deskew_7.out[1], "OCR-D-SEG-REG-DESKEW", "OCR-D-SEG-REG-DESKEW-CLIP")
+        ocrd_tesserocr_segment_line_9(ocrd_cis_ocropy_clip_8.out[0], ocrd_cis_ocropy_clip_8.out[1], "OCR-D-SEG-REG-DESKEW-CLIP", "OCR-D-SEG-LINE")
+        ocrd_segment_repair_10(ocrd_tesserocr_segment_line_9.out[0], ocrd_tesserocr_segment_line_9.out[1], "OCR-D-SEG-LINE", "OCR-D-SEG-REPAIR-LINE")
+        ocrd_cis_ocropy_dewarp_11(ocrd_segment_repair_10.out[0], ocrd_segment_repair_10.out[1], "OCR-D-SEG-REPAIR-LINE", "OCR-D-SEG-LINE-RESEG-DEWARP")
+        ocrd_calamari_recognize_12(ocrd_cis_ocropy_dewarp_11.out[0], ocrd_cis_ocropy_dewarp_11.out[1], "OCR-D-SEG-LINE-RESEG-DEWARP", "OCR-D-OCR")
         merging_mets(ocrd_calamari_recognize_12.out[0], ocrd_calamari_recognize_12.out[1])
 }

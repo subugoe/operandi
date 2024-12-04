@@ -3,22 +3,10 @@ from typing import List
 
 from operandi_utils.oton.ocrd_validator import ProcessorCallArguments
 from operandi_utils.oton.constants import (
-    BS, CONST_DIR_IN, CONST_DIR_OUT, CONST_PAGE_RANGE, CONST_METS_PATH, CONST_WORKSPACE_DIR,
-    OTON_LOG_LEVEL,
-    PARAMS_KEY_INPUT_FILE_GRP,
-    PARAMS_KEY_METS_PATH,
-    PARAMS_KEY_WORKSPACE_DIR,
-    PARAMS_KEY_ENV_WRAPPER_CMD_CORE,
-    PARAMS_KEY_ENV_WRAPPER_CMD_STEP,
-    PARAMS_KEY_FORKS,
-    PARAMS_KEY_PAGES,
-    PARAMS_KEY_CPUS,
-    PARAMS_KEY_CPUS_PER_FORK,
-    PARAMS_KEY_RAM,
-    PARAMS_KEY_RAM_PER_FORK,
-    PARAMS_KEY_METS_SOCKET_PATH,
-    SPACES,
-    WORKFLOW_COMMENT
+    BS, CONST_DIR_IN, CONST_DIR_OUT, CONST_PAGE_RANGE, CONST_METS_PATH, OTON_LOG_LEVEL, SPACES, WORKFLOW_COMMENT,
+    PARAMS_KEY_INPUT_FILE_GRP, PARAMS_KEY_METS_PATH, PARAMS_KEY_WORKSPACE_DIR, PARAMS_KEY_ENV_WRAPPER_CMD_CORE,
+    PARAMS_KEY_ENV_WRAPPER_CMD_STEP, PARAMS_KEY_FORKS, PARAMS_KEY_PAGES, PARAMS_KEY_CPUS, PARAMS_KEY_CPUS_PER_FORK,
+    PARAMS_KEY_RAM, PARAMS_KEY_RAM_PER_FORK, PARAMS_KEY_METS_SOCKET_PATH,
 )
 from operandi_utils.oton.nf_block_process import NextflowBlockProcess
 from operandi_utils.oton.nf_block_workflow import NextflowBlockWorkflow
@@ -174,13 +162,11 @@ class NextflowFileExecutable:
             # Add Nextflow process parameters
             nf_process_block.add_parameter_input(parameter=CONST_METS_PATH, parameter_type='val')
             nf_process_block.add_parameter_input(parameter=CONST_PAGE_RANGE, parameter_type='val')
-            nf_process_block.add_parameter_input(parameter=CONST_WORKSPACE_DIR, parameter_type='val')
             nf_process_block.add_parameter_input(parameter=CONST_DIR_IN, parameter_type='val')
             nf_process_block.add_parameter_input(parameter=CONST_DIR_OUT, parameter_type='val')
 
             nf_process_block.add_parameter_output(parameter=CONST_METS_PATH, parameter_type='val')
             nf_process_block.add_parameter_output(parameter=CONST_PAGE_RANGE, parameter_type='val')
-            nf_process_block.add_parameter_output(parameter=CONST_WORKSPACE_DIR, parameter_type='val')
             self.nf_lines_parameters[f'{PARAMS_KEY_ENV_WRAPPER_CMD_STEP}{index}'] = '"null"'
             self.nf_blocks_process.append(nf_process_block)
             index += 1

@@ -59,18 +59,16 @@ process ocrd_cis_ocropy_binarize_0 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ocrd-cis-ocropy-binarize -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -81,18 +79,16 @@ process ocrd_anybaseocr_crop_1 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ocrd-anybaseocr-crop -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -103,18 +99,16 @@ process ocrd_skimage_denoise_2 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-skimage-denoise -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ocrd-skimage-denoise -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -125,18 +119,16 @@ process ocrd_tesserocr_deskew_3 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-tesserocr-deskew -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
+        ocrd-tesserocr-deskew -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"operation_level": "page"}'
         """
 }
 
@@ -147,18 +139,16 @@ process ocrd_tesserocr_segment_4 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-tesserocr-segment -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"shrink_polygons": true}'
+        ocrd-tesserocr-segment -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"shrink_polygons": true}'
         """
 }
 
@@ -169,18 +159,16 @@ process ocrd_cis_ocropy_dewarp_5 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ocrd-cis-ocropy-dewarp -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -191,18 +179,16 @@ process ocrd_tesserocr_recognize_6 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ocrd-tesserocr-recognize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"textequiv_level": "glyph", "overwrite_segments": true, "model": "GT4HistOCR_50000000.997_191951"}'
+        ocrd-tesserocr-recognize -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"textequiv_level": "glyph", "overwrite_segments": true, "model": "GT4HistOCR_50000000.997_191951"}'
         """
 }
 
@@ -225,12 +211,12 @@ workflow {
     main:
         ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
         split_page_ranges(ch_range_multipliers)
-        ocrd_cis_ocropy_binarize_0(split_page_ranges.out[0], split_page_ranges.out[1], params.workspace_dir, params.input_file_group, "OCR-D-BIN")
-        ocrd_anybaseocr_crop_1(ocrd_cis_ocropy_binarize_0.out[0], ocrd_cis_ocropy_binarize_0.out[1], ocrd_cis_ocropy_binarize_0.out[2], "OCR-D-BIN", "OCR-D-CROP")
-        ocrd_skimage_denoise_2(ocrd_anybaseocr_crop_1.out[0], ocrd_anybaseocr_crop_1.out[1], ocrd_anybaseocr_crop_1.out[2], "OCR-D-CROP", "OCR-D-BIN-DENOISE")
-        ocrd_tesserocr_deskew_3(ocrd_skimage_denoise_2.out[0], ocrd_skimage_denoise_2.out[1], ocrd_skimage_denoise_2.out[2], "OCR-D-BIN-DENOISE", "OCR-D-BIN-DENOISE-DESKEW")
-        ocrd_tesserocr_segment_4(ocrd_tesserocr_deskew_3.out[0], ocrd_tesserocr_deskew_3.out[1], ocrd_tesserocr_deskew_3.out[2], "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG")
-        ocrd_cis_ocropy_dewarp_5(ocrd_tesserocr_segment_4.out[0], ocrd_tesserocr_segment_4.out[1], ocrd_tesserocr_segment_4.out[2], "OCR-D-SEG", "OCR-D-SEG-DEWARP")
-        ocrd_tesserocr_recognize_6(ocrd_cis_ocropy_dewarp_5.out[0], ocrd_cis_ocropy_dewarp_5.out[1], ocrd_cis_ocropy_dewarp_5.out[2], "OCR-D-SEG-DEWARP", "OCR-D-OCR")
+        ocrd_cis_ocropy_binarize_0(split_page_ranges.out[0], split_page_ranges.out[1], params.input_file_group, "OCR-D-BIN")
+        ocrd_anybaseocr_crop_1(ocrd_cis_ocropy_binarize_0.out[0], ocrd_cis_ocropy_binarize_0.out[1], "OCR-D-BIN", "OCR-D-CROP")
+        ocrd_skimage_denoise_2(ocrd_anybaseocr_crop_1.out[0], ocrd_anybaseocr_crop_1.out[1], "OCR-D-CROP", "OCR-D-BIN-DENOISE")
+        ocrd_tesserocr_deskew_3(ocrd_skimage_denoise_2.out[0], ocrd_skimage_denoise_2.out[1], "OCR-D-BIN-DENOISE", "OCR-D-BIN-DENOISE-DESKEW")
+        ocrd_tesserocr_segment_4(ocrd_tesserocr_deskew_3.out[0], ocrd_tesserocr_deskew_3.out[1], "OCR-D-BIN-DENOISE-DESKEW", "OCR-D-SEG")
+        ocrd_cis_ocropy_dewarp_5(ocrd_tesserocr_segment_4.out[0], ocrd_tesserocr_segment_4.out[1], "OCR-D-SEG", "OCR-D-SEG-DEWARP")
+        ocrd_tesserocr_recognize_6(ocrd_cis_ocropy_dewarp_5.out[0], ocrd_cis_ocropy_dewarp_5.out[1], "OCR-D-SEG-DEWARP", "OCR-D-OCR")
         merging_mets(ocrd_tesserocr_recognize_6.out[0], ocrd_tesserocr_recognize_6.out[1])
 }

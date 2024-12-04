@@ -61,18 +61,16 @@ process ocrd_tesserocr_recognize_0 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step0} ocrd-tesserocr-recognize -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"segmentation_level": "region", "textequiv_level": "word", "find_tables": true, "model": "deu"}'
+        ${params.env_wrapper_cmd_step0} ocrd-tesserocr-recognize -U ${params.mets_socket_path} -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"segmentation_level": "region", "textequiv_level": "word", "find_tables": true, "model": "deu"}'
         """
 }
 
@@ -80,5 +78,5 @@ workflow {
     main:
         ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
         split_page_ranges(ch_range_multipliers)
-        ocrd_tesserocr_recognize_0(split_page_ranges.out[0], split_page_ranges.out[1], params.workspace_dir, params.input_file_group, "OCR-D-OCR")
+        ocrd_tesserocr_recognize_0(split_page_ranges.out[0], split_page_ranges.out[1], params.input_file_group, "OCR-D-OCR")
 }

@@ -79,18 +79,16 @@ process ocrd_cis_ocropy_binarize_0 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step0} ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
+        ${params.env_wrapper_cmd_step0} ocrd-cis-ocropy-binarize -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
         """
 }
 
@@ -103,18 +101,16 @@ process ocrd_anybaseocr_crop_1 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step1} ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
+        ${params.env_wrapper_cmd_step1} ocrd-anybaseocr-crop -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
         """
 }
 
@@ -127,18 +123,16 @@ process ocrd_cis_ocropy_denoise_2 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step2} ocrd-cis-ocropy-denoise -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
+        ${params.env_wrapper_cmd_step2} ocrd-cis-ocropy-denoise -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
         """
 }
 
@@ -151,18 +145,16 @@ process ocrd_cis_ocropy_deskew_3 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step3} ocrd-cis-ocropy-deskew -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ${params.env_wrapper_cmd_step3} ocrd-cis-ocropy-deskew -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -175,18 +167,16 @@ process ocrd_tesserocr_segment_region_4 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step4} ocrd-tesserocr-segment-region -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"padding": 5.0, "find_tables": false, "dpi": 300}'
+        ${params.env_wrapper_cmd_step4} ocrd-tesserocr-segment-region -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"padding": 5.0, "find_tables": false, "dpi": 300}'
         """
 }
 
@@ -199,18 +189,16 @@ process ocrd_segment_repair_5 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step5} ocrd-segment-repair -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"plausibilize": true, "plausibilize_merge_min_overlap": 0.7}'
+        ${params.env_wrapper_cmd_step5} ocrd-segment-repair -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"plausibilize": true, "plausibilize_merge_min_overlap": 0.7}'
         """
 }
 
@@ -223,18 +211,16 @@ process ocrd_cis_ocropy_clip_6 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step6} ocrd-cis-ocropy-clip -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step6} ocrd-cis-ocropy-clip -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -247,18 +233,16 @@ process ocrd_cis_ocropy_segment_7 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step7} ocrd-cis-ocropy-segment -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
+        ${params.env_wrapper_cmd_step7} ocrd-cis-ocropy-segment -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
         """
 }
 
@@ -271,18 +255,16 @@ process ocrd_cis_ocropy_dewarp_8 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step8} ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step8} ocrd-cis-ocropy-dewarp -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -295,18 +277,16 @@ process ocrd_tesserocr_recognize_9 {
     input:
         val mets_path
         val page_range
-        val workspace_dir
         val input_group
         val output_group
 
     output:
         val mets_path
         val page_range
-        val workspace_dir
 
     script:
         """
-        ${params.env_wrapper_cmd_step9} ocrd-tesserocr-recognize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"model": "Fraktur"}'
+        ${params.env_wrapper_cmd_step9} ocrd-tesserocr-recognize -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"model": "Fraktur"}'
         """
 }
 
@@ -331,15 +311,15 @@ workflow {
     main:
         ch_range_multipliers = Channel.of(0..params.forks.intValue()-1)
         split_page_ranges(ch_range_multipliers)
-        ocrd_cis_ocropy_binarize_0(split_page_ranges.out[0], split_page_ranges.out[1], params.workspace_dir, params.input_file_group, "OCR-D-BINPAGE")
-        ocrd_anybaseocr_crop_1(ocrd_cis_ocropy_binarize_0.out[0], ocrd_cis_ocropy_binarize_0.out[1], ocrd_cis_ocropy_binarize_0.out[2], "OCR-D-BINPAGE", "OCR-D-SEG-PAGE-ANYOCR")
-        ocrd_cis_ocropy_denoise_2(ocrd_anybaseocr_crop_1.out[0], ocrd_anybaseocr_crop_1.out[1], ocrd_anybaseocr_crop_1.out[2], "OCR-D-SEG-PAGE-ANYOCR", "OCR-D-DENOISE-OCROPY")
-        ocrd_cis_ocropy_deskew_3(ocrd_cis_ocropy_denoise_2.out[0], ocrd_cis_ocropy_denoise_2.out[1], ocrd_cis_ocropy_denoise_2.out[2], "OCR-D-DENOISE-OCROPY", "OCR-D-DESKEW-OCROPY")
-        ocrd_tesserocr_segment_region_4(ocrd_cis_ocropy_deskew_3.out[0], ocrd_cis_ocropy_deskew_3.out[1], ocrd_cis_ocropy_deskew_3.out[2], "OCR-D-DESKEW-OCROPY", "OCR-D-SEG-BLOCK-TESSERACT")
-        ocrd_segment_repair_5(ocrd_tesserocr_segment_region_4.out[0], ocrd_tesserocr_segment_region_4.out[1], ocrd_tesserocr_segment_region_4.out[2], "OCR-D-SEG-BLOCK-TESSERACT", "OCR-D-SEGMENT-REPAIR")
-        ocrd_cis_ocropy_clip_6(ocrd_segment_repair_5.out[0], ocrd_segment_repair_5.out[1], ocrd_segment_repair_5.out[2], "OCR-D-SEGMENT-REPAIR", "OCR-D-CLIP")
-        ocrd_cis_ocropy_segment_7(ocrd_cis_ocropy_clip_6.out[0], ocrd_cis_ocropy_clip_6.out[1], ocrd_cis_ocropy_clip_6.out[2], "OCR-D-CLIP", "OCR-D-SEGMENT-OCROPY")
-        ocrd_cis_ocropy_dewarp_8(ocrd_cis_ocropy_segment_7.out[0], ocrd_cis_ocropy_segment_7.out[1], ocrd_cis_ocropy_segment_7.out[2], "OCR-D-SEGMENT-OCROPY", "OCR-D-DEWARP")
-        ocrd_tesserocr_recognize_9(ocrd_cis_ocropy_dewarp_8.out[0], ocrd_cis_ocropy_dewarp_8.out[1], ocrd_cis_ocropy_dewarp_8.out[2], "OCR-D-DEWARP", "OCR-D-OCR")
+        ocrd_cis_ocropy_binarize_0(split_page_ranges.out[0], split_page_ranges.out[1], params.input_file_group, "OCR-D-BINPAGE")
+        ocrd_anybaseocr_crop_1(ocrd_cis_ocropy_binarize_0.out[0], ocrd_cis_ocropy_binarize_0.out[1], "OCR-D-BINPAGE", "OCR-D-SEG-PAGE-ANYOCR")
+        ocrd_cis_ocropy_denoise_2(ocrd_anybaseocr_crop_1.out[0], ocrd_anybaseocr_crop_1.out[1], "OCR-D-SEG-PAGE-ANYOCR", "OCR-D-DENOISE-OCROPY")
+        ocrd_cis_ocropy_deskew_3(ocrd_cis_ocropy_denoise_2.out[0], ocrd_cis_ocropy_denoise_2.out[1], "OCR-D-DENOISE-OCROPY", "OCR-D-DESKEW-OCROPY")
+        ocrd_tesserocr_segment_region_4(ocrd_cis_ocropy_deskew_3.out[0], ocrd_cis_ocropy_deskew_3.out[1], "OCR-D-DESKEW-OCROPY", "OCR-D-SEG-BLOCK-TESSERACT")
+        ocrd_segment_repair_5(ocrd_tesserocr_segment_region_4.out[0], ocrd_tesserocr_segment_region_4.out[1], "OCR-D-SEG-BLOCK-TESSERACT", "OCR-D-SEGMENT-REPAIR")
+        ocrd_cis_ocropy_clip_6(ocrd_segment_repair_5.out[0], ocrd_segment_repair_5.out[1], "OCR-D-SEGMENT-REPAIR", "OCR-D-CLIP")
+        ocrd_cis_ocropy_segment_7(ocrd_cis_ocropy_clip_6.out[0], ocrd_cis_ocropy_clip_6.out[1], "OCR-D-CLIP", "OCR-D-SEGMENT-OCROPY")
+        ocrd_cis_ocropy_dewarp_8(ocrd_cis_ocropy_segment_7.out[0], ocrd_cis_ocropy_segment_7.out[1], "OCR-D-SEGMENT-OCROPY", "OCR-D-DEWARP")
+        ocrd_tesserocr_recognize_9(ocrd_cis_ocropy_dewarp_8.out[0], ocrd_cis_ocropy_dewarp_8.out[1], "OCR-D-DEWARP", "OCR-D-OCR")
         merging_mets(ocrd_tesserocr_recognize_9.out[0], ocrd_tesserocr_recognize_9.out[1])
 }
