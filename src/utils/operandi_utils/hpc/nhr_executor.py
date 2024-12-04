@@ -206,7 +206,7 @@ class NHRExecutor(NHRConnector):
         apptainer_cmd = f"apptainer exec --bind {hpc_ws_dir}:/ws_data --bind {bind_ocrd_models}"
         # Mets caching is disabled for the core, to avoid the cache error
         # when mergin mets files https://github.com/OCR-D/core/issues/1297
-        apptainer_cmd_core = f"{apptainer_cmd} --env OCRD_METS_CACHING=false"
+        apptainer_cmd_core = f"{apptainer_cmd} --env OCRD_METS_CACHING=true"
         apptainer_cmd_step = f"{apptainer_cmd} --env OCRD_METS_CACHING=true"
         apptainer_image = sif_core if use_slim_images else sif_ocrd_all
         core_command = f"{apptainer_cmd_core} {PH_NODE_DIR_PROCESSOR_SIFS}/{apptainer_image}"
