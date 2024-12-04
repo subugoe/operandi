@@ -198,7 +198,7 @@ class NHRExecutor(NHRConnector):
         nf_run_command += f" --input_file_group {input_file_grp}"
         nf_run_command += f" --mets_path /ws_data/{mets_basename}"
         if use_mets_server:
-            nf_run_command += f" --mets_socket /ws_data/mets_server.sock"
+            nf_run_command += f" --mets_socket_path /ws_data/mets_server.sock"
         nf_run_command += f" --workspace_dir /ws_data"
         nf_run_command += f" --pages {ws_pages_amount}"
 
