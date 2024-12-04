@@ -65,7 +65,11 @@ class NextflowFileExecutable:
 
     # TODO: Refactor later
     def build_split_page_ranges_process(self, environment: str, with_mets_server: bool) -> NextflowBlockProcess:
-        block = NextflowBlockProcess(ProcessorCallArguments(executable="split-page-ranges"), 0)
+        block = NextflowBlockProcess(
+            ProcessorCallArguments(executable="split-page-ranges"),
+            index_pos=0,
+            with_mets_server=with_mets_server
+        )
         block.nf_process_name = "split_page_ranges"
         block.ocrd_command_bash = ""
         block.ocrd_command_bash_placeholders = ""
@@ -110,8 +114,12 @@ class NextflowFileExecutable:
         return block
 
     # TODO: Refactor later
-    def build_merge_mets_process(self, environment: str) -> NextflowBlockProcess:
-        block = NextflowBlockProcess(ProcessorCallArguments(executable="merging-mets"), 0)
+    def build_merge_mets_process(self, environment: str, with_mets_server: bool) -> NextflowBlockProcess:
+        block = NextflowBlockProcess(
+            ProcessorCallArguments(executable="merging-mets"),
+            index_pos=0,
+            with_mets_server=with_mets_server
+        )
         block.nf_process_name = "merging_mets"
         block.ocrd_command_bash = ""
         block.ocrd_command_bash_placeholders = ""
@@ -151,9 +159,10 @@ class NextflowFileExecutable:
         index = 0
         env_wrapper = True if environment == "docker" or environment == "apptainer" else False
         self.build_split_page_ranges_process(environment=environment, with_mets_server=with_mets_server)
-        self.build_merge_mets_process(environment=environment)
+        self.build_merge_mets_process(environment=environment, with_mets_server=with_mets_server)
         for processor in ocrd_processors:
-            nf_process_block = NextflowBlockProcess(processor, index, env_wrapper=env_wrapper)
+            nf_process_block = NextflowBlockProcess(
+                processor, index, with_mets_server=with_mets_server, env_wrapper=env_wrapper)
 
             # Add Nextflow process directives
             nf_process_block.add_directive(directive='debug', value='true')

@@ -51,14 +51,15 @@ class ProcessorCallArguments:
             dump += f" -p '{json_dumps(self.parameters)}'"
         return dump
 
-    def dump_bash_form_with_placeholders(self):
+    def dump_bash_form_with_phs(self, with_mets_socket: bool, with_page_id: bool = True):
         dump = ''
         dump += f'{self.executable}'
-        if self.mets_socket_path:
+        if with_mets_socket:
             dump += f' -U ${BS[0]}{CONST_METS_SOCKET_PATH}{BS[1]}'
         dump += f' -w ${BS[0]}{CONST_WORKSPACE_DIR}{BS[1]}'
         dump += f' -m ${BS[0]}{CONST_METS_PATH}{BS[1]}'
-        dump += f' --page-id ${BS[0]}{CONST_PAGE_RANGE}{BS[1]}'
+        if with_page_id:
+            dump += f' --page-id ${BS[0]}{CONST_PAGE_RANGE}{BS[1]}'
         dump += f' -I ${BS[0]}{CONST_DIR_IN}{BS[1]}'
         dump += f' -O ${BS[0]}{CONST_DIR_OUT}{BS[1]}'
         if self.parameters:

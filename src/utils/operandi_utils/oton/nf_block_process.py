@@ -4,7 +4,12 @@ from operandi_utils.oton.constants import BS, OTON_LOG_LEVEL, PARAMS_KEY_ENV_WRA
 
 
 class NextflowBlockProcess:
-    def __init__(self, processor_call_arguments: ProcessorCallArguments, index_pos: int, env_wrapper: bool = False):
+    def __init__(
+        self, processor_call_arguments: ProcessorCallArguments,
+        index_pos: int,
+        with_mets_server: bool,
+        env_wrapper: bool = False
+    ):
         self.logger = getLogger(__name__)
         self.logger.setLevel(getLevelName(OTON_LOG_LEVEL))
         self.index_pos = str(index_pos)
@@ -17,7 +22,7 @@ class NextflowBlockProcess:
         self.output_params = {}
         self.script = ""
         self.ocrd_command_bash = processor_call_arguments.dump_bash_form()
-        self.ocrd_command_bash_placeholders = processor_call_arguments.dump_bash_form_with_placeholders()
+        self.ocrd_command_bash_placeholders = processor_call_arguments.dump_bash_form_with_phs(with_mets_server)
 
     def add_directive(self, directive: str, value: str):
         if directive in self.directives:

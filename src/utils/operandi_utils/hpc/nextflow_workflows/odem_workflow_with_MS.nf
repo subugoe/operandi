@@ -90,7 +90,7 @@ process ocrd_cis_ocropy_binarize_0 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step0} ocrd-cis-ocropy-binarize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
+        ${params.env_wrapper_cmd_step0} ocrd-cis-ocropy-binarize -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
         """
 }
 
@@ -114,7 +114,7 @@ process ocrd_anybaseocr_crop_1 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step1} ocrd-anybaseocr-crop -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
+        ${params.env_wrapper_cmd_step1} ocrd-anybaseocr-crop -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
         """
 }
 
@@ -138,7 +138,7 @@ process ocrd_cis_ocropy_denoise_2 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step2} ocrd-cis-ocropy-denoise -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
+        ${params.env_wrapper_cmd_step2} ocrd-cis-ocropy-denoise -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
         """
 }
 
@@ -162,7 +162,7 @@ process ocrd_cis_ocropy_deskew_3 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step3} ocrd-cis-ocropy-deskew -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
+        ${params.env_wrapper_cmd_step3} ocrd-cis-ocropy-deskew -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"level-of-operation": "page"}'
         """
 }
 
@@ -186,7 +186,7 @@ process ocrd_tesserocr_segment_region_4 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step4} ocrd-tesserocr-segment-region -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"padding": 5.0, "find_tables": false, "dpi": 300}'
+        ${params.env_wrapper_cmd_step4} ocrd-tesserocr-segment-region -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"padding": 5.0, "find_tables": false, "dpi": 300}'
         """
 }
 
@@ -210,7 +210,7 @@ process ocrd_segment_repair_5 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step5} ocrd-segment-repair -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"plausibilize": true, "plausibilize_merge_min_overlap": 0.7}'
+        ${params.env_wrapper_cmd_step5} ocrd-segment-repair -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"plausibilize": true, "plausibilize_merge_min_overlap": 0.7}'
         """
 }
 
@@ -234,7 +234,7 @@ process ocrd_cis_ocropy_clip_6 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step6} ocrd-cis-ocropy-clip -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step6} ocrd-cis-ocropy-clip -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -258,7 +258,7 @@ process ocrd_cis_ocropy_segment_7 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step7} ocrd-cis-ocropy-segment -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
+        ${params.env_wrapper_cmd_step7} ocrd-cis-ocropy-segment -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"dpi": 300}'
         """
 }
 
@@ -282,7 +282,7 @@ process ocrd_cis_ocropy_dewarp_8 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step8} ocrd-cis-ocropy-dewarp -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
+        ${params.env_wrapper_cmd_step8} ocrd-cis-ocropy-dewarp -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group}
         """
 }
 
@@ -306,7 +306,7 @@ process ocrd_tesserocr_recognize_9 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step9} ocrd-tesserocr-recognize -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"model": "Fraktur"}'
+        ${params.env_wrapper_cmd_step9} ocrd-tesserocr-recognize -U ${mets_socket_path} -w ${workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"model": "Fraktur"}'
         """
 }
 

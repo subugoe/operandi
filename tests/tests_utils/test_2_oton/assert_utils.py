@@ -18,6 +18,8 @@ def assert_common_features(
     assert len(blocks_process) == num_blocks_process
     for block in blocks_process:
         assert "ocrd-" in block.ocrd_command_bash_placeholders
+        if with_mets_server:
+            assert "-U" in block.ocrd_command_bash_placeholders
     blocks_workflows = nextflow_file_class.nf_blocks_workflow
     assert len(blocks_workflows) == num_blocks_workflow
     for block in blocks_workflows:
