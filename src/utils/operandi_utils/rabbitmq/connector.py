@@ -3,7 +3,10 @@ from typing import Any, Optional, Union
 from pika import BasicProperties, BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.adapters.blocking_connection import BlockingChannel
 
-from .constants import DEFAULT_EXCHANGER_NAME, DEFAULT_EXCHANGER_TYPE, PREFETCH_COUNT, RABBITMQ_QUEUE_DEFAULT
+from .constants import (
+    DEFAULT_EXCHANGER_NAME, DEFAULT_EXCHANGER_TYPE, HEARTBEAT, PREFETCH_COUNT, RABBITMQ_QUEUE_DEFAULT, RECONNECT_TRIES,
+    RECONNECT_WAIT
+)
 
 
 class RMQConnector:
@@ -36,12 +39,12 @@ class RMQConnector:
             channel, queue_name=RABBITMQ_QUEUE_DEFAULT, exchange_name=DEFAULT_EXCHANGER_NAME,
             routing_key=RABBITMQ_QUEUE_DEFAULT)  # Bind the default queue to the default exchange
 
-    # Connection related methods
     @staticmethod
     def open_blocking_connection(credentials: PlainCredentials, host: str, port: int, vhost: str) -> BlockingConnection:
-        # TODO: The heartbeat should not be disabled (0)!
         connection_params = ConnectionParameters(
-            host=host, port=port, virtual_host=vhost, credentials=credentials, heartbeat=0)
+            host=host, port=port, virtual_host=vhost, credentials=credentials, heartbeat=HEARTBEAT,
+            connection_attempts=RECONNECT_TRIES, retry_delay=RECONNECT_WAIT
+        )
         return BlockingConnection(parameters=connection_params)
 
     @staticmethod
