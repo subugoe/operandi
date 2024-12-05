@@ -54,7 +54,7 @@ services:
       retries: 120
 
   operandi-server:
-    image: ghcr.io/subugoe/operandi-server:main
+    image: ghcr.io/subugoe/operandi-server:latest
     container_name: operandi-server
     depends_on:
       operandi-rabbitmq:
@@ -84,7 +84,7 @@ services:
     command: operandi-server start
 
   operandi-broker:
-    image: ghcr.io/subugoe/operandi-broker:main
+    image: ghcr.io/subugoe/operandi-broker:latest
     container_name: operandi-broker
     depends_on:
       operandi-rabbitmq:
