@@ -18,6 +18,7 @@ class WorkflowArguments(BaseModel):
     workspace_id: str
     input_file_grp: Optional[str] = DEFAULT_FILE_GRP
     remove_file_grps: Optional[str] = ""
+    preserve_file_grps: Optional[str] = ""
     mets_name: Optional[str] = DEFAULT_METS_BASENAME
 
     class Config:
