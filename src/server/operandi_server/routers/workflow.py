@@ -34,13 +34,12 @@ from .workflow_utils import (
     validate_oton_with_handling, nf_script_executable_steps_with_handling
 )
 from .workspace_utils import check_if_file_group_exists_with_handling, get_db_workspace_with_handling
-from .user import RouterUser
+from .user_utils import user_auth_with_handling
 
 
 class RouterWorkflow:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.workflow")
-        self.user_authenticator = RouterUser()
 
         # The workflows available to all users by default
         self.production_workflows = []
@@ -190,7 +189,7 @@ class RouterWorkflow:
         Curl equivalent:
         `curl SERVER_ADDR/workflow`
         """
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         workflows = get_all_resources_url(SERVER_WORKFLOWS_ROUTER)
         response = []
         for workflow in workflows:
@@ -206,7 +205,7 @@ class RouterWorkflow:
         Curl equivalent:
         `curl -X GET SERVER_ADDR/workflow/{workflow_id} -H "accept: text/vnd.ocrd.workflow" -o foo.nf`
         """
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         db_workflow = await get_db_workflow_with_handling(self.logger, workflow_id=workflow_id)
         return FileResponse(
             path=db_workflow.workflow_script_path,
@@ -222,7 +221,7 @@ class RouterWorkflow:
         Curl equivalent:
         `curl -X POST SERVER_ADDR/workflow -F nextflow_script=example.nf`
         """
-        py_user_action = await self.user_authenticator.user_login(auth)
+        py_user_action = await user_auth_with_handling(self.logger, auth)
         workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=None)
         nf_script_dest = join(workflow_dir, nextflow_script.filename)
         try:
@@ -247,7 +246,7 @@ class RouterWorkflow:
         Curl equivalent:
         `curl -X PUT SERVER_ADDR/workflow/{workflow_id} -F nextflow_script=example.nf`
         """
-        py_user_action = await self.user_authenticator.user_login(auth)
+        py_user_action = await user_auth_with_handling(self.logger, auth)
         if workflow_id in self.production_workflows:
             message = f"Production workflow cannot be replaced. Tried to replace: {workflow_id}"
             self.logger.error(message)
@@ -282,7 +281,7 @@ class RouterWorkflow:
         Curl equivalent:
         `curl -X GET SERVER_ADDR/workflow/{workflow_id}/{job_id}`
         """
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
 
         db_wf_job = await get_db_workflow_job_with_handling(self.logger, job_id=job_id, check_local_existence=True)
         workspace_id = db_wf_job.workspace_id
@@ -316,7 +315,7 @@ class RouterWorkflow:
         Curl equivalent:
         `curl -X GET SERVER_ADDR/workflow/{workflow_id}/logs -H "accept: application/vnd.zip" -o foo.zip`
         """
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         await self._push_status_request_to_rabbitmq(job_id=job_id)
 
         db_wf_job = await get_db_workflow_job_with_handling(self.logger, job_id=job_id, check_local_existence=True)
@@ -340,7 +339,7 @@ class RouterWorkflow:
 
     async def download_workflow_job_hpc_log(
         self, workflow_id: str, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         await self._push_status_request_to_rabbitmq(job_id=job_id)
 
         db_wf_job = await get_db_workflow_job_with_handling(self.logger, job_id=job_id, check_local_existence=True)
@@ -369,7 +368,7 @@ class RouterWorkflow:
         self, workflow_id: str, workflow_args: WorkflowArguments, sbatch_args: SbatchArguments,
         details: str = "Workflow job", auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
-        py_user_action = await self.user_authenticator.user_login(auth)
+        py_user_action = await user_auth_with_handling(self.logger, auth)
         user_account_type = py_user_action.account_type
 
         try:
@@ -474,7 +473,7 @@ class RouterWorkflow:
         self, txt_file: UploadFile, environment: str, with_mets_server: bool = True,
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         oton_id, oton_dir = create_resource_dir(SERVER_OTON_CONVERSIONS, resource_id=None)
         ocrd_process_txt = join(oton_dir, f"ocrd_process_input.txt")
         nf_script_dest = join(oton_dir, f"nextflow_output.nf")

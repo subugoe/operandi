@@ -1,4 +1,5 @@
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from hashlib import sha512
 from random import random
 from typing import Tuple
@@ -7,8 +8,7 @@ from operandi_utils.constants import AccountType
 from operandi_utils.database import (
     db_create_processing_stats, db_create_user_account, db_get_user_account, db_get_user_account_with_email,
     DBUserAccount)
-from operandi_server.exceptions import AuthenticationError
-
+from operandi_server.models import PYUserAction
 
 
 async def create_user_if_not_available(
@@ -22,23 +22,40 @@ async def create_user_if_not_available(
             logger, email=username, password=password, account_type=account_type, approved_user=approved_user,
             details=details, institution_id=institution_id)
 
-async def user_auth(email: str, password: str) -> DBUserAccount:
+async def user_auth_with_handling(
+    logger, auth: HTTPBasicCredentials = Depends(HTTPBasic()), headers=None
+) -> PYUserAction:
+    email = auth.username
+    password = auth.password
+    if headers is None:
+        headers = {"WWW-Authenticate": "Basic"}
+    if not (email and password):
+        message = f"User login failed, missing e-mail or password field."
+        logger.error(f"{message}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=headers, detail=message)
     try:
-        db_user = await db_get_user_account_with_email(email=email)
+        db_user_account = await db_get_user_account_with_email(email=email)
     except RuntimeError:
-        raise AuthenticationError(f"Not found user account for email: {email}")
-    password_status = validate_password(plain_password=password, encrypted_password=db_user.encrypted_pass)
+        message = f"Not found user account for email: {email}"
+        logger.error(f"{message}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, headers=headers, detail=message)
+    if not db_user_account.approved_user:
+        message = f"The account has not been approved by the admin yet."
+        logger.error(f"{message}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=headers, detail=message)
+    password_status = validate_password(plain_password=password, encrypted_password=db_user_account.encrypted_pass)
     if not password_status:
-        raise AuthenticationError(f"Wrong credentials for email: {email}")
-    if not db_user.approved_user:
-        raise AuthenticationError(f"The account has not been approved by the admin yet.")
-    return db_user
+        message = f"Wrong credentials for email: {email}"
+        logger.error(f"{message}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=headers, detail=message)
+    return PYUserAction.from_db_user_account(action="Successfully logged!", db_user_account=db_user_account)
 
 async def user_register_with_handling(
     logger, email: str, password: str, account_type: AccountType, institution_id: str, approved_user: bool = False,
-    details: str = "User Account"
-):
-    headers = {"WWW-Authenticate": "Basic"}
+    details: str = "User Account", headers=None
+) -> DBUserAccount:
+    if headers is None:
+        headers = {"WWW-Authenticate": "Basic"}
     if account_type not in AccountType:
         message = f"Wrong account type. Must be one of: {AccountType}"
         logger.error(f"{message}")

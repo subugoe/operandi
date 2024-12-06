@@ -11,13 +11,12 @@ from operandi_utils.database import (
     db_get_workflow, db_get_workspace, db_get_all_workspaces_by_user, db_get_all_workflows_by_user
 )
 from operandi_utils.utils import send_bag_to_ola_hd
-from .user import RouterUser
+from .user_utils import user_auth_with_handling
 from .workspace_utils import create_workspace_bag, get_db_workspace_with_handling, validate_bag_with_handling
 
 class RouterAdminPanel:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.user")
-        self.user_authenticator = RouterUser()
         self.router = APIRouter(tags=[ServerApiTag.ADMIN])
         self.router.add_api_route(
             path="/admin/users",
@@ -51,7 +50,7 @@ class RouterAdminPanel:
         )
 
     async def auth_admin_with_handling(self, auth: HTTPBasicCredentials):
-        py_user_action = await self.user_authenticator.user_login(auth)
+        py_user_action = await user_auth_with_handling(self.logger, auth)
         if py_user_action.account_type != AccountType.ADMIN:
             message = f"Admin privileges required for the endpoint"
             self.logger.error(f"{message}")

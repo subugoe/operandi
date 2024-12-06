@@ -12,13 +12,12 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from operandi_utils.constants import ServerApiTag
 from operandi_utils.oton.constants import OCRD_ALL_JSON
 from operandi_server.models import PYDiscovery
-from .user import RouterUser
+from .user_utils import user_auth_with_handling
 
 
 class RouterDiscovery:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.discovery")
-        self.user_authenticator = RouterUser()
 
         self.router = APIRouter(tags=[ServerApiTag.DISCOVERY])
         self.router.add_api_route(
@@ -39,7 +38,7 @@ class RouterDiscovery:
         )
 
     async def discovery(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYDiscovery:
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         response = PYDiscovery(
             ram=virtual_memory().total / (1024.0 ** 3),
             cpu_cores=cpu_count(),
@@ -52,7 +51,7 @@ class RouterDiscovery:
         return response
 
     async def get_processor_names(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[str]:
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         try:
             processor_names = list(OCRD_ALL_JSON.keys())
             return processor_names
@@ -65,7 +64,7 @@ class RouterDiscovery:
             raise HTTPException(status_code=500, detail="An unexpected error occurred while loading processor names.")
 
     async def get_processor_info(self, processor_name: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> Dict:
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         try:
             if processor_name not in OCRD_ALL_JSON:
                 raise HTTPException(status_code=404, detail=f"Processor '{processor_name}' not found.")
