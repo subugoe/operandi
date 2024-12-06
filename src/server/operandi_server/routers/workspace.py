@@ -278,7 +278,7 @@ class RouterWorkspace:
 
     async def upload_batch_workspaces(
             self,
-            files: List[UploadFile] = Form(...),
+            workspaces: List[UploadFile] = Form(...),
             details: str = Form("Batch upload of workspaces"),
             auth: HTTPBasicCredentials = Depends(HTTPBasic()),
     ) -> List[WorkspaceRsrc]:
@@ -288,7 +288,7 @@ class RouterWorkspace:
         """
         py_user_action = await self.user_authenticator.user_login(auth)
 
-        if len(files) > 5:
+        if len(workspaces) > 5:
             message = "Batch upload exceeds the limit of 5 workspaces"
             self.logger.error(message)
             raise HTTPException(
@@ -297,12 +297,12 @@ class RouterWorkspace:
             )
 
         uploaded_workspaces = []
-        for file in files:
+        for workspace in workspaces:
             ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
             bag_dest = f"{ws_dir}.zip"
 
             try:
-                await receive_resource(file=file, resource_dst=bag_dest)
+                await receive_resource(file=workspace, resource_dst=bag_dest)
                 rmtree(ws_dir, ignore_errors=True)
                 validate_bag_with_handling(self.logger, bag_dst=bag_dest)
                 bag_info = extract_bag_info_with_handling(self.logger, bag_dst=bag_dest, ws_dir=ws_dir)
@@ -331,10 +331,10 @@ class RouterWorkspace:
                 uploaded_workspaces.append(WorkspaceRsrc.from_db_workspace(db_workspace))
 
             except Exception as error:
-                self.logger.error(f"Failed to process workspace {file.filename}, error: {error}")
+                self.logger.error(f"Failed to process workspace {workspace.filename}, error: {error}")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Error processing file {file.filename}: {str(error)}",
+                    detail=f"Error processing file {workspace.filename}: {str(error)}",
                 )
 
         return uploaded_workspaces
