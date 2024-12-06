@@ -6,9 +6,8 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_server.models import PYUserInfo, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.constants import AccountType, ServerApiTag
-from operandi_utils.database import db_get_all_user_accounts, db_get_processing_stats
 from operandi_utils.utils import send_bag_to_ola_hd
-from .user_utils import user_auth_with_handling
+from .user_utils import get_user_accounts, get_user_processing_stats_with_handling, user_auth_with_handling
 from .workflow_utils import get_user_workflows, get_user_workflow_jobs
 from .workspace_utils import (
     create_workspace_bag, get_user_workspaces, get_db_workspace_with_handling, validate_bag_with_handling
@@ -80,24 +79,13 @@ class RouterAdminPanel:
         }
         return response_message
 
-    async def get_users(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+    async def get_users(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[PYUserInfo]:
         await self.auth_admin_with_handling(auth)
-        users = await db_get_all_user_accounts()
-        return [PYUserInfo.from_db_user_account(user) for user in users]
+        return await get_user_accounts()
 
     async def user_processing_stats(self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         await self.auth_admin_with_handling(auth)
-        try:
-            db_processing_stats = await db_get_processing_stats(user_id)
-            if not db_processing_stats:
-                message = f"Processing stats not found for the user_id: {user_id}"
-                self.logger.error(message)
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
-        except Exception as error:
-            message = f"Failed to fetch processing stats for user_id: {user_id}, error: {error}"
-            self.logger.error(message)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
-        return db_processing_stats
+        return await get_user_processing_stats_with_handling(self.logger, user_id=user_id)
 
     async def user_workflow_jobs(
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),

@@ -5,12 +5,11 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import AccountType, ServerApiTag
-from operandi_utils.database import db_get_processing_stats, db_get_user_account_with_email
 from operandi_server.models import PYUserAction, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.database.models import DBProcessingStatistics
 from .workflow_utils import get_user_workflows, get_user_workflow_jobs
 from .workspace_utils import get_user_workspaces
-from .user_utils import user_auth_with_handling, user_register_with_handling
+from .user_utils import get_user_processing_stats_with_handling, user_auth_with_handling, user_register_with_handling
 
 
 class RouterUser:
@@ -87,10 +86,8 @@ class RouterUser:
         return PYUserAction.from_db_user_account(action=action, db_user_account=db_user_account)
 
     async def user_processing_stats(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        await user_auth_with_handling(self.logger, auth)
-        db_user_account = await db_get_user_account_with_email(email=auth.username)
-        db_processing_stats = await db_get_processing_stats(db_user_account.user_id)
-        return db_processing_stats
+        py_user_action = await user_auth_with_handling(self.logger, auth)
+        return await get_user_processing_stats_with_handling(self.logger, user_id=py_user_action.user_id)
 
     async def user_workflow_jobs(
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),

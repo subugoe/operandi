@@ -1,5 +1,6 @@
 __all__ = [
     "DBHPCSlurmJob",
+    "DBProcessingStatistics",
     "DBUserAccount",
     "DBWorkflow",
     "DBWorkflowJob",
@@ -56,7 +57,7 @@ __all__ = [
 ]
 
 from .base import db_initiate_database, sync_db_initiate_database
-from .models import DBHPCSlurmJob, DBUserAccount, DBWorkflow, DBWorkflowJob, DBWorkspace
+from .models import DBHPCSlurmJob, DBProcessingStatistics, DBUserAccount, DBWorkflow, DBWorkflowJob, DBWorkspace
 from .db_hpc_slurm_job import (
     db_create_hpc_slurm_job,
     db_get_hpc_slurm_job,
