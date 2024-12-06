@@ -3,11 +3,14 @@ from fastapi import HTTPException, status
 from pathlib import Path
 from typing import List, Optional
 
-from operandi_utils.database import db_get_workflow, db_get_workflow_job, db_get_all_workflows_by_user
+from operandi_utils.database import (
+    db_get_all_workflows_by_user, db_get_all_workflow_jobs_by_user,
+    db_get_workflow, db_get_workflow_job, db_get_workspace
+)
 from operandi_utils.database.models import DBWorkflow, DBWorkflowJob
 from operandi_utils.oton import OTONConverter, OCRDValidator
 from operandi_utils.oton.constants import PARAMS_KEY_METS_SOCKET_PATH
-from operandi_server.models import WorkflowRsrc
+from operandi_server.models import WorkflowRsrc, WorkflowJobRsrc
 
 
 async def get_db_workflow_with_handling(
@@ -120,3 +123,14 @@ async def get_workflows_of_user(
 ) -> List[WorkflowRsrc]:
     db_workflows = await db_get_all_workflows_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
     return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]
+
+async def get_workflow_jobs_of_user(
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+) -> List[WorkflowJobRsrc]:
+    db_workflow_jobs = await db_get_all_workflow_jobs_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
+    response = []
+    for db_workflow_job in db_workflow_jobs:
+        db_workflow = await db_get_workflow(db_workflow_job.workflow_id)
+        db_workspace = await db_get_workspace(db_workflow_job.workspace_id)
+        response.append(WorkflowJobRsrc.from_db_workflow_job(db_workflow_job, db_workflow, db_workspace))
+    return response

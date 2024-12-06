@@ -5,13 +5,10 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import AccountType, ServerApiTag
-from operandi_utils.database import (
-    db_get_processing_stats, db_get_all_workflow_jobs_by_user, db_get_user_account_with_email,
-    db_get_workflow, db_get_workspace
-)
+from operandi_utils.database import db_get_processing_stats, db_get_user_account_with_email
 from operandi_server.models import PYUserAction, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.database.models import DBProcessingStatistics
-from .workflow_utils import get_workflows_of_user
+from .workflow_utils import get_workflows_of_user, get_workflow_jobs_of_user
 from .workspace_utils import get_workspaces_of_user
 from .user_utils import user_auth_with_handling, user_register_with_handling
 
@@ -102,16 +99,8 @@ class RouterUser:
         """
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
-        await user_auth_with_handling(self.logger, auth)
-        db_user_account = await db_get_user_account_with_email(email=auth.username)
-        db_workflow_jobs = await db_get_all_workflow_jobs_by_user(
-            user_id=db_user_account.user_id, start_date=start_date, end_date=end_date)
-        response = []
-        for db_workflow_job in db_workflow_jobs:
-            db_workflow = await db_get_workflow(db_workflow_job.workflow_id)
-            db_workspace = await db_get_workspace(db_workflow_job.workspace_id)
-            response.append(WorkflowJobRsrc.from_db_workflow_job(db_workflow_job, db_workflow, db_workspace))
-        return response
+        py_user_action = await user_auth_with_handling(self.logger, auth)
+        return await get_workflow_jobs_of_user(user_id=py_user_action.user_id, start_date=start_date, end_date=end_date)
 
     async def user_workspaces(
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
