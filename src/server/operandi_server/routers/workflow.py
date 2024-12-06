@@ -10,7 +10,6 @@ from typing import List
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from starlette.status import HTTP_404_NOT_FOUND
 
 from operandi_utils import get_nf_wfs_dir, get_ocrd_process_wfs_dir
 from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateWorkspace
@@ -18,8 +17,7 @@ from operandi_utils.database import (
     db_create_workflow, db_create_workflow_job, db_get_hpc_slurm_job, db_get_workflow, db_update_workspace,
     db_increase_processing_stats_with_handling)
 from operandi_utils.oton import OTONConverter
-from operandi_utils.rabbitmq import (
-    get_connection_publisher, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS)
+from operandi_utils.rabbitmq import get_connection_publisher, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS
 from operandi_server.constants import (
     SERVER_OTON_CONVERSIONS, SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER)
 from operandi_server.files_manager import (
@@ -30,8 +28,10 @@ from .workflow_utils import (
     convert_oton_with_handling,
     get_db_workflow_job_with_handling,
     get_db_workflow_with_handling,
+    nf_script_executable_steps_with_handling,
     nf_script_uses_mets_server_with_handling,
-    validate_oton_with_handling, nf_script_executable_steps_with_handling
+    push_status_request_to_rabbitmq,
+    validate_oton_with_handling
 )
 from .workspace_utils import check_if_file_group_exists_with_handling, get_db_workspace_with_handling
 from .user_utils import user_auth_with_handling
@@ -118,19 +118,6 @@ class RouterWorkflow:
     def __del__(self):
         if self.rmq_publisher:
             self.rmq_publisher.disconnect()
-
-    async def _push_status_request_to_rabbitmq(self, job_id: str):
-        # Create the job status message to be sent to the RabbitMQ queue
-        try:
-            job_status_message = {"job_id": f"{job_id}"}
-            self.logger.debug(f"Encoding the job status RabbitMQ message: {job_status_message}")
-            encoded_wf_message = dumps(job_status_message).encode(encoding="utf-8")
-            self.logger.debug(f"Pushing to the RabbitMQ queue for job statuses: {RABBITMQ_QUEUE_JOB_STATUSES}")
-            self.rmq_publisher.publish_to_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, message=encoded_wf_message)
-        except Exception as error:
-            message = "Failed to push status request to RabbitMQ"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
 
     async def produce_production_workflows(
         self,
@@ -292,7 +279,7 @@ class RouterWorkflow:
             self.logger, workflow_id=workflow_id, check_deleted=False, check_local_existence=False)
 
         if db_wf_job.job_state != StateJob.FAILED and db_wf_job.job_state != StateJob.SUCCESS:
-            await self._push_status_request_to_rabbitmq(job_id=job_id)
+            await push_status_request_to_rabbitmq(self.logger, self.rmq_publisher, job_id=job_id)
 
         # TODO: Fix that by getting rid of the FileManager module
         try:
@@ -316,11 +303,11 @@ class RouterWorkflow:
         `curl -X GET SERVER_ADDR/workflow/{workflow_id}/logs -H "accept: application/vnd.zip" -o foo.zip`
         """
         await user_auth_with_handling(self.logger, auth)
-        await self._push_status_request_to_rabbitmq(job_id=job_id)
 
         db_wf_job = await get_db_workflow_job_with_handling(self.logger, job_id=job_id, check_local_existence=True)
         job_state = db_wf_job.job_state
         if job_state != StateJob.SUCCESS and job_state != StateJob.FAILED:
+            await push_status_request_to_rabbitmq(self.logger, self.rmq_publisher, job_id=job_id)
             message = f"Cannot download logs of a job unless it succeeds or fails: {job_id}"
             self.logger.exception(message)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
@@ -340,11 +327,11 @@ class RouterWorkflow:
     async def download_workflow_job_hpc_log(
         self, workflow_id: str, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         await user_auth_with_handling(self.logger, auth)
-        await self._push_status_request_to_rabbitmq(job_id=job_id)
 
         db_wf_job = await get_db_workflow_job_with_handling(self.logger, job_id=job_id, check_local_existence=True)
         job_state = db_wf_job.job_state
         if job_state != StateJob.SUCCESS and job_state != StateJob.FAILED:
+            await push_status_request_to_rabbitmq(self.logger, self.rmq_publisher, job_id=job_id)
             message = f"Cannot download logs of a job unless it succeeds or fails: {job_id}"
             self.logger.exception(message)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
@@ -361,7 +348,7 @@ class RouterWorkflow:
         slurm_job_log_path = Path(wf_job_local, slurm_job_log)
         if not slurm_job_log_path.exists():
             message = f"No slurm job log file was found for job id: {job_id}"
-            raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=message)
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
         return FileResponse(path=slurm_job_log_path, filename=slurm_job_log, media_type="application/text")
 
     async def submit_to_rabbitmq_queue(

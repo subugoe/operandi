@@ -1,8 +1,10 @@
 from datetime import datetime
 from fastapi import HTTPException, status
+from json import dumps
 from pathlib import Path
 from typing import List, Optional
 
+from operandi_utils.constants import StateJob
 from operandi_utils.database import (
     db_get_all_workflows_by_user, db_get_all_workflow_jobs_by_user,
     db_get_workflow, db_get_workflow_job, db_get_workspace
@@ -10,6 +12,7 @@ from operandi_utils.database import (
 from operandi_utils.database.models import DBWorkflow, DBWorkflowJob
 from operandi_utils.oton import OTONConverter, OCRDValidator
 from operandi_utils.oton.constants import PARAMS_KEY_METS_SOCKET_PATH
+from operandi_utils.rabbitmq import RABBITMQ_QUEUE_JOB_STATUSES
 from operandi_server.models import WorkflowRsrc, WorkflowJobRsrc
 
 
@@ -124,12 +127,30 @@ async def get_user_workflows(
     db_workflows = await db_get_all_workflows_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
     return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]
 
+async def push_status_request_to_rabbitmq(logger, rmq_publisher, job_id: str):
+    # Create the job status message to be sent to the RabbitMQ queue
+    try:
+        job_status_message = {"job_id": f"{job_id}"}
+        logger.debug(f"Encoding the job status RabbitMQ message: {job_status_message}")
+        encoded_wf_message = dumps(job_status_message).encode(encoding="utf-8")
+        logger.debug(f"Pushing to the RabbitMQ queue for job statuses: {RABBITMQ_QUEUE_JOB_STATUSES}")
+        rmq_publisher.publish_to_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, message=encoded_wf_message)
+    except Exception as error:
+        message = "Failed to push status request to RabbitMQ"
+        logger.error(f"{message}, error: {error}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+
 async def get_user_workflow_jobs(
     user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
 ) -> List[WorkflowJobRsrc]:
     db_workflow_jobs = await db_get_all_workflow_jobs_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
     response = []
     for db_workflow_job in db_workflow_jobs:
+        job_state = db_workflow_job.job_state
+        if job_state != StateJob.SUCCESS and job_state != StateJob.FAILED:
+            # TODO: Call here the 'push_status_request_to_rabbitmq' once
+            #  that method is also refactored to be rmq_publisher independent
+            pass
         db_workflow = await db_get_workflow(db_workflow_job.workflow_id)
         db_workspace = await db_get_workspace(db_workflow_job.workspace_id)
         response.append(WorkflowJobRsrc.from_db_workflow_job(db_workflow_job, db_workflow, db_workspace))
