@@ -3,22 +3,10 @@ from typing import List
 
 from operandi_utils.oton.ocrd_validator import ProcessorCallArguments
 from operandi_utils.oton.constants import (
-    BS, CONST_DIR_IN, CONST_DIR_OUT, CONST_PAGE_RANGE, CONST_METS_PATH, CONST_WORKSPACE_DIR,
-    OTON_LOG_LEVEL,
-    PARAMS_KEY_INPUT_FILE_GRP,
-    PARAMS_KEY_METS_PATH,
-    PARAMS_KEY_WORKSPACE_DIR,
-    PARAMS_KEY_ENV_WRAPPER_CMD_CORE,
-    PARAMS_KEY_ENV_WRAPPER_CMD_STEP,
-    PARAMS_KEY_FORKS,
-    PARAMS_KEY_PAGES,
-    PARAMS_KEY_CPUS,
-    PARAMS_KEY_CPUS_PER_FORK,
-    PARAMS_KEY_RAM,
-    PARAMS_KEY_RAM_PER_FORK,
-    PARAMS_KEY_METS_SOCKET_PATH,
-    SPACES,
-    WORKFLOW_COMMENT
+    BS, CONST_DIR_IN, CONST_DIR_OUT, CONST_PAGE_RANGE, CONST_METS_PATH, OTON_LOG_LEVEL, SPACES, WORKFLOW_COMMENT,
+    PARAMS_KEY_INPUT_FILE_GRP, PARAMS_KEY_METS_PATH, PARAMS_KEY_WORKSPACE_DIR, PARAMS_KEY_ENV_WRAPPER_CMD_CORE,
+    PARAMS_KEY_ENV_WRAPPER_CMD_STEP, PARAMS_KEY_FORKS, PARAMS_KEY_PAGES, PARAMS_KEY_CPUS, PARAMS_KEY_CPUS_PER_FORK,
+    PARAMS_KEY_RAM, PARAMS_KEY_RAM_PER_FORK, PARAMS_KEY_METS_SOCKET_PATH,
 )
 from operandi_utils.oton.nf_block_process import NextflowBlockProcess
 from operandi_utils.oton.nf_block_workflow import NextflowBlockWorkflow
@@ -65,7 +53,11 @@ class NextflowFileExecutable:
 
     # TODO: Refactor later
     def build_split_page_ranges_process(self, environment: str, with_mets_server: bool) -> NextflowBlockProcess:
-        block = NextflowBlockProcess(ProcessorCallArguments(executable="split-page-ranges"), 0)
+        block = NextflowBlockProcess(
+            ProcessorCallArguments(executable="split-page-ranges"),
+            index_pos=0,
+            with_mets_server=with_mets_server
+        )
         block.nf_process_name = "split_page_ranges"
         block.ocrd_command_bash = ""
         block.ocrd_command_bash_placeholders = ""
@@ -110,8 +102,12 @@ class NextflowFileExecutable:
         return block
 
     # TODO: Refactor later
-    def build_merge_mets_process(self, environment: str) -> NextflowBlockProcess:
-        block = NextflowBlockProcess(ProcessorCallArguments(executable="merging-mets"), 0)
+    def build_merge_mets_process(self, environment: str, with_mets_server: bool) -> NextflowBlockProcess:
+        block = NextflowBlockProcess(
+            ProcessorCallArguments(executable="merging-mets"),
+            index_pos=0,
+            with_mets_server=with_mets_server
+        )
         block.nf_process_name = "merging_mets"
         block.ocrd_command_bash = ""
         block.ocrd_command_bash_placeholders = ""
@@ -151,9 +147,10 @@ class NextflowFileExecutable:
         index = 0
         env_wrapper = True if environment == "docker" or environment == "apptainer" else False
         self.build_split_page_ranges_process(environment=environment, with_mets_server=with_mets_server)
-        self.build_merge_mets_process(environment=environment)
+        self.build_merge_mets_process(environment=environment, with_mets_server=with_mets_server)
         for processor in ocrd_processors:
-            nf_process_block = NextflowBlockProcess(processor, index, env_wrapper=env_wrapper)
+            nf_process_block = NextflowBlockProcess(
+                processor, index, with_mets_server=with_mets_server, env_wrapper=env_wrapper)
 
             # Add Nextflow process directives
             nf_process_block.add_directive(directive='debug', value='true')
@@ -165,13 +162,11 @@ class NextflowFileExecutable:
             # Add Nextflow process parameters
             nf_process_block.add_parameter_input(parameter=CONST_METS_PATH, parameter_type='val')
             nf_process_block.add_parameter_input(parameter=CONST_PAGE_RANGE, parameter_type='val')
-            nf_process_block.add_parameter_input(parameter=CONST_WORKSPACE_DIR, parameter_type='val')
             nf_process_block.add_parameter_input(parameter=CONST_DIR_IN, parameter_type='val')
             nf_process_block.add_parameter_input(parameter=CONST_DIR_OUT, parameter_type='val')
 
             nf_process_block.add_parameter_output(parameter=CONST_METS_PATH, parameter_type='val')
             nf_process_block.add_parameter_output(parameter=CONST_PAGE_RANGE, parameter_type='val')
-            nf_process_block.add_parameter_output(parameter=CONST_WORKSPACE_DIR, parameter_type='val')
             self.nf_lines_parameters[f'{PARAMS_KEY_ENV_WRAPPER_CMD_STEP}{index}'] = '"null"'
             self.nf_blocks_process.append(nf_process_block)
             index += 1

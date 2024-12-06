@@ -1,23 +1,26 @@
 from logging import getLogger
 from typing import List, Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import AccountType, ServerApiTag
-from operandi_utils.database import (
-    db_get_processing_stats, db_get_all_workflow_jobs_by_user, db_get_user_account_with_email,
-    db_get_workflow, db_get_workspace, db_get_all_workspaces_by_user, db_get_all_workflows_by_user
-)
-from operandi_server.exceptions import AuthenticationError
 from operandi_server.models import PYUserAction, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.database.models import DBProcessingStatistics
-from .user_utils import user_auth, user_register_with_handling
+from operandi_utils.rabbitmq import get_connection_publisher
+from .workflow_utils import get_user_workflows, get_user_workflow_jobs
+from .workspace_utils import get_user_workspaces
+from .user_utils import get_user_processing_stats_with_handling, user_auth_with_handling, user_register_with_handling
 
 
 class RouterUser:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.user")
+
+        self.logger.info(f"Trying to connect RMQ Publisher")
+        self.rmq_publisher = get_connection_publisher(enable_acks=True)
+        self.logger.info(f"RMQPublisher connected")
+
         self.router = APIRouter(tags=[ServerApiTag.USER])
         self.router.add_api_route(
             path="/user/register",
@@ -56,23 +59,15 @@ class RouterUser:
             response_model=List, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
+    def __del__(self):
+        if self.rmq_publisher:
+            self.rmq_publisher.disconnect()
+
     async def user_login(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYUserAction:
         """
         Used for user authentication.
         """
-        email = auth.username
-        password = auth.password
-        headers = {"WWW-Authenticate": "Basic"}
-        if not (email and password):
-            message = f"User login failed, missing e-mail or password field."
-            self.logger.error(f"{message}")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=headers, detail=message)
-        try:
-            db_user_account = await user_auth(email=email, password=password)
-        except AuthenticationError as error:
-            self.logger.error(f"{error}")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, headers=headers, detail=str(error))
-        return PYUserAction.from_db_user_account(action="Successfully logged!", db_user_account=db_user_account)
+        return await user_auth_with_handling(logger=self.logger, auth=auth)
 
     async def user_register(
         self, email: str, password: str, institution_id: str, account_type: AccountType = AccountType.USER,
@@ -80,7 +75,7 @@ class RouterUser:
     ) -> PYUserAction:
         """
         Used for registration.
-        There are 3 account types:
+        There are 4 account types:
         1) ADMIN
         2) USER
         3) HARVESTER
@@ -101,51 +96,36 @@ class RouterUser:
         return PYUserAction.from_db_user_account(action=action, db_user_account=db_user_account)
 
     async def user_processing_stats(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        await self.user_login(auth)
-        db_user_account = await db_get_user_account_with_email(email=auth.username)
-        db_processing_stats = await db_get_processing_stats(db_user_account.user_id)
-        return db_processing_stats
+        py_user_action = await user_auth_with_handling(self.logger, auth)
+        return await get_user_processing_stats_with_handling(self.logger, user_id=py_user_action.user_id)
 
     async def user_workflow_jobs(
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> List:
+    ) -> List[WorkflowJobRsrc]:
         """
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
-        await self.user_login(auth)
-        db_user_account = await db_get_user_account_with_email(email=auth.username)
-        db_workflow_jobs = await db_get_all_workflow_jobs_by_user(
-            user_id=db_user_account.user_id, start_date=start_date, end_date=end_date)
-        response = []
-        for db_workflow_job in db_workflow_jobs:
-            db_workflow = await db_get_workflow(db_workflow_job.workflow_id)
-            db_workspace = await db_get_workspace(db_workflow_job.workspace_id)
-            response.append(WorkflowJobRsrc.from_db_workflow_job(db_workflow_job, db_workflow, db_workspace))
-        return response
+        py_user_action = await user_auth_with_handling(self.logger, auth)
+        return await get_user_workflow_jobs(
+            self.logger, self.rmq_publisher, py_user_action.user_id, start_date, end_date)
 
     async def user_workspaces(
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> List:
+    ) -> List[WorkspaceRsrc]:
         """
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
-        await self.user_login(auth)
-        db_user_account = await db_get_user_account_with_email(email=auth.username)
-        db_workspaces = await db_get_all_workspaces_by_user(
-            user_id=db_user_account.user_id, start_date=start_date, end_date=end_date)
-        return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
+        py_user_action = await user_auth_with_handling(self.logger, auth)
+        return await get_user_workspaces(user_id=py_user_action.user_id, start_date=start_date, end_date=end_date)
 
     async def user_workflows(
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> List:
+    ) -> List[WorkflowRsrc]:
         """
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
-        await self.user_login(auth)
-        db_user_account = await db_get_user_account_with_email(email=auth.username)
-        db_workflows = await db_get_all_workflows_by_user(
-            user_id=db_user_account.user_id, start_date=start_date, end_date=end_date)
-        return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]
+        py_user_action = await user_auth_with_handling(self.logger, auth)
+        return await get_user_workflows(user_id=py_user_action.user_id, start_date=start_date, end_date=end_date)

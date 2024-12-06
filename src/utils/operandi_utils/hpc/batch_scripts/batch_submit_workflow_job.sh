@@ -230,6 +230,8 @@ remove_file_group_from_workspace() {
   echo "Removing file group: $1"
   REMOVE_FILE_GROUP_COMMAND="${REMOVE_FILE_GROUP_COMMAND//FILE_GROUP_PLACEHOLDER/$1}"
   eval "$REMOVE_FILE_GROUP_COMMAND"
+  # Set the placeholder again for future invocations
+  REMOVE_FILE_GROUP_COMMAND="${REMOVE_FILE_GROUP_COMMAND//$1/FILE_GROUP_PLACEHOLDER}"
 }
 
 remove_file_groups_from_workspace() {

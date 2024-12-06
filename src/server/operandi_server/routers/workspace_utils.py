@@ -1,9 +1,10 @@
 import bagit
+from datetime import datetime
 from fastapi import HTTPException, status
 from os.path import join
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Union
+from typing import List, Optional, Union
 from zipfile import ZipFile
 
 from ocrd import Resolver
@@ -14,8 +15,9 @@ from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from operandi_server.constants import DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME
 from operandi_server.exceptions import WorkspaceNotValidException
 from operandi_utils.constants import StateWorkspace
-from operandi_utils.database import db_get_workspace
+from operandi_utils.database import db_get_workspace, db_get_all_workspaces_by_user
 from operandi_utils.database.models import DBWorkspace
+from operandi_server.models import WorkspaceRsrc
 
 
 def get_ocrd_workspace_physical_pages(mets_path: str) -> List[str]:
@@ -226,3 +228,10 @@ def find_file_groups_to_remove_with_handling(logger, db_workspace, preserve_file
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
     return remove_groups
+
+async def get_user_workspaces(
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+) -> List[WorkspaceRsrc]:
+    db_workspaces = await db_get_all_workspaces_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
+    return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
+

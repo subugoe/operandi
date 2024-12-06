@@ -114,14 +114,14 @@ jobs:
           echo "$SSH_KEY_HPC" > /home/runner/.ssh/key_hpc
           chmod 600 /home/runner/.ssh/key_hpc
 
+      - name: stop RabbitMQ and MongoDB instances if still running
+        run: docker compose -f ./docker-compose.yml --env-file ${{ env.ENV_FILE }} down --remove-orphans
+
       - name: start RabbitMQ Server
         run: docker compose -f ./docker-compose.yml --env-file ${{ env.ENV_FILE }} up -d operandi-rabbitmq
 
       - name: start MongoDB
         run: docker compose -f ./docker-compose.yml --env-file ${{ env.ENV_FILE }} up -d operandi-mongodb
-
-      - name: wait starting of RabbitMQ and MongoDB
-        run: sleep 45
 
       - name: run utils tests
         run: |

@@ -1,8 +1,6 @@
 from logging import getLevelName, getLogger
 from typing import List
-from operandi_utils.oton.constants import (
-    OTON_LOG_LEVEL, PARAMS_KEY_WORKSPACE_DIR, PARAMS_KEY_INPUT_FILE_GRP, PARAMS_KEY_FORKS, SPACES
-)
+from operandi_utils.oton.constants import OTON_LOG_LEVEL, PARAMS_KEY_INPUT_FILE_GRP, PARAMS_KEY_FORKS, SPACES
 from operandi_utils.oton.nf_block_process import NextflowBlockProcess
 
 class NextflowBlockWorkflow:
@@ -37,11 +35,11 @@ class NextflowBlockWorkflow:
             if previous_nfp is None:
                 workflow_call += (
                     f'{nf_split_page_ranges.nf_process_name}.out[0], {nf_split_page_ranges.nf_process_name}.out[1], '
-                    f'{PARAMS_KEY_WORKSPACE_DIR}, {PARAMS_KEY_INPUT_FILE_GRP}, "{out_file_grps}"'
+                    f'{PARAMS_KEY_INPUT_FILE_GRP}, "{out_file_grps}"'
                 )
             else:
                 workflow_call += (
-                    f'{previous_nfp}.out[0], {previous_nfp}.out[1], {previous_nfp}.out[2], "{in_file_grps}",'
+                    f'{previous_nfp}.out[0], {previous_nfp}.out[1], "{in_file_grps}",'
                     f' "{out_file_grps}"'
                 )
             workflow_call += ")\n"

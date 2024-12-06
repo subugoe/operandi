@@ -6,18 +6,22 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_server.models import PYUserInfo, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.constants import AccountType, ServerApiTag
-from operandi_utils.database import (
-    db_get_all_user_accounts, db_get_processing_stats, db_get_all_workflow_jobs_by_user,
-    db_get_workflow, db_get_workspace, db_get_all_workspaces_by_user, db_get_all_workflows_by_user
-)
 from operandi_utils.utils import send_bag_to_ola_hd
-from .user import RouterUser
-from .workspace_utils import create_workspace_bag, get_db_workspace_with_handling, validate_bag_with_handling
+from operandi_utils.rabbitmq import get_connection_publisher
+from .user_utils import get_user_accounts, get_user_processing_stats_with_handling, user_auth_with_handling
+from .workflow_utils import get_user_workflows, get_user_workflow_jobs
+from .workspace_utils import (
+    create_workspace_bag, get_user_workspaces, get_db_workspace_with_handling, validate_bag_with_handling
+)
 
 class RouterAdminPanel:
     def __init__(self):
-        self.logger = getLogger("operandi_server.routers.user")
-        self.user_authenticator = RouterUser()
+        self.logger = getLogger("operandi_server.routers.admin_panel")
+
+        self.logger.info(f"Trying to connect RMQ Publisher")
+        self.rmq_publisher = get_connection_publisher(enable_acks=True)
+        self.logger.info(f"RMQPublisher connected")
+
         self.router = APIRouter(tags=[ServerApiTag.ADMIN])
         self.router.add_api_route(
             path="/admin/users",
@@ -26,7 +30,7 @@ class RouterAdminPanel:
         )
         self.router.add_api_route(
             path="/admin/processing_stats/{user_id}",
-            endpoint=self.get_processing_stats_for_user, methods=["GET"], status_code=status.HTTP_200_OK,
+            endpoint=self.user_processing_stats, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get processing stats for a specific user by user_id"
         )
         self.router.add_api_route(
@@ -50,8 +54,12 @@ class RouterAdminPanel:
             summary="Push a workspace to Ola-HD service"
         )
 
+    def __del__(self):
+        if self.rmq_publisher:
+            self.rmq_publisher.disconnect()
+
     async def auth_admin_with_handling(self, auth: HTTPBasicCredentials):
-        py_user_action = await self.user_authenticator.user_login(auth)
+        py_user_action = await user_auth_with_handling(self.logger, auth)
         if py_user_action.account_type != AccountType.ADMIN:
             message = f"Admin privileges required for the endpoint"
             self.logger.error(f"{message}")
@@ -81,60 +89,41 @@ class RouterAdminPanel:
         }
         return response_message
 
-    async def get_users(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+    async def get_users(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[PYUserInfo]:
         await self.auth_admin_with_handling(auth)
-        users = await db_get_all_user_accounts()
-        return [PYUserInfo.from_db_user_account(user) for user in users]
+        return await get_user_accounts()
 
-    async def get_processing_stats_for_user(self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+    async def user_processing_stats(self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         await self.auth_admin_with_handling(auth)
-        try:
-            db_processing_stats = await db_get_processing_stats(user_id)
-            if not db_processing_stats:
-                message = f"Processing stats not found for the user_id: {user_id}"
-                self.logger.error(message)
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
-        except Exception as error:
-            message = f"Failed to fetch processing stats for user_id: {user_id}, error: {error}"
-            self.logger.error(message)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
-        return db_processing_stats
+        return await get_user_processing_stats_with_handling(self.logger, user_id=user_id)
 
     async def user_workflow_jobs(
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> List:
+    ) -> List[WorkflowJobRsrc]:
         """
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         await self.auth_admin_with_handling(auth)
-        db_workflow_jobs = await db_get_all_workflow_jobs_by_user(
-            user_id=user_id, start_date=start_date, end_date=end_date)
-        response = []
-        for db_workflow_job in db_workflow_jobs:
-            db_workflow = await db_get_workflow(db_workflow_job.workflow_id)
-            db_workspace = await db_get_workspace(db_workflow_job.workspace_id)
-            response.append(WorkflowJobRsrc.from_db_workflow_job(db_workflow_job, db_workflow, db_workspace))
-        return response
+        return await get_user_workflow_jobs(
+            self.logger, self.rmq_publisher, user_id, start_date, end_date)
 
     async def user_workspaces(
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> List:
+    ) -> List[WorkspaceRsrc]:
         """
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         await self.auth_admin_with_handling(auth)
-        db_workspaces = await db_get_all_workspaces_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
-        return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
+        return await get_user_workspaces(user_id=user_id, start_date=start_date, end_date=end_date)
 
     async def user_workflows(
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> List:
+    ) -> List[WorkflowRsrc]:
         """
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         await self.auth_admin_with_handling(auth)
-        db_workflows = await db_get_all_workflows_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
-        return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]
+        return await get_user_workflows(user_id=user_id, start_date=start_date, end_date=end_date)

@@ -2,8 +2,8 @@ from json import dumps as json_dumps
 from logging import getLevelName, getLogger
 from typing import Optional
 from operandi_utils.oton.constants import (
-    BS, CONST_DIR_IN, CONST_DIR_OUT, CONST_WORKSPACE_DIR, CONST_METS_PATH, CONST_PAGE_RANGE, CONST_METS_SOCKET_PATH,
-    OCRD_ALL_JSON, OTON_LOG_LEVEL
+    BS, CONST_DIR_IN, CONST_DIR_OUT, CONST_METS_PATH, CONST_PAGE_RANGE, OCRD_ALL_JSON, OTON_LOG_LEVEL,
+    PARAMS_KEY_METS_SOCKET_PATH, PARAMS_KEY_WORKSPACE_DIR
 )
 
 # This class is based on ocrd.task_sequence.ProcessorTask
@@ -51,14 +51,15 @@ class ProcessorCallArguments:
             dump += f" -p '{json_dumps(self.parameters)}'"
         return dump
 
-    def dump_bash_form_with_placeholders(self):
+    def dump_bash_form_with_phs(self, with_mets_socket: bool, with_page_id: bool = True):
         dump = ''
         dump += f'{self.executable}'
-        if self.mets_socket_path:
-            dump += f' -U ${BS[0]}{CONST_METS_SOCKET_PATH}{BS[1]}'
-        dump += f' -w ${BS[0]}{CONST_WORKSPACE_DIR}{BS[1]}'
+        if with_mets_socket:
+            dump += f' -U ${BS[0]}{PARAMS_KEY_METS_SOCKET_PATH}{BS[1]}'
+        dump += f' -w ${BS[0]}{PARAMS_KEY_WORKSPACE_DIR}{BS[1]}'
         dump += f' -m ${BS[0]}{CONST_METS_PATH}{BS[1]}'
-        dump += f' --page-id ${BS[0]}{CONST_PAGE_RANGE}{BS[1]}'
+        if with_page_id:
+            dump += f' --page-id ${BS[0]}{CONST_PAGE_RANGE}{BS[1]}'
         dump += f' -I ${BS[0]}{CONST_DIR_IN}{BS[1]}'
         dump += f' -O ${BS[0]}{CONST_DIR_OUT}{BS[1]}'
         if self.parameters:
