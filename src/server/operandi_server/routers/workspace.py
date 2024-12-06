@@ -26,13 +26,12 @@ from .workspace_utils import (
     parse_file_groups_with_handling,
     remove_file_groups_with_handling
 )
-from .user import RouterUser
+from .user_utils import user_auth_with_handling
 
 
 class RouterWorkspace:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.workspace")
-        self.user_authenticator = RouterUser()
         self.router = APIRouter(tags=[ServerApiTag.WORKSPACE])
         self.router.add_api_route(
             path="/import_external_workspace",
@@ -88,7 +87,7 @@ class RouterWorkspace:
         Curl equivalent:
         `curl -X GET SERVER_ADDR/workspace`
         """
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         workspaces = get_all_resources_url(SERVER_WORKSPACES_ROUTER)
         response = []
         for workspace in workspaces:
@@ -106,7 +105,7 @@ class RouterWorkspace:
         Curl equivalent:
         `curl -X GET SERVER_ADDR/workspace/{workspace_id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
         """
-        py_user_action = await self.user_authenticator.user_login(auth)
+        py_user_action = await user_auth_with_handling(self.logger, auth)
         db_workspace = await get_db_workspace_with_handling(
             self.logger, workspace_id, check_ready=True, check_deleted=True, check_local_existence=True)
 
@@ -130,7 +129,7 @@ class RouterWorkspace:
         self, mets_url: str, preserve_file_grps: str, mets_basename: str = DEFAULT_METS_BASENAME,
         details: str = f"Workspace imported from a mets file url", auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkspaceRsrc:
-        py_user_action = await self.user_authenticator.user_login(auth)
+        py_user_action = await user_auth_with_handling(self.logger, auth)
         file_grps_to_preserve = parse_file_groups_with_handling(self.logger, file_groups=preserve_file_grps)
         workspace_id, workspace_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
 
@@ -167,7 +166,7 @@ class RouterWorkspace:
         Curl equivalent:
         `curl -X POST SERVER_ADDR/workspace -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
         """
-        py_user_action = await self.user_authenticator.user_login(auth)
+        py_user_action = await user_auth_with_handling(self.logger, auth)
         ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER, resource_id=None)
         bag_dest = f"{ws_dir}.zip"
         try:
@@ -200,7 +199,7 @@ class RouterWorkspace:
         `curl -X PUT SERVER_ADDR/workspace/{workspace_id}
         -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
         """
-        py_user_action = await self.user_authenticator.user_login(auth)
+        py_user_action = await user_auth_with_handling(self.logger, auth)
         try:
             await db_get_workspace(workspace_id=workspace_id)
             # Note: This check raises HTTP errors on RuntimeError for
@@ -246,7 +245,7 @@ class RouterWorkspace:
         Curl equivalent:
         `curl -X DELETE SERVER_ADDR/workspace/{workspace_id}`
         """
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         await get_db_workspace_with_handling(
             self.logger, workspace_id, check_ready=True, check_deleted=True, check_local_existence=True)
 
@@ -265,7 +264,7 @@ class RouterWorkspace:
         self, workspace_id: str, remove_file_grps: str, recursive: bool = True, force: bool = True,
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkspaceRsrc:
-        await self.user_authenticator.user_login(auth)
+        await user_auth_with_handling(self.logger, auth)
         db_workspace = await get_db_workspace_with_handling(
             self.logger, workspace_id, check_ready=True, check_deleted=True, check_local_existence=True
         )
