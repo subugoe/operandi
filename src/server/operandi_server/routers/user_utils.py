@@ -1,14 +1,12 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from hashlib import sha512
-from random import random
-from typing import Tuple
 
 from operandi_utils.constants import AccountType
 from operandi_utils.database import (
     db_create_processing_stats, db_create_user_account, db_get_user_account, db_get_user_account_with_email,
     DBUserAccount)
 from operandi_server.models import PYUserAction
+from .password_utils import encrypt_password, validate_password
 
 
 async def create_user_if_not_available(
@@ -60,10 +58,10 @@ async def user_register_with_handling(
         message = f"Wrong account type. Must be one of: {AccountType}"
         logger.error(f"{message}")
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers=headers, detail=message)
-    salt, encrypted_password = encrypt_password(password)
     try:
         await db_get_user_account(email)
     except RuntimeError:
+        salt, encrypted_password = encrypt_password(password)
         # No user existing with the provided e-mail, register
         db_user_account = await db_create_user_account(
             institution_id=institution_id, email=email, encrypted_pass=encrypted_password, salt=salt,
@@ -73,23 +71,3 @@ async def user_register_with_handling(
     message = f"Another user is already registered with email: {email}"
     logger.error(f"{message}")
     raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers=headers, detail=message)
-
-
-def encrypt_password(plain_password: str) -> Tuple[str, str]:
-    salt = get_random_salt()
-    hashed_password = get_hex_digest(salt, plain_password)
-    encrypted_password = f"{salt}${hashed_password}"
-    return salt, encrypted_password
-
-
-def get_hex_digest(salt: str, plain_password: str):
-    return sha512(f"{salt}{plain_password}".encode("utf-8")).hexdigest()
-
-
-def get_random_salt() -> str:
-    return sha512(f"{hash(str(random()))}".encode("utf-8")).hexdigest()[:8]
-
-
-def validate_password(plain_password: str, encrypted_password: str) -> bool:
-    salt, hashed_password = encrypted_password.split(sep='$', maxsplit=1)
-    return hashed_password == get_hex_digest(salt, plain_password)
