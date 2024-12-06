@@ -59,6 +59,10 @@ class RouterUser:
             response_model=List, response_model_exclude_unset=True, response_model_exclude_none=True
         )
 
+    def __del__(self):
+        if self.rmq_publisher:
+            self.rmq_publisher.disconnect()
+
     async def user_login(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYUserAction:
         """
         Used for user authentication.

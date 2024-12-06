@@ -54,6 +54,10 @@ class RouterAdminPanel:
             summary="Push a workspace to Ola-HD service"
         )
 
+    def __del__(self):
+        if self.rmq_publisher:
+            self.rmq_publisher.disconnect()
+
     async def auth_admin_with_handling(self, auth: HTTPBasicCredentials):
         py_user_action = await user_auth_with_handling(self.logger, auth)
         if py_user_action.account_type != AccountType.ADMIN:
