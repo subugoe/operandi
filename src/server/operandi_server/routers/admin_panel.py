@@ -25,7 +25,7 @@ class RouterAdminPanel:
         )
         self.router.add_api_route(
             path="/admin/processing_stats/{user_id}",
-            endpoint=self.get_processing_stats_for_user, methods=["GET"], status_code=status.HTTP_200_OK,
+            endpoint=self.user_processing_stats, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get processing stats for a specific user by user_id"
         )
         self.router.add_api_route(
@@ -85,7 +85,7 @@ class RouterAdminPanel:
         users = await db_get_all_user_accounts()
         return [PYUserInfo.from_db_user_account(user) for user in users]
 
-    async def get_processing_stats_for_user(self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+    async def user_processing_stats(self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         await self.auth_admin_with_handling(auth)
         try:
             db_processing_stats = await db_get_processing_stats(user_id)
