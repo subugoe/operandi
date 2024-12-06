@@ -118,13 +118,13 @@ async def convert_oton_with_handling(
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
-async def get_workflows_of_user(
+async def get_user_workflows(
     user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
 ) -> List[WorkflowRsrc]:
     db_workflows = await db_get_all_workflows_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
     return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]
 
-async def get_workflow_jobs_of_user(
+async def get_user_workflow_jobs(
     user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
 ) -> List[WorkflowJobRsrc]:
     db_workflow_jobs = await db_get_all_workflow_jobs_by_user(user_id=user_id, start_date=start_date, end_date=end_date)

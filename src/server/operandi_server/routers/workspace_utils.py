@@ -219,7 +219,7 @@ def check_if_file_group_exists_with_handling(logger, db_workspace, file_group: s
     file_groups = extract_file_groups_from_db_model_with_handling(logger, db_workspace)
     return file_group in file_groups
 
-async def get_workspaces_of_user(
+async def get_user_workspaces(
     user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
 ) -> List[WorkspaceRsrc]:
     db_workspaces = await db_get_all_workspaces_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
