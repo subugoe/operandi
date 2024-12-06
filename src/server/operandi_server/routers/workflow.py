@@ -28,9 +28,7 @@ from .workflow_utils import (
     convert_oton_with_handling,
     get_db_workflow_job_with_handling,
     get_db_workflow_with_handling,
-    nf_script_executable_steps_with_handling,
     nf_script_extract_metadata_with_handling,
-    nf_script_uses_mets_server_with_handling,
     push_status_request_to_rabbitmq,
     validate_oton_with_handling
 )
