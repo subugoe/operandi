@@ -1,11 +1,13 @@
+from datetime import datetime
 from fastapi import HTTPException, status
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
-from operandi_utils.database import db_get_workflow, db_get_workflow_job
+from operandi_utils.database import db_get_workflow, db_get_workflow_job, db_get_all_workflows_by_user
 from operandi_utils.database.models import DBWorkflow, DBWorkflowJob
 from operandi_utils.oton import OTONConverter, OCRDValidator
 from operandi_utils.oton.constants import PARAMS_KEY_METS_SOCKET_PATH
+from operandi_server.models import WorkflowRsrc
 
 
 async def get_db_workflow_with_handling(
@@ -112,3 +114,9 @@ async def convert_oton_with_handling(
         message = "Failed to convert ocrd process workflow to nextflow workflow"
         logger.error(f"{message}, error: {error}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+async def get_workflows_of_user(
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+) -> List[WorkflowRsrc]:
+    db_workflows = await db_get_all_workflows_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
+    return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]
