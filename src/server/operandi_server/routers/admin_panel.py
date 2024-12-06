@@ -7,6 +7,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from operandi_server.models import PYUserInfo, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_utils.utils import send_bag_to_ola_hd
+from operandi_utils.rabbitmq import get_connection_publisher
 from .user_utils import get_user_accounts, get_user_processing_stats_with_handling, user_auth_with_handling
 from .workflow_utils import get_user_workflows, get_user_workflow_jobs
 from .workspace_utils import (
@@ -15,7 +16,12 @@ from .workspace_utils import (
 
 class RouterAdminPanel:
     def __init__(self):
-        self.logger = getLogger("operandi_server.routers.user")
+        self.logger = getLogger("operandi_server.routers.admin_panel")
+
+        self.logger.info(f"Trying to connect RMQ Publisher")
+        self.rmq_publisher = get_connection_publisher(enable_acks=True)
+        self.logger.info(f"RMQPublisher connected")
+
         self.router = APIRouter(tags=[ServerApiTag.ADMIN])
         self.router.add_api_route(
             path="/admin/users",
@@ -95,7 +101,8 @@ class RouterAdminPanel:
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         await self.auth_admin_with_handling(auth)
-        return await get_user_workflow_jobs(user_id=user_id, start_date=start_date, end_date=end_date)
+        return await get_user_workflow_jobs(
+            self.logger, self.rmq_publisher, user_id, start_date, end_date)
 
     async def user_workspaces(
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),

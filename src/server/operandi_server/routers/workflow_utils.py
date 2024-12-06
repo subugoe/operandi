@@ -141,16 +141,14 @@ async def push_status_request_to_rabbitmq(logger, rmq_publisher, job_id: str):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
 
 async def get_user_workflow_jobs(
-    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    logger, rmq_publisher, user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
 ) -> List[WorkflowJobRsrc]:
     db_workflow_jobs = await db_get_all_workflow_jobs_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
     response = []
     for db_workflow_job in db_workflow_jobs:
         job_state = db_workflow_job.job_state
         if job_state != StateJob.SUCCESS and job_state != StateJob.FAILED:
-            # TODO: Call here the 'push_status_request_to_rabbitmq' once
-            #  that method is also refactored to be rmq_publisher independent
-            pass
+            await push_status_request_to_rabbitmq(logger, rmq_publisher, db_workflow_job.job_id)
         db_workflow = await db_get_workflow(db_workflow_job.workflow_id)
         db_workspace = await db_get_workspace(db_workflow_job.workspace_id)
         response.append(WorkflowJobRsrc.from_db_workflow_job(db_workflow_job, db_workflow, db_workspace))
