@@ -395,12 +395,16 @@ class RouterWorkflow:
         db_workflow = await get_db_workflow_with_handling(self.logger, workflow_id=workflow_id)
         if preserve_file_grps:
             self.logger.info(f"Finding file groups to be removed based on the reproducible/preserve file groups")
-            self.logger.info(f"preserve_file_grps: {preserve_file_grps}")
             remove_file_grps = find_file_groups_to_remove_with_handling(self.logger, db_workspace, preserve_file_grps)
             remove_file_grps = ",".join(remove_file_grps)
             self.logger.info(f"remove_file_grps: {remove_file_grps}")
-            file_grps_reproducible = ",".join(db_workflow.producible_file_groups)
-            remove_file_grps += f",{file_grps_reproducible}"
+            list_preserver_file_grps = preserve_file_grps.split(',')
+            remove_file_grps_reproducible = []
+            for file_group in db_workflow.producible_file_groups:
+                if file_group not in list_preserver_file_grps:
+                    remove_file_grps_reproducible.append(file_group)
+            if len(remove_file_grps_reproducible) > 0:
+                remove_file_grps += f",{','.join(remove_file_grps_reproducible)}"
             self.logger.info(f"remove_file_grps including reproducible: {remove_file_grps}")
 
         try:
