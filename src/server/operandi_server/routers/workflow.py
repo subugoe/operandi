@@ -533,6 +533,7 @@ class RouterWorkflow:
                     workflow_script_base=workflow.filename,
                     uses_mets_server=nf_metadata['uses_mets_server'],
                     executable_steps=nf_metadata['executable_steps'],
+                    producible_file_groups=nf_metadata['producible_file_groups'],
                     details=f"Batch uploaded workflow: {workflow.filename}"
                 )
                 workflow_resources.append(WorkflowRsrc.from_db_workflow(db_workflow))
