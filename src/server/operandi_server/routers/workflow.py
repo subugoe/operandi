@@ -523,20 +523,16 @@ class RouterWorkflow:
             try:
                 workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER)
                 nf_script_dest = join(workflow_dir, workflow.filename)
-
                 await receive_resource(file=workflow, resource_dst=nf_script_dest)
-
-                uses_mets_server = await nf_script_uses_mets_server_with_handling(self.logger, nf_script_dest)
-                executable_steps = await nf_script_executable_steps_with_handling(self.logger, nf_script_dest)
-
+                nf_metadata = await nf_script_extract_metadata_with_handling(self.logger, nf_script_dest)
                 db_workflow = await db_create_workflow(
                     user_id=py_user_action.user_id,
                     workflow_id=workflow_id,
                     workflow_dir=workflow_dir,
                     workflow_script_path=nf_script_dest,
                     workflow_script_base=workflow.filename,
-                    uses_mets_server=uses_mets_server,
-                    executable_steps=executable_steps,
+                    uses_mets_server=nf_metadata['uses_mets_server'],
+                    executable_steps=nf_metadata['executable_steps'],
                     details=f"Batch uploaded workflow: {workflow.filename}"
                 )
                 workflow_resources.append(WorkflowRsrc.from_db_workflow(db_workflow))
