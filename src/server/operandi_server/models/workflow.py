@@ -16,6 +16,7 @@ class WorkflowRsrc(Resource):
     # datetime: (datetime) - inherited from Resource
     uses_mets_server: bool
     executable_steps: List[str]
+    producible_file_groups: List[str]
 
     class Config:
         allow_population_by_field_name = True
@@ -29,6 +30,7 @@ class WorkflowRsrc(Resource):
             description=db_workflow.details,
             uses_mets_server=db_workflow.uses_mets_server,
             executable_steps=db_workflow.executable_steps,
+            producible_file_groups=db_workflow.producible_file_groups,
             datetime=db_workflow.datetime,
         )
 
