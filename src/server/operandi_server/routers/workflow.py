@@ -67,7 +67,8 @@ class RouterWorkflow:
         self.router.add_api_route(
             path="/batch-workflows", endpoint=self.upload_batch_workflow_scripts, methods=["POST"],
             status_code=status.HTTP_201_CREATED,
-            summary="Upload a list of nextflow workflow script (limit:5). Returns a list of `resource_id` associated with the uploaded script.",
+            summary="Upload a list of nextflow workflow scripts (limit:5). "
+                    "Returns a list of `resource_id`s associated with the uploaded workflows.",
             response_model=None
         )
         self.router.add_api_route(
@@ -483,24 +484,20 @@ class RouterWorkflow:
         return FileResponse(nf_script_dest, filename=f'{oton_id}.nf', media_type="application/txt-file")
 
     async def upload_batch_workflow_scripts(
-            self,
-            workflows: List[UploadFile],
-            auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self,
+        workflows: List[UploadFile],
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> List[WorkflowRsrc]:
         """
         Curl equivalent:
-        `curl -X POST SERVER_ADDR/batch-workflows \
-        -F "workflows=@workflow1.nf" \
-        -F "workflows=@workflow2.nf" \
-        -F "workflows=@workflow3.nf"`
+        `curl -X POST SERVER_ADDR/batch-workflows -F "workflows=@workflow1.nf" -F "workflows=@workflow2.nf" ...`
         """
-        py_user_action = await self.user_authenticator.user_login(auth)
+        py_user_action = await user_auth_with_handling(self.logger, auth)
 
         if len(workflows) > 5:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Batch submission limit exceeded. Maximum 5 workflows allowed."
-            )
+            message = "Batch upload exceeds the limit of 5 workflows"
+            self.logger.error(message)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
         workflow_resources = []
         for workflow in workflows:
@@ -523,14 +520,9 @@ class RouterWorkflow:
                     executable_steps=executable_steps,
                     details=f"Batch uploaded workflow: {workflow.filename}"
                 )
-
                 workflow_resources.append(WorkflowRsrc.from_db_workflow(db_workflow))
-
             except Exception as error:
-                self.logger.error(f"Failed to process workflow {workflow.filename}: {error}")
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Failed to process workflow {workflow.filename}: {error}"
-                )
-
+                message = f"Failed to process workspace {workflow.filename}"
+                self.logger.error(f"{message}, error: {error}")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         return workflow_resources
