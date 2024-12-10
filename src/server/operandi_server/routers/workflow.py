@@ -72,6 +72,11 @@ class RouterWorkflow:
             response_model=None
         )
         self.router.add_api_route(
+            path="/batch-workflow-jobs", endpoint=self.submit_batch_workflow_jobs,
+            methods=["POST"], status_code=status.HTTP_201_CREATED, summary="Trigger upto 5 workflow jobs with specified workflows and arguments.",
+            response_model=List[WorkflowJobRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        self.router.add_api_route(
             path="/workflow/{workflow_id}",
             endpoint=self.submit_to_rabbitmq_queue, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Run a workflow job with the specified `workflow_id` and arguments in the request body.",
@@ -542,3 +547,43 @@ class RouterWorkflow:
                 self.logger.error(f"{message}, error: {error}")
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         return workflow_resources
+
+    async def submit_batch_workflow_jobs(
+            self,
+            batch_requests: List[dict],
+            auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    ) -> List[WorkflowJobRsrc]:
+        if len(batch_requests) > 5:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You can only trigger up to 5 workflow jobs at a time."
+            )
+        job_results = []
+
+        for request in batch_requests:
+            try:
+                workflow_id = request.get("workflow_id")
+                workflow_args = WorkflowArguments(**request.get("workflow_args", {}))
+                sbatch_args = SbatchArguments(**request.get("sbatch_args", {}))
+                details = request.get("details", "Batch workflow job")
+
+                job_result = await self.submit_to_rabbitmq_queue(
+                    workflow_id=workflow_id,
+                    workflow_args=workflow_args,
+                    sbatch_args=sbatch_args,
+                    details=details,
+                    auth=auth
+                )
+                job_results.append(job_result)
+
+            except Exception as error:
+                self.logger.error(f"Failed to submit workflow job for request {request}: {error}")
+                continue  # Skip to the next job in the batch
+
+        if not job_results:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to trigger any workflow jobs."
+            )
+
+        return job_results
