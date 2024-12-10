@@ -46,6 +46,13 @@ class RouterWorkspace:
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
+            path="/batch-workspaces",
+            endpoint=self.upload_batch_workspaces, methods=["POST"], status_code=status.HTTP_201_CREATED,
+            summary="Upload a list of workspaces each as an ocrd zip (limit:5). "
+                    "Returns a list of `resource_id`s associated with the uploaded workspaces.",
+            response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        self.router.add_api_route(
             path="/workspace",
             endpoint=self.list_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get a list of existing workspaces.",
@@ -268,3 +275,53 @@ class RouterWorkspace:
         )
         db_workspace = await db_update_workspace(find_workspace_id=workspace_id, file_groups=remaining_file_groups)
         return WorkspaceRsrc.from_db_workspace(db_workspace)
+
+    async def upload_batch_workspaces(
+        self,
+        workspaces: List[UploadFile],
+        auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+    ) -> List[WorkspaceRsrc]:
+        """
+        Curl equivalent:
+        `curl -X POST SERVER_ADDR/batch-workspaces -F files=@workspace1.zip -F files=@workspace2.zip ...`
+        """
+        py_user_action = await user_auth_with_handling(self.logger, auth)
+
+        if len(workspaces) > 5:
+            message = "Batch upload exceeds the limit of 5 workspaces"
+            self.logger.error(message)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+        workspace_resources = []
+        for workspace in workspaces:
+            ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
+            bag_dest = f"{ws_dir}.zip"
+
+            try:
+                await receive_resource(file=workspace, resource_dst=bag_dest)
+                rmtree(ws_dir, ignore_errors=True)
+                validate_bag_with_handling(self.logger, bag_dst=bag_dest)
+                bag_info = extract_bag_info_with_handling(self.logger, bag_dst=bag_dest, ws_dir=ws_dir)
+                Path(bag_dest).unlink()
+
+                pages_amount = extract_pages_with_handling(self.logger, bag_info, ws_dir)
+                file_groups = extract_file_groups_with_handling(self.logger, bag_info, ws_dir)
+
+                db_workspace = await db_create_workspace(
+                    user_id=py_user_action.user_id,
+                    workspace_id=ws_id,
+                    workspace_dir=ws_dir,
+                    pages_amount=pages_amount,
+                    file_groups=file_groups,
+                    bag_info=bag_info,
+                    state=StateWorkspace.READY,
+                    details=f"Batch uploaded workspace: {workspace.filename}"
+                )
+                await db_increase_processing_stats_with_handling(
+                    self.logger, find_user_id=py_user_action.user_id, pages_uploaded=pages_amount)
+                workspace_resources.append(WorkspaceRsrc.from_db_workspace(db_workspace))
+            except Exception as error:
+                message = f"Failed to process workspace {workspace.filename}"
+                self.logger.error(f"{message}, error: {error}")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+        return workspace_resources

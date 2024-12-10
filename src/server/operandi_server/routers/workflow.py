@@ -7,7 +7,7 @@ from shutil import make_archive, copyfile
 from tempfile import mkdtemp
 from typing import List
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile, Form
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
@@ -63,6 +63,18 @@ class RouterWorkflow:
             status_code=status.HTTP_201_CREATED, response_model=WorkflowRsrc, response_model_exclude_unset=True,
             response_model_exclude_none=True,
             summary="Upload a nextflow workflow script. Returns a `resource_id` associated with the uploaded script."
+        )
+        self.router.add_api_route(
+            path="/batch-workflows", endpoint=self.upload_batch_workflow_scripts, methods=["POST"],
+            status_code=status.HTTP_201_CREATED,
+            summary="Upload a list of nextflow workflow scripts (limit:5). "
+                    "Returns a list of `resource_id`s associated with the uploaded workflows.",
+            response_model=None
+        )
+        self.router.add_api_route(
+            path="/batch-workflow-jobs", endpoint=self.submit_batch_workflow_jobs,
+            methods=["POST"], status_code=status.HTTP_201_CREATED, summary="Trigger upto 5 workflow jobs with specified workflows and arguments.",
+            response_model=List[WorkflowJobRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workflow/{workflow_id}",
@@ -494,3 +506,84 @@ class RouterWorkflow:
         await validate_oton_with_handling(self.logger, ocrd_process_txt)
         await convert_oton_with_handling(self.logger, ocrd_process_txt, nf_script_dest, environment, with_mets_server)
         return FileResponse(nf_script_dest, filename=f'{oton_id}.nf', media_type="application/txt-file")
+
+    async def upload_batch_workflow_scripts(
+        self,
+        workflows: List[UploadFile],
+        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    ) -> List[WorkflowRsrc]:
+        """
+        Curl equivalent:
+        `curl -X POST SERVER_ADDR/batch-workflows -F "workflows=@workflow1.nf" -F "workflows=@workflow2.nf" ...`
+        """
+        py_user_action = await user_auth_with_handling(self.logger, auth)
+
+        if len(workflows) > 5:
+            message = "Batch upload exceeds the limit of 5 workflows"
+            self.logger.error(message)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+        workflow_resources = []
+        for workflow in workflows:
+            try:
+                workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER)
+                nf_script_dest = join(workflow_dir, workflow.filename)
+                await receive_resource(file=workflow, resource_dst=nf_script_dest)
+                nf_metadata = await nf_script_extract_metadata_with_handling(self.logger, nf_script_dest)
+                db_workflow = await db_create_workflow(
+                    user_id=py_user_action.user_id,
+                    workflow_id=workflow_id,
+                    workflow_dir=workflow_dir,
+                    workflow_script_path=nf_script_dest,
+                    workflow_script_base=workflow.filename,
+                    uses_mets_server=nf_metadata['uses_mets_server'],
+                    executable_steps=nf_metadata['executable_steps'],
+                    producible_file_groups=nf_metadata['producible_file_groups'],
+                    details=f"Batch uploaded workflow: {workflow.filename}"
+                )
+                workflow_resources.append(WorkflowRsrc.from_db_workflow(db_workflow))
+            except Exception as error:
+                message = f"Failed to process workspace {workflow.filename}"
+                self.logger.error(f"{message}, error: {error}")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+        return workflow_resources
+
+    async def submit_batch_workflow_jobs(
+            self,
+            batch_requests: List[dict],
+            auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    ) -> List[WorkflowJobRsrc]:
+        if len(batch_requests) > 5:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You can only trigger up to 5 workflow jobs at a time."
+            )
+        job_results = []
+
+        for request in batch_requests:
+            try:
+                workflow_id = request.get("workflow_id")
+                workflow_args = WorkflowArguments(**request.get("workflow_args", {}))
+                sbatch_args = SbatchArguments(**request.get("sbatch_args", {}))
+                details = request.get("details", "Batch workflow job")
+
+                job_result = await self.submit_to_rabbitmq_queue(
+                    workflow_id=workflow_id,
+                    workflow_args=workflow_args,
+                    sbatch_args=sbatch_args,
+                    details=details,
+                    auth=auth
+                )
+                job_results.append(job_result)
+
+            except Exception as error:
+                self.logger.error(f"Failed to submit workflow job for request {request}: {error}")
+                continue  # Skip to the next job in the batch
+
+        if not job_results:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to trigger any workflow jobs."
+            )
+
+        return job_results
