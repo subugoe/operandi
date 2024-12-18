@@ -508,21 +508,17 @@ class RouterWorkflow:
         return FileResponse(nf_script_dest, filename=f'{oton_id}.nf', media_type="application/txt-file")
 
     async def upload_batch_workflow_scripts(
-        self,
-        workflows: List[UploadFile],
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, workflows: List[UploadFile], auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> List[WorkflowRsrc]:
         """
         Curl equivalent:
         `curl -X POST SERVER_ADDR/batch-workflows -F "workflows=@workflow1.nf" -F "workflows=@workflow2.nf" ...`
         """
         py_user_action = await user_auth_with_handling(self.logger, auth)
-
         if len(workflows) > 5:
             message = "Batch upload exceeds the limit of 5 workflows"
             self.logger.error(message)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-
         workflow_resources = []
         for workflow in workflows:
             try:
@@ -543,30 +539,26 @@ class RouterWorkflow:
                 )
                 workflow_resources.append(WorkflowRsrc.from_db_workflow(db_workflow))
             except Exception as error:
-                message = f"Failed to process workspace {workflow.filename}"
+                message = f"Failed to process workflow {workflow.filename}"
                 self.logger.error(f"{message}, error: {error}")
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         return workflow_resources
 
     async def submit_batch_workflow_jobs(
-            self,
-            batch_requests: List[dict],
-            auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, workflow_job_requests: List[dict], auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> List[WorkflowJobRsrc]:
-        if len(batch_requests) > 5:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You can only trigger up to 5 workflow jobs at a time."
-            )
-        job_results = []
-
-        for request in batch_requests:
+        py_user_action = await user_auth_with_handling(self.logger, auth)
+        if len(workflow_job_requests) > 5:
+            message = "Batch upload exceeds the limit of 5 workflow jobs"
+            self.logger.error(message)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+        workflow_job_resources = []
+        for workflow_job_request in workflow_job_requests:
             try:
-                workflow_id = request.get("workflow_id")
-                workflow_args = WorkflowArguments(**request.get("workflow_args", {}))
-                sbatch_args = SbatchArguments(**request.get("sbatch_args", {}))
-                details = request.get("details", "Batch workflow job")
-
+                workflow_id = workflow_job_request.get("workflow_id")
+                workflow_args = WorkflowArguments(**workflow_job_request.get("workflow_args", {}))
+                sbatch_args = SbatchArguments(**workflow_job_request.get("sbatch_args", {}))
+                details = workflow_job_request.get("details", "Batch workflow job")
                 job_result = await self.submit_to_rabbitmq_queue(
                     workflow_id=workflow_id,
                     workflow_args=workflow_args,
@@ -574,16 +566,13 @@ class RouterWorkflow:
                     details=details,
                     auth=auth
                 )
-                job_results.append(job_result)
-
+                workflow_job_resources.append(job_result)
             except Exception as error:
-                self.logger.error(f"Failed to submit workflow job for request {request}: {error}")
+                message = f"Failed to submit workflow job for request {workflow_job_request}: {error}"
+                self.logger.error(message)
                 continue  # Skip to the next job in the batch
-
-        if not job_results:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to trigger any workflow jobs."
-            )
-
-        return job_results
+        if not workflow_job_resources:
+            message = "Failed to trigger any workflow jobs."
+            self.logger.error(f"{message}")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+        return workflow_job_resources

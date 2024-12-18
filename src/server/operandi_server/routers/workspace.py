@@ -277,26 +277,21 @@ class RouterWorkspace:
         return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def upload_batch_workspaces(
-        self,
-        workspaces: List[UploadFile],
-        auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        self, workspaces: List[UploadFile], auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> List[WorkspaceRsrc]:
         """
         Curl equivalent:
         `curl -X POST SERVER_ADDR/batch-workspaces -F files=@workspace1.zip -F files=@workspace2.zip ...`
         """
         py_user_action = await user_auth_with_handling(self.logger, auth)
-
         if len(workspaces) > 5:
             message = "Batch upload exceeds the limit of 5 workspaces"
             self.logger.error(message)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-
         workspace_resources = []
         for workspace in workspaces:
             ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
             bag_dest = f"{ws_dir}.zip"
-
             try:
                 await receive_resource(file=workspace, resource_dst=bag_dest)
                 rmtree(ws_dir, ignore_errors=True)
