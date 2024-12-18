@@ -34,7 +34,7 @@ class LocalFilesManager:
     def __make_dir_resource(
         self, resource_router: str, resource_id: str = "", exists_ok: bool = True
     ) -> Tuple[str, str]:
-        if resource_id is "":
+        if resource_id == "":
             resource_id = generate_id()
         resource_dir = str(join(self.base_dirs[resource_router], resource_id))
         if Path(resource_dir).is_dir():
