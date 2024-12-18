@@ -1,8 +1,7 @@
 from typing import List, Optional
 from operandi_utils.constants import StateJob
 from operandi_utils.database.models import DBWorkflow, DBWorkflowJob, DBWorkspace
-from operandi_server.constants import SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER
-from operandi_server.files_manager import get_resource_url
+from operandi_server.files_manager import LFMInstance
 from .base import Resource
 from .workspace import WorkspaceRsrc
 
@@ -26,7 +25,7 @@ class WorkflowRsrc(Resource):
         return WorkflowRsrc(
             user_id=db_workflow.user_id,
             resource_id=db_workflow.workflow_id,
-            resource_url=get_resource_url(SERVER_WORKFLOWS_ROUTER, db_workflow.workflow_id),
+            resource_url=LFMInstance.get_url_workflow(db_workflow.workflow_id),
             description=db_workflow.details,
             uses_mets_server=db_workflow.uses_mets_server,
             executable_steps=db_workflow.executable_steps,
@@ -54,7 +53,7 @@ class WorkflowJobRsrc(Resource):
         return WorkflowJobRsrc(
             user_id=db_workflow_job.user_id,
             resource_id=db_workflow_job.job_id,
-            resource_url=get_resource_url(SERVER_WORKFLOW_JOBS_ROUTER, db_workflow_job.job_id),
+            resource_url=LFMInstance.get_url_workflow_job(db_workflow_job.job_id),
             description=db_workflow_job.details,
             job_state=db_workflow_job.job_state,
             workflow_rsrc=WorkflowRsrc.from_db_workflow(db_workflow),

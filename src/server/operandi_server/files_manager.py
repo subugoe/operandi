@@ -1,101 +1,103 @@
 import aiofiles
 from io import DEFAULT_BUFFER_SIZE
-from os import environ, listdir, scandir
-from os.path import isdir, isfile, join
+from os import environ, scandir
+from os.path import isdir, join
 from pathlib import Path
 from shutil import rmtree
 from typing import List, Tuple
 from operandi_utils import generate_id
+from .constants import (
+    SERVER_OTON_CONVERSIONS, SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER)
 
+class LocalFilesManager:
+    def __init__(self):
+        self.server_base_live_url = environ.get("OPERANDI_SERVER_URL_LIVE", None)
+        if not self.server_base_live_url:
+            raise ValueError("Environment variable not set: OPERANDI_SERVER_URL_LIVE")
+        self.base_dir_server = environ.get("OPERANDI_SERVER_BASE_DIR", None)
+        if not self.base_dir_server:
+            raise ValueError("Environment variable not set: OPERANDI_SERVER_BASE_DIR")
+        self.base_dirs = {
+            SERVER_OTON_CONVERSIONS: join(self.base_dir_server, SERVER_OTON_CONVERSIONS),
+            SERVER_WORKSPACES_ROUTER: join(self.base_dir_server, SERVER_WORKSPACES_ROUTER),
+            SERVER_WORKFLOWS_ROUTER: join(self.base_dir_server, SERVER_WORKFLOWS_ROUTER),
+            SERVER_WORKFLOW_JOBS_ROUTER: join(self.base_dir_server, SERVER_WORKFLOW_JOBS_ROUTER)
+        }
 
-def abs_resource_router_dir_path(resource_router: str) -> str:
-    server_base_dir = environ.get("OPERANDI_SERVER_BASE_DIR", None)
-    if not server_base_dir:
-        raise ValueError("Environment variable not set: OPERANDI_SERVER_BASE_DIR")
-    return join(server_base_dir, resource_router)
+    def __del__(self):
+        pass
 
+    def make_dir_base_resources(self):
+        for key, value in self.base_dirs.items():
+            Path(value).mkdir(mode=0o777, parents=True, exist_ok=True)
 
-def abs_resource_dir_path(resource_router: str, resource_id: str) -> str:
-    return join(abs_resource_router_dir_path(resource_router), resource_id)
+    def __make_dir_resource(
+        self, resource_router: str, resource_id: str = "", exists_ok: bool = True
+    ) -> Tuple[str, str]:
+        if resource_id is "":
+            resource_id = generate_id()
+        resource_dir = str(join(self.base_dirs[resource_router], resource_id))
+        if Path(resource_dir).is_dir():
+            if not exists_ok:
+                raise FileExistsError(
+                    f"Failed to create resource dir '{resource_router}', already exists: {resource_dir}")
+        Path(resource_dir).mkdir(mode=0o777, parents=True, exist_ok=True)
+        return resource_id, resource_dir
 
+    def make_dir_oton_conversions(self, resource_id: str = "", exists_ok: bool = True) -> Tuple[str, str]:
+        return self.__make_dir_resource(SERVER_OTON_CONVERSIONS, resource_id, exists_ok)
 
-def abs_resource_url(resource_router: str, resource_id: str) -> str:
-    server_base_live_url = environ.get("OPERANDI_SERVER_URL_LIVE", None)
-    if not server_base_live_url:
-        raise ValueError("Environment variable not set: OPERANDI_SERVER_URL_LIVE")
-    return join(server_base_live_url, resource_router, resource_id)
+    def make_dir_workspace(self, workspace_id: str = "", exists_ok: bool = True) -> Tuple[str, str]:
+        return self.__make_dir_resource(SERVER_WORKSPACES_ROUTER, workspace_id, exists_ok)
 
+    def make_dir_workflow(self, workflow_id: str = "", exists_ok: bool = True) -> Tuple[str, str]:
+        return self.__make_dir_resource(SERVER_WORKFLOWS_ROUTER, workflow_id, exists_ok)
 
-def create_resource_base_dir(resource_router: str) -> str:
-    resource_abs_path = abs_resource_router_dir_path(resource_router)
-    Path(resource_abs_path).mkdir(mode=0o777, parents=True, exist_ok=True)
-    return resource_abs_path
+    def make_dir_workflow_job(self, workflow_job_id: str = "", exists_ok: bool = True) -> Tuple[str, str]:
+        return self.__make_dir_resource(SERVER_WORKFLOW_JOBS_ROUTER, workflow_job_id, exists_ok)
 
+    def __get_dir_resource(self, resource_router: str, resource_id: str) -> str:
+        resource_dir = str(join(self.base_dirs[resource_router], resource_id))
+        if not Path(resource_dir).is_dir():
+            raise FileNotFoundError(f"Resource dir '{resource_router}' not found: {resource_dir}")
+        return resource_dir
 
-def create_resource_dir(resource_router: str, resource_id: str = None, exists_ok=False) -> Tuple[str, str]:
-    if resource_id is None:
-        resource_id = generate_id()
-    resource_dir = abs_resource_dir_path(resource_router, resource_id)
-    if isdir(resource_dir):
-        if not exists_ok:
-            raise FileExistsError(f"Failed to create resource dir, already exists: {resource_dir}")
-    Path(resource_dir).mkdir(mode=0o777, parents=True, exist_ok=True)
-    return resource_id, resource_dir
+    def get_dir_workspace(self, workspace_id: str) -> str:
+        return self.__get_dir_resource(SERVER_WORKSPACES_ROUTER, workspace_id)
 
+    def get_dir_workflow(self, workflow_id: str) -> str:
+        return self.__get_dir_resource(SERVER_WORKFLOWS_ROUTER, workflow_id)
 
-def delete_resource_dir(resource_router: str, resource_id: str) -> Tuple[str, str]:
-    resource_dir = abs_resource_dir_path(resource_router, resource_id)
-    if not isdir(resource_dir):
-        raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
-    rmtree(resource_dir, ignore_errors=True)
-    return resource_id, resource_dir
+    def get_dir_workflow_job(self, workflow_job_id: str) -> str:
+        return self.__get_dir_resource(SERVER_WORKFLOW_JOBS_ROUTER, workflow_job_id)
 
+    def get_url_workspace(self, workspace_id: str) -> str:
+        return join(self.server_base_live_url, SERVER_WORKSPACES_ROUTER, workspace_id)
 
-def get_all_resources_local(resource_router: str) -> List[Tuple[str, str]]:
-    resources = []
-    router_dir = abs_resource_router_dir_path(resource_router)
-    for res in scandir(router_dir):
-        if res.is_dir():
-            resource_id = str(res.name)
-            resource_dir = str(res)
-            resources.append((resource_id, resource_dir))
-    return resources
+    def get_url_workflow(self, workflow_id: str) -> str:
+        return join(self.server_base_live_url, SERVER_WORKFLOWS_ROUTER, workflow_id)
 
+    def get_url_workflow_job(self, workflow_job_id: str) -> str:
+        return join(self.server_base_live_url, SERVER_WORKFLOW_JOBS_ROUTER, workflow_job_id)
 
-def get_all_resources_url(resource_router: str) -> List[Tuple[str, str]]:
-    resources = []
-    router_dir = abs_resource_router_dir_path(resource_router)
-    for res in scandir(router_dir):
-        if res.is_dir():
-            resource_id = str(res.name)
-            url = abs_resource_url(resource_router, resource_id)
-            resources.append((resource_id, url))
-    return resources
+    def __delete_dir_resource(
+        self, resource_router: str, resource_id: str, missing_ok: bool = False
+    ) -> Tuple[str, str]:
+        resource_dir = str(join(self.base_dirs[resource_router], resource_id))
+        if not Path(resource_dir).is_dir():
+            if not missing_ok:
+                raise FileNotFoundError(f"Resource dir '{resource_router}' not found: {resource_dir}")
+        rmtree(resource_dir, ignore_errors=True)
+        return resource_id, resource_dir
 
+    def delete_dir_workspace(self, workspace_id: str, missing_ok: bool = False) -> Tuple[str, str]:
+        return self.__delete_dir_resource(SERVER_WORKSPACES_ROUTER, workspace_id, missing_ok)
 
-def get_resource_local(resource_router: str, resource_id: str) -> str:
-    resource_dir = abs_resource_dir_path(resource_router, resource_id)
-    if not isdir(resource_dir):
-        raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
-    return resource_dir
+    def delete_dir_workflow(self, workflow_id: str, missing_ok: bool = False) -> Tuple[str, str]:
+        return self.__delete_dir_resource(SERVER_WORKFLOWS_ROUTER, workflow_id, missing_ok)
 
-
-def get_resource_url(resource_router: str, resource_id: str) -> str:
-    resource_dir = abs_resource_dir_path(resource_router, resource_id)
-    if not isdir(resource_dir):
-        raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
-    return abs_resource_url(resource_router, resource_id)
-
-
-def get_resource_file(resource_router: str, resource_id: str, file_ext=None) -> str:
-    resource_dir = abs_resource_dir_path(resource_router, resource_id)
-    if not isdir(resource_dir):
-        raise FileNotFoundError(f"Resource dir not found: {resource_dir}")
-    for file in listdir(resource_dir):
-        if isfile(file):
-            if file_ext and file.endswith(file_ext):
-                return join(resource_dir, file)
-    raise FileNotFoundError(f"Resource file with ending '{file_ext}' not found in: {resource_dir}")
+    def delete_dir_workflow_job(self, workflow_job_id: str, missing_ok: bool = False) -> Tuple[str, str]:
+        return self.__delete_dir_resource(SERVER_WORKFLOW_JOBS_ROUTER, workflow_job_id, missing_ok)
 
 
 async def receive_resource(file, resource_dst, chunk_size: int = DEFAULT_BUFFER_SIZE):
@@ -104,3 +106,6 @@ async def receive_resource(file, resource_dst, chunk_size: int = DEFAULT_BUFFER_
         while content:
             await fpt.write(content)
             content = await file.read(chunk_size)
+
+# TODO: Consider making that a Singleton instance
+LFMInstance = LocalFilesManager()

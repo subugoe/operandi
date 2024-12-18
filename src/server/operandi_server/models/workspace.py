@@ -1,8 +1,7 @@
 from typing import List, Optional
 from operandi_utils.constants import StateWorkspace
 from operandi_utils.database.models import DBWorkspace
-from operandi_server.constants import SERVER_WORKSPACES_ROUTER
-from operandi_server.files_manager import get_resource_url
+from operandi_server.files_manager import LFMInstance
 from .base import Resource
 
 class WorkspaceRsrc(Resource):
@@ -30,7 +29,7 @@ class WorkspaceRsrc(Resource):
         return WorkspaceRsrc(
             user_id=db_workspace.user_id,
             resource_id=db_workspace.workspace_id,
-            resource_url=get_resource_url(SERVER_WORKSPACES_ROUTER, db_workspace.workspace_id),
+            resource_url=LFMInstance.get_url_workspace(db_workspace.workspace_id),
             description=db_workspace.details,
             pages_amount=db_workspace.pages_amount,
             file_groups=db_workspace.file_groups,

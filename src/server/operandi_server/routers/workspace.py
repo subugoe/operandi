@@ -11,9 +11,9 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from operandi_utils.constants import ServerApiTag, StateWorkspace
 from operandi_utils.database import (
     db_create_workspace, db_get_workspace, db_update_workspace, db_increase_processing_stats_with_handling)
-from operandi_server.constants import SERVER_WORKSPACES_ROUTER, DEFAULT_METS_BASENAME
-from operandi_server.files_manager import (
-    create_resource_dir, delete_resource_dir, get_all_resources_url, get_resource_url, receive_resource)
+from operandi_server.constants import DEFAULT_METS_BASENAME
+from operandi_server.files_manager import receive_resource
+from operandi_server.files_manager import LFMInstance
 from operandi_server.models import WorkspaceRsrc
 from .workspace_utils import (
     create_workspace_bag,
@@ -53,12 +53,6 @@ class RouterWorkspace:
             response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
-            path="/workspace",
-            endpoint=self.list_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get a list of existing workspaces.",
-            response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
-        )
-        self.router.add_api_route(
             path="/workspace/{workspace_id}",
             endpoint=self.download_workspace, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download an existing workspace zip identified with `workspace_id`.",
@@ -82,22 +76,6 @@ class RouterWorkspace:
             summary="Remove file groups from a workspace",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-
-    async def list_workspaces(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkspaceRsrc]:
-        """
-        Curl equivalent:
-        `curl -X GET SERVER_ADDR/workspace`
-        """
-        await user_auth_with_handling(self.logger, auth)
-        workspaces = get_all_resources_url(SERVER_WORKSPACES_ROUTER)
-        response = []
-        for workspace in workspaces:
-            ws_id, ws_url = workspace
-            db_workspace = await db_get_workspace(workspace_id=ws_id)
-            # file_groups = extract_file_groups_from_db_model_with_handling(self.logger, db_workspace)
-            # db_workspace = await db_update_workspace(find_workspace_id=ws_id, file_groups=file_groups)
-            response.append(WorkspaceRsrc.from_db_workspace(db_workspace))
-        return response
 
     async def download_workspace(
         self, background_tasks: BackgroundTasks, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
@@ -132,8 +110,7 @@ class RouterWorkspace:
     ) -> WorkspaceRsrc:
         py_user_action = await user_auth_with_handling(self.logger, auth)
         file_grps_to_preserve = parse_file_groups_with_handling(self.logger, file_groups=preserve_file_grps)
-        workspace_id, workspace_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
-
+        workspace_id, workspace_dir = LFMInstance.make_dir_workspace()
         bag_dest = f"{workspace_dir}.zip"
         try:
             ws_temp_dir = create_workspace_bag_from_remote_url(
@@ -168,7 +145,7 @@ class RouterWorkspace:
         `curl -X POST SERVER_ADDR/workspace -H "content-type: multipart/form-data" -F workspace=example_ws.ocrd.zip`
         """
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER, resource_id=None)
+        ws_id, ws_dir = LFMInstance.make_dir_workspace()
         bag_dest = f"{ws_dir}.zip"
         try:
             await receive_resource(file=workspace, resource_dst=bag_dest)
@@ -211,12 +188,8 @@ class RouterWorkspace:
             # Non-existing DB entry, ignore since that case is acceptable for PUT
             pass
 
-        try:
-            delete_resource_dir(SERVER_WORKSPACES_ROUTER, workspace_id)
-        except FileNotFoundError:
-            # Nothing to be deleted
-            pass
-        ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
+        LFMInstance.delete_dir_workspace(workspace_id=workspace_id, missing_ok=True)
+        ws_id, ws_dir = LFMInstance.make_dir_workspace(workspace_id=workspace_id)
         bag_dest = f"{ws_dir}.zip"
         try:
             await receive_resource(file=workspace, resource_dst=bag_dest)
@@ -253,8 +226,7 @@ class RouterWorkspace:
         db_workspace = await db_update_workspace(find_workspace_id=workspace_id, deleted=True)
         workspace_rsrc = WorkspaceRsrc.from_db_workspace(db_workspace)
         try:
-            deleted_workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
-            delete_resource_dir(SERVER_WORKSPACES_ROUTER, workspace_id)
+            LFMInstance.delete_dir_workspace(workspace_id=workspace_id, missing_ok=False)
         except FileNotFoundError as error:
             message = f"Non-existing local entry workspace_id: {workspace_id}"
             self.logger.error(f"{message}, error: {error}")
@@ -290,7 +262,7 @@ class RouterWorkspace:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         workspace_resources = []
         for workspace in workspaces:
-            ws_id, ws_dir = create_resource_dir(SERVER_WORKSPACES_ROUTER)
+            ws_id, ws_dir = LFMInstance.make_dir_workspace()
             bag_dest = f"{ws_dir}.zip"
             try:
                 await receive_resource(file=workspace, resource_dst=bag_dest)

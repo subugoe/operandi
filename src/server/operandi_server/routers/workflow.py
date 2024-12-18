@@ -7,22 +7,19 @@ from shutil import make_archive, copyfile
 from tempfile import mkdtemp
 from typing import List
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile, Form
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils import get_nf_wfs_dir, get_ocrd_process_wfs_dir
 from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateWorkspace
 from operandi_utils.database import (
-    db_create_workflow, db_create_workflow_job, db_get_hpc_slurm_job, db_get_workflow, db_update_workspace,
+    db_create_workflow, db_create_workflow_job, db_get_hpc_slurm_job, db_update_workspace,
     db_increase_processing_stats_with_handling)
 from operandi_utils.oton import OTONConverter
 from operandi_utils.rabbitmq import get_connection_publisher, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS
-from operandi_server.constants import (
-    SERVER_OTON_CONVERSIONS, SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER)
-from operandi_server.files_manager import (
-    create_resource_dir, delete_resource_dir, get_all_resources_url, get_resource_local, get_resource_url,
-    receive_resource)
+from operandi_server.files_manager import receive_resource
+from operandi_server.files_manager import LFMInstance
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
 from .workflow_utils import (
     convert_oton_with_handling,
@@ -33,7 +30,7 @@ from .workflow_utils import (
     validate_oton_with_handling
 )
 from .workspace_utils import (
-  check_if_file_group_exists_with_handling, get_db_workspace_with_handling, find_file_groups_to_remove_with_handling)
+    check_if_file_group_exists_with_handling, get_db_workspace_with_handling, find_file_groups_to_remove_with_handling)
 from .user_utils import user_auth_with_handling
 
 
@@ -81,11 +78,6 @@ class RouterWorkflow:
             endpoint=self.submit_to_rabbitmq_queue, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Run a workflow job with the specified `workflow_id` and arguments in the request body.",
             response_model=WorkflowJobRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
-        )
-        self.router.add_api_route(
-            path=f"/workflow", endpoint=self.list_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get a list of existing Nextflow workflows.",
-            response_model=List[WorkflowRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
         self.router.add_api_route(
             path="/workflow/{workflow_id}",
@@ -168,9 +160,8 @@ class RouterWorkflow:
                 continue
             # path.stem -> file_name
             # path.name -> file_name.ext
-            workflow_id, workflow_dir = create_resource_dir(
-                SERVER_WORKFLOWS_ROUTER, resource_id=path.stem, exists_ok=True)
-            nf_script_dest = join(workflow_dir, path.name)
+            workflow_id, workflow_dir = LFMInstance.make_dir_workflow(workflow_id=path.stem, exists_ok=True)
+            nf_script_dest = str(join(workflow_dir, path.name))
             copyfile(src=path, dst=nf_script_dest)
             nf_metadata = await nf_script_extract_metadata_with_handling(self.logger, nf_script_dest)
             self.logger.info(
@@ -182,20 +173,6 @@ class RouterWorkflow:
                 executable_steps=nf_metadata["executable_steps"],
                 producible_file_groups=nf_metadata["producible_file_groups"], details=wf_detail)
             self.production_workflows.append(workflow_id)
-
-    async def list_workflows(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[WorkflowRsrc]:
-        """
-        Curl equivalent:
-        `curl SERVER_ADDR/workflow`
-        """
-        await user_auth_with_handling(self.logger, auth)
-        workflows = get_all_resources_url(SERVER_WORKFLOWS_ROUTER)
-        response = []
-        for workflow in workflows:
-            wf_id, wf_url = workflow
-            db_workflow = await db_get_workflow(workflow_id=wf_id)
-            response.append(WorkflowRsrc.from_db_workflow(db_workflow))
-        return response
 
     async def download_workflow_script(
         self, workflow_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
@@ -221,7 +198,7 @@ class RouterWorkflow:
         `curl -X POST SERVER_ADDR/workflow -F nextflow_script=example.nf`
         """
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=None)
+        workflow_id, workflow_dir = LFMInstance.make_dir_workflow()
         nf_script_dest = join(workflow_dir, nextflow_script.filename)
         try:
             await receive_resource(file=nextflow_script, resource_dst=nf_script_dest)
@@ -250,14 +227,8 @@ class RouterWorkflow:
             message = f"Production workflow cannot be replaced. Tried to replace: {workflow_id}"
             self.logger.error(message)
             raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail=message)
-
-        try:
-            delete_resource_dir(SERVER_WORKFLOWS_ROUTER, workflow_id)
-        except FileNotFoundError:
-            # Resource not available, nothing to be deleted
-            pass
-
-        workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
+        LFMInstance.delete_dir_workflow(workflow_id=workflow_id, missing_ok=True)
+        workflow_id, workflow_dir = LFMInstance.make_dir_workflow(workflow_id=workflow_id)
         nf_script_dest = join(workflow_dir, nextflow_script.filename)
         try:
             await receive_resource(file=nextflow_script, resource_dst=nf_script_dest)
@@ -293,16 +264,6 @@ class RouterWorkflow:
         if db_wf_job.job_state != StateJob.FAILED and db_wf_job.job_state != StateJob.SUCCESS:
             await push_status_request_to_rabbitmq(self.logger, self.rmq_publisher, job_id=job_id)
 
-        # TODO: Fix that by getting rid of the FileManager module
-        try:
-            wf_job_url = get_resource_url(SERVER_WORKFLOW_JOBS_ROUTER, resource_id=db_wf_job.job_id)
-            workflow_url = get_resource_url(SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
-            workspace_url = get_resource_url(SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
-        except Exception as error:
-            message = f"Failed to locate the job resource"
-            self.logger.exception(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
         return WorkflowJobRsrc.from_db_workflow_job(
             db_workflow_job=db_wf_job, db_workflow=db_workflow, db_workspace=db_workspace)
 
@@ -325,7 +286,7 @@ class RouterWorkflow:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
 
         try:
-            wf_job_local = get_resource_local(SERVER_WORKFLOW_JOBS_ROUTER, resource_id=db_wf_job.job_id)
+            wf_job_local = LFMInstance.get_dir_workflow_job(workflow_job_id=db_wf_job.job_id)
         except FileNotFoundError as error:
             message = f"Failed to locate the workflow job resource zip"
             self.logger.exception(f"{message}, error: {error}")
@@ -349,7 +310,7 @@ class RouterWorkflow:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
 
         try:
-            wf_job_local = get_resource_local(SERVER_WORKFLOW_JOBS_ROUTER, resource_id=db_wf_job.job_id)
+            wf_job_local = LFMInstance.get_dir_workflow_job(workflow_job_id=db_wf_job.job_id)
         except FileNotFoundError as error:
             message = f"Failed to locate the workflow job resource zip"
             self.logger.exception(f"{message}, error: {error}")
@@ -422,17 +383,10 @@ class RouterWorkflow:
         try:
             # Create job request parameters
             self.logger.info("Creating workflow job space")
-            job_id, job_dir = create_resource_dir(SERVER_WORKFLOW_JOBS_ROUTER)
+            job_id, job_dir = LFMInstance.make_dir_workflow_job(exists_ok=False)
             job_state = StateJob.QUEUED
-
-            # TODO: Fix that by getting rid of the FileManager module
-            # Build urls to be sent as a response
-            self.logger.info("Building urls to be sent as a response")
-            workspace_url = get_resource_url(resource_router=SERVER_WORKSPACES_ROUTER, resource_id=workspace_id)
-            workflow_url = get_resource_url(resource_router=SERVER_WORKFLOWS_ROUTER, resource_id=workflow_id)
-            job_url = get_resource_url(resource_router=SERVER_WORKFLOW_JOBS_ROUTER, resource_id=job_id)
         except Exception as error:
-            message = "Failed to create or parse local resources"
+            message = "Failed to create workflow job resource"
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
 
@@ -492,7 +446,7 @@ class RouterWorkflow:
         auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ):
         await user_auth_with_handling(self.logger, auth)
-        oton_id, oton_dir = create_resource_dir(SERVER_OTON_CONVERSIONS, resource_id=None)
+        oton_id, oton_dir = LFMInstance.make_dir_oton_conversions()
         ocrd_process_txt = join(oton_dir, f"ocrd_process_input.txt")
         nf_script_dest = join(oton_dir, f"nextflow_output.nf")
 
@@ -522,7 +476,7 @@ class RouterWorkflow:
         workflow_resources = []
         for workflow in workflows:
             try:
-                workflow_id, workflow_dir = create_resource_dir(SERVER_WORKFLOWS_ROUTER)
+                workflow_id, workflow_dir = LFMInstance.make_dir_workflow()
                 nf_script_dest = join(workflow_dir, workflow.filename)
                 await receive_resource(file=workflow, resource_dst=nf_script_dest)
                 nf_metadata = await nf_script_extract_metadata_with_handling(self.logger, nf_script_dest)
