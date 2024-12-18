@@ -33,8 +33,8 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-        os: [ubuntu-latest]
+        python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12" ]
+        os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -149,6 +149,7 @@ jobs:
           pytest -p no:cacheprovider tests/integration_tests/test_*.py -s -v
 
   build-and-push-docker-images:
+    if: github.event_name == 'push' && contains(github.ref, '/tags/v')
     name: Push ${{matrix.services.module}} to image registry
     environment:
       name: development
@@ -194,7 +195,7 @@ jobs:
           file: ./src/${{matrix.services.dockerfile}}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }} 
+          labels: ${{ steps.meta.outputs.labels }}
 
 #  deploy-development:
 #    name: Deploy to development VM
