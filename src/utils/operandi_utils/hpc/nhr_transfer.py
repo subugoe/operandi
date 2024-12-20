@@ -175,6 +175,9 @@ class NHRTransfer(NHRConnector):
         try:
             unpack_zip_archive(source=unpack_src, destination=unpack_dst)
         except Exception as error:
+            if remove_zip:
+                Path(unpack_src).unlink(missing_ok=True)
+                self.logger.info(f"Removed the temp workspace zip: {unpack_src}")
             raise Exception(
                 f"Error when unpacking workspace zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}")
         self.logger.info(f"Unpacked workspace zip from src: {unpack_src}, to dst: {unpack_dst}")
