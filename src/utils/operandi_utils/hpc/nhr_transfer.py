@@ -186,7 +186,7 @@ class NHRTransfer(NHRConnector):
             Path(unpack_src).unlink(missing_ok=True)
             self.logger.info(f"Removed the temp workspace zip: {unpack_src}")
 
-    def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: Path, workflow_job_dir: Path, slurm_job_id: str):
+    def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: Path, workflow_job_dir: Path):
         _ = self.sftp_client  # Force reconnect of the SFTP Client
         wf_job_zip_path = self._download_workflow_job_zip(local_wf_job_dir=workflow_job_dir)
         self._unzip_workflow_job_dir(wf_job_zip_path, workflow_job_dir, True)

@@ -71,8 +71,7 @@ def test_hpc_connector_run_batch_script(
 
     ws_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE)
     wf_job_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB)
-    hpc_nhr_data_transfer.get_and_unpack_slurm_workspace(
-        ocrd_workspace_dir=ws_dir, workflow_job_dir=wf_job_dir, slurm_job_id=slurm_job_id)
+    hpc_nhr_data_transfer.get_and_unpack_slurm_workspace(ocrd_workspace_dir=ws_dir, workflow_job_dir=wf_job_dir)
     assert Path(ws_dir, "OCR-D-BIN").exists()
     assert wf_job_dir.exists()
     assert Path(wf_job_dir, "work").exists()
@@ -94,8 +93,7 @@ def test_hpc_connector_run_batch_script_with_ms(
 
     ws_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE_WITH_MS)
     wf_job_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB_WITH_MS)
-    hpc_nhr_data_transfer.get_and_unpack_slurm_workspace(
-        ocrd_workspace_dir=ws_dir, workflow_job_dir=wf_job_dir, slurm_job_id=slurm_job_id)
+    hpc_nhr_data_transfer.get_and_unpack_slurm_workspace(ocrd_workspace_dir=ws_dir, workflow_job_dir=wf_job_dir)
     assert Path(ws_dir, "OCR-D-BIN").exists()
     assert wf_job_dir.exists()
     assert Path(wf_job_dir, "work").exists()

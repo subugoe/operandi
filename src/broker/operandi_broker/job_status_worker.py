@@ -4,6 +4,7 @@ import signal
 from os import getpid, getppid, setsid
 from pathlib import Path
 from sys import exit
+from typing import List
 
 from ocrd import Resolver
 from operandi_utils import reconfigure_all_loggers, get_log_file_path_prefix
@@ -68,12 +69,22 @@ class JobStatusWorker:
             self.log.error(f"The worker failed, reason: {e}")
             raise Exception(f"The worker failed, reason: {e}")
 
-    def __download_results_from_hpc(self, job_dir: str, workspace_dir: str, slurm_job_id: str) -> None:
+    def __download_results_from_hpc(self, job_dir: str, workspace_dir: str) -> None:
         self.hpc_io_transfer.get_and_unpack_slurm_workspace(
-            ocrd_workspace_dir=Path(workspace_dir), workflow_job_dir=Path(job_dir), slurm_job_id=slurm_job_id)
+            ocrd_workspace_dir=Path(workspace_dir), workflow_job_dir=Path(job_dir))
         self.log.info(f"Transferred slurm workspace from hpc path")
         # Delete the result dir from the HPC home folder
         # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
+
+    def __extract_updated_file_groups(self, db_workspace: DBWorkspace) -> List[str]:
+        try:
+            workspace = Resolver().workspace_from_url(
+                mets_url=db_workspace.workspace_mets_path, clobber_mets=False,
+                mets_basename=db_workspace.mets_basename, download=False)
+            return workspace.mets.file_groups
+        except Exception as error:
+            self.log.error(f"Failed to extract the processed file groups: {error}")
+            return ["CORRUPTED FILE GROUPS"]
 
     def __handle_hpc_and_workflow_states(
         self, hpc_slurm_job_db: DBHPCSlurmJob, workflow_job_db: DBWorkflowJob, workspace_db: DBWorkspace
@@ -84,7 +95,6 @@ class JobStatusWorker:
         # if not new_slurm_job_state:
         #   return
 
-        user_id = workspace_db.user_id
         job_id = workflow_job_db.job_id
         job_dir = workflow_job_db.job_dir
         old_job_state = workflow_job_db.job_state
@@ -107,41 +117,36 @@ class JobStatusWorker:
         # If there has been a change of operandi workflow state, update it
         if old_job_state != new_job_state:
             self.log.info(f"Workflow job id: {job_id}, old state: {old_job_state}, new state: {new_job_state}")
-            sync_db_update_workflow_job(find_job_id=job_id, job_state=new_job_state)
-            # TODO: Simplify SUCCESS and FAILED duplications
             if new_job_state == StateJob.SUCCESS:
+                self.hpc_io_transfer.download_slurm_job_log_file(hpc_slurm_job_db.hpc_slurm_job_id, job_dir)
                 sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_FROM_HPC)
                 sync_db_update_workflow_job(find_job_id=job_id, job_state=StateJob.TRANSFERRING_FROM_HPC)
-                self.__download_results_from_hpc(
-                    job_dir=job_dir, workspace_dir=workspace_dir, slurm_job_id=hpc_slurm_job_db.hpc_slurm_job_id)
+                self.__download_results_from_hpc(job_dir=job_dir, workspace_dir=workspace_dir)
 
-                # TODO: Find a better way to do the update - consider callbacks to Operandi Server
-                try:
-                    workspace = Resolver().workspace_from_url(
-                        mets_url=workspace_db.workspace_mets_path, clobber_mets=False,
-                        mets_basename=workspace_db.mets_basename, download=False)
-                    updated_file_groups = workspace.mets.file_groups
-                except Exception as error:
-                    self.log.error(f"Failed to extract the processed file groups: {error}")
-                    updated_file_groups = ["CORRUPTED FILE GROUPS"]
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
-
+                updated_file_groups = self.__extract_updated_file_groups(db_workspace=workspace_db)
                 db_workspace = sync_db_update_workspace(
                     find_workspace_id=workspace_id, state=StateWorkspace.READY, file_groups=updated_file_groups)
+
+                self.log.info(f"Setting new workflow job state `{StateJob.SUCCESS}` of job_id: {job_id}")
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
-                db_stats = sync_db_increase_processing_stats(
-                    find_user_id=user_id, pages_succeed=db_workspace.pages_amount)
-                self.hpc_io_transfer.download_slurm_job_log_file(hpc_slurm_job_db.hpc_slurm_job_id, job_dir)
+
                 self.log.info(f"Increasing `pages_succeed` stat by {db_workspace.pages_amount}")
+                db_stats = sync_db_increase_processing_stats(
+                    find_user_id=workspace_db.user_id, pages_succeed=db_workspace.pages_amount)
                 self.log.info(f"Total amount of `pages_succeed` stat: {db_stats.pages_succeed}")
+
             if new_job_state == StateJob.FAILED:
+                self.hpc_io_transfer.download_slurm_job_log_file(hpc_slurm_job_db.hpc_slurm_job_id, job_dir)
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
                 db_workspace = sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
+
+                self.log.info(f"Setting new workflow job state `{StateJob.FAILED}` of job_id: {job_id}")
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.FAILED)
-                db_stats = sync_db_increase_processing_stats(
-                    find_user_id=user_id, pages_failed=db_workspace.pages_amount)
-                self.hpc_io_transfer.download_slurm_job_log_file(hpc_slurm_job_db.hpc_slurm_job_id, job_dir)
+
                 self.log.error(f"Increasing `pages_failed` stat by {db_workspace.pages_amount}")
+                db_stats = sync_db_increase_processing_stats(
+                    find_user_id=workspace_db.user_id, pages_failed=db_workspace.pages_amount)
                 self.log.error(f"Total amount of `pages_failed` stat: {db_stats.pages_failed}")
 
         self.log.info(f"Latest slurm job state: {new_slurm_job_state}")
