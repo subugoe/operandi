@@ -9,7 +9,7 @@ from operandi_utils import (
 from operandi_utils.constants import LOG_LEVEL_BROKER
 from operandi_utils.rabbitmq.constants import (
     RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS, RABBITMQ_QUEUE_JOB_STATUSES)
-from .worker import Worker
+from .job_submit_worker import Worker
 from .job_status_worker import JobStatusWorker
 
 
