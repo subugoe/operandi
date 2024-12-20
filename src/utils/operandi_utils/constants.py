@@ -169,6 +169,7 @@ class StateWorkspace(str, Enum):
 
 # TODO: Find a more optimal way of achieving this dynamically
 OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE = {
+    "ocrd_all": "ocrd_all_maximum_image.sif",
     "ocrd": "ocrd_core.sif",
     "ocrd-tesserocr-crop": "ocrd_tesserocr.sif",
     "ocrd-tesserocr-deskew": "ocrd_tesserocr.sif",
