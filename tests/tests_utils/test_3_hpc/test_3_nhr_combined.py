@@ -66,7 +66,7 @@ def test_hpc_connector_run_batch_script(
         file_groups_to_remove="", cpus=2, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
         partition=HPC_NHR_JOB_TEST_PARTITION, qos=HPC_JOB_QOS_SHORT)
     finished_successfully = hpc_nhr_command_executor.poll_till_end_slurm_job_state(
-        slurm_job_id=slurm_job_id, interval=5, timeout=300)
+        slurm_job_id=slurm_job_id, interval=10, timeout=300)
     assert finished_successfully
 
     ws_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE)
@@ -89,7 +89,7 @@ def test_hpc_connector_run_batch_script_with_ms(
         file_groups_to_remove="", cpus=3, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
         partition=HPC_NHR_JOB_TEST_PARTITION, qos=HPC_JOB_QOS_SHORT)
     finished_successfully = hpc_nhr_command_executor.poll_till_end_slurm_job_state(
-        slurm_job_id=slurm_job_id, interval=5, timeout=300)
+        slurm_job_id=slurm_job_id, interval=10, timeout=300)
     assert finished_successfully
 
     ws_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, ID_WORKSPACE_WITH_MS)
