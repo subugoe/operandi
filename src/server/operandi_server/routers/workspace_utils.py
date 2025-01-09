@@ -230,8 +230,9 @@ def find_file_groups_to_remove_with_handling(logger, db_workspace, preserve_file
     return remove_groups
 
 async def get_user_workspaces(
-    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
 ) -> List[WorkspaceRsrc]:
-    db_workspaces = await db_get_all_workspaces_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
+    db_workspaces = await db_get_all_workspaces_by_user(
+        user_id=user_id, start_date=start_date, end_date=end_date, hide_deleted=hide_deleted)
     return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
 

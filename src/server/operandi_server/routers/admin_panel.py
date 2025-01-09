@@ -99,31 +99,31 @@ class RouterAdminPanel:
 
     async def user_workflow_jobs(
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
-        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
     ) -> List[WorkflowJobRsrc]:
         """
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         await self.auth_admin_with_handling(auth)
         return await get_user_workflow_jobs(
-            self.logger, self.rmq_publisher, user_id, start_date, end_date)
+            self.logger, self.rmq_publisher, user_id, start_date, end_date, hide_deleted)
 
     async def user_workspaces(
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
-        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
     ) -> List[WorkspaceRsrc]:
         """
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         await self.auth_admin_with_handling(auth)
-        return await get_user_workspaces(user_id=user_id, start_date=start_date, end_date=end_date)
+        return await get_user_workspaces(user_id, start_date, end_date, hide_deleted)
 
     async def user_workflows(
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
-        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
     ) -> List[WorkflowRsrc]:
         """
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         await self.auth_admin_with_handling(auth)
-        return await get_user_workflows(user_id=user_id, start_date=start_date, end_date=end_date)
+        return await get_user_workflows(user_id, start_date, end_date, hide_deleted)

@@ -76,7 +76,7 @@ async def db_get_workspace(workspace_id: str) -> DBWorkspace:
 
 
 async def db_get_all_workspaces_by_user(
-    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
 ) -> List[DBWorkspace]:
     query = {"user_id": user_id}
     if start_date or end_date:
@@ -85,6 +85,8 @@ async def db_get_all_workspaces_by_user(
             query["datetime"]["$gte"] = start_date
         if end_date:
             query["datetime"]["$lte"] = end_date
+    if hide_deleted:
+        query["deleted"] = False
     db_workspaces = await DBWorkspace.find_many(query).to_list()
     return db_workspaces
 
@@ -137,5 +139,6 @@ async def sync_db_update_workspace(find_workspace_id: str, **kwargs) -> DBWorksp
 
 @call_sync
 async def sync_db_get_all_workspaces_by_user(
-    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[DBWorkspace]:
-    return await db_get_all_workspaces_by_user(user_id, start_date, end_date)
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
+) -> List[DBWorkspace]:
+    return await db_get_all_workspaces_by_user(user_id, start_date, end_date, hide_deleted)
