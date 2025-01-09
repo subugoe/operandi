@@ -38,12 +38,12 @@ class OCRDValidator:
     def validate_all_processors(self, processors: List[ProcessorCallArguments]):
         prev_output_file_grps = []
         first_processor = processors[0]
-        self.logger.info(f"Validating parameters against json schema of processor: {first_processor.executable}")
+        self.logger.debug(f"Validating parameters against json schema of processor: {first_processor.executable}")
         self.validate_processor_params(first_processor, overwrite_with_defaults=False)
 
         prev_output_file_grps += first_processor.output_file_grps.split(',')
         for processor in processors[1:]:
-            self.logger.info(f"Validating parameters against json schema of processor: {first_processor.executable}")
+            self.logger.debug(f"Validating parameters against json schema of processor: {processor.executable}")
             self.validate_processor_params(processor, overwrite_with_defaults=False)
             for input_file_grp in processor.input_file_grps.split(','):
                 if input_file_grp not in prev_output_file_grps:
