@@ -377,7 +377,9 @@ class RouterWorkflow:
                 if file_group not in list_preserver_file_grps:
                     remove_file_grps_reproducible.append(file_group)
             if len(remove_file_grps_reproducible) > 0:
-                remove_file_grps += f",{','.join(remove_file_grps_reproducible)}"
+                if len(remove_file_grps) > 0:
+                    remove_file_grps += ","
+                remove_file_grps += f"{','.join(remove_file_grps_reproducible)}"
             self.logger.info(f"remove_file_grps including reproducible: {remove_file_grps}")
 
         try:

@@ -80,7 +80,9 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
         "workflow_args": {
             "workspace_id": workspace_id,
             "input_file_grp": input_file_grp,
-            "remove_file_grps": ",".join(remove_file_grps_list_odem),
+            # "remove_file_grps": ",".join(remove_file_grps_list_odem),
+            "remove_file_grps": "",
+            "preserve_file_grps": f"{input_file_grp},OCR-D-OCR",
             "mets_name": DEFAULT_METS_BASENAME
         },
         "sbatch_args": {"partition": HPC_NHR_JOB_TEST_PARTITION, "cpus": 8, "ram": 32}
@@ -98,9 +100,15 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
 
     ws_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, workspace_id)
     assert ws_dir.exists()
+    assert Path(ws_dir, input_file_grp).exists()
     assert Path(ws_dir, "OCR-D-OCR").exists()
+
+    # Check if file groups not mentioned in preserve_file_grps are removed
+    for file_group in remove_file_grps_list_odem:
+        assert not Path(ws_dir, file_group).exists()
 
     wf_job_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, workflow_job_id)
     assert wf_job_dir.exists()
     assert Path(wf_job_dir, "work").exists
+    assert Path(wf_job_dir, workspace_id, input_file_grp).exists()
     assert Path(wf_job_dir, workspace_id, "OCR-D-OCR").exists()
