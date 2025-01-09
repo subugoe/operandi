@@ -20,7 +20,9 @@
     {"name": "operandi_queue_harvester", "vhost": "/", "durable": false, "auto_delete": false},
     {"name": "operandi_queue_harvester", "vhost": "test", "durable": false, "auto_delete": false},
     {"name": "operandi_queue_job_statuses", "vhost": "/", "durable": false, "auto_delete": true},
-    {"name": "operandi_queue_job_statuses", "vhost": "test", "durable": false, "auto_delete": true}
+    {"name": "operandi_queue_job_statuses", "vhost": "test", "durable": false, "auto_delete": true},
+    {"name": "operandi_queue_hpc_downloads", "vhost": "/", "durable": false, "auto_delete": false},
+    {"name": "operandi_queue_hpc_downloads", "vhost": "test", "durable": false, "auto_delete": false}
   ],
   "exchanges": [],
   "bindings": []

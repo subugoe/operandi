@@ -12,6 +12,7 @@ class WorkspaceRsrc(Resource):
     # description: (str) - inherited from Resource
     # created_by_user: (str) - inherited from Resource
     # datetime: (datetime) - inherited from Resource
+    # deleted: bool - inherited from Resource
     pages_amount: int
     file_groups: List[str]
     state: StateWorkspace = StateWorkspace.UNSET
@@ -39,5 +40,6 @@ class WorkspaceRsrc(Resource):
             bagit_profile_identifier=db_workspace.bagit_profile_identifier,
             ocrd_base_version_checksum=db_workspace.ocrd_base_version_checksum,
             mets_basename=db_workspace.mets_basename,
-            bag_info_add=db_workspace.bag_info_adds
+            bag_info_add=db_workspace.bag_info_adds,
+            deleted=db_workspace.deleted
         )

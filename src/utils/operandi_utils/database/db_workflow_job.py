@@ -39,7 +39,7 @@ async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
 
 
 async def db_get_all_workflow_jobs_by_user(
-    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
 ) -> List[DBWorkflowJob]:
     query = {"user_id": user_id}
     if start_date or end_date:
@@ -48,6 +48,8 @@ async def db_get_all_workflow_jobs_by_user(
             query["datetime"]["$gte"] = start_date
         if end_date:
             query["datetime"]["$lte"] = end_date
+    if hide_deleted:
+        query["deleted"] = False
     db_workflow_jobs = await DBWorkflowJob.find_many(query).to_list()
     return db_workflow_jobs
 
@@ -95,5 +97,6 @@ async def sync_db_update_workflow_job(find_job_id: str, **kwargs) -> DBWorkflowJ
 
 @call_sync
 async def sync_db_get_all_workflow_jobs_by_user(
-    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[DBWorkflowJob]:
-    return await db_get_all_workflow_jobs_by_user(user_id, start_date, end_date)
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
+) -> List[DBWorkflowJob]:
+    return await db_get_all_workflow_jobs_by_user(user_id, start_date, end_date, hide_deleted)

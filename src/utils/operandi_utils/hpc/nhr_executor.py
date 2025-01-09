@@ -18,6 +18,11 @@ PH_NODE_DIR_OCRD_MODELS = "PH_NODE_DIR_OCRD_MODELS"
 PH_NODE_DIR_PROCESSOR_SIFS = "PH_NODE_DIR_PROCESSOR_SIFS"
 PH_CMD_WRAPPER = "PH_CMD_WRAPPER"
 
+CHECK_SLURM_JOB_TRY_TIMES = 10
+CHECK_SLURM_JOB_WAIT_TIME = 3
+POLL_SLURM_JOB_TIMEOUT = 300
+POLL_SLURM_JOB_CHECK_INTERVAL = 5
+
 class NHRExecutor(NHRConnector):
     def __init__(self) -> None:
         logger = getLogger(name=self.__class__.__name__)
@@ -72,7 +77,7 @@ class NHRExecutor(NHRConnector):
         hpc_nf_script_path = join(self.slurm_workspaces_dir, workflow_job_id, nextflow_script_id)
         hpc_workspace_dir = join(self.slurm_workspaces_dir, workflow_job_id, workspace_id)
 
-        sif_ocrd_all = "ocrd_all_maximum_image.sif"
+        sif_ocrd_all = OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE["ocrd_all"]
         sif_ocrd_core = OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE["ocrd"]
 
         if HPC_USE_SLIM_IMAGES:
@@ -122,7 +127,9 @@ class NHRExecutor(NHRConnector):
         assert int(slurm_job_id)
         return slurm_job_id
 
-    def check_slurm_job_state(self, slurm_job_id: str, tries: int = 10, wait_time: int = 2) -> str:
+    def check_slurm_job_state(
+        self, slurm_job_id: str, tries: int = CHECK_SLURM_JOB_TRY_TIMES, wait_time: int = CHECK_SLURM_JOB_WAIT_TIME
+    ) -> str:
         command = f"{HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS} {slurm_job_id}"
         slurm_job_state = None
 
@@ -154,12 +161,14 @@ class NHRExecutor(NHRConnector):
         self.logger.info(f"Slurm job state of {slurm_job_id}: {slurm_job_state}")
         return slurm_job_state
 
-    def poll_till_end_slurm_job_state(self, slurm_job_id: str, interval: int = 5, timeout: int = 300) -> bool:
+    def poll_till_end_slurm_job_state(
+        self, slurm_job_id: str, interval: int = POLL_SLURM_JOB_CHECK_INTERVAL, timeout: int = POLL_SLURM_JOB_TIMEOUT
+    ) -> bool:
         self.logger.info(f"Polling slurm job status till end")
         tries_left = timeout / interval
         self.logger.info(f"Tries to be performed: {tries_left}")
         while tries_left:
-            self.logger.info(f"Sleeping for {interval} secs")
+            self.logger.info(f"Sleeping for {interval} seconds, before trying again")
             sleep(interval)
             tries_left -= 1
             self.logger.info(f"Tries left: {tries_left}")
@@ -185,7 +194,7 @@ class NHRExecutor(NHRConnector):
             self.logger.warning(f"Invalid SLURM job state: {slurm_job_state}")
 
         # Timeout reached
-        self.logger.info("Polling slurm job status timeout reached")
+        self.logger.warning("Polling slurm job status timeout reached")
         return False
 
     @staticmethod

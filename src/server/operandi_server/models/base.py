@@ -10,6 +10,7 @@ class Resource(BaseModel):
     resource_url: str = Field(..., description="The unique URL of the resource")
     description: str = Field(..., description="The description of the resource")
     datetime: datetime
+    deleted: bool
 
     class Config:
         allow_population_by_field_name = True

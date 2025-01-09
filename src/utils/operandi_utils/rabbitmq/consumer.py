@@ -7,7 +7,7 @@ from operandi_utils.constants import LOG_LEVEL_RMQ_CONSUMER
 from .connector import RMQConnector
 from .constants import (
     DEFAULT_EXCHANGER_NAME, DEFAULT_EXCHANGER_TYPE,
-    RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS
+    RABBITMQ_QUEUE_HPC_DOWNLOADS, RABBITMQ_QUEUE_JOB_STATUSES, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS
 )
 
 
@@ -34,6 +34,7 @@ class RMQConsumer(RMQConnector):
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
         self.create_queue(queue_name=RABBITMQ_QUEUE_HARVESTER)
         self.create_queue(queue_name=RABBITMQ_QUEUE_USERS)
+        self.create_queue(queue_name=RABBITMQ_QUEUE_HPC_DOWNLOADS)
         self.create_queue(queue_name=RABBITMQ_QUEUE_JOB_STATUSES, auto_delete=True)
 
     def create_queue(

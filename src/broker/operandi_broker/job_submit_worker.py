@@ -21,7 +21,7 @@ from operandi_utils.rabbitmq import get_connection_consumer
 
 # Each worker class listens to a specific queue,
 # consume messages, and process messages.
-class Worker:
+class JobSubmitWorker:
     def __init__(self, db_url, rabbitmq_url, queue_name, tunnel_port_executor, tunnel_port_transfer, test_sbatch=False):
         self.log = getLogger(f"operandi_broker.worker[{getpid()}].{queue_name}")
         self.queue_name = queue_name

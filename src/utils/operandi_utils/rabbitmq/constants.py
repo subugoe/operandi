@@ -1,6 +1,7 @@
 DEFAULT_EXCHANGER_NAME: str = "operandi_default_exchange"
 DEFAULT_EXCHANGER_TYPE: str = "direct"
 RABBITMQ_QUEUE_DEFAULT: str = "operandi_queue_default"
+RABBITMQ_QUEUE_HPC_DOWNLOADS: str = "operandi_queue_hpc_downloads"
 RABBITMQ_QUEUE_HARVESTER: str = "operandi_queue_harvester"
 RABBITMQ_QUEUE_JOB_STATUSES: str = "operandi_queue_job_statuses"
 RABBITMQ_QUEUE_USERS: str = "operandi_queue_users"
