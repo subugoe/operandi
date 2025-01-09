@@ -8,9 +8,10 @@ from operandi_utils import (
     get_log_file_path_prefix, reconfigure_all_loggers, verify_database_uri, verify_and_parse_mq_uri)
 from operandi_utils.constants import LOG_LEVEL_BROKER
 from operandi_utils.rabbitmq.constants import (
-    RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS, RABBITMQ_QUEUE_JOB_STATUSES)
-from .job_submit_worker import Worker
+    RABBITMQ_QUEUE_HPC_DOWNLOADS, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS, RABBITMQ_QUEUE_JOB_STATUSES)
+from .job_download_worker import JobDownloadWorker
 from .job_status_worker import JobStatusWorker
+from .job_submit_worker import JobSubmitWorker
 
 
 class ServiceBroker:
@@ -48,14 +49,15 @@ class ServiceBroker:
         # A list of queues for which a worker process should be created
         queues = [RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS]
         status_queue = RABBITMQ_QUEUE_JOB_STATUSES
+        hpc_download_queue = RABBITMQ_QUEUE_HPC_DOWNLOADS
         try:
             for queue_name in queues:
                 self.log.info(f"Creating a worker process to consume from queue: {queue_name}")
-                self.create_worker_process(
-                    queue_name=queue_name, status_checker=False, tunnel_port_executor=22, tunnel_port_transfer=22)
+                self.create_worker_process(queue_name, "submit_worker")
             self.log.info(f"Creating a status worker process to consume from queue: {status_queue}")
-            self.create_worker_process(
-                queue_name=status_queue, status_checker=True, tunnel_port_executor=22, tunnel_port_transfer=22)
+            self.create_worker_process(status_queue, "status_worker")
+            self.log.info(f"Creating a download worker process to consume from queue: {hpc_download_queue}")
+            self.create_worker_process(hpc_download_queue, "download_worker")
         except Exception as error:
             self.log.error(f"Error while creating worker processes: {error}")
 
@@ -81,7 +83,7 @@ class ServiceBroker:
 
     # Creates a separate worker process and append its pid if successful
     def create_worker_process(
-        self, queue_name, tunnel_port_executor: int = 22, tunnel_port_transfer: int = 22, status_checker=False
+        self, queue_name, worker_type: str, tunnel_port_executor: int = 22, tunnel_port_transfer: int = 22
     ) -> None:
         # If the entry for queue_name does not exist, create id
         if queue_name not in self.queues_and_workers:
@@ -89,7 +91,7 @@ class ServiceBroker:
             # Initialize the worker pids list for the queue
             self.queues_and_workers[queue_name] = []
         child_pid = self.__create_child_process(
-            queue_name=queue_name, status_checker=status_checker, tunnel_port_executor=tunnel_port_executor,
+            queue_name=queue_name, worker_type=worker_type, tunnel_port_executor=tunnel_port_executor,
             tunnel_port_transfer=tunnel_port_transfer)
         # If creation of the child process was successful
         if child_pid:
@@ -99,27 +101,31 @@ class ServiceBroker:
 
     # Forks a child process
     def __create_child_process(
-        self, queue_name, tunnel_port_executor: int = 22, tunnel_port_transfer: int = 22, status_checker=False
+        self, queue_name, worker_type: str, tunnel_port_executor: int = 22, tunnel_port_transfer: int = 22
     ) -> int:
         self.log.info(f"Trying to create a new worker process for queue: {queue_name}")
         try:
-            # TODO: Try to utilize Popen() instead of fork()
             created_pid = fork()
         except Exception as os_error:
             self.log.error(f"Failed to create a child process, reason: {os_error}")
             return 0
+
         if created_pid != 0:
             return created_pid
         try:
-            # Clean unnecessary data
-            # self.queues_and_workers = None
-            if status_checker:
+            if worker_type == "status_worker":
                 child_worker = JobStatusWorker(
                     db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
                     tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer,
                     test_sbatch=self.test_sbatch)
-            else:
-                child_worker = Worker(
+            elif worker_type == "download_worker":
+                child_worker = JobDownloadWorker(
+                    db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
+                    tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer,
+                    test_sbatch=self.test_sbatch
+                )
+            else:  # worker_type == "submit_worker"
+                child_worker = JobSubmitWorker(
                     db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
                     tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer,
                     test_sbatch=self.test_sbatch)

@@ -6,6 +6,7 @@ __all__ = [
     "RABBITMQ_QUEUE_DEFAULT",
     "RABBITMQ_QUEUE_JOB_STATUSES",
     "RABBITMQ_QUEUE_HARVESTER",
+    "RABBITMQ_QUEUE_HPC_DOWNLOADS",
     "RABBITMQ_QUEUE_USERS",
     "RMQConnector"
 ]
@@ -17,6 +18,7 @@ from .constants import (
     RABBITMQ_QUEUE_DEFAULT,
     RABBITMQ_QUEUE_JOB_STATUSES,
     RABBITMQ_QUEUE_HARVESTER,
+    RABBITMQ_QUEUE_HPC_DOWNLOADS,
     RABBITMQ_QUEUE_USERS
 )
 from .wrappers import get_connection_consumer, get_connection_publisher

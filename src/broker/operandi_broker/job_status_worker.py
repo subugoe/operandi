@@ -17,6 +17,7 @@ from operandi_utils.hpc import NHRExecutor, NHRTransfer
 from operandi_utils.rabbitmq import get_connection_consumer
 
 
+# TODO: Refactor status worker to not download files. Adapt the JobDownloadWorker to do the task.
 class JobStatusWorker:
     def __init__(self, db_url, rabbitmq_url, queue_name, tunnel_port_executor, tunnel_port_transfer, test_sbatch=False):
         self.log = getLogger(f"operandi_broker.job_status_worker[{getpid()}].{queue_name}")

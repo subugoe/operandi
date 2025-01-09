@@ -5,7 +5,7 @@ from time import sleep
 from operandi_server.constants import (
     DEFAULT_METS_BASENAME, DEFAULT_FILE_GRP, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER)
 from operandi_utils.constants import StateJob
-from operandi_utils.rabbitmq import RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_JOB_STATUSES
+from operandi_utils.rabbitmq import RABBITMQ_QUEUE_HPC_DOWNLOADS, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_JOB_STATUSES
 from operandi_utils.hpc.constants import HPC_NHR_JOB_TEST_PARTITION
 from tests.tests_server.helpers_asserts import assert_response_status_code
 
@@ -48,11 +48,11 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
     assert response.json()["message"] == "The home page of the OPERANDI Server"
 
     # Create a background worker for the harvester queue
-    service_broker.create_worker_process(
-        queue_name=RABBITMQ_QUEUE_HARVESTER, status_checker=False, tunnel_port_executor=22, tunnel_port_transfer=22)
+    service_broker.create_worker_process(RABBITMQ_QUEUE_HARVESTER, "submit_worker")
     # Create a background worker for the job statuses queue
-    service_broker.create_worker_process(
-        queue_name=RABBITMQ_QUEUE_JOB_STATUSES, status_checker=True, tunnel_port_executor=22, tunnel_port_transfer=22)
+    service_broker.create_worker_process(RABBITMQ_QUEUE_JOB_STATUSES, "status_worker")
+    # Create a background worker for the hpc download queue
+    service_broker.create_worker_process(RABBITMQ_QUEUE_HPC_DOWNLOADS, "download_worker")
 
     # Post a workspace zip
     response = operandi.post(url="/workspace", files={"workspace": bytes_small_workspace}, auth=auth_harvester)

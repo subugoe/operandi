@@ -9,7 +9,7 @@ from operandi_utils.database import sync_db_initiate_database
 from operandi_utils.hpc import NHRExecutor, NHRTransfer
 from operandi_utils.rabbitmq import get_connection_consumer
 
-
+# TODO: Adapt the JobDownloadWorker to do the task of downloading instead of the job status worker
 class JobDownloadWorker:
     def __init__(self, db_url, rabbitmq_url, queue_name, tunnel_port_executor, tunnel_port_transfer, test_sbatch=False):
         self.log = getLogger(f"operandi_broker.job_download_worker[{getpid()}].{queue_name}")
