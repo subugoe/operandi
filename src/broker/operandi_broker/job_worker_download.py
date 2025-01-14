@@ -13,9 +13,8 @@ from operandi_utils.database import (
 
 
 class JobWorkerDownload(JobWorkerBase):
-    def __init__(self, db_url, rabbitmq_url, queue_name, test_sbatch=False):
+    def __init__(self, db_url, rabbitmq_url, queue_name):
         super().__init__(db_url, rabbitmq_url, queue_name)
-        self.test_sbatch = test_sbatch
         self.current_message_job_id = None
 
     @override

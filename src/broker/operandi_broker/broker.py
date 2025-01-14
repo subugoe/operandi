@@ -82,17 +82,13 @@ class ServiceBroker:
             self.log.error(f"Unexpected error: {error}")
 
     # Creates a separate worker process and append its pid if successful
-    def create_worker_process(
-        self, queue_name, worker_type: str, tunnel_port_executor: int = 22, tunnel_port_transfer: int = 22
-    ) -> None:
+    def create_worker_process(self, queue_name, worker_type: str) -> None:
         # If the entry for queue_name does not exist, create id
         if queue_name not in self.queues_and_workers:
             self.log.info(f"Initializing workers list for queue: {queue_name}")
             # Initialize the worker pids list for the queue
             self.queues_and_workers[queue_name] = []
-        child_pid = self.__create_child_process(
-            queue_name=queue_name, worker_type=worker_type, tunnel_port_executor=tunnel_port_executor,
-            tunnel_port_transfer=tunnel_port_transfer)
+        child_pid = self.__create_child_process(queue_name=queue_name, worker_type=worker_type)
         # If creation of the child process was successful
         if child_pid:
             self.log.info(f"Assigning a new worker process with pid: {child_pid}, to queue: {queue_name}")
@@ -100,9 +96,7 @@ class ServiceBroker:
             (self.queues_and_workers[queue_name]).append(child_pid)
 
     # Forks a child process
-    def __create_child_process(
-        self, queue_name, worker_type: str, tunnel_port_executor: int = 22, tunnel_port_transfer: int = 22
-    ) -> int:
+    def __create_child_process(self, queue_name, worker_type: str) -> int:
         self.log.info(f"Trying to create a new worker process for queue: {queue_name}")
         try:
             created_pid = fork()
@@ -115,14 +109,11 @@ class ServiceBroker:
         try:
             if worker_type == "status_worker":
                 child_worker = JobWorkerStatus(
-                    db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
-                    test_sbatch=self.test_sbatch)
+                    db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name)
                 child_worker.run(hpc_executor=True, hpc_io_transfer=True, publisher=True)
             elif worker_type == "download_worker":
                 child_worker = JobWorkerDownload(
-                    db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
-                    test_sbatch=self.test_sbatch
-                )
+                    db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name)
                 child_worker.run(hpc_executor=True, hpc_io_transfer=True, publisher=False)
             else:  # worker_type == "submit_worker"
                 child_worker = JobWorkerSubmit(
