@@ -8,6 +8,8 @@ from paramiko import AutoAddPolicy, RSAKey, SSHClient
 
 from .constants import HPC_NHR_CLUSTERS
 
+SSH_RECONNECT_TRIES = 5
+
 class NHRConnector:
     def __init__(
         self,
@@ -30,7 +32,7 @@ class NHRConnector:
         self.check_keyfile_existence(key_path=self.key_path)
         self.logger.debug(f"Retrieving hpc frontend server private key file from path: {self.key_path}")
         self._ssh_client = None
-        self._ssh_reconnect_tries = 5
+        self._ssh_reconnect_tries = SSH_RECONNECT_TRIES
         self._ssh_reconnect_tries_remaining = self._ssh_reconnect_tries
         # TODO: Make the sub cluster options selectable
         self.project_root_dir: str = HPC_NHR_CLUSTERS["EmmyPhase2"]["scratch-emmy-hdd"]
@@ -44,27 +46,6 @@ class NHRConnector:
             self._ssh_client.close()
             self._ssh_client = None
         self._ssh_client = self.connect_to_hpc_nhr_frontend_server(host=HPC_NHR_CLUSTERS["EmmyPhase2"]["host"])
-        # self._ssh_client.get_transport().set_keepalive(30)
-
-        """
-        try:
-            # Note: This extra check is required against aggressive
-            # Firewalls that ignore the keepalive option!
-            self._ssh_client.get_transport().send_ignore()
-            self._ssh_reconnect_tries_remaining = self._ssh_reconnect_tries
-        except Exception as error:
-            self.logger.warning(f"SSH client failed to send ignore, connection is broken: {error}")
-            if self._ssh_client:
-                self._ssh_client.close()
-                self._ssh_client = None
-            if self._ssh_reconnect_tries_remaining < 0:
-                raise Exception(f"Failed to reconnect {self._ssh_reconnect_tries} times: {error}")
-            self.logger.info(f"Reconnecting the SSH client, try times: {self._ssh_reconnect_tries_remaining}")
-            self._ssh_reconnect_tries_remaining -= 1
-            return self.ssh_client  # recursive call to itself to try again
-        return self._ssh_client
-        """
-
         return self._ssh_client
 
     @staticmethod

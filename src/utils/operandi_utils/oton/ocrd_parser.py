@@ -52,7 +52,7 @@ class OCRDParser:
                 self.logger.error(message)
                 raise ValueError(message)
         processor_call_arguments.self_validate()
-        self.logger.info(f"Successfully validated parameters of processor: {processor_call_arguments.executable}")
+        self.logger.debug(f"Successfully validated parameters of processor: {processor_call_arguments.executable}")
         return processor_call_arguments
 
     def purify_line(self, line: str) -> str:
@@ -82,10 +82,10 @@ class OCRDParser:
             for line in ocrd_file:
                 purified_line = self.purify_line(line)
                 if len(purified_line) > 0:
-                    self.logger.info(f"Appending purified line {line_counter}: {purified_line}")
+                    self.logger.debug(f"Appending purified line {line_counter}: {purified_line}")
                     file_lines.append(purified_line)
                 else:
-                    self.logger.info(f"0 sized line {line_counter} spotted, skipping")
+                    self.logger.debug(f"0 sized line {line_counter} spotted, skipping")
                 line_counter += 1
         ocrd_process_command = file_lines[0]
         processor_tasks = file_lines[1:]

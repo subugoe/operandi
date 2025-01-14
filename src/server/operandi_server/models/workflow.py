@@ -13,6 +13,7 @@ class WorkflowRsrc(Resource):
     # description: (str) - inherited from Resource
     # created_by_user: (str) - inherited from Resource
     # datetime: (datetime) - inherited from Resource
+    # deleted: bool - inherited from Resource
     uses_mets_server: bool
     executable_steps: List[str]
     producible_file_groups: List[str]
@@ -31,6 +32,7 @@ class WorkflowRsrc(Resource):
             executable_steps=db_workflow.executable_steps,
             producible_file_groups=db_workflow.producible_file_groups,
             datetime=db_workflow.datetime,
+            deleted=db_workflow.deleted
         )
 
 class WorkflowJobRsrc(Resource):
@@ -41,6 +43,7 @@ class WorkflowJobRsrc(Resource):
     # description: (str) - inherited from Resource
     # created_by_user: (str) - inherited from Resource
     # datetime: (datetime) - inherited from Resource
+    # deleted: bool - inherited from Resource
     job_state: Optional[StateJob] = StateJob.UNSET
     workflow_rsrc: Optional[WorkflowRsrc]
     workspace_rsrc: Optional[WorkspaceRsrc]
@@ -58,5 +61,6 @@ class WorkflowJobRsrc(Resource):
             job_state=db_workflow_job.job_state,
             workflow_rsrc=WorkflowRsrc.from_db_workflow(db_workflow),
             workspace_rsrc=WorkspaceRsrc.from_db_workspace(db_workspace),
-            datetime=db_workflow_job.datetime
+            datetime=db_workflow_job.datetime,
+            deleted=db_workflow.deleted
         )

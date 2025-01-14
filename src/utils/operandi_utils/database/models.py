@@ -31,7 +31,7 @@ class DBUserAccount(Document):
     account_type: AccountType = AccountType.UNSET
     approved_user: bool = False
     deleted: bool = False
-    datetime = datetime.now()
+    datetime: Optional[datetime]
     details: Optional[str]
 
     class Settings:
@@ -85,7 +85,7 @@ class DBHPCSlurmJob(Document):
     hpc_batch_script_path: Optional[str]
     hpc_slurm_workspace_path: Optional[str]
     deleted: bool = False
-    datetime = datetime.now()
+    datetime: Optional[datetime]
     details: Optional[str]
 
     class Settings:
@@ -117,7 +117,7 @@ class DBWorkflow(Document):
     executable_steps: List[str]
     producible_file_groups: List[str]
     deleted: bool = False
-    datetime = datetime.now()
+    datetime: Optional[datetime]
     details: Optional[str]
 
     class Settings:
@@ -152,7 +152,7 @@ class DBWorkflowJob(Document):
     workspace_dir: Optional[str]
     hpc_slurm_job_id: Optional[str]
     deleted: bool = False
-    datetime = datetime.now()
+    datetime: Optional[datetime]
     details: Optional[str]
 
     class Settings:
@@ -195,7 +195,7 @@ class DBWorkspace(Document):
     mets_basename: Optional[str]
     bag_info_adds: Optional[dict]
     deleted: bool = False
-    datetime = datetime.now()
+    datetime: Optional[datetime]
     details: Optional[str]
 
     class Settings:
