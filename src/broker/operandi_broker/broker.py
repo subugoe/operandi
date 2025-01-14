@@ -1,7 +1,5 @@
 from logging import getLogger
-from os import environ, fork
-import psutil
-import signal
+from os import environ
 from time import sleep
 
 from operandi_utils import (
@@ -9,9 +7,8 @@ from operandi_utils import (
 from operandi_utils.constants import LOG_LEVEL_BROKER
 from operandi_utils.rabbitmq.constants import (
     RABBITMQ_QUEUE_HPC_DOWNLOADS, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS, RABBITMQ_QUEUE_JOB_STATUSES)
-from .job_worker_download import JobWorkerDownload
-from .job_worker_status import JobWorkerStatus
-from .job_worker_submit import JobWorkerSubmit
+
+from .broker_utils import create_child_process, kill_workers
 
 
 class ServiceBroker:
@@ -74,7 +71,7 @@ class ServiceBroker:
         except KeyboardInterrupt:
             self.log.info(f"SIGINT signal received. Sending SIGINT to worker processes.")
             # Sends SIGINT to workers
-            self.kill_workers()
+            kill_workers(self.log, self.queues_and_workers)
             self.log.info(f"Closing gracefully in 3 seconds!")
             exit(0)
         except Exception as error:
@@ -88,65 +85,10 @@ class ServiceBroker:
             self.log.info(f"Initializing workers list for queue: {queue_name}")
             # Initialize the worker pids list for the queue
             self.queues_and_workers[queue_name] = []
-        child_pid = self.__create_child_process(queue_name=queue_name, worker_type=worker_type)
+        child_pid = create_child_process(
+            self.log, self.db_url, self.rabbitmq_url, queue_name, worker_type, self.test_sbatch)
         # If creation of the child process was successful
         if child_pid:
             self.log.info(f"Assigning a new worker process with pid: {child_pid}, to queue: {queue_name}")
             # append the pid to the workers list of the queue_name
             (self.queues_and_workers[queue_name]).append(child_pid)
-
-    # Forks a child process
-    def __create_child_process(self, queue_name, worker_type: str) -> int:
-        self.log.info(f"Trying to create a new worker process for queue: {queue_name}")
-        try:
-            created_pid = fork()
-        except Exception as os_error:
-            self.log.error(f"Failed to create a child process, reason: {os_error}")
-            return 0
-
-        if created_pid != 0:
-            return created_pid
-        try:
-            if worker_type == "status_worker":
-                child_worker = JobWorkerStatus(
-                    db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name)
-                child_worker.run(hpc_executor=True, hpc_io_transfer=True, publisher=True)
-            elif worker_type == "download_worker":
-                child_worker = JobWorkerDownload(
-                    db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name)
-                child_worker.run(hpc_executor=True, hpc_io_transfer=True, publisher=False)
-            else:  # worker_type == "submit_worker"
-                child_worker = JobWorkerSubmit(
-                    db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
-                    test_sbatch=self.test_sbatch)
-                child_worker.run(hpc_executor=True, hpc_io_transfer=True, publisher=False)
-            exit(0)
-        except Exception as e:
-            self.log.error(f"Worker process failed for queue: {queue_name}, reason: {e}")
-            exit(-1)
-
-    def _send_signal_to_worker(self, worker_pid: int, signal_type: signal):
-        try:
-            process = psutil.Process(pid=worker_pid)
-            process.send_signal(signal_type)
-        except psutil.ZombieProcess as error:
-            self.log.info(f"Worker process has become a zombie: {worker_pid}, {error}")
-        except psutil.NoSuchProcess as error:
-            self.log.error(f"No such worker process with pid: {worker_pid}, {error}")
-        except psutil.AccessDenied as error:
-            self.log.error(f"Access denied to the worker process with pid: {worker_pid}, {error}")
-
-    def kill_workers(self):
-        interrupted_pids = []
-        self.log.info(f"Starting to send SIGINT to all workers")
-        # Send SIGINT to all workers
-        for queue_name in self.queues_and_workers:
-            self.log.info(f"Sending SIGINT to workers of queue: {queue_name}")
-            for worker_pid in self.queues_and_workers[queue_name]:
-                self._send_signal_to_worker(worker_pid=worker_pid, signal_type=signal.SIGINT)
-                interrupted_pids.append(worker_pid)
-        sleep(3)
-        self.log.info(f"Sending SIGKILL (if needed) to previously interrupted workers")
-        # Check whether workers exited properly
-        for pid in interrupted_pids:
-            self._send_signal_to_worker(worker_pid=pid, signal_type=signal.SIGKILL)
