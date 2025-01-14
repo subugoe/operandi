@@ -12,7 +12,7 @@ from tests.tests_server.helpers_asserts import assert_response_status_code
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
 
 def check_job_till_finish(auth_harvester, operandi, workflow_id: str, workflow_job_id: str):
-    tries = 70
+    tries = 60
     job_status = None
     check_job_status_url = f"/workflow/{workflow_id}/{workflow_job_id}"
     while tries > 0:
@@ -32,15 +32,23 @@ def check_job_till_finish(auth_harvester, operandi, workflow_id: str, workflow_j
     assert job_status == StateJob.SUCCESS
 
 
-def download_workflow_job_logs(auth_harvester, operandi, workflow_id: str, workflow_job_id: str) -> Path:
-    get_log_zip_url = f"/workflow/{workflow_id}/{workflow_job_id}/log"
-    response = operandi.get(url=get_log_zip_url, auth=auth_harvester)
-    zip_local_path = Path(environ.get("OPERANDI_SERVER_BASE_DIR"), f"{workflow_job_id}.zip")
-    with open(zip_local_path, "wb") as filePtr:
-        for chunk in response.iter_bytes(chunk_size=1024):
-            if chunk:
-                filePtr.write(chunk)
-    return zip_local_path
+def download_workflow_job_logs(auth_harvester, operandi, workflow_id: str, workflow_job_id: str):
+    tries = 60
+    get_log_zip_url = f"/workflow/{workflow_id}/{workflow_job_id}/logs"
+    while tries > 0:
+        tries -= 1
+        sleep(30)
+        response = operandi.get(url=get_log_zip_url, auth=auth_harvester)
+        if response.status_code != 200:
+            continue
+        assert_response_status_code(response.status_code, expected_floor=2)
+        zip_local_path = Path(environ.get("OPERANDI_SERVER_BASE_DIR"), f"{workflow_job_id}.zip")
+        with open(zip_local_path, "wb") as filePtr:
+            for chunk in response.iter_bytes(chunk_size=1024):
+                if chunk:
+                    filePtr.write(chunk)
+        assert zip_local_path.exists()
+        break
 
 
 def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_workspace):
@@ -92,11 +100,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
     workflow_job_id = response.json()["resource_id"]
 
     check_job_till_finish(auth_harvester, operandi, workflow_id, workflow_job_id)
-
-    # TODO: Fix this, wait for a few secs till the data is transferred from HPC to Operandi Server
-    sleep(45)
-    zip_local_path = download_workflow_job_logs(auth_harvester, operandi, workflow_id, workflow_job_id)
-    assert zip_local_path.exists()
+    download_workflow_job_logs(auth_harvester, operandi, workflow_id, workflow_job_id)
 
     ws_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, workspace_id)
     assert ws_dir.exists()
