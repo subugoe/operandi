@@ -34,11 +34,11 @@ class JobWorkerStatus(JobWorkerBase):
             self._handle_msg_failure(interruption=False)
             return
 
-        # Handle database related reads and set the workflow job status to RUNNING
         try:
-            db_workflow_job = sync_db_get_workflow_job(self.current_message_job_id)
+            db_hpc_slurm_job: DBHPCSlurmJob = sync_db_get_hpc_slurm_job(self.current_message_job_id)
+
+            db_workflow_job: DBWorkflowJob = sync_db_get_workflow_job(self.current_message_job_id)
             workspace_id = db_workflow_job.workspace_id
-            db_hpc_slurm_job = sync_db_get_hpc_slurm_job(self.current_message_job_id)
         except RuntimeError as error:
             self.log.warning(f"Database run-time error has occurred: {error}")
             self._handle_msg_failure(interruption=False)

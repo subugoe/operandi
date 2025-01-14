@@ -37,13 +37,14 @@ class JobWorkerDownload(JobWorkerBase):
             self._handle_msg_failure(interruption=False)
             return
 
-        # Handle database related reads and set the workflow job status to RUNNING
         try:
-            db_hpc_slurm_job= sync_db_get_hpc_slurm_job(self.current_message_job_id)
+            db_hpc_slurm_job = sync_db_get_hpc_slurm_job(self.current_message_job_id)
             slurm_job_id = db_hpc_slurm_job.hpc_slurm_job_id
+
             db_workflow_job = sync_db_get_workflow_job(self.current_message_job_id)
-            job_dir = db_workflow_job.job_dir
             workspace_id = db_workflow_job.workspace_id
+            job_dir = db_workflow_job.job_dir
+
             db_workspace = sync_db_get_workspace(workspace_id)
             ws_dir = db_workspace.workspace_dir
             user_id = db_workspace.user_id

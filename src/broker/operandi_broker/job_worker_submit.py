@@ -8,7 +8,8 @@ from operandi_broker.job_worker_base import JobWorkerBase
 
 from operandi_utils.constants import StateJob, StateWorkspace
 from operandi_utils.database import (
-    sync_db_increase_processing_stats, sync_db_get_workflow, sync_db_get_workspace,
+    DBWorkflow, DBWorkflowJob, DBWorkspace,
+    sync_db_increase_processing_stats, sync_db_get_workflow, sync_db_get_workflow_job, sync_db_get_workspace,
     sync_db_create_hpc_slurm_job, sync_db_update_workflow_job, sync_db_update_workspace)
 from operandi_utils.hpc.constants import (
     HPC_BATCH_SUBMIT_WORKFLOW_JOB, HPC_JOB_DEADLINE_TIME_REGULAR, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_SHORT,
@@ -21,8 +22,8 @@ class JobWorkerSubmit(JobWorkerBase):
         self.test_sbatch = test_sbatch
         self.current_message_job_id = None
         self.current_message_user_id = None
-        self.current_message_ws_id = None
         self.current_message_wf_id = None
+        self.current_message_ws_id = None
 
     @override
     def _consumed_msg_callback(self, ch, method, properties, body):
@@ -36,9 +37,6 @@ class JobWorkerSubmit(JobWorkerBase):
         try:
             consumed_message = loads(body)
             self.log.info(f"Consumed message: {consumed_message}")
-            self.current_message_user_id = consumed_message["user_id"]
-            self.current_message_ws_id = consumed_message["workspace_id"]
-            self.current_message_wf_id = consumed_message["workflow_id"]
             self.current_message_job_id = consumed_message["job_id"]
             input_file_grp = consumed_message["input_file_grp"]
             remove_file_grps = consumed_message["remove_file_grps"]
@@ -53,17 +51,21 @@ class JobWorkerSubmit(JobWorkerBase):
             self._handle_msg_failure(interruption=False)
             return
 
-        # Handle database related reads and set the workflow job status to RUNNING
         try:
-            workflow_db = sync_db_get_workflow(self.current_message_wf_id)
-            workspace_db = sync_db_get_workspace(self.current_message_ws_id)
+            db_workflow_job: DBWorkflowJob = sync_db_get_workflow_job(self.current_message_job_id)
+            self.current_message_user_id = db_workflow_job.user_id
+            self.current_message_wf_id = db_workflow_job.workflow_id
+            self.current_message_ws_id = db_workflow_job.workspace_id
 
-            workflow_script_path = Path(workflow_db.workflow_script_path)
-            nf_uses_mets_server = workflow_db.uses_mets_server
-            nf_executable_steps = workflow_db.executable_steps
-            workspace_dir = Path(workspace_db.workspace_dir)
-            mets_basename = workspace_db.mets_basename
-            ws_pages_amount = workspace_db.pages_amount
+            db_workflow: DBWorkflow = sync_db_get_workflow(self.current_message_wf_id)
+            workflow_script_path = Path(db_workflow.workflow_script_path)
+            nf_uses_mets_server = db_workflow.uses_mets_server
+            nf_executable_steps = db_workflow.executable_steps
+
+            db_workspace: DBWorkspace = sync_db_get_workspace(self.current_message_ws_id)
+            workspace_dir = Path(db_workspace.workspace_dir)
+            mets_basename = db_workspace.mets_basename
+            ws_pages_amount = db_workspace.pages_amount
             if not mets_basename:
                 mets_basename = "mets.xml"
         except RuntimeError as error:
@@ -127,9 +129,10 @@ class JobWorkerSubmit(JobWorkerBase):
 
         # Reset the current message related parameters
         self.current_message_delivery_tag = None
-        self.current_message_ws_id = None
-        self.current_message_wf_id = None
         self.current_message_job_id = None
+        self.current_message_user_id = None
+        self.current_message_wf_id = None
+        self.current_message_ws_id = None
 
     # TODO: This should be further refined, currently it's just everything in one place
     def prepare_and_trigger_slurm_job(
