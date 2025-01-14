@@ -9,9 +9,9 @@ from operandi_utils import (
 from operandi_utils.constants import LOG_LEVEL_BROKER
 from operandi_utils.rabbitmq.constants import (
     RABBITMQ_QUEUE_HPC_DOWNLOADS, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS, RABBITMQ_QUEUE_JOB_STATUSES)
-from .job_download_worker import JobDownloadWorker
-from .job_status_worker import JobStatusWorker
-from .job_submit_worker import JobSubmitWorker
+from .job_worker_download import JobWorkerDownload
+from .job_worker_status import JobWorkerStatus
+from .job_worker_submit import JobWorkerSubmit
 
 
 class ServiceBroker:
@@ -114,22 +114,21 @@ class ServiceBroker:
             return created_pid
         try:
             if worker_type == "status_worker":
-                child_worker = JobStatusWorker(
+                child_worker = JobWorkerStatus(
                     db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
-                    tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer,
                     test_sbatch=self.test_sbatch)
+                child_worker.run(hpc_executor=True, hpc_io_transfer=True, publisher=True)
             elif worker_type == "download_worker":
-                child_worker = JobDownloadWorker(
+                child_worker = JobWorkerDownload(
                     db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
-                    tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer,
                     test_sbatch=self.test_sbatch
                 )
+                child_worker.run(hpc_executor=True, hpc_io_transfer=True, publisher=False)
             else:  # worker_type == "submit_worker"
-                child_worker = JobSubmitWorker(
+                child_worker = JobWorkerSubmit(
                     db_url=self.db_url, rabbitmq_url=self.rabbitmq_url, queue_name=queue_name,
-                    tunnel_port_executor=tunnel_port_executor, tunnel_port_transfer=tunnel_port_transfer,
                     test_sbatch=self.test_sbatch)
-            child_worker.run()
+                child_worker.run(hpc_executor=True, hpc_io_transfer=True, publisher=False)
             exit(0)
         except Exception as e:
             self.log.error(f"Worker process failed for queue: {queue_name}, reason: {e}")
