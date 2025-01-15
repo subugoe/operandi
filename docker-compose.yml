@@ -114,3 +114,28 @@ services:
     networks:
       - operandi
     command: operandi-broker start
+
+  sqlite:
+    image: nouchka/sqlite3
+    container_name: operandi-sqlite
+    hostname: sqlite-host
+    volumes:
+      - "${PWD}/sqlite_data/operandi.db:/operandi.db"  # Mount the entire directory to ensure persistence
+    networks:
+      - operandi
+
+
+
+  grafana:
+    image: grafana/grafana-enterprise:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_LOG_LEVEL=debug # Enable debug logs (optional)
+    restart: always
+
+volumes:
+  grafana-data:
