@@ -92,3 +92,6 @@ class ServiceBroker:
             self.log.info(f"Assigning a new worker process with pid: {child_pid}, to queue: {queue_name}")
             # append the pid to the workers list of the queue_name
             (self.queues_and_workers[queue_name]).append(child_pid)
+
+    def kill_workers(self):
+        kill_workers(self.log, self.queues_and_workers)
