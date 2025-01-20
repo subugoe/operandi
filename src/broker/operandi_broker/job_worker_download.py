@@ -112,7 +112,9 @@ class JobWorkerDownload(JobWorkerBase):
             ocrd_workspace_dir=Path(workspace_dir), workflow_job_dir=Path(job_dir))
         self.log.info(f"Transferred slurm workspace from hpc path")
         # Delete the result dir from the HPC home folder
-        # self.hpc_executor.execute_blocking(f"bash -lc 'rm -rf {hpc_slurm_workspace_path}/{workflow_job_id}'")
+        job_id = Path(job_dir).name
+        self.hpc_executor.remove_workflow_job_dir(workflow_job_id=job_id)
+        self.log.info(f"Removed slurm workspace from HPC for job: {job_id}")
 
     def __extract_updated_file_groups(self, db_workspace: DBWorkspace) -> List[str]:
         try:

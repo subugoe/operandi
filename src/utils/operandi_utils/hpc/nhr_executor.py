@@ -45,6 +45,15 @@ class NHRExecutor(NHRConnector):
         return_code = stdout.channel.recv_exit_status()
         return output, err, return_code
 
+    def remove_workflow_job_dir(self, workflow_job_id: str):
+        hpc_slurm_job_dir = f"{self.slurm_workspaces_dir}/{workflow_job_id}"
+        command = f"bash -lc 'rm -rf {hpc_slurm_job_dir}'"
+        self.logger.info(f"About to execute a force command: {command}")
+        output, err, return_code = self.execute_blocking(command)
+        self.logger.info(f"Command output: {output}")
+        self.logger.info(f"Command err: {err}")
+        self.logger.info(f"Command return code: {return_code}")
+
     def trigger_slurm_job(
         self, workflow_job_id: str, nextflow_script_path: Path, input_file_grp: str,
         workspace_id: str, mets_basename: str, nf_process_forks: int, ws_pages_amount: int, use_mets_server: bool,
