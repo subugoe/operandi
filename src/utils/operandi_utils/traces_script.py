@@ -4,6 +4,7 @@ from os import listdir
 from os.path import join, isfile
 from sqlite3 import connect as sqlite3_connect
 
+SQLITE3_DB_NAME = "workflow_db.db"
 
 def convert_rss_to_gb(rss):
     """
@@ -65,7 +66,7 @@ def process_trace_file(file_path):
     df["%cpu"] = df["%cpu"].str.replace("%", "").astype(float)
     df["peak_rss"] = df["peak_rss"].apply(convert_rss_to_gb)
 
-    conn = sqlite3_connect('workflow_db.db')
+    conn = sqlite3_connect(SQLITE3_DB_NAME)
     cursor = conn.cursor()
 
     # Insert filtered data into the nextflow_traces table
@@ -84,7 +85,7 @@ for file_name in listdir("nf-traces"):
         process_trace_file(file_path)
 
 
-conn = sqlite3_connect("workflow_db.db")
+conn = sqlite3_connect(SQLITE3_DB_NAME)
 cursor = conn.cursor()
 # Fetch and print the contents of the nextflow_traces table
 cursor.execute("SELECT * FROM nextflow_traces")
