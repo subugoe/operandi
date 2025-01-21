@@ -79,10 +79,13 @@ def process_trace_file(file_path):
     conn.close()
 
 
-for file_name in listdir("nf-traces"):
-    file_path = join("nf-traces", file_name)
-    if isfile(file_path):
-        process_trace_file(file_path)
+def process_trace_files():
+    for file_name in listdir("nf-traces"):
+        file_path = join("nf-traces", file_name)
+        if isfile(file_path):
+            process_trace_file(file_path)
+
+process_trace_files()
 
 
 conn = sqlite3_connect(SQLITE3_DB_NAME)
