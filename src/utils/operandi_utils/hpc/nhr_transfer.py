@@ -11,13 +11,17 @@ from typing import Tuple
 from operandi_utils import make_zip_archive, unpack_zip_archive
 from .nhr_connector import NHRConnector
 
+SFTP_RECONNECT_TRIES = 5
+DOWNLOAD_FILE_TRY_TIMES = 100
+DOWNLOAD_FILE_SLEEP_TIME = 3
+
 class NHRTransfer(NHRConnector):
     def __init__(self) -> None:
         logger = getLogger(name=self.__class__.__name__)
         super().__init__(logger)
         self._operandi_data_root = ""
         self._sftp_client = None
-        self._sftp_reconnect_tries = 5
+        self._sftp_reconnect_tries = SFTP_RECONNECT_TRIES
         self._sftp_reconnect_tries_remaining = self._sftp_reconnect_tries
         _ = self.sftp_client  # forces a connection
 
@@ -27,26 +31,6 @@ class NHRTransfer(NHRConnector):
             self._sftp_client.close()
             self._ssh_client = None
         self._sftp_client = self.ssh_client.open_sftp()
-        # self._sftp_client.get_channel().get_transport().set_keepalive(30)
-
-        """
-        try:
-            # Note: This extra check is required against aggressive
-            # Firewalls that ignore the keepalive option!
-            self._sftp_client.get_channel().get_transport().send_ignore()
-            self._sftp_reconnect_tries_remaining = self._sftp_reconnect_tries
-        except Exception as error:
-            self.logger.warning(f"SFTP client failed to send ignore, connection is broken: {error}")
-            if self._sftp_client:
-                self._sftp_client.close()
-                self._sftp_client = None
-            if self._sftp_reconnect_tries_remaining < 0:
-                raise Exception(f"Failed to reconnect {self._sftp_reconnect_tries} times: {error}")
-            self.logger.info(f"Reconnecting the SFTP client, try times: {self._sftp_reconnect_tries_remaining}")
-            self._sftp_reconnect_tries_remaining -= 1
-            return self.sftp_client  # recursive call to itself to try again
-        return self._sftp_client
-        """
         return self._sftp_client
 
     def create_slurm_workspace_zip(
@@ -115,9 +99,14 @@ class NHRTransfer(NHRConnector):
         Path(local_src_slurm_zip).unlink(missing_ok=True)
         return local_src_slurm_zip, hpc_dst
 
-    def _download_file_with_retries(self, remote_src, local_dst, try_times: int = 100, sleep_time: int = 3):
+    def _download_file_with_retries(
+        self, remote_src, local_dst, try_times: int = DOWNLOAD_FILE_TRY_TIMES,
+        sleep_time: int = DOWNLOAD_FILE_SLEEP_TIME
+    ):
         if try_times < 0 or sleep_time < 0:
-            raise ValueError("Negative value passed as a parameter for time")
+            self.logger.warning("Negative value passed as a parameter to any of the time options, using defaults.")
+            try_times = DOWNLOAD_FILE_TRY_TIMES
+            sleep_time = DOWNLOAD_FILE_SLEEP_TIME
         tries = try_times
         while tries > 0:
             try:
@@ -158,6 +147,9 @@ class NHRTransfer(NHRConnector):
         try:
             unpack_zip_archive(source=unpack_src, destination=unpack_dst)
         except Exception as error:
+            if remove_zip:
+                Path(unpack_src).unlink(missing_ok=True)
+                self.logger.info(f"Removed the temp workflow job zip: {unpack_src}")
             raise Exception(
                 f"Error when unpacking workflow job zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}")
         self.logger.info(f"Unpacked workflow job zip from src: {unpack_src}, to dst: {unpack_dst}")
@@ -183,6 +175,9 @@ class NHRTransfer(NHRConnector):
         try:
             unpack_zip_archive(source=unpack_src, destination=unpack_dst)
         except Exception as error:
+            if remove_zip:
+                Path(unpack_src).unlink(missing_ok=True)
+                self.logger.info(f"Removed the temp workspace zip: {unpack_src}")
             raise Exception(
                 f"Error when unpacking workspace zip: {error}, unpack_src: {unpack_src}, unpack_dst: {unpack_dst}")
         self.logger.info(f"Unpacked workspace zip from src: {unpack_src}, to dst: {unpack_dst}")
@@ -191,7 +186,7 @@ class NHRTransfer(NHRConnector):
             Path(unpack_src).unlink(missing_ok=True)
             self.logger.info(f"Removed the temp workspace zip: {unpack_src}")
 
-    def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: Path, workflow_job_dir: Path, slurm_job_id: str):
+    def get_and_unpack_slurm_workspace(self, ocrd_workspace_dir: Path, workflow_job_dir: Path):
         _ = self.sftp_client  # Force reconnect of the SFTP Client
         wf_job_zip_path = self._download_workflow_job_zip(local_wf_job_dir=workflow_job_dir)
         self._unzip_workflow_job_dir(wf_job_zip_path, workflow_job_dir, True)

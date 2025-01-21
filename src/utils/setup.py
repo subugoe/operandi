@@ -5,7 +5,7 @@ install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='operandi_utils',
-    version='2.18.6',
+    version='2.19.0',
     description='OPERANDI - Utils',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

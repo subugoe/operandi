@@ -106,9 +106,10 @@ async def convert_oton_with_handling(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
 async def get_user_workflows(
-    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
 ) -> List[WorkflowRsrc]:
-    db_workflows = await db_get_all_workflows_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
+    db_workflows = await db_get_all_workflows_by_user(
+        user_id=user_id, start_date=start_date, end_date=end_date, hide_deleted=hide_deleted)
     return [WorkflowRsrc.from_db_workflow(db_workflow) for db_workflow in db_workflows]
 
 async def push_status_request_to_rabbitmq(logger, rmq_publisher, job_id: str):
@@ -125,9 +126,11 @@ async def push_status_request_to_rabbitmq(logger, rmq_publisher, job_id: str):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
 
 async def get_user_workflow_jobs(
-    logger, rmq_publisher, user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    logger, rmq_publisher, user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None,
+    hide_deleted: bool = True
 ) -> List[WorkflowJobRsrc]:
-    db_workflow_jobs = await db_get_all_workflow_jobs_by_user(user_id=user_id, start_date=start_date, end_date=end_date)
+    db_workflow_jobs = await db_get_all_workflow_jobs_by_user(
+        user_id=user_id, start_date=start_date, end_date=end_date, hide_deleted=hide_deleted)
     response = []
     for db_workflow_job in db_workflow_jobs:
         job_state = db_workflow_job.job_state
