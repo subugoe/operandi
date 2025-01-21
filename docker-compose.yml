@@ -124,8 +124,6 @@ services:
     networks:
       - operandi
 
-
-
   grafana:
     image: grafana/grafana-enterprise:latest
     container_name: grafana
