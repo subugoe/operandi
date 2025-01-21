@@ -85,23 +85,21 @@ def process_trace_files():
         if isfile(file_path):
             process_trace_file(file_path)
 
+
+def fetch_all_traces_and_print():
+    conn = sqlite3_connect(SQLITE3_DB_NAME)
+    cursor = conn.cursor()
+    # Fetch and print the contents of the nextflow_traces table
+    cursor.execute("SELECT * FROM nextflow_traces")
+    rows = cursor.fetchall()
+
+    # Get column names from cursor.description
+    column_names = [description[0] for description in cursor.description]
+    print(" | ".join(column_names))
+    for row in rows:
+        print(" | ".join(map(str, row)))
+    conn.close()
+
+
 process_trace_files()
-
-
-conn = sqlite3_connect(SQLITE3_DB_NAME)
-cursor = conn.cursor()
-# Fetch and print the contents of the nextflow_traces table
-cursor.execute("SELECT * FROM nextflow_traces")
-rows = cursor.fetchall()
-
-# Get column names from cursor.description
-column_names = [description[0] for description in cursor.description]
-
-# Print column names
-print(" | ".join(column_names))
-
-# Print the table rows
-for row in rows:
-    print(" | ".join(map(str, row)))
-#
-conn.close()
+fetch_all_traces_and_print()
