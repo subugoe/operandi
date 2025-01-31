@@ -32,3 +32,8 @@ class SbatchArguments(BaseModel):
 
     class Config:
         allow_population_by_field_name = True
+
+class MetsUrlRequest(BaseModel):
+    mets_url: str = Field(..., description="The mets url")
+    preserve_file_grps: str = Field(..., description="The file groups to be preserved")
+    mets_basename: str = Field(default=DEFAULT_METS_BASENAME, description="The mets file basename")

@@ -14,7 +14,7 @@ from operandi_utils.database import (
 from operandi_server.constants import DEFAULT_METS_BASENAME
 from operandi_server.files_manager import receive_resource
 from operandi_server.files_manager import LFMInstance
-from operandi_server.models import WorkspaceRsrc
+from operandi_server.models import MetsUrlRequest, WorkspaceRsrc
 from .workspace_utils import (
     create_workspace_bag,
     create_workspace_bag_from_remote_url,
@@ -27,7 +27,6 @@ from .workspace_utils import (
     remove_file_groups_with_handling
 )
 from .user_utils import user_auth_with_handling
-
 
 class RouterWorkspace:
     def __init__(self):
@@ -49,6 +48,13 @@ class RouterWorkspace:
             path="/batch-workspaces",
             endpoint=self.upload_batch_workspaces, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Upload a list of workspaces each as an ocrd zip (limit:5). "
+                    "Returns a list of `resource_id`s associated with the uploaded workspaces.",
+            response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        self.router.add_api_route(
+            path="/batch-workspaces-urls",
+            endpoint=self.upload_batch_workspaces_from_urls, methods=["POST"], status_code=status.HTTP_201_CREATED,
+            summary="Upload a list of workspaces each as a URL referencing a mets file (limit:5). "
                     "Returns a list of `resource_id`s associated with the uploaded workspaces.",
             response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
@@ -291,4 +297,24 @@ class RouterWorkspace:
                 message = f"Failed to process workspace {workspace.filename}"
                 self.logger.error(f"{message}, error: {error}")
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+        return workspace_resources
+
+    async def upload_batch_workspaces_from_urls(
+        self, mets_urls: List[MetsUrlRequest], auth: HTTPBasicCredentials = Depends(HTTPBasic())
+    ) -> List[WorkspaceRsrc]:
+        await user_auth_with_handling(self.logger, auth)
+        if len(mets_urls) > 5:
+            message = "Batch upload exceeds the limit of 5 workspace urls"
+            self.logger.error(message)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+        workspace_resources = []
+        for mets_url_request in mets_urls:
+            workspace_resource = await self.upload_workspace_from_url(
+                mets_url=mets_url_request.mets_url,
+                preserve_file_grps=mets_url_request.preserve_file_grps,
+                mets_basename=mets_url_request.mets_basename,
+                details="Batch uploaded url workspace",
+                auth=auth
+            )
+            workspace_resources.append(workspace_resource)
         return workspace_resources
