@@ -120,6 +120,7 @@ class NHRTransfer(NHRConnector):
                 continue
 
     def download_slurm_job_log_file(self, slurm_job_id: str, local_wf_job_dir: Path) -> Path:
+        _ = self.sftp_client  # Force reconnect of the SFTP Client
         workflow_job_id = Path(local_wf_job_dir).name
         get_src = Path(self.slurm_workspaces_dir, workflow_job_id, f"slurm-job-{slurm_job_id}.txt")
         get_dst = Path(local_wf_job_dir, f"slurm-job-{slurm_job_id}.txt")
