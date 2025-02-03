@@ -156,35 +156,12 @@ class RouterWorkspace:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
         workspace_resources = []
         for workspace in workspaces:
-            ws_id, ws_dir = LFMInstance.make_dir_workspace()
-            bag_dest = f"{ws_dir}.zip"
-            try:
-                await receive_resource(file=workspace, resource_dst=bag_dest)
-                rmtree(ws_dir, ignore_errors=True)
-                validate_bag_with_handling(self.logger, bag_dst=bag_dest)
-                bag_info = extract_bag_info_with_handling(self.logger, bag_dst=bag_dest, ws_dir=ws_dir)
-                Path(bag_dest).unlink()
-
-                pages_amount = extract_pages_with_handling(self.logger, bag_info, ws_dir)
-                file_groups = extract_file_groups_with_handling(self.logger, bag_info, ws_dir)
-
-                db_workspace = await db_create_workspace(
-                    user_id=py_user_action.user_id,
-                    workspace_id=ws_id,
-                    workspace_dir=ws_dir,
-                    pages_amount=pages_amount,
-                    file_groups=file_groups,
-                    bag_info=bag_info,
-                    state=StateWorkspace.READY,
-                    details=f"Batch uploaded workspace: {workspace.filename}"
-                )
-                await db_increase_processing_stats_with_handling(
-                    self.logger, find_user_id=py_user_action.user_id, pages_uploaded=pages_amount)
-                workspace_resources.append(WorkspaceRsrc.from_db_workspace(db_workspace))
-            except Exception as error:
-                message = f"Failed to process workspace {workspace.filename}"
-                self.logger.error(f"{message}, error: {error}")
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+            workspace_resource = await self.upload_workspace(
+                workspace=workspace,
+                details=f"Batch uploaded workspace: {workspace.filename}",
+                auth=auth
+            )
+            workspace_resources.append(workspace_resource)
         return workspace_resources
 
     async def upload_workspace_from_url(
