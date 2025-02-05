@@ -1,7 +1,4 @@
-import pandas as pd
 from re import match as re_match, IGNORECASE as re_IGNORECASE
-from os import listdir
-from os.path import join, isfile
 from sqlite3 import connect as sqlite3_connect
 
 SQLITE3_DB_NAME = "workflow_db.db"
@@ -49,12 +46,12 @@ def convert_duration_to_seconds(duration):
     return None
 
 
-def process_trace_file(df):
+def process_trace_dataframe(df):
     """
-    Processes a trace file to retain only enabled metrics and stores data in a database.
+    Processes a dataframe of trace file to retain only enabled metrics and stores data in a database.
 
     Parameters:
-    - df (dataframe): dataframe of file.
+    - df (dataframe): dataframe of trace file.
     - conn (object): Database connection object.
     - workflow_id (int): ID of the workflow for data association.
     - enabled_metrics (list): List of metrics to be retained.
@@ -77,11 +74,6 @@ def process_trace_file(df):
     conn.close()
 
 
-def process_trace_files():
-    for file_name in listdir("nf-traces"):
-        file_path = join("nf-traces", file_name)
-        if isfile(file_path):
-            process_trace_file(file_path)
 
 
 def fetch_all_traces_and_print():
