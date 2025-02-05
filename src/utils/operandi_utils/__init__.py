@@ -7,7 +7,7 @@ __all__ = [
     "get_nf_wfs_dir",
     "get_ocrd_process_wfs_dir",
     "make_zip_archive",
-    "process_trace_file",
+    "process_trace_dataframe",
     "receive_file",
     "reconfigure_all_loggers",
     "safe_init_logging",
@@ -22,7 +22,7 @@ __all__ = [
 
 from operandi_utils.constants import StateJob, StateJobSlurm, StateWorkspace
 from operandi_utils.logging import reconfigure_all_loggers, get_log_file_path_prefix
-from operandi_utils.traces_script import process_trace_file
+from operandi_utils.traces_script import process_trace_dataframe
 from operandi_utils.utils import (
     call_sync,
     download_mets_file,
