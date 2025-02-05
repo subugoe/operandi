@@ -32,3 +32,11 @@ class SbatchArguments(BaseModel):
 
     class Config:
         allow_population_by_field_name = True
+
+class OlahdUploadArguments(BaseModel):
+    username: str
+    password: str
+    endpoint: str
+
+    class Config:
+        allow_population_by_field_name = True

@@ -13,8 +13,6 @@ from uuid import uuid4
 
 from ocrd_utils import initLogging
 
-from .constants import OLA_HD_BAG_ENDPOINT, OLA_HD_USER, OLA_HD_PASSWORD
-
 
 logging_initialized = False
 
@@ -118,11 +116,10 @@ def unpack_zip_archive(source, destination) -> None:
     unpack_archive(filename=source, extract_dir=destination)
 
 
-# TODO: Conceptual implementation, not tested in any way yet
-def send_bag_to_ola_hd(path_to_bag) -> str:
+def send_bag_to_ola_hd(path_to_bag, username, password, endpoint) -> str:
     ola_hd_files = {"file": open(path_to_bag, "rb")}
-    ola_hd_auth = (OLA_HD_USER, OLA_HD_PASSWORD)
-    ola_hd_response = post(url=OLA_HD_BAG_ENDPOINT, files=ola_hd_files, data={"isGt": False}, auth=ola_hd_auth)
+    ola_hd_auth = (username, password)
+    ola_hd_response = post(url=endpoint, files=ola_hd_files, auth=ola_hd_auth)
     if ola_hd_response.status_code >= 400:
         ola_hd_response.raise_for_status()
     return ola_hd_response.json()["pid"]

@@ -19,9 +19,6 @@ __all__ = [
     "LOG_LEVEL_WORKER",
     "MODULE_TYPES",
     "OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE",
-    "OLA_HD_BAG_ENDPOINT",
-    "OLA_HD_USER",
-    "OLA_HD_PASSWORD",
     "OPERANDI_VERSION",
     "ServerApiTag",
     "StateJob",
@@ -40,14 +37,6 @@ LOG_LEVEL_RMQ_CONSUMER: str = "INFO"
 LOG_LEVEL_RMQ_PUBLISHER: str = "INFO"
 
 MODULE_TYPES = ["server", "harvester", "broker", "worker"]
-
-# Notes left by @joschrew
-# OLA-HD development instance, reachable only when connected to GÖNET
-OLA_HD_BAG_ENDPOINT = "http://141.5.99.53/api/bag"
-# The credentials are already publicly available inside the OLA-HD repo
-# Ignore docker warnings about exposed credentials
-OLA_HD_USER = "admin"
-OLA_HD_PASSWORD = "JW24G.xR"
 
 OPERANDI_VERSION = get_distribution("operandi_utils").version
 
