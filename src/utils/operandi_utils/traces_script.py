@@ -49,19 +49,17 @@ def convert_duration_to_seconds(duration):
     return None
 
 
-def process_trace_file(file_path):
+def process_trace_file(df):
     """
     Processes a trace file to retain only enabled metrics and stores data in a database.
 
     Parameters:
-    - file_path (str): Path to the trace file (assumes TSV format).
+    - df (dataframe): dataframe of file.
     - conn (object): Database connection object.
     - workflow_id (int): ID of the workflow for data association.
     - enabled_metrics (list): List of metrics to be retained.
     """
 
-    # Load the trace data (assuming it's in TSV format)
-    df = pd.read_csv(file_path, sep="\t")
     df["duration"] = df["duration"].apply(convert_duration_to_seconds)
     df["%cpu"] = df["%cpu"].str.replace("%", "").astype(float)
     df["peak_rss"] = df["peak_rss"].apply(convert_rss_to_gb)
@@ -101,5 +99,5 @@ def fetch_all_traces_and_print():
     conn.close()
 
 
-process_trace_files()
-fetch_all_traces_and_print()
+# process_trace_files()
+# fetch_all_traces_and_print()
