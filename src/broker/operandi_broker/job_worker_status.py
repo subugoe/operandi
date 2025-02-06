@@ -105,6 +105,7 @@ class JobWorkerStatus(JobWorkerBase):
             return
 
         self.log.info(f"Workflow job: {job_id}, changed state: {old_job_state} -> {new_job_state}")
+        sync_db_update_workflow_job(find_job_id=job_id, job_state=new_job_state)
         if new_job_state == StateJob.HPC_SUCCESS or new_job_state == StateJob.HPC_FAILED:
             sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_FROM_HPC)
             sync_db_update_workflow_job(find_job_id=job_id, job_state=StateJob.TRANSFERRING_FROM_HPC)
