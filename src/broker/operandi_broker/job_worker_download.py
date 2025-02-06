@@ -58,8 +58,8 @@ class JobWorkerDownload(JobWorkerBase):
 
         try:
             # TODO: Refactor this block of code since nothing is downloaded from the HPC when job fails.
-            self.hpc_io_transfer.download_slurm_job_log_file(slurm_job_id, job_dir)
-            if previous_job_state == StateJob.SUCCESS:
+            if previous_job_state == StateJob.HPC_SUCCESS:
+                self.hpc_io_transfer.download_slurm_job_log_file(slurm_job_id, job_dir)
                 self.__download_results_from_hpc(job_dir=job_dir, workspace_dir=ws_dir)
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
                 updated_file_groups = self.__extract_updated_file_groups(db_workspace=db_workspace)
@@ -69,16 +69,20 @@ class JobWorkerDownload(JobWorkerBase):
                 self.log.info(f"Increasing `pages_succeed` stat by {pages_amount}")
                 db_stats = sync_db_increase_processing_stats(find_user_id=user_id, pages_succeed=pages_amount)
                 self.log.info(f"Total amount of `pages_succeed` stat: {db_stats.pages_succeed}")
-            if previous_job_state == StateJob.FAILED:
+                sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
+                self.log.info(f"Setting new workflow job state `{previous_job_state}`"
+                              f" of job_id: {self.current_message_job_id}")
+            if previous_job_state == StateJob.HPC_FAILED:
+                self.hpc_io_transfer.download_slurm_job_log_file(slurm_job_id, job_dir)
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
                 db_workspace = sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
                 pages_amount = db_workspace.pages_amount
                 self.log.error(f"Increasing `pages_failed` stat by {pages_amount}")
                 db_stats = sync_db_increase_processing_stats(find_user_id=user_id, pages_failed=pages_amount)
                 self.log.error(f"Total amount of `pages_failed` stat: {db_stats.pages_failed}")
-            self.log.info(f"Setting new workflow job state `{previous_job_state}`"
-                          f" of job_id: {self.current_message_job_id}")
-            sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=previous_job_state)
+                sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.FAILED)
+                self.log.info(f"Setting new workflow job state `{previous_job_state}`"
+                              f" of job_id: {self.current_message_job_id}")
         except ValueError as error:
             self.log.warning(f"{error}")
             self._handle_msg_failure(interruption=False)

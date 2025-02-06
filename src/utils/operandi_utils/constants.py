@@ -74,20 +74,22 @@ class StateJob(str, Enum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
+    HPC_SUCCESS = "HPC_SUCCESS"
+    HPC_FAILED = "HPC_FAILED"
     TRANSFERRING_TO_HPC = "TRANSFERRING_TO_HPC"
     TRANSFERRING_FROM_HPC = "TRANSFERRING_FROM_HPC"
     UNSET = "UNSET"
 
     @staticmethod
     def convert_from_slurm_job(slurm_job_state: str) -> StateJob:
-        if StateJobSlurm.is_state_success(slurm_job_state):
-            return StateJob.SUCCESS
+        if StateJobSlurm.is_state_hpc_success(slurm_job_state):
+            return StateJob.HPC_SUCCESS
         if StateJobSlurm.is_state_waiting(slurm_job_state):
             return StateJob.PENDING
         if StateJobSlurm.is_state_running(slurm_job_state):
             return StateJob.RUNNING
-        if StateJobSlurm.is_state_fail(slurm_job_state):
-            return StateJob.FAILED
+        if StateJobSlurm.is_state_hpc_fail(slurm_job_state):
+            return StateJob.HPC_FAILED
         raise ValueError(f"Invalid slurm job state: {slurm_job_state}")
 
 
@@ -134,7 +136,7 @@ class StateJobSlurm(str, Enum):
         return [StateJobSlurm.RUNNING]
 
     @staticmethod
-    def is_state_fail(slurm_job_state: str) -> bool:
+    def is_state_hpc_fail(slurm_job_state: str) -> bool:
         if slurm_job_state in StateJobSlurm.failing_states():
             return True
         return False
@@ -152,7 +154,7 @@ class StateJobSlurm(str, Enum):
         return False
 
     @staticmethod
-    def is_state_success(slurm_job_state: str) -> bool:
+    def is_state_hpc_success(slurm_job_state: str) -> bool:
         if slurm_job_state in StateJobSlurm.success_states():
             return True
         return False
