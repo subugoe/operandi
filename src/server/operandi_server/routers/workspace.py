@@ -83,6 +83,11 @@ class RouterWorkspace:
             summary="Remove file groups from a workspace",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
+        self.router.add_api_route(
+            path="/push_to_ola_hd",
+            endpoint=self.push_to_ola_hd, methods=["POST"], status_code=status.HTTP_201_CREATED,
+            summary="Push a workspace to Ola-HD service"
+        )
 
     async def download_workspace(
         self, background_tasks: BackgroundTasks, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())

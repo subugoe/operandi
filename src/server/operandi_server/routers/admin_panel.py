@@ -45,11 +45,6 @@ class RouterAdminPanel:
             endpoint=self.user_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workflows submitted by the user identified by user_id"
         )
-        self.router.add_api_route(
-            path="/admin/push_to_ola_hd",
-            endpoint=self.push_to_ola_hd, methods=["POST"], status_code=status.HTTP_201_CREATED,
-            summary="Push a workspace to Ola-HD service"
-        )
 
     def __del__(self):
         if self.rmq_publisher:
