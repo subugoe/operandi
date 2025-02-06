@@ -4,15 +4,12 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_server.models import PYUserInfo, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc, OlahdUploadArguments
+from operandi_server.models import PYUserInfo, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.constants import AccountType, ServerApiTag
-from operandi_utils.utils import send_bag_to_ola_hd
 from operandi_utils.rabbitmq import get_connection_publisher
 from .user_utils import get_user_accounts, get_user_processing_stats_with_handling, user_auth_with_handling
 from .workflow_utils import get_user_workflows, get_user_workflow_jobs
-from .workspace_utils import (
-    create_workspace_bag, get_user_workspaces, get_db_workspace_with_handling, validate_bag_with_handling
-)
+from .workspace_utils import get_user_workspaces
 
 class RouterAdminPanel:
     def __init__(self):
@@ -64,35 +61,6 @@ class RouterAdminPanel:
             message = f"Admin privileges required for the endpoint"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
-
-    async def push_to_ola_hd(self, workspace_id: str, olahd_args: OlahdUploadArguments, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
-        await self.auth_admin_with_handling(auth)
-        db_workspace = await get_db_workspace_with_handling(self.logger, workspace_id=workspace_id)
-        try:
-            bag_dst = create_workspace_bag(db_workspace=db_workspace)
-        except Exception as error:
-            message = f"Failed to create workspace bag for: {workspace_id}"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
-        validate_bag_with_handling(self.logger, bag_dst=bag_dst)
-
-        try:
-            pid = send_bag_to_ola_hd(
-                path_to_bag=bag_dst,
-                username=olahd_args.username,
-                password=olahd_args.password,
-                endpoint=olahd_args.endpoint
-            )
-        except Exception as error:
-            message = "Failed to send bag to Ola-HD service"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-
-        response_message = {
-            "message": f"Workspace bag of id: {workspace_id} was pushed to the Ola-HD service",
-            "pid": pid
-        }
-        return response_message
 
     async def get_users(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> List[PYUserInfo]:
         await self.auth_admin_with_handling(auth)
