@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_server.models import PYUserInfo, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
+from operandi_server.models import PYUserInfo, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc, OlahdUploadArguments
 from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_utils.utils import send_bag_to_ola_hd
 from operandi_utils.rabbitmq import get_connection_publisher
@@ -65,7 +65,7 @@ class RouterAdminPanel:
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
 
-    async def push_to_ola_hd(self, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+    async def push_to_ola_hd(self, workspace_id: str, olahd_args: OlahdUploadArguments, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         await self.auth_admin_with_handling(auth)
         db_workspace = await get_db_workspace_with_handling(self.logger, workspace_id=workspace_id)
         try:
@@ -77,11 +77,16 @@ class RouterAdminPanel:
         validate_bag_with_handling(self.logger, bag_dst=bag_dst)
 
         try:
-            pid = send_bag_to_ola_hd(path_to_bag=bag_dst)
+            pid = send_bag_to_ola_hd(
+                path_to_bag=bag_dst,
+                username=olahd_args.username,
+                password=olahd_args.password,
+                endpoint=olahd_args.endpoint
+            )
         except Exception as error:
             message = "Failed to send bag to Ola-HD service"
             self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
         response_message = {
             "message": f"Workspace bag of id: {workspace_id} was pushed to the Ola-HD service",
