@@ -70,7 +70,7 @@ class JobWorkerDownload(JobWorkerBase):
                 db_stats = sync_db_increase_processing_stats(find_user_id=user_id, pages_succeed=pages_amount)
                 self.log.info(f"Total amount of `pages_succeed` stat: {db_stats.pages_succeed}")
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
-                self.log.info(f"Setting new workflow job state `{previous_job_state}`"
+                self.log.info(f"Setting new workflow job state `{StateJob.SUCCESS}`"
                               f" of job_id: {self.current_message_job_id}")
             if previous_job_state == StateJob.HPC_FAILED:
                 self.hpc_io_transfer.download_slurm_job_log_file(slurm_job_id, job_dir)
@@ -81,7 +81,7 @@ class JobWorkerDownload(JobWorkerBase):
                 db_stats = sync_db_increase_processing_stats(find_user_id=user_id, pages_failed=pages_amount)
                 self.log.error(f"Total amount of `pages_failed` stat: {db_stats.pages_failed}")
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.FAILED)
-                self.log.info(f"Setting new workflow job state `{previous_job_state}`"
+                self.log.info(f"Setting new workflow job state `{StateJob.FAILED}`"
                               f" of job_id: {self.current_message_job_id}")
         except ValueError as error:
             self.log.warning(f"{error}")

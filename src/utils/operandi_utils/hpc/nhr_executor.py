@@ -185,7 +185,7 @@ class NHRExecutor(NHRConnector):
             if not slurm_job_state:
                 self.logger.info(f"Slurm job state is not available yet")
                 continue
-            if StateJobSlurm.is_state_success(slurm_job_state):
+            if StateJobSlurm.is_state_hpc_success(slurm_job_state):
                 self.logger.info(f"Slurm job state is in: {StateJobSlurm.success_states()}")
                 return True
             if StateJobSlurm.is_state_waiting(slurm_job_state):
@@ -194,7 +194,7 @@ class NHRExecutor(NHRConnector):
             if StateJobSlurm.is_state_running(slurm_job_state):
                 self.logger.info(f"Slurm job state is in: {StateJobSlurm.running_states()}")
                 continue
-            if StateJobSlurm.is_state_fail(slurm_job_state):
+            if StateJobSlurm.is_state_hpc_fail(slurm_job_state):
                 self.logger.info(f"Slurm job state is in: {StateJobSlurm.failing_states()}")
                 return False
             # Sometimes the slurm state is still
