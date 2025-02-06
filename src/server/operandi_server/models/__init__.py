@@ -1,5 +1,6 @@
 __all__ = [
     "OlahdUploadArguments"
+    "MetsUrlRequest",
     "PYDiscovery",
     "PYUserAction",
     "PYUserInfo",
@@ -11,9 +12,8 @@ __all__ = [
     "WorkspaceRsrc"
 ]
 
-from .base import Resource, SbatchArguments, WorkflowArguments, OlahdUploadArguments
+from .base import MetsUrlRequest, OlahdUploadArguments, Resource, SbatchArguments, WorkflowArguments,
 from .discovery import PYDiscovery
 from .user import PYUserAction, PYUserInfo
 from .workflow import WorkflowRsrc, WorkflowJobRsrc
 from .workspace import WorkspaceRsrc
-

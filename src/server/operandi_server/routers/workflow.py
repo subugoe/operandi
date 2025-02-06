@@ -261,7 +261,7 @@ class RouterWorkflow:
         db_workflow = await get_db_workflow_with_handling(
             self.logger, workflow_id=workflow_id, check_deleted=False, check_local_existence=False)
 
-        if db_wf_job.job_state != StateJob.FAILED and db_wf_job.job_state != StateJob.SUCCESS:
+        if db_wf_job.job_state not in [StateJob.SUCCESS, StateJob.FAILED, StateJob.TRANSFERRING_FROM_HPC]:
             await push_status_request_to_rabbitmq(self.logger, self.rmq_publisher, job_id=job_id)
 
         return WorkflowJobRsrc.from_db_workflow_job(

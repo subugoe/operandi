@@ -19,9 +19,9 @@ PH_NODE_DIR_PROCESSOR_SIFS = "PH_NODE_DIR_PROCESSOR_SIFS"
 PH_CMD_WRAPPER = "PH_CMD_WRAPPER"
 
 CHECK_SLURM_JOB_TRY_TIMES = 10
-CHECK_SLURM_JOB_WAIT_TIME = 3
+CHECK_SLURM_JOB_WAIT_TIME = 30
 POLL_SLURM_JOB_TIMEOUT = 300
-POLL_SLURM_JOB_CHECK_INTERVAL = 5
+POLL_SLURM_JOB_CHECK_INTERVAL = 10
 
 class NHRExecutor(NHRConnector):
     def __init__(self) -> None:
@@ -185,7 +185,7 @@ class NHRExecutor(NHRConnector):
             if not slurm_job_state:
                 self.logger.info(f"Slurm job state is not available yet")
                 continue
-            if StateJobSlurm.is_state_success(slurm_job_state):
+            if StateJobSlurm.is_state_hpc_success(slurm_job_state):
                 self.logger.info(f"Slurm job state is in: {StateJobSlurm.success_states()}")
                 return True
             if StateJobSlurm.is_state_waiting(slurm_job_state):
@@ -194,7 +194,7 @@ class NHRExecutor(NHRConnector):
             if StateJobSlurm.is_state_running(slurm_job_state):
                 self.logger.info(f"Slurm job state is in: {StateJobSlurm.running_states()}")
                 continue
-            if StateJobSlurm.is_state_fail(slurm_job_state):
+            if StateJobSlurm.is_state_hpc_fail(slurm_job_state):
                 self.logger.info(f"Slurm job state is in: {StateJobSlurm.failing_states()}")
                 return False
             # Sometimes the slurm state is still
