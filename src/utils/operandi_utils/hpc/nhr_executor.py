@@ -54,6 +54,16 @@ class NHRExecutor(NHRConnector):
         self.logger.info(f"Command err: {err}")
         self.logger.info(f"Command return code: {return_code}")
 
+    def check_if_model_exists(self, ocrd_processor: str, model: str) -> bool:
+        model_path = f"{self.project_root_dir}/ocrd_models/ocrd-resources/{ocrd_processor}/{model}"
+        command = f"bash -lc 'ls -la {model_path}'"
+        self.logger.info(f"About to execute a force command: {command}")
+        output, err, return_code = self.execute_blocking(command)
+        self.logger.info(f"Command output: {output}")
+        self.logger.info(f"Command err: {err}")
+        self.logger.info(f"Command return code: {return_code}")
+        return not bool(return_code)
+
     def trigger_slurm_job(
         self, workflow_job_id: str, nextflow_script_path: Path, input_file_grp: str,
         workspace_id: str, mets_basename: str, nf_process_forks: int, ws_pages_amount: int, use_mets_server: bool,

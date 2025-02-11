@@ -41,3 +41,21 @@ def test_hpc_connector_executor_cd_dir(hpc_nhr_command_executor):
     # The test dir name will be part of the returned error message
     assert f'{test_dir_name}' in err[0]
     assert output == []
+
+
+def test_hpc_connector_executor_check_if_models_exists(hpc_nhr_command_executor):
+    non_existing_models = {
+        "ocrd-calamari-recognize": "non-existing-model",
+        "non-existing-processor": "qurator-gt4histocr-1.0",
+    }
+    existing_models = {
+        "ocrd-calamari-recognize": "qurator-gt4histocr-1.0",
+        "ocrd-cis-ocropy-recognize": "LatinHist.pyrnn.gz",
+        "ocrd-kraken-recognize": "typewriter.mlmodel",
+        "ocrd-tesserocr-recognize": "Fraktur.traineddata"
+    }
+
+    for key, value in existing_models.items():
+        assert hpc_nhr_command_executor.check_if_model_exists(ocrd_processor=key, model=value)
+    for key, value in non_existing_models.items():
+        assert not hpc_nhr_command_executor.check_if_model_exists(ocrd_processor=key, model=value)
