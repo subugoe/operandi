@@ -41,6 +41,15 @@ def helper_pack_and_put_slurm_workspace(
 
     Path(local_slurm_workspace_zip_path).unlink(missing_ok=True)
 
+
+def test_pack_and_put_slurm_workspace_failing(hpc_nhr_data_transfer, path_small_workspace_data_dir, template_workflow):
+    helper_pack_and_put_slurm_workspace(
+        hpc_nhr_data_transfer=hpc_nhr_data_transfer, workflow_job_id=ID_WORKFLOW_JOB_FAILING,
+        workspace_id=ID_WORKSPACE_FAILING, path_workflow=Path(template_workflow),
+        path_workspace_dir=Path(path_small_workspace_data_dir)
+    )
+
+
 def test_pack_and_put_slurm_workspace(hpc_nhr_data_transfer, path_small_workspace_data_dir, template_workflow):
     helper_pack_and_put_slurm_workspace(
         hpc_nhr_data_transfer=hpc_nhr_data_transfer, workflow_job_id=ID_WORKFLOW_JOB, workspace_id=ID_WORKSPACE,
@@ -71,9 +80,11 @@ def test_hpc_connector_run_batch_script_failing(
         slurm_job_id=slurm_job_id, interval=10, timeout=300)
     assert not finished_successfully
 
-    wf_job_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB)
+    wf_job_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB_FAILING)
     hpc_nhr_data_transfer.download_slurm_job_log_file(slurm_job_id=slurm_job_id, local_wf_job_dir=wf_job_dir)
-    assert Path(wf_job_dir, f"slurm-job-{slurm_job_id}.txt").exists()
+    log_file_path = Path(wf_job_dir, f"slurm-job-{slurm_job_id}.txt")
+    assert log_file_path.exists()
+    assert log_file_path.stat().st_size > 0
 
 
 def test_hpc_connector_run_batch_script(
@@ -96,7 +107,9 @@ def test_hpc_connector_run_batch_script(
     assert wf_job_dir.exists()
     assert Path(wf_job_dir, "work").exists()
     assert Path(wf_job_dir, ID_WORKSPACE, "OCR-D-BIN").exists()
-    assert Path(wf_job_dir, f"slurm-job-{slurm_job_id}.txt").exists()
+    log_file_path = Path(wf_job_dir, f"slurm-job-{slurm_job_id}.txt")
+    assert log_file_path.exists()
+    assert log_file_path.stat().st_size > 0
 
 def test_hpc_connector_run_batch_script_with_ms(
     hpc_nhr_command_executor, hpc_nhr_data_transfer, template_workflow_with_ms):
@@ -118,4 +131,6 @@ def test_hpc_connector_run_batch_script_with_ms(
     assert wf_job_dir.exists()
     assert Path(wf_job_dir, "work").exists()
     assert Path(wf_job_dir, ID_WORKSPACE_WITH_MS, "OCR-D-BIN").exists()
-    assert Path(wf_job_dir, f"slurm-job-{slurm_job_id}.txt").exists()
+    log_file_path = Path(wf_job_dir, f"slurm-job-{slurm_job_id}.txt")
+    assert log_file_path.exists()
+    assert log_file_path.stat().st_size > 0
