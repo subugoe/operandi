@@ -13,6 +13,8 @@ from tests.helpers_asserts import assert_exists_dir, assert_exists_file
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
 
 current_time = datetime.now().strftime("%Y%m%d_%H%M%S%f")
+ID_WORKFLOW_JOB_FAILING = f"test_wf_job_failing_{current_time}"
+ID_WORKSPACE_FAILING = f"test_ws_failing_{current_time}"
 ID_WORKFLOW_JOB_WITH_MS = f"test_wf_job_ms_{current_time}"
 ID_WORKSPACE_WITH_MS = f"test_ws_ms_{current_time}"
 ID_WORKFLOW_JOB = f"test_wf_job_{current_time}"
@@ -54,6 +56,24 @@ def test_pack_and_put_slurm_workspace_with_ms(
         workspace_id=ID_WORKSPACE_WITH_MS, path_workflow=Path(template_workflow_with_ms),
         path_workspace_dir=Path(path_small_workspace_data_dir)
     )
+
+
+def test_hpc_connector_run_batch_script_failing(
+    hpc_nhr_command_executor, hpc_nhr_data_transfer, template_workflow):
+    slurm_job_id = hpc_nhr_command_executor.trigger_slurm_job(
+        workflow_job_id=ID_WORKFLOW_JOB_FAILING, nextflow_script_path=Path(template_workflow),
+        input_file_grp="NON-EXISTING-FILE-GRP", workspace_id=ID_WORKSPACE_FAILING,
+        mets_basename=DEFAULT_METS_BASENAME, nf_process_forks=2, ws_pages_amount=8,
+        use_mets_server=False, nf_executable_steps=["ocrd-cis-ocropy-binarize"],
+        file_groups_to_remove="", cpus=2, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
+        partition=HPC_NHR_JOB_TEST_PARTITION, qos=HPC_JOB_QOS_SHORT)
+    finished_successfully = hpc_nhr_command_executor.poll_till_end_slurm_job_state(
+        slurm_job_id=slurm_job_id, interval=10, timeout=300)
+    assert not finished_successfully
+
+    wf_job_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, ID_WORKFLOW_JOB)
+    hpc_nhr_data_transfer.download_slurm_job_log_file(slurm_job_id=slurm_job_id, local_wf_job_dir=wf_job_dir)
+    assert Path(wf_job_dir, f"slurm-job-{slurm_job_id}.txt").exists()
 
 
 def test_hpc_connector_run_batch_script(
