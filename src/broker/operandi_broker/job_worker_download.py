@@ -83,7 +83,7 @@ class JobWorkerDownload(JobWorkerBase):
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.FAILED)
                 self.log.info(f"Setting new workflow job state `{StateJob.FAILED}`"
                               f" of job_id: {self.current_message_job_id}")
-        except ValueError as error:
+        except Exception as error:
             self.log.warning(f"{error}")
             self._handle_msg_failure(interruption=False)
             return
