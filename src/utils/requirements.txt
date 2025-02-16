@@ -6,6 +6,7 @@ clint==0.5.1
 loguru>=0.6.0
 httpx>=0.24.0
 ocrd>=2.67.0
+pandas>=2.0.0
 paramiko>=3.4.0
 pika>=1.2.0
 pydantic>=1.9.1
