@@ -1,11 +1,14 @@
 from datetime import datetime
+from io import StringIO
 from logging import getLogger
 from os import environ
+from pandas import read_csv
 from uvicorn import run
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, UploadFile, File, HTTPException
 
 from operandi_utils import get_log_file_path_prefix, reconfigure_all_loggers, verify_database_uri
+from operandi_utils import  process_trace_dataframe
 from operandi_utils.constants import AccountType, LOG_LEVEL_SERVER, OPERANDI_VERSION
 from operandi_utils.database import db_initiate_database
 from operandi_utils import safe_init_logging
@@ -65,7 +68,13 @@ class OperandiServer(FastAPI):
             status_code=status.HTTP_200_OK,
             summary="Get information about the server"
         )
-
+        self.add_api_route(
+            path="/upload-trace",
+            endpoint=self.upload_trace_file,
+            methods=["POST"],
+            summary="Upload and process a trace file",
+            status_code=status.HTTP_201_CREATED
+        )
     def run_server(self):
         host, port = self.local_server_url.split("//")[1].split(":")
         run(self, host=host, port=int(port))
@@ -145,3 +154,21 @@ class OperandiServer(FastAPI):
                 details="Default harvester account"
             )
             self.logger.info(f"Inserted default harvester account credentials")
+
+    async def upload_trace_file(self, file: UploadFile = File(...)):
+        """
+        API endpoint to upload a trace file, process it in memory,
+        and store data in the database without saving the file.
+        """
+        try:
+            # Read file contents into a pandas DataFrame (without saving)
+            content = await file.read()
+            df = read_csv(StringIO(content.decode("utf-8")), sep="\t")
+
+            # Process the DataFrame directly
+            process_trace_dataframe(df)
+
+            return {"message": f"File '{file.filename}' uploaded and processed successfully."}
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
