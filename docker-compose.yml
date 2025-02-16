@@ -120,7 +120,7 @@ services:
     container_name: operandi-sqlite
     hostname: sqlite-host
     volumes:
-      - "${PWD}/sqlite_data/operandi.db:/operandi.db"  # Mount the entire directory to ensure persistence
+      - "${SQLITE_DB_DIR}/operandi.db:/operandi.db"
     networks:
       - operandi
 
