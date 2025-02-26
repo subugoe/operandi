@@ -74,7 +74,7 @@ def test_hpc_connector_run_batch_script_failing(
         input_file_grp="NON-EXISTING-FILE-GRP", workspace_id=ID_WORKSPACE_FAILING,
         mets_basename=DEFAULT_METS_BASENAME, nf_process_forks=2, ws_pages_amount=8,
         use_mets_server=False, nf_executable_steps=["ocrd-cis-ocropy-binarize"],
-        file_groups_to_remove="", cpus=2, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
+        file_groups_to_remove="", cpus=2, ram=32, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
         partition=HPC_NHR_JOB_TEST_PARTITION, qos=HPC_JOB_QOS_SHORT)
     finished_successfully = hpc_nhr_command_executor.poll_till_end_slurm_job_state(
         slurm_job_id=slurm_job_id, interval=10, timeout=300)
@@ -94,7 +94,7 @@ def test_hpc_connector_run_batch_script(
         input_file_grp=DEFAULT_FILE_GRP, workspace_id=ID_WORKSPACE,
         mets_basename=DEFAULT_METS_BASENAME, nf_process_forks=2, ws_pages_amount=8,
         use_mets_server=False, nf_executable_steps=["ocrd-cis-ocropy-binarize"],
-        file_groups_to_remove="", cpus=2, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
+        file_groups_to_remove="", cpus=2, ram=64, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
         partition=HPC_NHR_JOB_TEST_PARTITION, qos=HPC_JOB_QOS_SHORT)
     finished_successfully = hpc_nhr_command_executor.poll_till_end_slurm_job_state(
         slurm_job_id=slurm_job_id, interval=10, timeout=300)
@@ -118,7 +118,7 @@ def test_hpc_connector_run_batch_script_with_ms(
         input_file_grp=DEFAULT_FILE_GRP, workspace_id=ID_WORKSPACE_WITH_MS,
         mets_basename=DEFAULT_METS_BASENAME, nf_process_forks=2, ws_pages_amount=8,
         use_mets_server=True, nf_executable_steps=["ocrd-cis-ocropy-binarize"],
-        file_groups_to_remove="", cpus=4, ram=16, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
+        file_groups_to_remove="", cpus=4, ram=64, job_deadline_time=HPC_JOB_DEADLINE_TIME_TEST,
         partition=HPC_NHR_JOB_TEST_PARTITION, qos=HPC_JOB_QOS_SHORT)
     finished_successfully = hpc_nhr_command_executor.poll_till_end_slurm_job_state(
         slurm_job_id=slurm_job_id, interval=10, timeout=300)

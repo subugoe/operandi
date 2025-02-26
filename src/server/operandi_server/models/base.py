@@ -28,7 +28,7 @@ class WorkflowArguments(BaseModel):
 class SbatchArguments(BaseModel):
     partition: str = HPC_NHR_JOB_DEFAULT_PARTITION  # partition to be used
     cpus: int = 4  # cpus per job allocated by default
-    ram: int = 32  # RAM (in GB) per job allocated by default
+    ram: int = 64  # RAM (in GB) per job allocated by default
 
     class Config:
         allow_population_by_field_name = True

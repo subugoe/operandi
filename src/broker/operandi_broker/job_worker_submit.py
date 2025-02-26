@@ -87,19 +87,20 @@ class JobWorkerSubmit(JobWorkerBase):
                 nf_executable_steps=nf_executable_steps, file_groups_to_remove=remove_file_grps, cpus=slurm_job_cpus,
                 ram=slurm_job_ram, partition=slurm_job_partition
             )
+
+            job_state = StateJob.PENDING
+            self.log.info(f"Setting new job state `{job_state}` of job_id: {self.current_message_job_id}")
+            sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=job_state)
+
+            ws_state = StateWorkspace.PENDING
+            self.log.info(f"Setting new workspace state `{ws_state}` of workspace_id: {self.current_message_ws_id}")
+            sync_db_update_workspace(find_workspace_id=self.current_message_ws_id, state=ws_state)
+
             self.log.info(f"The HPC slurm job was successfully submitted")
         except Exception as error:
             self.log.error(f"Triggering a slurm job in the HPC has failed: {error}")
             self._handle_msg_failure(interruption=False)
             return
-
-        job_state = StateJob.PENDING
-        self.log.info(f"Setting new job state `{job_state}` of job_id: {self.current_message_job_id}")
-        sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=job_state)
-
-        ws_state = StateWorkspace.PENDING
-        self.log.info(f"Setting new workspace state `{ws_state}` of workspace_id: {self.current_message_ws_id}")
-        sync_db_update_workspace(find_workspace_id=self.current_message_ws_id, state=ws_state)
 
         self.has_consumed_message = False
         self.log.debug(f"Ack delivery tag: {self.current_message_delivery_tag}")

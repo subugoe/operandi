@@ -3,7 +3,7 @@ from logging import getLogger
 from os.path import join
 from pathlib import Path
 from time import sleep
-from typing import List
+from typing import List, Tuple
 
 from operandi_utils.constants import StateJobSlurm, OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE
 from .constants import (
@@ -11,12 +11,17 @@ from .constants import (
     HPC_USE_SLIM_IMAGES, HPC_WRAPPER_SUBMIT_WORKFLOW_JOB, HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS
 )
 from .nhr_connector import NHRConnector
-
-# Just some placeholders to be replaced with actual paths that are
-# dynamically allocated inside the node that runs the HPC slurm job
-PH_NODE_DIR_OCRD_MODELS = "PH_NODE_DIR_OCRD_MODELS"
-PH_NODE_DIR_PROCESSOR_SIFS = "PH_NODE_DIR_PROCESSOR_SIFS"
-PH_CMD_WRAPPER = "PH_CMD_WRAPPER"
+from .nhr_executor_cmd_wrappers import (
+    cmd_core_print_version,
+    cmd_core_list_file_groups,
+    cmd_core_remove_file_group,
+    cmd_core_start_mets_server,
+    cmd_core_stop_mets_server,
+    cmd_nextflow_run,
+    PH_NODE_DIR_PROCESSOR_SIFS,
+    PH_NODE_DIR_OCRD_MODELS
+)
+from .nhr_executor_utils import parse_slurm_job_state_from_output
 
 CHECK_SLURM_JOB_TRY_TIMES = 10
 CHECK_SLURM_JOB_WAIT_TIME = 30
@@ -31,17 +36,11 @@ class NHRExecutor(NHRConnector):
 
     # Execute blocking commands and wait for an output and return code
     def execute_blocking(self, command, timeout=None, environment=None):
-        stdin, stdout, stderr = self.ssh_client.exec_command(
-            command=command, timeout=timeout, environment=environment)
-
-        # TODO: Not satisfied with this but fast conversion from
-        #  SSHLibrary to Paramiko is needed for testing
+        stdin, stdout, stderr = self.ssh_client.exec_command(command=command, timeout=timeout, environment=environment)
         while not stdout.channel.exit_status_ready():
             sleep(1)
             continue
-
-        output = stdout.readlines()
-        err = stderr.readlines()
+        output, err = stdout.readlines(), stderr.readlines()
         return_code = stdout.channel.recv_exit_status()
         return output, err, return_code
 
@@ -103,7 +102,7 @@ class NHRExecutor(NHRConnector):
             ph_sif_core = f"{PH_NODE_DIR_PROCESSOR_SIFS}/{sif_ocrd_core}"
         else:
             ph_sif_core = f"{PH_NODE_DIR_PROCESSOR_SIFS}/{sif_ocrd_all}"
-        nf_run_command = self.cmd_nextflow_run(
+        nf_run_command = cmd_nextflow_run(
             hpc_nf_script_path=hpc_nf_script_path, hpc_ws_dir=hpc_workspace_dir,
             bind_ocrd_models=f"{PH_NODE_DIR_OCRD_MODELS}/ocrd-resources:/usr/local/share/ocrd-resources",
             sif_core=sif_ocrd_core,
@@ -128,11 +127,11 @@ class NHRExecutor(NHRConnector):
             "hpc_workflow_job_dir": hpc_workflow_job_dir,
             "hpc_workspace_dir": hpc_workspace_dir,
             "nf_run_command": nf_run_command,
-            "print_ocrd_version_command": self.cmd_core_print_version(hpc_workspace_dir, ph_sif_core),
-            "start_mets_server_command": self.cmd_core_start_mets_server(hpc_workspace_dir, ph_sif_core),
-            "stop_mets_server_command": self.cmd_core_stop_mets_server(hpc_workspace_dir, ph_sif_core),
-            "list_file_groups_command": self.cmd_core_list_file_groups(hpc_workspace_dir, ph_sif_core),
-            "remove_file_group_command": self.cmd_core_remove_file_group(hpc_workspace_dir, ph_sif_core)
+            "print_ocrd_version_command": cmd_core_print_version(hpc_workspace_dir, ph_sif_core),
+            "start_mets_server_command": cmd_core_start_mets_server(hpc_workspace_dir, ph_sif_core),
+            "stop_mets_server_command": cmd_core_stop_mets_server(hpc_workspace_dir, ph_sif_core),
+            "list_file_groups_command": cmd_core_list_file_groups(hpc_workspace_dir, ph_sif_core),
+            "remove_file_group_command": cmd_core_remove_file_group(hpc_workspace_dir, ph_sif_core)
         }
         command += f" '{dumps(sbatch_args)}' '{dumps(regular_args)}'"
 
@@ -146,38 +145,30 @@ class NHRExecutor(NHRConnector):
         assert int(slurm_job_id)
         return slurm_job_id
 
+    def check_slurm_job_state_once(self, slurm_job_id: str) -> StateJobSlurm:
+        command = f"{HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS} {slurm_job_id}"
+        output, err, return_code = self.execute_blocking(command)
+        if return_code > 0:
+            self.logger.info(f"Executed force command: {command}")
+            self.logger.info(f"Command return code: {return_code}")
+            self.logger.info(f"Command err: {err}")
+            self.logger.info(f"Command output: {output}")
+        slurm_job_state, msg = parse_slurm_job_state_from_output(output)
+        if slurm_job_state == StateJobSlurm.UNSET:
+            self.logger.warning(msg)
+        return slurm_job_state
+
     def check_slurm_job_state(
         self, slurm_job_id: str, tries: int = CHECK_SLURM_JOB_TRY_TIMES, wait_time: int = CHECK_SLURM_JOB_WAIT_TIME
     ) -> str:
-        command = f"{HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS} {slurm_job_id}"
-        slurm_job_state = None
-
-        while not slurm_job_state and tries > 0:
-            self.logger.info(f"About to execute a force command: {command}")
-            output, err, return_code = self.execute_blocking(command)
-            self.logger.info(f"Command output: {output}")
-            self.logger.info(f"Command err: {err}")
-            self.logger.info(f"Command return code: {return_code}")
-            if output:
-                if len(output) < 3:
-                    self.logger.warning("The output has returned with less than 3 lines. "
-                                        "The job has not been listed yet.")
-                    continue
-                # Split the last line and get the second element,
-                # i.e., the state element in the requested output format
-                slurm_job_state = output[-2].split()[1]
-                # TODO: dirty fast fix, improve this
-                if slurm_job_state.startswith('---'):
-                    self.logger.warning("The output is dashes. The job has not been listed yet.")
-                    slurm_job_state = None
-                    continue
-            if slurm_job_state:
+        slurm_job_state = StateJobSlurm.UNSET
+        while tries > 0:
+            slurm_job_state = self.check_slurm_job_state_once(slurm_job_id=slurm_job_id)
+            if slurm_job_state != StateJobSlurm.UNSET:
                 break
             tries -= 1
             sleep(wait_time)
-        if not slurm_job_state:
-            self.logger.warning(f"Returning a None slurm job state")
-        self.logger.info(f"Slurm job state of {slurm_job_id}: {slurm_job_state}")
+        self.logger.info(f"Current slurm job state of {slurm_job_id}: {slurm_job_state}")
         return slurm_job_state
 
     def poll_till_end_slurm_job_state(
@@ -192,7 +183,7 @@ class NHRExecutor(NHRConnector):
             tries_left -= 1
             self.logger.info(f"Tries left: {tries_left}")
             slurm_job_state = self.check_slurm_job_state(slurm_job_id)
-            if not slurm_job_state:
+            if slurm_job_state == StateJobSlurm.UNSET:
                 self.logger.info(f"Slurm job state is not available yet")
                 continue
             if StateJobSlurm.is_state_hpc_success(slurm_job_state):
@@ -207,76 +198,6 @@ class NHRExecutor(NHRConnector):
             if StateJobSlurm.is_state_hpc_fail(slurm_job_state):
                 self.logger.info(f"Slurm job state is in: {StateJobSlurm.failing_states()}")
                 return False
-            # Sometimes the slurm state is still
-            # not initialized inside the HPC environment.
-            # This is not a problem that requires a raise of Exception
-            self.logger.warning(f"Invalid SLURM job state: {slurm_job_state}")
-
         # Timeout reached
         self.logger.warning("Polling slurm job status timeout reached")
         return False
-
-    @staticmethod
-    def cmd_nextflow_run(
-        hpc_nf_script_path: str, hpc_ws_dir: str, bind_ocrd_models: str, sif_core: str, sif_ocrd_all: str,
-        input_file_grp: str, mets_basename: str, use_mets_server: bool, nf_executable_steps: List[str],
-        ws_pages_amount: int, cpus: int, ram: int, forks: int, use_slim_images: bool
-    ) -> str:
-        nf_run_command = f"nextflow run {hpc_nf_script_path} -ansi-log false -with-report -with-trace"
-        nf_run_command += f" --input_file_group {input_file_grp}"
-        nf_run_command += f" --mets_path /ws_data/{mets_basename}"
-        if use_mets_server:
-            nf_run_command += f" --mets_socket_path /ws_data/mets_server.sock"
-        nf_run_command += f" --workspace_dir /ws_data"
-        nf_run_command += f" --pages {ws_pages_amount}"
-
-        sif_images = [OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE[exe] for exe in nf_executable_steps]
-        apptainer_cmd = f"apptainer exec --bind {hpc_ws_dir}:/ws_data --bind {bind_ocrd_models}"
-        # Mets caching is disabled for the core, to avoid the cache error
-        # when mergin mets files https://github.com/OCR-D/core/issues/1297
-        apptainer_cmd_core = f"{apptainer_cmd} --env OCRD_METS_CACHING=false"
-        apptainer_cmd_step = f"{apptainer_cmd} --env OCRD_METS_CACHING=true"
-        apptainer_image = sif_core if use_slim_images else sif_ocrd_all
-        core_command = f"{apptainer_cmd_core} {PH_NODE_DIR_PROCESSOR_SIFS}/{apptainer_image}"
-        nf_run_command += f" --env_wrapper_cmd_core {PH_CMD_WRAPPER}{core_command}{PH_CMD_WRAPPER}"
-
-        index = 0
-        for sif_image in sif_images:
-            apptainer_image = sif_image if use_slim_images else sif_ocrd_all
-            step_command = f"{apptainer_cmd_step} {PH_NODE_DIR_PROCESSOR_SIFS}/{apptainer_image}"
-            nf_run_command += f" --env_wrapper_cmd_step{index} {PH_CMD_WRAPPER}{step_command}{PH_CMD_WRAPPER}"
-            index += 1
-        nf_run_command += f" --cpus {cpus}"
-        nf_run_command += f" --ram {ram}"
-        nf_run_command += f" --forks {forks}"
-        return nf_run_command
-
-    @staticmethod
-    def cmd_core_print_version(hpc_ws_dir: str, ph_sif_core: str) -> str:
-        return f"apptainer exec --bind {hpc_ws_dir}:/ws_data {ph_sif_core} ocrd --version"
-
-    @staticmethod
-    def cmd_core_start_mets_server(hpc_ws_dir: str, ph_sif_core: str) -> str:
-        command = f"apptainer exec --bind {hpc_ws_dir}:/ws_data {ph_sif_core}"
-        command += f" ocrd workspace -d /ws_data -U /ws_data/mets_server.sock server start"
-        command += f" > {hpc_ws_dir}/mets_server.log 2>&1 &"
-        return command
-
-    @staticmethod
-    def cmd_core_stop_mets_server(hpc_ws_dir: str, ph_sif_core: str) -> str:
-        command = f"apptainer exec --bind {hpc_ws_dir}:/ws_data {ph_sif_core}"
-        command += " ocrd workspace -d /ws_data -U /ws_data/mets_server.sock server stop"
-        return command
-
-    @staticmethod
-    def cmd_core_list_file_groups(hpc_ws_dir: str, ph_sif_core: str) -> str:
-        command = f"apptainer exec --bind {hpc_ws_dir}:/ws_data {ph_sif_core}"
-        command += " ocrd workspace -d /ws_data list-group"
-        return command
-
-    @staticmethod
-    def cmd_core_remove_file_group(hpc_ws_dir: str, ph_sif_core: str) -> str:
-        command = f"apptainer exec --bind {hpc_ws_dir}:/ws_data {ph_sif_core}"
-        command += " ocrd workspace -d /ws_data remove-group -r -f FILE_GROUP_PLACEHOLDER"
-        command += f" > {hpc_ws_dir}/remove_file_groups.log 2>&1"
-        return command

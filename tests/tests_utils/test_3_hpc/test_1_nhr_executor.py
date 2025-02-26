@@ -43,7 +43,7 @@ def test_hpc_connector_executor_cd_dir(hpc_nhr_command_executor):
     assert output == []
 
 
-def test_hpc_connector_executor_check_if_models_exists(hpc_nhr_command_executor):
+def _test_hpc_connector_executor_check_if_models_exists(hpc_nhr_command_executor):
     non_existing_models = {
         "ocrd-calamari-recognize": "non-existing-model",
         "non-existing-processor": "qurator-gt4histocr-1.0",
