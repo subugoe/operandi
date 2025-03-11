@@ -325,7 +325,11 @@ class RouterWorkspace:
         except Exception as error:
             message = "Failed to send bag to Ola-HD service"
             self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
+            try:
+                response_status_code = error.response.status_code
+            except AttributeError:
+                response_status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+            raise HTTPException(status_code=response_status_code, detail=message)
 
         response_message = {
             "message": f"Workspace bag of id: {workspace_id} was pushed to the Ola-HD service",
