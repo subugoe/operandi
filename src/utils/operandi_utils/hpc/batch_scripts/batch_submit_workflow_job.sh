@@ -45,8 +45,8 @@ REMOVE_FILE_GROUP_COMMAND=$(echo "$json_args" | jq .remove_file_group_command | 
 PROJECT_DIR_OCRD_MODELS="${PROJECT_BASE_DIR}/ocrd_models"
 PROJECT_DIR_PROCESSOR_SIFS="${PROJECT_BASE_DIR}/ocrd_processor_sifs"
 
-NODE_DIR_OCRD_MODELS="${TMP_LOCAL}/ocrd_models"
-NODE_DIR_PROCESSOR_SIFS="${TMP_LOCAL}/ocrd_processor_sifs"
+NODE_DIR_OCRD_MODELS="${LOCAL_TMPDIR}/ocrd_models"
+NODE_DIR_PROCESSOR_SIFS="${LOCAL_TMPDIR}/ocrd_processor_sifs"
 
 echo ""
 echo "Project dir ocrd models: $PROJECT_DIR_OCRD_MODELS"
