@@ -187,7 +187,7 @@ transfer_to_node_storage_workflow_job_zip(){
 
 unzip_workflow_job_dir_in_node() {
   if [ ! -f "$NODE_WORKFLOW_JOB_ZIP" ]; then
-    echo "Required scratch slurm workspace zip is not available: $NODE_WORKFLOW_JOB_ZIP"
+    echo "Required workflow job zip is not available for unzipping: $NODE_WORKFLOW_JOB_ZIP"
     exit 1
   fi
 
@@ -303,6 +303,7 @@ unzip_workflow_job_dir_in_node
 echo ""
 transfer_to_node_storage_processor_models
 transfer_to_node_storage_processor_images
+transfer_to_node_storage_workflow_job_zip
 start_mets_server
 execute_nextflow_workflow
 stop_mets_server

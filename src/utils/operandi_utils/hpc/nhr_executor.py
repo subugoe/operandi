@@ -72,7 +72,7 @@ class NHRExecutor(NHRConnector):
             "constraint": "ssd",
             "partition": partition,
             "job_deadline_time": job_deadline_time,
-            "output_log": f"{self.slurm_workspaces_dir}/{workflow_job_id}/slurm-job-%J.txt",
+            "output_log": f"{self.slurm_workspaces_dir}/slurm-job-%J.txt",
             "cpus": cpus,
             "ram": f"{ram}G",
             "qos": qos,
