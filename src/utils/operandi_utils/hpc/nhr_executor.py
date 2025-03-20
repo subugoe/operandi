@@ -82,6 +82,7 @@ class NHRExecutor(NHRConnector):
 
         command = f"{HPC_WRAPPER_SUBMIT_WORKFLOW_JOB}"
         sbatch_args = {
+            "constraint": "ssd",
             "partition": partition,
             "job_deadline_time": job_deadline_time,
             "output_log": f"{self.slurm_workspaces_dir}/{workflow_job_id}/slurm-job-%J.txt",
