@@ -15,7 +15,7 @@ batch_script_path=$(echo "$sbatch_args" | jq .batch_script_path | tr -d '"')
 # $2 is a json of regular arguments used inside the `batch_submit_workflow_job.sh`
 if [ "$qos" == "48h" ] ; then
   # QOS not set, the default of 48h is used
-  sbatch --partition="$partition" --time="$deadline_time" --output="$output" --cpus-per-task="$cpus_per_task" --mem="$memory" "$batch_script_path" "$2"
+  sbatch --constraint="ssd" --partition="$partition" --time="$deadline_time" --output="$output" --cpus-per-task="$cpus_per_task" --mem="$memory" "$batch_script_path" "$2"
 else
-  sbatch --partition="$partition" --time="$deadline_time" --output="$output" --cpus-per-task="$cpus_per_task" --mem="$memory" --qos="$qos" "$batch_script_path" "$2"
+  sbatch --constraint="ssd" --partition="$partition" --time="$deadline_time" --output="$output" --cpus-per-task="$cpus_per_task" --mem="$memory" --qos="$qos" "$batch_script_path" "$2"
 fi
