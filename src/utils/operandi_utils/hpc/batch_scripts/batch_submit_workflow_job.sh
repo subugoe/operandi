@@ -140,6 +140,7 @@ transfer_to_node_storage_workflow_job_zip(){
   else
     echo "Successfully transferred workflow job zip to node local storage: $NODE_WORKFLOW_JOB_ZIP"
   fi
+  echo "Removing zip: $WORKFLOW_JOB_ZIP"
   rm -f "$WORKFLOW_JOB_ZIP"
 }
 
@@ -291,10 +292,14 @@ zip_results() {
 }
 
 transfer_from_node_storage_result_zips(){
-  mkdir -p "$SCRATCH_BASE/results_workflow_jobs"
-  mkdir -p "$SCRATCH_BASE/results_workspaces"
-  cp "$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKFLOW_JOB_ID.zip" "$SCRATCH_BASE/results_workflow_jobs/$WORKFLOW_JOB_ID.zip"
-  cp "$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKSPACE_ID.zip" "$SCRATCH_BASE/results_workspaces/$WORKSPACE_ID.zip"
+  if [ -f "$NODE_DIR_BASE/$WORKFLOW_JOB_ID.zip" ]; then
+    echo "Transferring $NODE_DIR_BASE/$WORKFLOW_JOB_ID.zip to $SCRATCH_BASE/$WORKFLOW_JOB_ID/wf_$WORKFLOW_JOB_ID.zip"
+    cp "$NODE_DIR_BASE/$WORKFLOW_JOB_ID.zip" "$SCRATCH_BASE/$WORKFLOW_JOB_ID/wf_$WORKFLOW_JOB_ID.zip"
+  fi
+  if [ -f "$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKSPACE_ID.zip" ]; then
+    echo "Transferring $NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKSPACE_ID.zip to $SCRATCH_BASE/$WORKFLOW_JOB_ID/ws_$WORKSPACE_ID.zip"
+    cp "$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKSPACE_ID.zip" "$SCRATCH_BASE/$WORKFLOW_JOB_ID/ws_$WORKSPACE_ID.zip"
+  fi
 }
 
 
