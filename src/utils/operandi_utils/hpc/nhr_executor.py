@@ -1,9 +1,8 @@
 from json import dumps
 from logging import getLogger
-from os.path import join
 from pathlib import Path
 from time import sleep
-from typing import List, Tuple
+from typing import List
 
 from operandi_utils.constants import StateJobSlurm, OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE
 from .constants import (
@@ -11,16 +10,7 @@ from .constants import (
     HPC_USE_SLIM_IMAGES, HPC_WRAPPER_SUBMIT_WORKFLOW_JOB, HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS
 )
 from .nhr_connector import NHRConnector
-from .nhr_executor_cmd_wrappers import (
-    cmd_core_print_version,
-    cmd_core_list_file_groups,
-    cmd_core_remove_file_group,
-    cmd_core_start_mets_server,
-    cmd_core_stop_mets_server,
-    cmd_nextflow_run,
-    PH_NODE_DIR_PROCESSOR_SIFS,
-    PH_NODE_DIR_OCRD_MODELS
-)
+from .nhr_executor_cmd_wrappers import cmd_nextflow_run
 from .nhr_executor_utils import parse_slurm_job_state_from_output
 
 CHECK_SLURM_JOB_TRY_TIMES = 10
@@ -77,10 +67,7 @@ class NHRExecutor(NHRConnector):
                 f"Setting the forks value to the value of amount of pages.")
             nf_process_forks = ws_pages_amount
 
-        nextflow_script_id = nextflow_script_path.name
-        use_mets_server_bash_flag = "true" if use_mets_server else "false"
-
-        command = f"{HPC_WRAPPER_SUBMIT_WORKFLOW_JOB}"
+        force_command = f"{HPC_WRAPPER_SUBMIT_WORKFLOW_JOB}"
         sbatch_args = {
             "constraint": "ssd",
             "partition": partition,
@@ -92,24 +79,16 @@ class NHRExecutor(NHRConnector):
             "batch_script_path": HPC_BATCH_SUBMIT_WORKFLOW_JOB
         }
 
-        hpc_workflow_job_dir = join(self.slurm_workspaces_dir, workflow_job_id)
-        hpc_nf_script_path = join(self.slurm_workspaces_dir, workflow_job_id, nextflow_script_id)
-        hpc_workspace_dir = join(self.slurm_workspaces_dir, workflow_job_id, workspace_id)
-
         sif_ocrd_all = OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE["ocrd_all"]
         sif_ocrd_core = OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE["ocrd"]
 
-        if HPC_USE_SLIM_IMAGES:
-            ph_sif_core = f"{PH_NODE_DIR_PROCESSOR_SIFS}/{sif_ocrd_core}"
-        else:
-            ph_sif_core = f"{PH_NODE_DIR_PROCESSOR_SIFS}/{sif_ocrd_all}"
+        if not HPC_USE_SLIM_IMAGES:
+            sif_ocrd_core = f"{sif_ocrd_all}"
         nf_run_command = cmd_nextflow_run(
-            hpc_nf_script_path=hpc_nf_script_path, hpc_ws_dir=hpc_workspace_dir,
-            bind_ocrd_models=f"{PH_NODE_DIR_OCRD_MODELS}/ocrd-resources:/usr/local/share/ocrd-resources",
-            sif_core=sif_ocrd_core,
-            sif_ocrd_all=sif_ocrd_all, input_file_grp=input_file_grp, mets_basename=mets_basename,
-            use_mets_server=use_mets_server, nf_executable_steps=nf_executable_steps, ws_pages_amount=ws_pages_amount,
-            cpus=cpus, ram=ram, forks=nf_process_forks, use_slim_images=HPC_USE_SLIM_IMAGES
+            sif_core=sif_ocrd_core, sif_ocrd_all=sif_ocrd_all, input_file_grp=input_file_grp,
+            mets_basename=mets_basename, use_mets_server=use_mets_server, nf_executable_steps=nf_executable_steps,
+            ws_pages_amount=ws_pages_amount, cpus=cpus, ram=ram, forks=nf_process_forks,
+            use_slim_images=HPC_USE_SLIM_IMAGES
         )
 
         if HPC_USE_SLIM_IMAGES:
@@ -117,43 +96,39 @@ class NHRExecutor(NHRConnector):
             ocrd_processor_images = f"{sif_ocrd_core},{ocrd_processor_images}"
         else:
             ocrd_processor_images = sif_ocrd_all
+
         regular_args = {
+            "ocrd_processor_images": ocrd_processor_images,
             "project_base_dir": self.project_root_dir,
             "scratch_base_dir": self.slurm_workspaces_dir,
-            "ocrd_processor_images": ocrd_processor_images,
+            "use_mets_server": "true" if use_mets_server else "false",
             "workflow_job_id": workflow_job_id,
             "workspace_id": workspace_id,
-            "use_mets_server_bash_flag": use_mets_server_bash_flag,
+            "nf_script_id": nextflow_script_path.name,
             "file_groups_to_remove": file_groups_to_remove,
-            "hpc_workflow_job_dir": hpc_workflow_job_dir,
-            "hpc_workspace_dir": hpc_workspace_dir,
-            "nf_run_command": nf_run_command,
-            "print_ocrd_version_command": cmd_core_print_version(hpc_workspace_dir, ph_sif_core),
-            "start_mets_server_command": cmd_core_start_mets_server(hpc_workspace_dir, ph_sif_core),
-            "stop_mets_server_command": cmd_core_stop_mets_server(hpc_workspace_dir, ph_sif_core),
-            "list_file_groups_command": cmd_core_list_file_groups(hpc_workspace_dir, ph_sif_core),
-            "remove_file_group_command": cmd_core_remove_file_group(hpc_workspace_dir, ph_sif_core)
+            "sif_ocrd_core": sif_ocrd_core,
+            "nf_run_command": nf_run_command
         }
-        command += f" '{dumps(sbatch_args)}' '{dumps(regular_args)}'"
+        force_command += f" '{dumps(sbatch_args)}' '{dumps(regular_args)}'"
 
-        self.logger.info(f"About to execute a force command: {command}")
-        output, err, return_code = self.execute_blocking(command)
-        self.logger.info(f"Command output: {output}")
-        self.logger.info(f"Command err: {err}")
-        self.logger.info(f"Command return code: {return_code}")
+        self.logger.info(f"About to execute a force command: {force_command}")
+        output, err, return_code = self.execute_blocking(force_command)
+        self.logger.info(f"Force command output: {output}")
+        self.logger.info(f"Force command err: {err}")
+        self.logger.info(f"Force command return code: {return_code}")
         slurm_job_id = output[0].strip('\n').split(' ')[-1]
         self.logger.info(f"Slurm job id: {slurm_job_id}")
         assert int(slurm_job_id)
         return slurm_job_id
 
     def check_slurm_job_state_once(self, slurm_job_id: str) -> StateJobSlurm:
-        command = f"{HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS} {slurm_job_id}"
-        output, err, return_code = self.execute_blocking(command)
+        force_command = f"{HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS} {slurm_job_id}"
+        output, err, return_code = self.execute_blocking(force_command)
         if return_code > 0:
-            self.logger.info(f"Executed force command: {command}")
-            self.logger.info(f"Command return code: {return_code}")
-            self.logger.info(f"Command err: {err}")
-            self.logger.info(f"Command output: {output}")
+            self.logger.info(f"Executed force command: {force_command}")
+            self.logger.info(f"Force command return code: {return_code}")
+            self.logger.info(f"Force command err: {err}")
+            self.logger.info(f"Force command output: {output}")
         slurm_job_state, msg = parse_slurm_job_state_from_output(output)
         if slurm_job_state == StateJobSlurm.UNSET:
             self.logger.warning(msg)

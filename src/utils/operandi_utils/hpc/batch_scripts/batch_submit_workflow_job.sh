@@ -28,25 +28,27 @@ done
 
 PROJECT_BASE_DIR=$(echo "$json_args" | jq .project_base_dir | tr -d '"')
 SCRATCH_BASE=$(echo "$json_args" | jq .scratch_base_dir | tr -d '"')
+USE_METS_SERVER=$(echo "$json_args" | jq .use_mets_server | tr -d '"')
 WORKFLOW_JOB_ID=$(echo "$json_args" | jq .workflow_job_id | tr -d '"')
 WORKSPACE_ID=$(echo "$json_args" | jq .workspace_id | tr -d '"')
-USE_METS_SERVER=$(echo "$json_args" | jq .use_mets_server_bash_flag | tr -d '"')
+NF_SCRIPT_ID=$(echo "$json_args" | jq .nf_script_id | tr -d '"')
 FILE_GROUPS_TO_REMOVE=$(echo "$json_args" | jq .file_groups_to_remove | tr -d '"')
-
-WORKFLOW_JOB_DIR=$(echo "$json_args" | jq .hpc_workflow_job_dir | tr -d '"')
-WORKSPACE_DIR=$(echo "$json_args" | jq .hpc_workspace_dir | tr -d '"')
+SIF_OCRD_CORE=$(echo "$json_args" | jq .sif_ocrd_core | tr -d '"')
 NF_RUN_COMMAND=$(echo "$json_args" | jq .nf_run_command | tr -d '"')
-PRINT_OCRD_VERSION_COMMAND=$(echo "$json_args" | jq .print_ocrd_version_command | tr -d '"')
-START_METS_SERVER_COMMAND=$(echo "$json_args" | jq .start_mets_server_command | tr -d '"')
-STOP_METS_SERVER_COMMAND=$(echo "$json_args" | jq .stop_mets_server_command | tr -d '"')
-LIST_FILE_GROUPS_COMMAND=$(echo "$json_args" | jq .list_file_groups_command | tr -d '"')
-REMOVE_FILE_GROUP_COMMAND=$(echo "$json_args" | jq .remove_file_group_command | tr -d '"')
 
-PROJECT_DIR_OCRD_MODELS="${PROJECT_BASE_DIR}/ocrd_models"
-PROJECT_DIR_PROCESSOR_SIFS="${PROJECT_BASE_DIR}/ocrd_processor_sifs"
+WORKFLOW_JOB_ZIP="$SCRATCH_BASE/$WORKFLOW_JOB_ID.zip"
 
-NODE_DIR_OCRD_MODELS="${LOCAL_TMPDIR}/ocrd_models"
-NODE_DIR_PROCESSOR_SIFS="${LOCAL_TMPDIR}/ocrd_processor_sifs"
+NODE_DIR_BASE="$LOCAL_TMPDIR"
+NODE_WORKFLOW_JOB_DIR="$NODE_DIR_BASE/$WORKFLOW_JOB_ID"
+NODE_WORKFLOW_JOB_ZIP="$NODE_DIR_BASE/$WORKFLOW_JOB_ID.zip"
+NODE_WORKSPACE_DIR="$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKSPACE_ID"
+NODE_NF_SCRIPT_PATH="$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$NF_SCRIPT_ID"
+
+PROJECT_DIR_OCRD_MODELS="$PROJECT_BASE_DIR/ocrd_models"
+PROJECT_DIR_PROCESSOR_SIFS="$PROJECT_BASE_DIR/ocrd_processor_sifs"
+NODE_DIR_OCRD_MODELS="$NODE_DIR_BASE/ocrd_models"
+NODE_DIR_PROCESSOR_SIFS="$NODE_DIR_BASE/ocrd_processor_sifs"
+PATH_SIF_OCRD_CORE="$NODE_DIR_PROCESSOR_SIFS/$SIF_OCRD_CORE"
 
 echo ""
 echo "Project dir ocrd models: $PROJECT_DIR_OCRD_MODELS"
@@ -55,11 +57,14 @@ echo "Node dir ocrd models: $NODE_DIR_OCRD_MODELS"
 echo "Node dir processor sifs: $NODE_DIR_PROCESSOR_SIFS"
 echo ""
 
-echo "Workspace dir: $WORKSPACE_DIR"
+echo "Node workspace dir: $NODE_WORKSPACE_DIR"
+echo "Node nextflow script path: $NODE_NF_SCRIPT_PATH"
 echo "Use mets server: $USE_METS_SERVER"
 
 echo ""
 echo "Nf run command with Node placeholders: $NF_RUN_COMMAND"
+NF_RUN_COMMAND="${NF_RUN_COMMAND//PH_HPC_WS_DIR/$NODE_WORKSPACE_DIR}"
+NF_RUN_COMMAND="${NF_RUN_COMMAND//PH_NF_SCRIPT_PATH/$NODE_NF_SCRIPT_PATH}"
 NF_RUN_COMMAND="${NF_RUN_COMMAND//PH_NODE_DIR_OCRD_MODELS/$NODE_DIR_OCRD_MODELS}"
 NF_RUN_COMMAND="${NF_RUN_COMMAND//PH_CMD_WRAPPER/\'}"
 NF_RUN_COMMAND="${NF_RUN_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
@@ -67,13 +72,13 @@ echo ""
 echo "Nf run command without placeholders: $NF_RUN_COMMAND"
 echo ""
 
-echo "Replacing ocrd core NODE_DIR_PROCESSOR_SIFS"
-PRINT_OCRD_VERSION_COMMAND="${PRINT_OCRD_VERSION_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
-START_METS_SERVER_COMMAND="${START_METS_SERVER_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
-STOP_METS_SERVER_COMMAND="${STOP_METS_SERVER_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
-LIST_FILE_GROUPS_COMMAND="${LIST_FILE_GROUPS_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
-REMOVE_FILE_GROUP_COMMAND="${REMOVE_FILE_GROUP_COMMAND//PH_NODE_DIR_PROCESSOR_SIFS/$NODE_DIR_PROCESSOR_SIFS}"
-echo ""
+# OCR-D core commands
+CMD_APPTAINER_WRAPPER="apptainer exec --bind $NODE_WORKSPACE_DIR:/ws_data $PATH_SIF_OCRD_CORE"
+CMD_PRINT_OCRD_VERSION="$CMD_APPTAINER_WRAPPER ocrd --version"
+CMD_START_METS_SERVER="$CMD_APPTAINER_WRAPPER ocrd workspace -d /ws_data -U /ws_data/mets_server.sock server start > $NODE_WORKSPACE_DIR/mets_server.log 2>&1 &"
+CMD_STOP_METS_SERVER="$CMD_APPTAINER_WRAPPER ocrd workspace -d /ws_data -U /ws_data/mets_server.sock server stop"
+CMD_LIST_FILE_GROUPS="$CMD_APPTAINER_WRAPPER ocrd workspace -d /ws_data list-group"
+CMD_REMOVE_FILE_GROUP="$CMD_APPTAINER_WRAPPER ocrd workspace -d /ws_data remove-group -r -f PH_FILE_GROUP > $NODE_WORKSPACE_DIR/remove_file_groups.log 2>&1"
 
 check_existence_of_dir_scratch_base(){
   if [ ! -d "${SCRATCH_BASE}" ]; then
@@ -128,7 +133,7 @@ transfer_to_node_storage_processor_models(){
     clear_data_from_computing_node
     exit 1
   else
-    echo "Successfully transferred ocrd models to node local storage"
+    echo "Successfully transferred ocrd models to node local storage: ${NODE_DIR_OCRD_MODELS}"
   fi
 }
 
@@ -160,47 +165,63 @@ transfer_to_node_storage_processor_images(){
     fi
   done
   echo ""
-  eval "$PRINT_OCRD_VERSION_COMMAND"
+  eval "$CMD_PRINT_OCRD_VERSION"
   echo ""
 }
 
-unzip_workflow_job_dir() {
-  if [ ! -f "${WORKFLOW_JOB_DIR}.zip" ]; then
-    echo "Required scratch slurm workspace zip is not available: ${WORKFLOW_JOB_DIR}.zip"
+transfer_to_node_storage_workflow_job_zip(){
+  if [ ! -f "$WORKFLOW_JOB_ZIP" ]; then
+    echo "Required scratch slurm workspace zip is not available: $WORKFLOW_JOB_ZIP"
+    exit 1
+  fi
+  cp "$WORKFLOW_JOB_ZIP" "$NODE_WORKFLOW_JOB_ZIP"
+  if [ ! -f "$NODE_WORKFLOW_JOB_ZIP" ]; then
+    echo "Workflow job zip not found at node local storage: $NODE_WORKFLOW_JOB_ZIP"
+    clear_data_from_computing_node
+    exit 1
+  else
+    echo "Successfully transferred workflow job zip to node local storage: $NODE_WORKFLOW_JOB_ZIP"
+  fi
+  rm -f "$WORKFLOW_JOB_ZIP"
+}
+
+unzip_workflow_job_dir_in_node() {
+  if [ ! -f "$NODE_WORKFLOW_JOB_ZIP" ]; then
+    echo "Required scratch slurm workspace zip is not available: $NODE_WORKFLOW_JOB_ZIP"
     exit 1
   fi
 
-  echo "Unzipping ${WORKFLOW_JOB_DIR}.zip to: ${WORKFLOW_JOB_DIR}"
-  unzip "${WORKFLOW_JOB_DIR}.zip" -d "${SCRATCH_BASE}" > "${SCRATCH_BASE}/${WORKSPACE_ID}_unzipping.log"
-  echo "Removing zip: ${WORKFLOW_JOB_DIR}.zip"
-  mv "${SCRATCH_BASE}/${WORKSPACE_ID}_unzipping.log" "${WORKFLOW_JOB_DIR}/workflow_job_unzipping.log"
-  rm "${WORKFLOW_JOB_DIR}.zip"
+  echo "Unzipping $NODE_WORKFLOW_JOB_ZIP to: $NODE_WORKFLOW_JOB_DIR"
+  unzip "$NODE_WORKFLOW_JOB_ZIP" -d "$NODE_DIR_BASE" > "$NODE_DIR_BASE/${WORKSPACE_ID}_unzipping.log"
+  echo "Removing zip: $NODE_WORKFLOW_JOB_ZIP"
+  mv "$NODE_DIR_BASE/${WORKSPACE_ID}_unzipping.log" "$NODE_WORKFLOW_JOB_DIR/workflow_job_unzipping.log"
+  rm -f "$NODE_WORKFLOW_JOB_ZIP"
 
-  if [ ! -d "${WORKFLOW_JOB_DIR}" ]; then
-    echo "Required scratch slurm workflow dir not available: ${WORKFLOW_JOB_DIR}"
+  if [ ! -d "$NODE_WORKFLOW_JOB_DIR" ]; then
+    echo "Required scratch slurm workflow dir not available: $NODE_WORKFLOW_JOB_DIR"
     exit 1
   fi
 
-  cd "${WORKFLOW_JOB_DIR}" || exit 1
+  cd "$NODE_WORKFLOW_JOB_DIR" || exit 1
 }
 
 start_mets_server() {
-  if [ "$1" == "true" ] ; then
+  if [ "$USE_METS_SERVER" == "true" ] ; then
     echo "Starting the mets server for the specific workspace in the background"
-    eval "$START_METS_SERVER_COMMAND"
+    eval "$CMD_START_METS_SERVER"
     sleep 10
   fi
 }
 
 stop_mets_server() {
-  if [ "$1" == "true" ] ; then
+  if [ "$USE_METS_SERVER" == "true" ] ; then
     echo "Stopping the mets server"
-    eval "$STOP_METS_SERVER_COMMAND"
+    eval "$CMD_STOP_METS_SERVER"
   fi
 }
 
 execute_nextflow_workflow() {
-  if [ "$1" == "true" ] ; then
+  if [ "$USE_METS_SERVER" == "true" ] ; then
     echo "Executing the nextflow workflow with mets server"
   else
     echo "Executing the nextflow workflow without mets server"
@@ -215,7 +236,7 @@ execute_nextflow_workflow() {
 
 list_file_groups_from_workspace() {
     all_file_groups=()
-    mapfile -t all_file_groups < <($LIST_FILE_GROUPS_COMMAND)
+    mapfile -t all_file_groups < <($CMD_LIST_FILE_GROUPS)
     file_groups_length=${#all_file_groups[@]}
     echo -n "File groups: "
     for file_group in "${all_file_groups[@]}"
@@ -228,10 +249,10 @@ list_file_groups_from_workspace() {
 
 remove_file_group_from_workspace() {
   echo "Removing file group: $1"
-  REMOVE_FILE_GROUP_COMMAND="${REMOVE_FILE_GROUP_COMMAND//FILE_GROUP_PLACEHOLDER/$1}"
-  eval "$REMOVE_FILE_GROUP_COMMAND"
+  CMD_REMOVE_FILE_GROUP="${CMD_REMOVE_FILE_GROUP//PH_FILE_GROUP/$1}"
+  eval "$CMD_REMOVE_FILE_GROUP"
   # Set the placeholder again for future invocations
-  REMOVE_FILE_GROUP_COMMAND="${REMOVE_FILE_GROUP_COMMAND//$1/FILE_GROUP_PLACEHOLDER}"
+  CMD_REMOVE_FILE_GROUP="${CMD_REMOVE_FILE_GROUP//$1/PH_FILE_GROUP}"
 }
 
 remove_file_groups_from_workspace() {
@@ -256,11 +277,11 @@ remove_file_groups_from_workspace() {
 
 zip_results() {
   # Delete symlinks created for the Nextflow workers
-  find "${WORKFLOW_JOB_DIR}" -type l -delete
+  find "$NODE_WORKFLOW_JOB_DIR" -type l -delete
   # Create a zip of the ocrd workspace dir
-  cd "${WORKSPACE_DIR}" && zip -r "${WORKSPACE_ID}.zip" "." -x "*.sock" > "workspace_zipping.log"
+  cd "$NODE_WORKSPACE_DIR" && zip -r "$WORKSPACE_ID.zip" "." -x "*.sock" > "workspace_zipping.log"
   # Create a zip of the Nextflow run results by excluding the ocrd workspace dir
-  cd "${WORKFLOW_JOB_DIR}" && zip -r "${WORKFLOW_JOB_ID}.zip" "." -x "${WORKSPACE_ID}**" > "workflow_job_zipping.log"
+  cd "$NODE_WORKFLOW_JOB_DIR" && zip -r "$NODE_WORKFLOW_JOB_ZIP" "." -x "$WORKSPACE_ID**" > "workflow_job_zipping.log"
 
   case $? in
     0) echo "The results have been zipped successfully" ;;
@@ -268,16 +289,24 @@ zip_results() {
   esac
 }
 
+transfer_from_node_storage_result_zips(){
+  mkdir -p "$SCRATCH_BASE/results_workflow_jobs"
+  mkdir -p "$SCRATCH_BASE/results_workspaces"
+  cp "$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKFLOW_JOB_ID.zip" "$SCRATCH_BASE/results_workflow_jobs/$WORKFLOW_JOB_ID.zip"
+  cp "$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKSPACE_ID.zip" "$SCRATCH_BASE/results_workspaces/$WORKSPACE_ID.zip"
+}
+
 
 # Main loop for workflow job execution
 check_existence_of_paths
-unzip_workflow_job_dir
+unzip_workflow_job_dir_in_node
 echo ""
 transfer_to_node_storage_processor_models
 transfer_to_node_storage_processor_images
-start_mets_server "$USE_METS_SERVER"
-execute_nextflow_workflow "$USE_METS_SERVER"
-stop_mets_server "$USE_METS_SERVER"
+start_mets_server
+execute_nextflow_workflow
+stop_mets_server
 remove_file_groups_from_workspace "$FILE_GROUPS_TO_REMOVE"
 zip_results
+transfer_from_node_storage_result_zips
 clear_data_from_computing_node
