@@ -132,7 +132,7 @@ class NHRTransfer(NHRConnector):
 
     def _download_workflow_job_zip(self, local_wf_job_dir: Path) -> Path:
         workflow_job_id = Path(local_wf_job_dir).name
-        get_src = Path(self.slurm_workspaces_dir, workflow_job_id, f"{workflow_job_id}.zip")
+        get_src = Path(self.slurm_workspaces_dir, workflow_job_id, f"wf_{workflow_job_id}.zip")
         get_dst = Path(local_wf_job_dir.parent.absolute(), f"{workflow_job_id}.zip")
         self.logger.info(f"Downloading workflow job zip from HPC source: {get_src}")
         self.logger.info(f"Downloading workflow job zip to local destination: {get_dst}")
@@ -162,7 +162,7 @@ class NHRTransfer(NHRConnector):
     def _download_workspace_zip(self, local_ocrd_ws_dir: Path, local_wf_job_dir: Path) -> Path:
         workflow_job_id = Path(local_wf_job_dir).name
         workspace_id = Path(local_ocrd_ws_dir).name
-        get_src = Path(self.slurm_workspaces_dir, workflow_job_id, workspace_id, f"{workspace_id}.zip")
+        get_src = Path(self.slurm_workspaces_dir, workflow_job_id, f"ws_{workspace_id}.zip")
         get_dst = Path(local_ocrd_ws_dir.parent.absolute(), f"{workspace_id}.zip")
         self.logger.info(f"Downloading workspace zip from HPC source: {get_src}")
         self.logger.info(f"Downloading workspace zip to local destination: {get_dst}")
