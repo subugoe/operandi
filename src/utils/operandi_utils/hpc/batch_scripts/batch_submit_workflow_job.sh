@@ -126,6 +126,23 @@ clear_data_from_computing_node() {
   rm -rf "${NODE_DIR_PROCESSOR_SIFS}"
 }
 
+transfer_to_node_storage_workflow_job_zip(){
+  if [ ! -f "$WORKFLOW_JOB_ZIP" ]; then
+    echo "Required scratch slurm workspace zip is not available: $WORKFLOW_JOB_ZIP"
+    exit 1
+  fi
+  echo "Transferring workflow job zip from $WORKFLOW_JOB_ZIP to $NODE_WORKFLOW_JOB_ZIP"
+  cp "$WORKFLOW_JOB_ZIP" "$NODE_WORKFLOW_JOB_ZIP"
+  if [ ! -f "$NODE_WORKFLOW_JOB_ZIP" ]; then
+    echo "Workflow job zip not found at node local storage: $NODE_WORKFLOW_JOB_ZIP"
+    clear_data_from_computing_node
+    exit 1
+  else
+    echo "Successfully transferred workflow job zip to node local storage: $NODE_WORKFLOW_JOB_ZIP"
+  fi
+  rm -f "$WORKFLOW_JOB_ZIP"
+}
+
 transfer_to_node_storage_processor_models(){
   cp -R "${PROJECT_DIR_OCRD_MODELS}" "${NODE_DIR_OCRD_MODELS}"
   if [ ! -d "${NODE_DIR_OCRD_MODELS}" ]; then
@@ -167,22 +184,6 @@ transfer_to_node_storage_processor_images(){
   echo ""
   eval "$CMD_PRINT_OCRD_VERSION"
   echo ""
-}
-
-transfer_to_node_storage_workflow_job_zip(){
-  if [ ! -f "$WORKFLOW_JOB_ZIP" ]; then
-    echo "Required scratch slurm workspace zip is not available: $WORKFLOW_JOB_ZIP"
-    exit 1
-  fi
-  cp "$WORKFLOW_JOB_ZIP" "$NODE_WORKFLOW_JOB_ZIP"
-  if [ ! -f "$NODE_WORKFLOW_JOB_ZIP" ]; then
-    echo "Workflow job zip not found at node local storage: $NODE_WORKFLOW_JOB_ZIP"
-    clear_data_from_computing_node
-    exit 1
-  else
-    echo "Successfully transferred workflow job zip to node local storage: $NODE_WORKFLOW_JOB_ZIP"
-  fi
-  rm -f "$WORKFLOW_JOB_ZIP"
 }
 
 unzip_workflow_job_dir_in_node() {
@@ -299,11 +300,11 @@ transfer_from_node_storage_result_zips(){
 
 # Main loop for workflow job execution
 check_existence_of_paths
-unzip_workflow_job_dir_in_node
 echo ""
+transfer_to_node_storage_workflow_job_zip
+unzip_workflow_job_dir_in_node
 transfer_to_node_storage_processor_models
 transfer_to_node_storage_processor_images
-transfer_to_node_storage_workflow_job_zip
 start_mets_server
 execute_nextflow_workflow
 stop_mets_server
