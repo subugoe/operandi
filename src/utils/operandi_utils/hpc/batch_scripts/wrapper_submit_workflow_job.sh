@@ -20,14 +20,3 @@ if [ "$qos" == "48h" ] ; then
 else
   sbatch --constraint="$constraint" --partition="$partition" --time="$deadline_time" --output="$output" --cpus-per-task="$cpus_per_task" --mem="$memory" --qos="$qos" "$batch_script_path" "$2"
 fi
-
-echo "executed wrapper script: $0"
-echo "constraint: $constraint"
-echo "partition: $partition"
-echo "deadline_time: $deadline_time"
-echo "output: $output"
-echo "cpus_per_task: $cpus_per_task"
-echo "memory: $memory"
-echo "qos: $qos"
-echo "batch_script_path: $batch_script_path"
-echo "regular_args: $2"
