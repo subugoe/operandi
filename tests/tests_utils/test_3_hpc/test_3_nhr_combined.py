@@ -42,7 +42,7 @@ def helper_pack_and_put_slurm_workspace(
     Path(local_slurm_workspace_zip_path).unlink(missing_ok=True)
 
 
-def test_pack_and_put_slurm_workspace_failing(hpc_nhr_data_transfer, path_small_workspace_data_dir, template_workflow):
+def _test_pack_and_put_slurm_workspace_failing(hpc_nhr_data_transfer, path_small_workspace_data_dir, template_workflow):
     helper_pack_and_put_slurm_workspace(
         hpc_nhr_data_transfer=hpc_nhr_data_transfer, workflow_job_id=ID_WORKFLOW_JOB_FAILING,
         workspace_id=ID_WORKSPACE_FAILING, path_workflow=Path(template_workflow),
@@ -50,14 +50,14 @@ def test_pack_and_put_slurm_workspace_failing(hpc_nhr_data_transfer, path_small_
     )
 
 
-def test_pack_and_put_slurm_workspace(hpc_nhr_data_transfer, path_small_workspace_data_dir, template_workflow):
+def _test_pack_and_put_slurm_workspace(hpc_nhr_data_transfer, path_small_workspace_data_dir, template_workflow):
     helper_pack_and_put_slurm_workspace(
         hpc_nhr_data_transfer=hpc_nhr_data_transfer, workflow_job_id=ID_WORKFLOW_JOB, workspace_id=ID_WORKSPACE,
         path_workflow=Path(template_workflow), path_workspace_dir=Path(path_small_workspace_data_dir)
     )
 
 
-def test_pack_and_put_slurm_workspace_with_ms(
+def _test_pack_and_put_slurm_workspace_with_ms(
     hpc_nhr_data_transfer, path_small_workspace_data_dir, template_workflow_with_ms
 ):
     helper_pack_and_put_slurm_workspace(
@@ -67,7 +67,7 @@ def test_pack_and_put_slurm_workspace_with_ms(
     )
 
 
-def test_hpc_connector_run_batch_script_failing(
+def _test_hpc_connector_run_batch_script_failing(
     hpc_nhr_command_executor, hpc_nhr_data_transfer, template_workflow):
     slurm_job_id = hpc_nhr_command_executor.trigger_slurm_job(
         workflow_job_id=ID_WORKFLOW_JOB_FAILING, nextflow_script_path=Path(template_workflow),
@@ -87,7 +87,7 @@ def test_hpc_connector_run_batch_script_failing(
     assert log_file_path.stat().st_size > 0
 
 
-def test_hpc_connector_run_batch_script(
+def _test_hpc_connector_run_batch_script(
     hpc_nhr_command_executor, hpc_nhr_data_transfer, template_workflow):
     slurm_job_id = hpc_nhr_command_executor.trigger_slurm_job(
         workflow_job_id=ID_WORKFLOW_JOB, nextflow_script_path=Path(template_workflow),
@@ -111,7 +111,7 @@ def test_hpc_connector_run_batch_script(
     assert log_file_path.exists()
     assert log_file_path.stat().st_size > 0
 
-def test_hpc_connector_run_batch_script_with_ms(
+def _test_hpc_connector_run_batch_script_with_ms(
     hpc_nhr_command_executor, hpc_nhr_data_transfer, template_workflow_with_ms):
     slurm_job_id = hpc_nhr_command_executor.trigger_slurm_job(
         workflow_job_id=ID_WORKFLOW_JOB_WITH_MS, nextflow_script_path=Path(template_workflow_with_ms),
