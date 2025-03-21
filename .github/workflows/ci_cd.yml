@@ -153,6 +153,7 @@ jobs:
     name: Push ${{matrix.services.module}} to image registry
     environment:
       name: development
+    needs: build-native
     strategy:
       fail-fast: true
       matrix:
