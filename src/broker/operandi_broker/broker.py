@@ -5,6 +5,7 @@ from time import sleep
 from operandi_utils import (
     get_log_file_path_prefix, reconfigure_all_loggers, verify_database_uri, verify_and_parse_mq_uri)
 from operandi_utils.constants import LOG_LEVEL_BROKER
+from operandi_utils.hpc import NHRExecutor, NHRTransfer
 from operandi_utils.rabbitmq.constants import (
     RABBITMQ_QUEUE_HPC_DOWNLOADS, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS, RABBITMQ_QUEUE_JOB_STATUSES)
 
@@ -37,6 +38,12 @@ class ServiceBroker:
         except ValueError as e:
             raise ValueError(e)
 
+        try:
+            NHRTransfer().upload_batch_scripts()
+            NHRExecutor().make_remote_batch_scripts_executable()
+        except Exception as error:
+            self.log.error(f"Error while trying to upload batch scripts to HPC: {error}")
+
         # A dictionary to keep track of queues and worker pids
         # Keys: Each key is a unique queue name
         # Value: List of worker pids consuming from the key queue name
@@ -47,6 +54,7 @@ class ServiceBroker:
         queues = [RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS]
         status_queue = RABBITMQ_QUEUE_JOB_STATUSES
         hpc_download_queue = RABBITMQ_QUEUE_HPC_DOWNLOADS
+
         try:
             for queue_name in queues:
                 self.log.info(f"Creating a worker process to consume from queue: {queue_name}")

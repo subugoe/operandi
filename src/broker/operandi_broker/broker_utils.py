@@ -26,7 +26,7 @@ def create_child_process(
     try:
         if worker_type == "status_worker":
             child_worker = JobWorkerStatus(db_url, rabbitmq_url, queue_name)
-            child_worker.run(hpc_executor=True, hpc_io_transfer=True, publisher=True)
+            child_worker.run(hpc_executor=True, hpc_io_transfer=False, publisher=True)
         elif worker_type == "download_worker":
             child_worker = JobWorkerDownload(db_url, rabbitmq_url, queue_name)
             child_worker.run(hpc_executor=True, hpc_io_transfer=True, publisher=False)

@@ -23,7 +23,6 @@ class NHRTransfer(NHRConnector):
         self._sftp_reconnect_tries = SFTP_RECONNECT_TRIES
         self._sftp_reconnect_tries_remaining = self._sftp_reconnect_tries
         _ = self.sftp_client  # forces a connection
-        self.upload_batch_scripts()
 
     @property
     def sftp_client(self):

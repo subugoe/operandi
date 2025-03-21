@@ -25,6 +25,15 @@ class NHRExecutor(NHRConnector):
         super().__init__(logger)
         _ = self.ssh_client  # forces a connection
 
+    def make_remote_batch_scripts_executable(self):
+        hpc_slurm_job_dir = f"{self.batch_scripts_dir}"
+        command = f"bash -lc 'chmod +x -R {hpc_slurm_job_dir}'"
+        self.logger.info(f"About to execute a force command: {command}")
+        output, err, return_code = self.execute_blocking(command)
+        self.logger.info(f"Command output: {output}")
+        self.logger.info(f"Command err: {err}")
+        self.logger.info(f"Command return code: {return_code}")
+
     # Execute blocking commands and wait for an output and return code
     def execute_blocking(self, command, timeout=None, environment=None):
         stdin, stdout, stderr = self.ssh_client.exec_command(command=command, timeout=timeout, environment=environment)
