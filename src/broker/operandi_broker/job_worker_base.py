@@ -48,12 +48,10 @@ class JobWorkerBase:
         raise NotImplementedError(NOT_IMPLEMENTED_ERROR)
 
     def run(self, hpc_executor: bool, hpc_io_transfer: bool, publisher: bool):
-        error_flag = "PH_0"
         try:
             # Source: https://unix.stackexchange.com/questions/18166/what-are-session-leaders-in-ps
             # Make the current process session leader
             setsid()
-            error_flag = "PH_1"
             # Reconfigure all loggers to the same format
             reconfigure_all_loggers(log_level=LOG_LEVEL_WORKER, log_file_path=self.log_file_path)
             self.log.info(f"Activating signal handler for SIGINT, SIGTERM")
@@ -65,27 +63,21 @@ class JobWorkerBase:
             if hpc_executor:
                 self.hpc_executor = NHRExecutor()
                 self.log.info("HPC executor connection successful.")
-                error_flag = "PH_2"
             if hpc_io_transfer:
                 self.hpc_io_transfer = NHRTransfer()
                 self.log.info("HPC transfer connection successful.")
-                error_flag = "PH_3"
             if publisher:
                 self.rmq_publisher = get_connection_publisher(rabbitmq_url=self.rmq_url, enable_acks=True)
                 self.log.info(f"RMQPublisher connected")
-                error_flag = "PH_4"
 
             self.rmq_consumer = get_connection_consumer(rabbitmq_url=self.rmq_url)
-            error_flag = "PH_5"
             self.log.info(f"RMQConsumer connected")
             self.rmq_consumer.configure_consuming(
                 queue_name=self.queue_name, callback_method=self._consumed_msg_callback)
-            error_flag = "PH_6"
             self.log.info(f"Starting consuming from queue: {self.queue_name}")
             self.rmq_consumer.start_consuming()
-            error_flag = "PH_7"
         except Exception as e:
-            self.log.error(f"The worker failed, error_flag={error_flag}, reason: {e}")
+            self.log.error(f"The worker failed, reason: {e}")
             raise Exception(f"The worker failed, reason: {e}")
 
     # The arguments to this method are passed by the caller from the OS
