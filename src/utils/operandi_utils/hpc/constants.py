@@ -1,7 +1,5 @@
 __all__ = [
     "HPC_BATCH_SUBMIT_WORKFLOW_JOB",
-    "HPC_DIR_BATCH_SCRIPTS",
-    "HPC_DIR_SLURM_WORKSPACES",
     "HPC_JOB_DEADLINE_TIME_REGULAR",
     "HPC_JOB_DEADLINE_TIME_TEST",
     "HPC_NHR_JOB_DEFAULT_PARTITION",
@@ -59,13 +57,9 @@ HPC_NHR_CLUSTERS = {
     }
 }
 
-HPC_DIR_BATCH_SCRIPTS = "batch_scripts"
-HPC_DIR_SLURM_WORKSPACES = "slurm_workspaces"
-# TODO: Fix the constant file name - it should be automatically resolved
-# TODO: Fix the naming when releasing the next Operandi version
-HPC_BATCH_SUBMIT_WORKFLOW_JOB = f"{HPC_NHR_SCRATCH_EMMY_HDD}/{HPC_DIR_BATCH_SCRIPTS}/batch_submit_workflow_job.sh"
-HPC_WRAPPER_SUBMIT_WORKFLOW_JOB = f"{HPC_NHR_SCRATCH_EMMY_HDD}/{HPC_DIR_BATCH_SCRIPTS}/wrapper_submit_workflow_job.sh"
-HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS = f"{HPC_NHR_SCRATCH_EMMY_HDD}/{HPC_DIR_BATCH_SCRIPTS}/wrapper_check_workflow_job_status.sh"
+HPC_BATCH_SUBMIT_WORKFLOW_JOB: str = f"batch_submit_workflow_job.sh"
+HPC_WRAPPER_SUBMIT_WORKFLOW_JOB: str = f"wrapper_submit_workflow_job.sh"
+HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS: str = f"wrapper_check_workflow_job_status.sh"
 
 HPC_JOB_DEADLINE_TIME_REGULAR = "48:00:00"
 HPC_JOB_DEADLINE_TIME_TEST = "00:30:00"

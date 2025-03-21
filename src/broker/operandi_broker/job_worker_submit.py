@@ -186,7 +186,7 @@ class JobWorkerSubmit(JobWorkerBase):
             sync_db_create_hpc_slurm_job(
                 user_id=self.current_message_user_id,
                 workflow_job_id=workflow_job_id, hpc_slurm_job_id=slurm_job_id,
-                hpc_batch_script_path=HPC_BATCH_SUBMIT_WORKFLOW_JOB,
+                hpc_batch_script_path=join(self.hpc_io_transfer.batch_scripts_dir, HPC_BATCH_SUBMIT_WORKFLOW_JOB),
                 hpc_slurm_workspace_path=join(self.hpc_io_transfer.slurm_workspaces_dir, workflow_job_id))
         except Exception as error:
             raise Exception(f"Failed to save the hpc slurm job in DB: {error}")

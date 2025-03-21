@@ -8,22 +8,22 @@ from tempfile import mkdtemp
 from time import sleep
 from typing import Tuple
 
-from operandi_utils import make_zip_archive, unpack_zip_archive
+from operandi_utils import make_zip_archive, unpack_zip_archive, get_batch_scripts_dir
 from .nhr_connector import NHRConnector
 
 SFTP_RECONNECT_TRIES = 5
-DOWNLOAD_FILE_TRY_TIMES = 100
-DOWNLOAD_FILE_SLEEP_TIME = 3
+TRY_TIMES = 100
+SLEEP_TIME = 3
 
 class NHRTransfer(NHRConnector):
     def __init__(self) -> None:
         logger = getLogger(name=self.__class__.__name__)
         super().__init__(logger)
-        self._operandi_data_root = ""
         self._sftp_client = None
         self._sftp_reconnect_tries = SFTP_RECONNECT_TRIES
         self._sftp_reconnect_tries_remaining = self._sftp_reconnect_tries
         _ = self.sftp_client  # forces a connection
+        self.upload_batch_scripts()
 
     @property
     def sftp_client(self):
@@ -32,6 +32,16 @@ class NHRTransfer(NHRConnector):
             self._ssh_client = None
         self._sftp_client = self.ssh_client.open_sftp()
         return self._sftp_client
+
+    def upload_batch_scripts(self):
+        batch_scripts_dir = get_batch_scripts_dir()
+        for current_file in batch_scripts_dir.iterdir():
+            if current_file.is_file() and current_file.suffix == ".sh":
+                remote_dst = f"{self.batch_scripts_dir}/{current_file.name}"
+                self.logger.info(f"Uploading batch script: {current_file} to {remote_dst}")
+                self._upload_file_with_retries(local_src=current_file, remote_dst=remote_dst)
+            else:
+                self.logger.info(f"Skipping batch scripts path: {current_file}")
 
     def create_slurm_workspace_zip(
         self, ocrd_workspace_dir: Path, workflow_job_id: str, nextflow_script_path: Path,
@@ -99,14 +109,32 @@ class NHRTransfer(NHRConnector):
         Path(local_src_slurm_zip).unlink(missing_ok=True)
         return local_src_slurm_zip, hpc_dst
 
-    def _download_file_with_retries(
-        self, remote_src, local_dst, try_times: int = DOWNLOAD_FILE_TRY_TIMES,
-        sleep_time: int = DOWNLOAD_FILE_SLEEP_TIME
+    def _upload_file_with_retries(
+        self, local_src, remote_dst, try_times: int = TRY_TIMES, sleep_time: int = SLEEP_TIME
     ):
         if try_times < 0 or sleep_time < 0:
             self.logger.warning("Negative value passed as a parameter to any of the time options, using defaults.")
-            try_times = DOWNLOAD_FILE_TRY_TIMES
-            sleep_time = DOWNLOAD_FILE_SLEEP_TIME
+            try_times = TRY_TIMES
+            sleep_time = SLEEP_TIME
+        tries = try_times
+        while tries > 0:
+            try:
+                self.put_file(local_src=str(local_src), remote_dst=str(remote_dst))
+                break
+            except Exception as error:
+                tries -= 1
+                if tries <= 0:
+                    raise Exception(f"Error uploading file: {error}, local_src:{local_src}, remote_dst:{remote_dst}")
+                sleep(sleep_time)
+                continue
+
+    def _download_file_with_retries(
+        self, remote_src, local_dst, try_times: int = TRY_TIMES, sleep_time: int = SLEEP_TIME
+    ):
+        if try_times < 0 or sleep_time < 0:
+            self.logger.warning("Negative value passed as a parameter to any of the time options, using defaults.")
+            try_times = TRY_TIMES
+            sleep_time = SLEEP_TIME
         tries = try_times
         while tries > 0:
             try:
@@ -115,7 +143,7 @@ class NHRTransfer(NHRConnector):
             except Exception as error:
                 tries -= 1
                 if tries <= 0:
-                    raise Exception(f"Error getting zip file: {error}, remote_src:{remote_src}, local_dst:{local_dst}")
+                    raise Exception(f"Error downloading file: {error}, remote_src:{remote_src}, local_dst:{local_dst}")
                 sleep(sleep_time)
                 continue
 

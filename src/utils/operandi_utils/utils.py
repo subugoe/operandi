@@ -75,11 +75,14 @@ def is_url_responsive(url: str) -> bool:
         response = get(url, stream=True)
         if response.status_code // 100 == 2:
             return True
-    except RequestException as request_error:
+    except RequestException:
         return False
-    except Exception as error:
+    except Exception:
         return False
+    return False
 
+def get_batch_scripts_dir() -> Path:
+    return Path(dirname(__file__), "hpc", "batch_scripts")
 
 def get_nf_wfs_dir() -> Path:
     return Path(dirname(__file__), "hpc", "nextflow_workflows")

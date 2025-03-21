@@ -1,5 +1,6 @@
 from json import dumps
 from logging import getLogger
+from os.path import join
 from pathlib import Path
 from time import sleep
 from typing import List
@@ -67,7 +68,7 @@ class NHRExecutor(NHRConnector):
                 f"Setting the forks value to the value of amount of pages.")
             nf_process_forks = ws_pages_amount
 
-        force_command = f"{HPC_WRAPPER_SUBMIT_WORKFLOW_JOB}"
+        force_command = f"{join(self.batch_scripts_dir, HPC_WRAPPER_SUBMIT_WORKFLOW_JOB)}"
         sbatch_args = {
             "constraint": "ssd",
             "partition": partition,
@@ -76,7 +77,7 @@ class NHRExecutor(NHRConnector):
             "cpus": cpus,
             "ram": f"{ram}G",
             "qos": qos,
-            "batch_script_path": HPC_BATCH_SUBMIT_WORKFLOW_JOB
+            "batch_script_path": join(self.batch_scripts_dir, HPC_BATCH_SUBMIT_WORKFLOW_JOB)
         }
 
         sif_ocrd_all = OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE["ocrd_all"]
@@ -122,7 +123,7 @@ class NHRExecutor(NHRConnector):
         return slurm_job_id
 
     def check_slurm_job_state_once(self, slurm_job_id: str) -> StateJobSlurm:
-        force_command = f"{HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS} {slurm_job_id}"
+        force_command = f"{join(self.batch_scripts_dir, HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS)} {slurm_job_id}"
         output, err, return_code = self.execute_blocking(force_command)
         if return_code > 0:
             self.logger.info(f"Executed force command: {force_command}")
