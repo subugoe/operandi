@@ -292,13 +292,15 @@ zip_results() {
 }
 
 transfer_from_node_storage_result_zips(){
-  if [ -f "$NODE_DIR_BASE/$WORKFLOW_JOB_ID.zip" ]; then
-    echo "Transferring $NODE_DIR_BASE/$WORKFLOW_JOB_ID.zip to $SCRATCH_BASE/$WORKFLOW_JOB_ID/wf_$WORKFLOW_JOB_ID.zip"
-    cp "$NODE_DIR_BASE/$WORKFLOW_JOB_ID.zip" "$SCRATCH_BASE/$WORKFLOW_JOB_ID/wf_$WORKFLOW_JOB_ID.zip"
+  WF_JOB_ZIP="$NODE_DIR_BASE/$WORKFLOW_JOB_ID.zip"
+  if [ -f "$WF_JOB_ZIP" ]; then
+    echo "Transferring $WF_JOB_ZIP to $SCRATCH_BASE/$WORKFLOW_JOB_ID/wf_$WORKFLOW_JOB_ID.zip"
+    cp "$WF_JOB_ZIP" "$SCRATCH_BASE/$WORKFLOW_JOB_ID/wf_$WORKFLOW_JOB_ID.zip"
   fi
-  if [ -f "$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKSPACE_ID.zip" ]; then
-    echo "Transferring $NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKSPACE_ID.zip to $SCRATCH_BASE/$WORKFLOW_JOB_ID/ws_$WORKSPACE_ID.zip"
-    cp "$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKSPACE_ID.zip" "$SCRATCH_BASE/$WORKFLOW_JOB_ID/ws_$WORKSPACE_ID.zip"
+  WS_ZIP="$NODE_DIR_BASE/$WORKFLOW_JOB_ID/$WORKSPACE_ID/$WORKSPACE_ID.zip"
+  if [ -f "$WS_ZIP" ]; then
+    echo "Transferring $WS_ZIP to $SCRATCH_BASE/$WORKFLOW_JOB_ID/ws_$WORKSPACE_ID.zip"
+    cp "$WS_ZIP" "$SCRATCH_BASE/$WORKFLOW_JOB_ID/ws_$WORKSPACE_ID.zip"
   fi
 }
 
