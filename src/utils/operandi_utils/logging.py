@@ -46,7 +46,7 @@ def reconfigure_all_loggers(log_level: str, log_file_path: str):
         current_logger = logging.getLogger(name)
         if "pika" in current_logger.name or "paramiko" in current_logger.name or "ocrd" in current_logger.name:
             print(f"Setting log level to WARNING of: {name}")
-            current_logger.setLevel(level="WARNING")
+            current_logger.setLevel(level="DEBUG")
         current_logger.handlers = []
         current_logger.propagate = True
     handlers = [
