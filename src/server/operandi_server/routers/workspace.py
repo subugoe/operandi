@@ -33,57 +33,60 @@ class RouterWorkspace:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.workspace")
         self.router = APIRouter(tags=[ServerApiTag.WORKSPACE])
-        self.router.add_api_route(
+        self.add_api_routes(self.router)
+
+    def add_api_routes(self, router: APIRouter):
+        router.add_api_route(
             path="/import_external_workspace",
             endpoint=self.upload_workspace_from_url, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Import workspace from mets url. Returns a `resource_id` associated with the uploaded workspace.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workspace",
             endpoint=self.upload_workspace, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Import workspace as an ocrd zip. Returns a `resource_id` associated with the uploaded workspace.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/batch-workspaces",
             endpoint=self.upload_batch_workspaces, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Upload a list of workspaces each as an ocrd zip (limit:5). "
                     "Returns a list of `resource_id`s associated with the uploaded workspaces.",
             response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/batch-workspaces-urls",
             endpoint=self.upload_batch_workspaces_from_urls, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Upload a list of workspaces each as a URL referencing a mets file (limit:5). "
                     "Returns a list of `resource_id`s associated with the uploaded workspaces.",
             response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workspace/{workspace_id}",
             endpoint=self.download_workspace, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download an existing workspace zip identified with `workspace_id`.",
             response_model=None, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workspace/{workspace_id}",
             endpoint=self.upload_workspace, methods=["PUT"], status_code=status.HTTP_201_CREATED,
             summary="Update an existing workspace specified with `workspace_id` or create a new workspace.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workspace/{workspace_id}",
             endpoint=self.delete_workspace, methods=["DELETE"], status_code=status.HTTP_200_OK,
             summary="Delete an existing workspace identified with `workspace_id`.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/remove_file_group/{workspace_id}",
             endpoint=self.remove_file_group_from_workspace, methods=["DELETE"], status_code=status.HTTP_201_CREATED,
             summary="Remove file groups from a workspace",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/push_to_ola_hd",
             endpoint=self.push_to_ola_hd, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Push a workspace to Ola-HD service"

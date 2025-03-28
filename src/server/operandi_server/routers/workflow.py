@@ -46,7 +46,14 @@ class RouterWorkflow:
         self.logger.info(f"RMQPublisher connected")
 
         self.router = APIRouter(tags=[ServerApiTag.WORKFLOW])
-        self.router.add_api_route(
+        self.add_api_routes(self.router)
+
+    def __del__(self):
+        if self.rmq_publisher:
+            self.rmq_publisher.disconnect()
+
+    def add_api_routes(self, router: APIRouter):
+        router.add_api_route(
             path="/convert_workflow",
             endpoint=self.convert_txt_to_nextflow, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="""
@@ -55,37 +62,37 @@ class RouterWorkflow:
             """,
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workflow", endpoint=self.upload_workflow_script, methods=["POST"],
             status_code=status.HTTP_201_CREATED, response_model=WorkflowRsrc, response_model_exclude_unset=True,
             response_model_exclude_none=True,
             summary="Upload a nextflow workflow script. Returns a `resource_id` associated with the uploaded script."
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/batch-workflows", endpoint=self.upload_batch_workflow_scripts, methods=["POST"],
             status_code=status.HTTP_201_CREATED,
             summary="Upload a list of nextflow workflow scripts (limit:5). "
                     "Returns a list of `resource_id`s associated with the uploaded workflows.",
             response_model=None
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/batch-workflow-jobs", endpoint=self.submit_batch_workflow_jobs,
             methods=["POST"], status_code=status.HTTP_201_CREATED, summary="Trigger upto 5 workflow jobs with specified workflows and arguments.",
             response_model=List[WorkflowJobRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workflow/{workflow_id}",
             endpoint=self.submit_to_rabbitmq_queue, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Run a workflow job with the specified `workflow_id` and arguments in the request body.",
             response_model=WorkflowJobRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workflow/{workflow_id}",
             endpoint=self.download_workflow_script, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download an existing nextflow workflow script identified with `workflow_id`.",
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workflow/{workflow_id}/{job_id}",
             endpoint=self.get_workflow_job_status, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="""
@@ -100,28 +107,24 @@ class RouterWorkflow:
             """,
             response_model=WorkflowJobRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workflow/{workflow_id}/{job_id}/logs",
             endpoint=self.download_workflow_job_logs, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download the logs zip of a job identified with `workflow_id` and `job_id`.",
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workflow/{workflow_id}/{job_id}/hpc-log",
             endpoint=self.download_workflow_job_hpc_log, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download the slurm job log file of the `job_id`.",
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workflow/{workflow_id}",
             endpoint=self.update_workflow_script, methods=["PUT"], status_code=status.HTTP_201_CREATED,
             summary="Update an existing workflow script identified with or `workflow_id` or upload a new script.",
             response_model=WorkflowRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-
-    def __del__(self):
-        if self.rmq_publisher:
-            self.rmq_publisher.disconnect()
 
     async def produce_production_workflows(
         self,
