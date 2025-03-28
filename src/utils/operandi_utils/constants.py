@@ -52,6 +52,7 @@ class AccountType(str, Enum):
 class ServerApiTag(str, Enum):
     ADMIN = "admin"
     DISCOVERY = "discovery"
+    OTON = "oton"
     USER = "user"
     WORKFLOW = "workflow"
     WORKSPACE = "workspace"

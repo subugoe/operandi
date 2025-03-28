@@ -10,7 +10,6 @@ from operandi_utils.database import (
     db_get_workflow, db_get_workflow_job, db_get_workspace
 )
 from operandi_utils.database.models import DBWorkflow, DBWorkflowJob
-from operandi_utils.oton import OTONConverter, OCRDValidator
 from operandi_utils.oton.constants import PARAMS_KEY_METS_SOCKET_PATH
 from operandi_utils.rabbitmq import RABBITMQ_QUEUE_JOB_STATUSES
 from operandi_server.models import WorkflowRsrc, WorkflowJobRsrc
@@ -78,32 +77,6 @@ async def nf_script_extract_metadata_with_handling(logger, nf_script_path: str) 
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
     logger.info(f"Extracted Nextflow workflow metadata: {metadata}")
     return metadata
-
-async def validate_oton_with_handling(logger, ocrd_process_txt_path: str):
-    try:
-        # Separate validation for refined error logging
-        validator = OCRDValidator()
-        validator.validate(input_file=ocrd_process_txt_path)
-    except ValueError as error:
-        message = "Failed to validate the ocrd process workflow txt file"
-        logger.error(f"{message}, error: {error}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-
-async def convert_oton_with_handling(
-    logger, ocrd_process_txt_path: str, nf_script_dest_path: str, environment: str, with_mets_server: bool
-):
-    environments = ["local", "docker", "apptainer"]
-    if environment not in environments:
-        message = f"Unknown environment value: {environment}. Must be one of: {environments}"
-        logger.error(message)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-    try:
-        converter = OTONConverter()
-        converter.convert_oton(str(ocrd_process_txt_path), str(nf_script_dest_path), environment, with_mets_server)
-    except ValueError as error:
-        message = "Failed to convert ocrd process workflow to nextflow workflow"
-        logger.error(f"{message}, error: {error}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
 async def get_user_workflows(
     user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True

@@ -19,12 +19,10 @@ from operandi_utils.rabbitmq import get_connection_publisher, RABBITMQ_QUEUE_HAR
 from operandi_server.files_manager import LFMInstance, receive_resource
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
 from .workflow_utils import (
-    convert_oton_with_handling,
     get_db_workflow_job_with_handling,
     get_db_workflow_with_handling,
     nf_script_extract_metadata_with_handling,
-    push_status_request_to_rabbitmq,
-    validate_oton_with_handling
+    push_status_request_to_rabbitmq
 )
 from .workspace_utils import (
     check_if_file_group_exists_with_handling, get_db_workspace_with_handling, find_file_groups_to_remove_with_handling)
@@ -50,15 +48,6 @@ class RouterWorkflow:
             self.rmq_publisher.disconnect()
 
     def add_api_routes(self, router: APIRouter):
-        router.add_api_route(
-            path="/convert_workflow",
-            endpoint=self.convert_txt_to_nextflow, methods=["POST"], status_code=status.HTTP_201_CREATED,
-            summary="""
-            Upload a text file containing a workflow in ocrd process format and
-            convert it to a Nextflow script in the desired format (local/docker/apptainer)
-            """,
-            response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
-        )
         router.add_api_route(
             path="/workflow", endpoint=self.upload_workflow_script, methods=["POST"],
             status_code=status.HTTP_201_CREATED, response_model=WorkflowRsrc, response_model_exclude_unset=True,
@@ -387,26 +376,6 @@ class RouterWorkflow:
             message = f"The user account type is not valid: {user_type}. Must be one of: {AccountType}"
             self.logger.error(f"{message}")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
-
-    async def convert_txt_to_nextflow(
-        self, txt_file: UploadFile, environment: str, with_mets_server: bool = True,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
-    ):
-        await user_auth_with_handling(self.logger, auth)
-        oton_id, oton_dir = LFMInstance.make_dir_oton_conversions()
-        ocrd_process_txt = join(oton_dir, f"ocrd_process_input.txt")
-        nf_script_dest = join(oton_dir, f"nextflow_output.nf")
-
-        try:
-            await receive_resource(file=txt_file, resource_dst=ocrd_process_txt)
-        except Exception as error:
-            message = "Failed to receive the workflow resource"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
-
-        await validate_oton_with_handling(self.logger, ocrd_process_txt)
-        await convert_oton_with_handling(self.logger, ocrd_process_txt, nf_script_dest, environment, with_mets_server)
-        return FileResponse(nf_script_dest, filename=f'{oton_id}.nf', media_type="application/txt-file")
 
     async def upload_batch_workflow_scripts(
         self, workflows: List[UploadFile], auth: HTTPBasicCredentials = Depends(HTTPBasic())
