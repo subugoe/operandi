@@ -53,6 +53,7 @@ class ServerApiTag(str, Enum):
     ADMIN = "admin"
     DISCOVERY = "discovery"
     OTON = "oton"
+    OLAHD = "olahd"
     USER = "user"
     WORKFLOW = "workflow"
     WORKSPACE = "workspace"

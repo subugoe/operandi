@@ -10,7 +10,6 @@ __all__ = [
     "receive_file",
     "reconfigure_all_loggers",
     "safe_init_logging",
-    "send_bag_to_ola_hd",
     "StateJob",
     "StateJobSlurm",
     "StateWorkspace",
@@ -32,7 +31,6 @@ from operandi_utils.utils import (
     make_zip_archive,
     unpack_zip_archive,
     safe_init_logging,
-    send_bag_to_ola_hd,
     verify_and_parse_mq_uri,
     verify_database_uri
 )

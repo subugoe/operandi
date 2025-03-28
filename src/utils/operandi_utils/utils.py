@@ -6,7 +6,7 @@ from pathlib import Path
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
 from re import match as re_match
-from requests import get as requests_get, post as requests_post
+from requests import get as requests_get
 from requests.exceptions import RequestException
 from shutil import make_archive, move, unpack_archive
 from uuid import uuid4
@@ -85,14 +85,6 @@ def make_zip_archive(source, destination):
 
 def unpack_zip_archive(source, destination):
     unpack_archive(filename=source, extract_dir=destination)
-
-def send_bag_to_ola_hd(path_to_bag, username, password, endpoint) -> str:
-    ola_hd_files = {"file": open(path_to_bag, "rb")}
-    ola_hd_auth = (username, password)
-    ola_hd_response = requests_post(url=endpoint, files=ola_hd_files, auth=ola_hd_auth)
-    if ola_hd_response.status_code >= 400:
-        ola_hd_response.raise_for_status()
-    return ola_hd_response.json()["pid"]
 
 def verify_database_uri(mongodb_address: str) -> str:
     try:
