@@ -186,6 +186,7 @@ class Harvester:
             if workflow_job_state == StateJob.FAILED:
                 return False
             tries_left -= 1
+        return False
 
     def get_workspace_zip(self, workspace_id: str, download_dir: str) -> str:
         self.logger.info(f"Getting workspace zip of: {workspace_id}")
