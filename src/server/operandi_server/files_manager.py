@@ -1,10 +1,10 @@
 import aiofiles
 from io import DEFAULT_BUFFER_SIZE
-from os import environ, scandir
-from os.path import isdir, join
+from os import environ
+from os.path import join
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Tuple
+from typing import Tuple
 from operandi_utils import generate_id
 from .constants import (
     SERVER_OTON_CONVERSIONS, SERVER_WORKFLOWS_ROUTER, SERVER_WORKFLOW_JOBS_ROUTER, SERVER_WORKSPACES_ROUTER)

@@ -1,37 +1,34 @@
 from functools import wraps
 from io import DEFAULT_BUFFER_SIZE
-from os import makedirs, sep
-from os.path import basename, dirname, exists
+from os import sep
+from os.path import basename, dirname
 from pathlib import Path
 from pika import URLParameters
 from pymongo import uri_parser as mongo_uri_parser
 from re import match as re_match
-from requests import get, post
+from requests import get as requests_get, post as requests_post
 from requests.exceptions import RequestException
 from shutil import make_archive, move, unpack_archive
 from uuid import uuid4
 
 from ocrd_utils import initLogging
 
-
 logging_initialized = False
 
-
-def safe_init_logging() -> None:
+def safe_init_logging():
     """
-    wrapper around ocrd_utils.initLogging. It assures that ocrd_utils.initLogging is only called
-    once. This function may be called multiple times
+    A wrapper around ocrd_utils.initLogging. It assures that ocrd_utils.initLogging is only called once.
+    This function may be called multiple times without any side effects
     """
     global logging_initialized
     if not logging_initialized:
         logging_initialized = True
         initLogging()
 
-
 def call_sync(func):
     """
-    Based on:
-    https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
+    A wrapper to call async methods in a sync fashion.
+    Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
     """
     from asyncio import iscoroutine, get_event_loop
 
@@ -44,35 +41,9 @@ def call_sync(func):
 
     return func_wrapper
 
-
-def download_mets_file(
-    mets_url, ocrd_workspace_dir, mets_basename: str = "mets.xml", chunk_size: int = DEFAULT_BUFFER_SIZE
-) -> bool:
-    try:
-        response = get(mets_url, stream=True)
-        if response.status_code != 200:
-            return False
-    except RequestException as request_error:
-        return False
-    except Exception as error:
-        return False
-    try:
-        if not exists(ocrd_workspace_dir):
-            makedirs(ocrd_workspace_dir)
-        filename = Path(ocrd_workspace_dir, mets_basename)
-        receive_file(response=response, download_path=filename, chunk_size=chunk_size, mode='wb')
-    except FileExistsError as file_error:
-        return False
-    except OSError as os_error:
-        return False
-    except Exception as error:
-        return False
-    return True
-
-
 def is_url_responsive(url: str) -> bool:
     try:
-        response = get(url, stream=True)
+        response = requests_get(url, stream=True)
         if response.status_code // 100 == 2:
             return True
     except RequestException:
@@ -96,16 +67,14 @@ def generate_id(file_ext: str = None):
         generated_id += file_ext
     return generated_id
 
-
-def receive_file(response, download_path, chunk_size: int = DEFAULT_BUFFER_SIZE, mode: str = "wb") -> None:
+def receive_file(response, download_path, chunk_size: int = DEFAULT_BUFFER_SIZE, mode: str = "wb"):
     with open(download_path, mode) as filePtr:
         for chunk in response.iter_content(chunk_size=chunk_size):
             if chunk:
                 filePtr.write(chunk)
                 filePtr.flush()
 
-
-def make_zip_archive(source, destination) -> None:
+def make_zip_archive(source, destination):
     base = basename(destination)
     name = base.split('.')[0]
     zip_format = base.split('.')[1]
@@ -114,19 +83,16 @@ def make_zip_archive(source, destination) -> None:
     make_archive(base_name=name, format=zip_format, root_dir=archive_from, base_dir=archive_to)
     move(src=f"{name}.{zip_format}", dst=destination)
 
-
-def unpack_zip_archive(source, destination) -> None:
+def unpack_zip_archive(source, destination):
     unpack_archive(filename=source, extract_dir=destination)
-
 
 def send_bag_to_ola_hd(path_to_bag, username, password, endpoint) -> str:
     ola_hd_files = {"file": open(path_to_bag, "rb")}
     ola_hd_auth = (username, password)
-    ola_hd_response = post(url=endpoint, files=ola_hd_files, auth=ola_hd_auth)
+    ola_hd_response = requests_post(url=endpoint, files=ola_hd_files, auth=ola_hd_auth)
     if ola_hd_response.status_code >= 400:
         ola_hd_response.raise_for_status()
     return ola_hd_response.json()["pid"]
-
 
 def verify_database_uri(mongodb_address: str) -> str:
     try:
@@ -136,8 +102,7 @@ def verify_database_uri(mongodb_address: str) -> str:
         raise ValueError(f"The MongoDB address '{mongodb_address}' is in wrong format, {error}")
     return mongodb_address
 
-
-def verify_and_parse_mq_uri(rabbitmq_address: str):
+def verify_and_parse_mq_uri(rabbitmq_address: str) -> dict:
     """
     Check the full list of available parameters in the docs here:
     https://pika.readthedocs.io/en/stable/_modules/pika/connection.html#URLParameters

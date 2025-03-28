@@ -502,7 +502,7 @@ class RouterWorkflow:
     async def submit_batch_workflow_jobs(
         self, workflow_job_requests: List[dict], auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> List[WorkflowJobRsrc]:
-        py_user_action = await user_auth_with_handling(self.logger, auth)
+        await user_auth_with_handling(self.logger, auth)
         if len(workflow_job_requests) > 5:
             message = "Batch upload exceeds the limit of 5 workflow jobs"
             self.logger.error(message)

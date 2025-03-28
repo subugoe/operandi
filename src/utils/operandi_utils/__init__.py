@@ -1,6 +1,5 @@
 __all__ = [
     "call_sync",
-    "download_mets_file",
     "is_url_responsive",
     "generate_id",
     "get_batch_scripts_dir",
@@ -24,7 +23,6 @@ from operandi_utils.constants import StateJob, StateJobSlurm, StateWorkspace
 from operandi_utils.logging import reconfigure_all_loggers, get_log_file_path_prefix
 from operandi_utils.utils import (
     call_sync,
-    download_mets_file,
     is_url_responsive,
     generate_id,
     get_batch_scripts_dir,
