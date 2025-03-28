@@ -3,7 +3,7 @@ from logging import getLogger
 from os import unlink
 from os.path import join
 from pathlib import Path
-from shutil import make_archive, copyfile
+from shutil import make_archive
 from tempfile import mkdtemp
 from typing import List
 
@@ -11,15 +11,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, 
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from operandi_utils import get_nf_wfs_dir, get_ocrd_process_wfs_dir
 from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateWorkspace
 from operandi_utils.database import (
     db_create_workflow, db_create_workflow_job, db_get_hpc_slurm_job, db_update_workspace,
     db_increase_processing_stats_with_handling)
-from operandi_utils.oton import OTONConverter
 from operandi_utils.rabbitmq import get_connection_publisher, RABBITMQ_QUEUE_HARVESTER, RABBITMQ_QUEUE_USERS
-from operandi_server.files_manager import receive_resource
-from operandi_server.files_manager import LFMInstance
+from operandi_server.files_manager import LFMInstance, receive_resource
 from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowRsrc, WorkflowJobRsrc
 from .workflow_utils import (
     convert_oton_with_handling,
@@ -35,11 +32,11 @@ from .user_utils import user_auth_with_handling
 
 
 class RouterWorkflow:
-    def __init__(self):
+    def __init__(self, production_workflows: List[str]):
         self.logger = getLogger("operandi_server.routers.workflow")
 
         # The workflows available to all users by default
-        self.production_workflows = []
+        self.production_workflows = production_workflows
 
         self.logger.info(f"Trying to connect RMQ Publisher")
         self.rmq_publisher = get_connection_publisher(enable_acks=True)
@@ -125,57 +122,6 @@ class RouterWorkflow:
             summary="Update an existing workflow script identified with or `workflow_id` or upload a new script.",
             response_model=WorkflowRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-
-    async def produce_production_workflows(
-        self,
-        ocrd_process_wf_dir: Path = get_ocrd_process_wfs_dir(),
-        production_nf_wfs_dir: Path = get_nf_wfs_dir()
-    ):
-        oton_converter = OTONConverter()
-        for path in ocrd_process_wf_dir.iterdir():
-            if not path.is_file():
-                self.logger.info(f"Skipping non-file path: {path}")
-                continue
-            if path.suffix != '.txt':
-                self.logger.info(f"Skipping non .txt extension file path: {path}")
-                continue
-            # path.stem -> file_name
-            # path.name -> file_name.ext
-            self.logger.info(f"Converting to Nextflow workflow the ocrd process workflow: {path}")
-            output_path = Path(production_nf_wfs_dir, f"{path.stem}.nf")
-            oton_converter.convert_oton(
-                input_path=path, output_path=str(output_path), environment="apptainer", with_mets_server=False)
-            self.logger.info(f"Converted to a Nextflow file without a mets server: {output_path}")
-            output_path = Path(production_nf_wfs_dir, f"{path.stem}_with_MS.nf")
-            oton_converter.convert_oton(
-                input_path=path, output_path=str(output_path), environment="apptainer", with_mets_server=True)
-            self.logger.info(f"Converted to a Nextflow file with a mets server: {output_path}")
-
-    async def insert_production_workflows(self, production_nf_wfs_dir: Path = get_nf_wfs_dir()):
-        wf_detail = "Workflow provided by the Operandi Server"
-        self.logger.info(f"Inserting production workflows for Operandi from: {production_nf_wfs_dir}")
-        for path in production_nf_wfs_dir.iterdir():
-            if not path.is_file():
-                self.logger.info(f"Skipping non-file path: {path}")
-                continue
-            if path.suffix != '.nf':
-                self.logger.info(f"Skipping non .nf extension file path: {path}")
-                continue
-            # path.stem -> file_name
-            # path.name -> file_name.ext
-            workflow_id, workflow_dir = LFMInstance.make_dir_workflow(workflow_id=path.stem, exists_ok=True)
-            nf_script_dest = str(join(workflow_dir, path.name))
-            copyfile(src=path, dst=nf_script_dest)
-            nf_metadata = await nf_script_extract_metadata_with_handling(self.logger, nf_script_dest)
-            self.logger.info(
-                f"Inserting: {workflow_id}, metadata: {nf_metadata}, script path: {nf_script_dest}")
-            await db_create_workflow(
-                user_id="Operandi Server",
-                workflow_id=workflow_id, workflow_dir=workflow_dir, workflow_script_path=nf_script_dest,
-                workflow_script_base=path.name, uses_mets_server=nf_metadata["uses_mets_server"],
-                executable_steps=nf_metadata["executable_steps"],
-                producible_file_groups=nf_metadata["producible_file_groups"], details=wf_detail)
-            self.production_workflows.append(workflow_id)
 
     async def download_workflow_script(
         self, workflow_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
