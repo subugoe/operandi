@@ -12,12 +12,7 @@ from os.path import join
 from pathlib import Path
 from .constants import MODULE_TYPES
 
-
-__all__ = [
-    "get_log_file_path_prefix",
-    "reconfigure_all_loggers"
-]
-
+__all__ = ["get_log_file_path_prefix", "reconfigure_all_loggers"]
 
 class InterceptHandler(logging.Handler):
     def emit(self, record):
@@ -33,7 +28,6 @@ class InterceptHandler(logging.Handler):
             frame = frame.f_back
             depth += 1
         loguru.logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
-
 
 def reconfigure_all_loggers(log_level: str, log_file_path: str):
     # Intercept everything at the root logger
@@ -55,7 +49,6 @@ def reconfigure_all_loggers(log_level: str, log_file_path: str):
     ]
     print(f"Configured new handlers: {handlers}")
     loguru.logger.configure(handlers=handlers)
-
 
 # Returns log path for the modules, if module is worker, returns prefix for logging
 def get_log_file_path_prefix(module_type: str) -> str:

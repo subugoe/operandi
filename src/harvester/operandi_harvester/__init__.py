@@ -1,7 +1,4 @@
-__all__ = [
-  "cli",
-  "Harvester",
-]
+__all__ = ["cli", "Harvester"]
 
 from .cli import cli
 from .harvester import Harvester

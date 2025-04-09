@@ -5,7 +5,7 @@ from typing import Tuple
 def get_random_salt() -> str:
     return sha512(f"{hash(str(random()))}".encode("utf-8")).hexdigest()[:8]
 
-def get_hex_digest(salt: str, plain_password: str):
+def get_hex_digest(salt: str, plain_password: str) -> str:
     return sha512(f"{salt}{plain_password}".encode("utf-8")).hexdigest()
 
 def encrypt_password(plain_password: str) -> Tuple[str, str]:

@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from os.path import join
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Optional, Union
+from typing import List, Optional
 from zipfile import ZipFile
 
 from ocrd import Resolver
@@ -52,7 +52,7 @@ def extract_file_groups_with_handling(logger, bag_info: dict, ws_dir: str) -> Li
     return file_groups
 
 
-def create_workspace_bag(db_workspace) -> Union[str, None]:
+def create_workspace_bag(db_workspace) -> str:
     """
     Create workspace bag.
 
@@ -137,7 +137,7 @@ def validate_bag(bag_dest: str):
         raise WorkspaceNotValidException(valid_report.to_xml())
 
 
-def validate_bag_with_handling(logger, bag_dst: str) -> None:
+def validate_bag_with_handling(logger, bag_dst: str):
     message = "Failed to validate workspace bag"
     try:
         validate_bag(bag_dst)

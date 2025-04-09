@@ -22,46 +22,49 @@ class RouterUser:
         self.logger.info(f"RMQPublisher connected")
 
         self.router = APIRouter(tags=[ServerApiTag.USER])
-        self.router.add_api_route(
+        self.add_api_routes(self.router)
+
+    def __del__(self):
+        if self.rmq_publisher:
+            self.rmq_publisher.disconnect()
+
+    def add_api_routes(self, router: APIRouter):
+        router.add_api_route(
             path="/user/register",
             endpoint=self.user_register, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Register a user with their e-mail and password",
             response_model=PYUserAction, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/user/login",
             endpoint=self.user_login, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Authenticate a user with their e-mail and password",
             response_model=PYUserAction, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/user/processing_stats",
             endpoint=self.user_processing_stats, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get user account statistics of the currently logged user",
             response_model=DBProcessingStatistics, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/user/workspaces",
             endpoint=self.user_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workspaces uploaded by the currently logged user",
             response_model=List, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/user/workflows",
             endpoint=self.user_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workflows uploaded by the currently logged user",
             response_model=List, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/user/workflow_jobs",
             endpoint=self.user_workflow_jobs, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get all workflow jobs started by the currently logged user",
             response_model=List, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-
-    def __del__(self):
-        if self.rmq_publisher:
-            self.rmq_publisher.disconnect()
 
     async def user_login(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())) -> PYUserAction:
         """

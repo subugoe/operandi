@@ -11,11 +11,10 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from operandi_utils.constants import ServerApiTag, StateWorkspace
 from operandi_utils.database import (
     db_create_workspace, db_get_workspace, db_update_workspace, db_increase_processing_stats_with_handling)
-from operandi_utils.utils import send_bag_to_ola_hd
 from operandi_server.constants import DEFAULT_METS_BASENAME
 from operandi_server.files_manager import receive_resource
 from operandi_server.files_manager import LFMInstance
-from operandi_server.models import MetsUrlRequest, OlahdUploadArguments, WorkspaceRsrc
+from operandi_server.models import MetsUrlRequest, WorkspaceRsrc
 from .workspace_utils import (
     create_workspace_bag,
     create_workspace_bag_from_remote_url,
@@ -33,60 +32,58 @@ class RouterWorkspace:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.workspace")
         self.router = APIRouter(tags=[ServerApiTag.WORKSPACE])
-        self.router.add_api_route(
+        self.add_api_routes(self.router)
+
+    def add_api_routes(self, router: APIRouter):
+        router.add_api_route(
             path="/import_external_workspace",
             endpoint=self.upload_workspace_from_url, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Import workspace from mets url. Returns a `resource_id` associated with the uploaded workspace.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workspace",
             endpoint=self.upload_workspace, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Import workspace as an ocrd zip. Returns a `resource_id` associated with the uploaded workspace.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/batch-workspaces",
             endpoint=self.upload_batch_workspaces, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Upload a list of workspaces each as an ocrd zip (limit:5). "
                     "Returns a list of `resource_id`s associated with the uploaded workspaces.",
             response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/batch-workspaces-urls",
             endpoint=self.upload_batch_workspaces_from_urls, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Upload a list of workspaces each as a URL referencing a mets file (limit:5). "
                     "Returns a list of `resource_id`s associated with the uploaded workspaces.",
             response_model=List[WorkspaceRsrc], response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workspace/{workspace_id}",
             endpoint=self.download_workspace, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download an existing workspace zip identified with `workspace_id`.",
             response_model=None, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workspace/{workspace_id}",
             endpoint=self.upload_workspace, methods=["PUT"], status_code=status.HTTP_201_CREATED,
             summary="Update an existing workspace specified with `workspace_id` or create a new workspace.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/workspace/{workspace_id}",
             endpoint=self.delete_workspace, methods=["DELETE"], status_code=status.HTTP_200_OK,
             summary="Delete an existing workspace identified with `workspace_id`.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/remove_file_group/{workspace_id}",
             endpoint=self.remove_file_group_from_workspace, methods=["DELETE"], status_code=status.HTTP_201_CREATED,
             summary="Remove file groups from a workspace",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
-        )
-        self.router.add_api_route(
-            path="/push_to_ola_hd",
-            endpoint=self.push_to_ola_hd, methods=["POST"], status_code=status.HTTP_201_CREATED,
-            summary="Push a workspace to Ola-HD service"
         )
 
     async def download_workspace(
@@ -301,38 +298,3 @@ class RouterWorkspace:
         )
         db_workspace = await db_update_workspace(find_workspace_id=workspace_id, file_groups=remaining_file_groups)
         return WorkspaceRsrc.from_db_workspace(db_workspace)
-
-    async def push_to_ola_hd(
-        self, workspace_id: str, olahd_args: OlahdUploadArguments, auth: HTTPBasicCredentials = Depends(HTTPBasic())
-    ):
-        await user_auth_with_handling(self.logger, auth)
-        db_workspace = await get_db_workspace_with_handling(self.logger, workspace_id=workspace_id)
-        try:
-            bag_dst = create_workspace_bag(db_workspace=db_workspace)
-        except Exception as error:
-            message = f"Failed to create workspace bag for: {workspace_id}"
-            self.logger.error(f"{message}, error: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
-        validate_bag_with_handling(self.logger, bag_dst=bag_dst)
-
-        try:
-            pid = send_bag_to_ola_hd(
-                path_to_bag=bag_dst,
-                username=olahd_args.username,
-                password=olahd_args.password,
-                endpoint=olahd_args.endpoint
-            )
-        except Exception as error:
-            message = "Failed to send bag to Ola-HD service"
-            self.logger.error(f"{message}, error: {error}")
-            try:
-                response_status_code = error.response.status_code
-            except AttributeError:
-                response_status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-            raise HTTPException(status_code=response_status_code, detail=message)
-
-        response_message = {
-            "message": f"Workspace bag of id: {workspace_id} was pushed to the Ola-HD service",
-            "pid": pid
-        }
-        return response_message

@@ -20,35 +20,38 @@ class RouterAdminPanel:
         self.logger.info(f"RMQPublisher connected")
 
         self.router = APIRouter(tags=[ServerApiTag.ADMIN])
-        self.router.add_api_route(
-            path="/admin/users",
-            endpoint=self.get_users, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get all registered users"
-        )
-        self.router.add_api_route(
-            path="/admin/processing_stats/{user_id}",
-            endpoint=self.user_processing_stats, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get processing stats for a specific user by user_id"
-        )
-        self.router.add_api_route(
-            path="/admin/workflow_jobs/{user_id}",
-            endpoint=self.user_workflow_jobs, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get all workflow jobs submitted by the user identified by user_id"
-        )
-        self.router.add_api_route(
-            path="/admin/workspaces/{user_id}",
-            endpoint=self.user_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get all workspaces submitted by the user identified by user_id"
-        )
-        self.router.add_api_route(
-            path="/admin/workflows/{user_id}",
-            endpoint=self.user_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
-            summary="Get all workflows submitted by the user identified by user_id"
-        )
+        self.add_api_routes(self.router)
 
     def __del__(self):
         if self.rmq_publisher:
             self.rmq_publisher.disconnect()
+
+    def add_api_routes(self, router: APIRouter):
+        router.add_api_route(
+            path="/admin/users",
+            endpoint=self.get_users, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get all registered users"
+        )
+        router.add_api_route(
+            path="/admin/processing_stats/{user_id}",
+            endpoint=self.user_processing_stats, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get processing stats for a specific user by user_id"
+        )
+        router.add_api_route(
+            path="/admin/workflow_jobs/{user_id}",
+            endpoint=self.user_workflow_jobs, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get all workflow jobs submitted by the user identified by user_id"
+        )
+        router.add_api_route(
+            path="/admin/workspaces/{user_id}",
+            endpoint=self.user_workspaces, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get all workspaces submitted by the user identified by user_id"
+        )
+        router.add_api_route(
+            path="/admin/workflows/{user_id}",
+            endpoint=self.user_workflows, methods=["GET"], status_code=status.HTTP_200_OK,
+            summary="Get all workflows submitted by the user identified by user_id"
+        )
 
     async def auth_admin_with_handling(self, auth: HTTPBasicCredentials):
         py_user_action = await user_auth_with_handling(self.logger, auth)

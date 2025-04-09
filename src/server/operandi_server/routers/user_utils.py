@@ -15,7 +15,7 @@ async def create_user_if_not_available(
     details: str = "User Account"
 ) -> DBUserAccount:
     try:
-        await db_get_user_account_with_email(email=username)
+        return await db_get_user_account_with_email(email=username)
     except RuntimeError:
         return await user_register_with_handling(
             logger, email=username, password=password, account_type=account_type, approved_user=approved_user,

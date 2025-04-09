@@ -18,20 +18,22 @@ from .user_utils import user_auth_with_handling
 class RouterDiscovery:
     def __init__(self):
         self.logger = getLogger("operandi_server.routers.discovery")
-
         self.router = APIRouter(tags=[ServerApiTag.DISCOVERY])
-        self.router.add_api_route(
+        self.add_api_routes(self.router)
+
+    def add_api_routes(self, router: APIRouter):
+        router.add_api_route(
             path="/discovery",
             endpoint=self.discovery, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="List Operandi Server properties",
             response_model=PYDiscovery, response_model_exclude_unset=True, response_model_exclude_none=True
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/discovery/processors",
             endpoint=self.get_processor_names, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="List OCR-D processor names"
         )
-        self.router.add_api_route(
+        router.add_api_route(
             path="/discovery/processor/{processor_name}",
             endpoint=self.get_processor_info, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get information about a specific OCR-D processor"

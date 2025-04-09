@@ -192,8 +192,7 @@ class NextflowFileExecutable:
         )
         self.nf_blocks_workflow.append(nf_workflow_block)
 
-    # TODO: Refactor later
-    def produce_nextflow_file(self, output_path: str, environment: str, with_mets_server: bool):
+    def produce_nextflow_file(self, output_path: str, with_mets_server: bool):
         # Write Nextflow line tokens to an output file
         with open(output_path, mode='w', encoding='utf-8') as nextflow_file:
             nextflow_file.write(f"{WORKFLOW_COMMENT}\n")

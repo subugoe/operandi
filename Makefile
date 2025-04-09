@@ -3,8 +3,8 @@ PYTHON = python
 PIP3 = pip3
 PIP3_INSTALL = pip3 install
 
-BUILD_ORDER = src/utils src/server src/broker src/harvester
-UNINSTALL_ORDER = operandi_harvester operandi_broker operandi_server operandi_utils
+BUILD_ORDER = src/utils src/server src/broker src/client src/harvester
+UNINSTALL_ORDER = operandi_harvester operandi_client operandi_broker operandi_server operandi_utils
 
 ifneq (,$(wildcard ./.env))
     include ./.env

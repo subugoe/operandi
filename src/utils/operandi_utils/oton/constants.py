@@ -11,7 +11,7 @@ CONST_METS_PATH: str = 'mets_path'
 CONST_METS_SOCKET_PATH: str = 'mets_socket_path'
 CONST_WORKSPACE_DIR: str = 'workspace_dir'
 
-OCRD_ALL_JSON_FILE = resource_filename(__name__, 'ocrd_all_tool.json')
+OCRD_ALL_JSON_FILE = resource_filename(__name__, 'ocrd-all-tool.json')
 with open(OCRD_ALL_JSON_FILE) as f:
     OCRD_ALL_JSON = load(f)
 
