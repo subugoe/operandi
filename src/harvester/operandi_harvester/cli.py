@@ -12,16 +12,6 @@ def cli(**kwargs):  # pylint: disable=unused-argument
     Entry-point of multipurpose CLI for Operandi Harvester
     """
 
-@cli.command("convert")
-@option(
-    "-a", "--address",
-    required=True,
-    default=DEFAULT_OPERANDI_SERVER_ROOT_URL,
-    help="The address of the Operandi Server."
-)
-def convert_txt_to_json(address):
-    harvester = Harvester(server_address=address)
-    harvester.convert_txt_to_json()
 
 @cli.command("start")
 @option(
