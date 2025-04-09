@@ -12,6 +12,7 @@ __all__ = [
     "AccountType",
     "LOG_FORMAT",
     "LOG_LEVEL_BROKER",
+    "LOG_LEVEL_CLIENT",
     "LOG_LEVEL_HARVESTER",
     "LOG_LEVEL_RMQ_CONSUMER",
     "LOG_LEVEL_RMQ_PUBLISHER",
@@ -30,13 +31,14 @@ load_dotenv()
 
 LOG_FORMAT: str = "%(levelname) -7s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s"
 LOG_LEVEL_SERVER: str = "INFO"
+LOG_LEVEL_CLIENT: str = "INFO"
 LOG_LEVEL_HARVESTER: str = "INFO"
 LOG_LEVEL_BROKER: str = "INFO"
 LOG_LEVEL_WORKER: str = "INFO"
 LOG_LEVEL_RMQ_CONSUMER: str = "INFO"
 LOG_LEVEL_RMQ_PUBLISHER: str = "INFO"
 
-MODULE_TYPES = ["server", "harvester", "broker", "worker"]
+MODULE_TYPES = ["server", "harvester", "client", "broker", "worker"]
 
 OPERANDI_VERSION = get_distribution("operandi_utils").version
 
