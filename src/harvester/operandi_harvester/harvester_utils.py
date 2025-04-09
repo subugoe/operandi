@@ -2,12 +2,12 @@ from json import dumps as json_dumps, loads as json_loads
 from logging import Logger
 from os.path import exists, isfile
 from typing import Dict
-from .constants import VD18_DATA_JSON, VD18_IDS_FILE, VD18_METS_EXT, VD18_URL
+from .constants import VD18_DATA_JSON, VD18_METS_EXT, VD18_URL
 
 
 def build_vd18_remote_url(logger: Logger, vd18_ppn_id: str) -> str:
     remote_url = f"{VD18_URL}{vd18_ppn_id}{VD18_METS_EXT}"
-    logger.info(f"The remote url of {vd18_ppn_id}: {remote_url}")
+    logger.info(f"Building the remote url of {vd18_ppn_id}: {remote_url}")
     return remote_url
 
 
@@ -20,10 +20,6 @@ def check_file_existence(logger: Logger, file_path: str):
         msg = f"Path is not a file: {file_path}"
         logger.error(msg)
         raise FileNotFoundError(msg)
-
-
-def check_vd18_file_existence(logger):
-    check_file_existence(logger, VD18_IDS_FILE)
 
 
 def load_vd18_data(logger: Logger, json_path: str = VD18_DATA_JSON) -> Dict:
