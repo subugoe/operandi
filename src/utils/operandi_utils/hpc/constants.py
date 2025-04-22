@@ -20,9 +20,9 @@ HPC_NHR_PROJECT: str = "project_pwieder_ocr_nhr"
 
 # https://docs.hpc.gwdg.de/start_here/connecting/login_nodes_and_example_commands/index.html#the-login-nodes
 # https://docs.hpc.gwdg.de/how_to_use/the_storage_systems/data_stores/scratch_work/index.html#nhr
-HPC_NHR_SCRATCH_EMMY_HDD: str = f"/mnt/lustre-emmy-hdd/projects/{HPC_NHR_PROJECT}"  # Capacity - 110 TiB
-HPC_NHR_SCRATCH_EMMY_SSD: str = f"/mnt/lustre-emmy-ssd/projects/{HPC_NHR_PROJECT}"  # Capacity - 8.4 PiB
-HPC_NHR_SCRATCH_GRETE_SSD: str = f"/mnt/lustre-grete/projects/{HPC_NHR_PROJECT}"  # Capacity - 110 TiB
+HPC_NHR_SCRATCH_EMMY_HDD: str = f"/mnt/lustre-emmy-hdd/projects/{HPC_NHR_PROJECT}"  # Capacity - 8.4 PiB
+HPC_NHR_SCRATCH_EMMY_SSD: str = f"/mnt/lustre-emmy-ssd/projects/{HPC_NHR_PROJECT}"  # Capacity - 110 TiB
+HPC_NHR_SCRATCH_GRETE_SSD: str = f"/mnt/lustre-grete/projects/{HPC_NHR_PROJECT}"  # Capacity - 509 TiB
 
 HPC_NHR_CLUSTERS = {
     "EmmyPhase1": {

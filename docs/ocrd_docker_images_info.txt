@@ -1,0 +1,217 @@
+This document contains most (all?) of the OCR-D docker images of the OCR-D foundation.
+Useful for administrators who want to deploy their own Operandi service.
+The document was created based on: https://pad.gwdg.de/bU7hGsKbRtW2c9Hh7eTd-w?view#
+
+docker pull ocrd/all:latest
+
+docker pull ocrd/core:latest
+docker pull ghcr.io/ocr-d/core:latest
+docker pull ocrd/core-cuda:latest
+docker pull ghcr.io/ocr-d/core-cuda:latest
+docker pull ocrd/core-cuda-tf1:latest
+docker pull ghcr.io/ocr-d/core-cuda-tf1:latest
+docker pull ocrd/core-cuda-tf2:latest
+docker pull ghcr.io/ocr-d/core-cuda-tf2:latest
+docker pull ocrd/core-cuda-torch:latest
+docker pull ghcr.io/ocr-d/core-cuda-torch:latest
+
+Importance:
+    - 0 - can go
+    - 1 - useful in some workflows
+    - 2 - useful in many workflows
+    - 3 - essential
+
+Action:
+    - Keep - retain as-is
+    - Refactor - should be retained but in a separate project
+    - Sunset - announce deprecation
+    - Delete - should go
+
+
+(v0.19.1)
+docker pull ocrd/tesserocr:latest
+docker pull ghcr.io/ocr-d/ocrd_tesserocr:latest
+    - [3][K] ocrd-tesserocr-crop                [fast]
+    - [3][K] ocrd-tesserocr-deskew              [fast]
+    - [3][K] ocrd-tesserocr-recognize           [fast]
+    - [3][K] ocrd-tesserocr-segment             [fast]
+    - [3][K] ocrd-tesserocr-segment-line        [fast]
+    - [3][K] ocrd-tesserocr-segment-region      [fast]
+    - [3][K] ocrd-tesserocr-segment-table       [fast]
+    - [3][K] ocrd-tesserocr-segment-word        [fast]
+    - [2][K] ocrd-tesserocr-fontshape           [no alternative for text style detection]
+    - [1][K] ocrd-tesserocr-binarize            [for consistency with tesseract CLI]
+
+(v0.1.5)
+docker pull ocrd/cis:latest
+    - [3][R] ocrd-cis-ocropy-binarize           [improved ocropy binarizatino + otsu + gauss_otsu]
+    - [3][R] ocrd-cis-ocropy-denoise
+    - [3][R] ocrd-cis-ocropy-deskew
+    - [3][R] ocrd-cis-ocropy-dewarp
+    - [3][R] ocrd-cis-ocropy-segment   
+    - [2][R] ocrd-cis-ocropy-resegment          [Improves line polygons, fitting them better to the line]
+    - [2][R] ocrd-cis-ocropy-clip               [Whites out overlapping region images to remove noise]
+    - [1][R] ocrd-cis-ocropy-recognize          [Only interesting for historic models, should not be used for new models]
+    - [0][D] ocrd-cis-ocropy-train              [Only interesting for historic models, should not be used for new models]
+    - [0][D] ocrd-cis-align                     [Matches two OCR results, better solved in ocrd-nmalign-merge]
+    - [0][D] ocrd-cis-postcorrect               [untested and obsolete]
+
+(v0.4.1)
+docker pull ocrd/kraken:latest
+docker pull ghcr.io/ocr-d/kraken:latest
+    - [3][K] ocrd-kraken-recognize
+    - [3][K] ocrd-kraken-segment
+    - [1][K] ocrd-kraken-binarize               [largely the same algo as in ocrd-cis-ocropy-binarize]
+
+(v0.1.8)
+docker pull ocrd/wrap:latest
+docker pull ghcr.io/bertsky/ocrd_wrap:latest
+    - [3][K] ocrd-preprocess-image
+    - [2][K] ocrd-skimage-normalize             [only contrast enhancement processor]
+    - [1][K] ocrd-skimage-binarize              [some binarization algos not in olena]
+    - [1][K] ocrd-skimage-denoise
+    - [1][K] ocrd-skimage-denoise-raw
+
+(v1.0.6)
+docker pull ocrd/calamari:latest
+docker pull ghcr.io/ocr-d/calamari:latest
+    - [3][K] ocrd-calamari-recognize            [Essential engine]
+
+(v1.6.0)
+docker pull ocrd/olena:latest
+    - [3][K] ocrd-olena-binarize                [involved build but fast and versatile]
+
+(v0.9.7)
+docker pull ocrd/dinglehopper:latest
+    - [3][K] ocrd-dinglehopper
+
+(v0.3.1)
+docker pull ocrd/eynollah:latest
+    - [3][K] ocrd-eynollah-segment
+
+(v0.11.2)
+docker pull ocrd/fileformat:latest
+    - [3][K] ocrd-fileformat-transform
+
+(v0.0.3)
+docker pull ocrd/nmalign:latest
+docker pull ghcr.io/bertsky/nmalign:latest
+    - [3][K] ocrd-nmalign-merge
+
+(v0.1.24)
+docker pull ocrd/segment:latest
+    - [2][K] ocrd-segment-extract-glyphs
+    - [2][K] ocrd-segment-extract-lines
+    - [2][K] ocrd-segment-extract-pages
+    - [2][K] ocrd-segment-extract-regions
+    - [2][K] ocrd-segment-extract-words
+    - [2][K] ocrd-segment-from-coco
+    - [2][K] ocrd-segment-from-masks
+    - [2][K] ocrd-segment-project
+    - [2][K] ocrd-segment-repair
+    - [2][K] ocrd-segment-replace-original
+    - [2][K] ocrd-segment-replace-page
+    - [2][K] ocrd-segment-replace-text
+    - [1][K] ocrd-segment-evaluate              [only segmentation evaluation processor]
+
+(v1.10.0)
+docker pull ocrd/anybaseocr:latest
+    - [2][R] ocrd-anybaseocr-dewarp             [we have few dewarping options, this is not great but working]
+    - [1][R] ocrd-anybaseocr-crop               [slow but still good cropper]
+    - [0][D] ocrd-anybaseocr-binarize           [superseded by ocrd-cis-ocropy-binarize]
+    - [0][D] ocrd-anybaseocr-layout-analysis    [no alternative but unusable as-is]
+    - [0][D] ocrd-anybaseocr-textline           [obsolete ocropy-based segmentation]
+    - [0][D] ocrd-anybaseocr-tiseg              [largely untested clipping]
+    - [0][D] ocrd-anybaseocr-block-segmentation
+    - [0][D] ocrd-anybaseocr-deskew
+
+(v0.1.0)
+docker pull ocrd/sbb_binarization:latest
+    - [0][D] ocrd-sbb-binarize                  [superseded by eynollah]
+    - [?][?] ocrd-sbb-textline-detector         [superseded by eynollah]
+
+(v0.6.1)
+docker pull ocrd/froc:latest
+    - [?][K] ocrd-froc
+
+(v1.1.0)
+docker pull ocrd/pagetopdf:latest
+    - [1][K] ocrd-pagetopdf
+
+(v0.4.3)
+docker pull ocrd/keraslm:latest
+    - [1][K] ocrd-keraslm-rate                  [depends on @bertsky maintaining]
+
+(v0.0.0)
+docker pull ocrd/docstruct:latest
+docker pull ghcr.io/bertsky/docstruct:latest
+    - [1][K] ocrd-docstruct                     [depends on @bertsky maintaining]
+
+(v0.0.2)
+docker pull ocrd/doxa:latest
+docker pull ghcr.io/bertsky/ocrd_doxa:latest
+    - [1][K] ocrd-doxa-binarize                 [depends on @bertsky maintaining]
+
+(v0.1.1)
+docker pull ocrd/im6convert:latest
+docker pull ghcr.io/ocr-d/ocrd_im6convert:latest
+    - [0][S] ocrd-im6convert                    [superseded by ocrd-preprocess-image]
+
+(v0.0.2)
+docker pull ocrd/olahd-client:latest
+    - [1][K] ocrd-olahd-client                  [depents on @sub maintaining, not suitable for Operandi] 
+
+(v0.1.8)
+docker pull ocrd/detectron2:latest
+docker pull ghcr.io/bertsky/ocrd_detectron2:latest
+    - [2][K] ocrd-detectron2-segment
+
+(v0.1.15)
+docker pull ocrd/cor-asv-ann:latest
+    - [1][R] ocrd-cor-asv-ann-mark              [highlights words not found in dictionnary]
+    - [0][R] ocrd-cor-asv-ann-align             [text normalization code might be salvageable]
+    - [0][D] ocrd-cor-asv-ann-evaluate          [superseded by ocrd-nmalign-merge]
+    - [0][D] ocrd-cor-asv-ann-join
+    - [0][D] ocrd-cor-asv-ann-process           [proof-of-concept post-correction, not used]
+
+(v0.1.3)
+docker pull (?) https://bertsky.github.io/workflow-configuration
+    - [3][K] ocrd-page-transform
+    - [?][?] ocrd-import
+
+(v0.0.1)
+docker pull (?) https://github.com/qurator-spk/page2tsv/tree/06c8b382db95067d4d5b2a283156c9e94586d03c
+    - [1][K] ocrd-neat-export
+    - [1][K] ocrd-neat-import
+
+(v0.1.0)
+docker pull (?) https://github.com/bertsky/ocrd_page2tei
+    - [1][K] ocrd-page2tei
+
+(v1.4.1)
+docker pull (?) https://github.com/OCR-D/page-to-alto
+    - [?][K] ocrd-page2alto-transform
+
+(v0.0.0)
+docker pull (?) https://github.com/ASVLeipzig/cor-asv-fst/tree/421137125ea7094403e6f439414f2755f9d655ed
+    - [?][?] ocrd-cor-asv-fst-process
+
+(v0.1.3)
+docker pull (?) https://github.com/ocr-d-modul-2-segmentierung/ocrd-pixelclassifier-segmentation/tree/ead3fdd19c9dceb69499d8e2267e71b9cd3bcd2c
+    - [0][D] ocrd-pc-segmentation
+
+(v0.5.0)
+docker pull (?) https://github.com/OCR-D/ocrd_typegroups_classifier
+    - [0][S] ocrd-typegroups-classifier         [To be replaced with ocrd-froc]
+
+(v0.0.3)
+docker pull (?) https://github.com/OCR-D/ocrd_ocropy/tree/a6e556ec182bb18b755bfd818e7f72326b5819fa
+    - [0][D] ocrd-ocropy-segment
+
+(v0.0.0)
+docker pull (?) https://github.com/qurator-spk/ocrd_repair_inconsistencies/tree/94c482f737df6a4ebea9c32f0face8c029effed5
+    - [0][D] ocrd-repair-inconsistencies
+
+(v0.0.0)
+docker pull (?) https://github.com/OCR-D/format-converters/tree/fa8b4b54d20ec1b136dad355c213fda94e8878b5 (?)
+    - [][] ?
