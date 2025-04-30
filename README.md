@@ -21,8 +21,8 @@ place as part of the digitization process.
 
 ## 4. Developer documentation - check [here](https://github.com/subugoe/operandi/tree/main/docs/README_doc_developer.md)
 
-## 5. Tester documentation - check [here](https://github.com/subugoe/operandi/tree/main/docs/README_doc_tester.md)
+## 5. Administrator documentation - check [here](https://github.com/subugoe/operandi/tree/main/docs/README_doc_admin.md)
 
-## 6. Administrator documentation - check [here](https://github.com/subugoe/operandi/tree/main/docs/README_doc_admin.md)
+## 6. Tester documentation - check [here](https://github.com/subugoe/operandi/tree/main/docs/README_doc_tester.md)
 
 ## 7. Benchmarking highlights - check [here](https://github.com/subugoe/operandi/tree/main/docs/README_benchmarking.md)

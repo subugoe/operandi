@@ -152,6 +152,8 @@ docker rmi ghcr.io/subugoe/operandi-broker:latest
 docker compose -f /home/cloud/repos/operandi/docker-compose_image_based.yml --env-file /home/cloud/deploy/operandi-production.env up -d
 ```
 
+Proceed with the 3.2 Deployment.
+
 ### 3.2 Deployment
 
 Then simply execute either of the two scripts above, e.g:
@@ -172,8 +174,6 @@ local fix is required
 preferred way to do.
 
 ### 3.3. Check if modules are running
-<details>
- <summary> Click to expand </summary>
 
 By default, the MongoDB is listening on port 27018 and the RabbitMQ server is listening on ports 5672, 15672, and 25672. 
 The Operandi Server is listening on port 80. 
@@ -196,21 +196,28 @@ or
 sudo lsof -i -P -n | grep LISTEN
 ```
 ```
-docker-pr 19979            root    4u  IPv4 203595      0t0  TCP *:27017 (LISTEN)
-docker-pr 19986            root    4u  IPv6 199569      0t0  TCP *:27017 (LISTEN)
-docker-pr 19999            root    4u  IPv4 210212      0t0  TCP *:25672 (LISTEN)
-docker-pr 20005            root    4u  IPv6 214698      0t0  TCP *:25672 (LISTEN)
-docker-pr 20017            root    4u  IPv4 206766      0t0  TCP *:15672 (LISTEN)
-docker-pr 20023            root    4u  IPv6 216148      0t0  TCP *:15672 (LISTEN)
-docker-pr 20036            root    4u  IPv4 202653      0t0  TCP *:5672 (LISTEN)
-docker-pr 20042            root    4u  IPv6 210254      0t0  TCP *:5672 (LISTEN)
-docker-pr 20582            root    4u  IPv4 220165      0t0  TCP *:80 (LISTEN)
-docker-pr 20589            root    4u  IPv6 219177      0t0  TCP *:80 (LISTEN)
+docker-pr 19979   root   4u  IPv4 203595   0t0  TCP *:27017 (LISTEN)
+docker-pr 19986   root   4u  IPv6 199569   0t0  TCP *:27017 (LISTEN)
+docker-pr 19999   root   4u  IPv4 210212   0t0  TCP *:25672 (LISTEN)
+docker-pr 20005   root   4u  IPv6 214698   0t0  TCP *:25672 (LISTEN)
+docker-pr 20017   root   4u  IPv4 206766   0t0  TCP *:15672 (LISTEN)
+docker-pr 20023   root   4u  IPv6 216148   0t0  TCP *:15672 (LISTEN)
+docker-pr 20036   root   4u  IPv4 202653   0t0  TCP *:5672 (LISTEN)
+docker-pr 20042   root   4u  IPv6 210254   0t0  TCP *:5672 (LISTEN)
+docker-pr 20582   root   4u  IPv4 220165   0t0  TCP *:80 (LISTEN)
+docker-pr 20589   root   4u  IPv6 219177   0t0  TCP *:80 (LISTEN)
 ```
-</details>
 
 ## 4. Logging and Monitoring
-TODO:
+The default logging directory of Operandi is `/tmp/operandi_logs_prod`, however, that path can also be changed with the
+`OPERANDI_LOGS_DIR` environment variable (check the example environment file above). Each module: `broker`, `server`, 
+and `worker` has its own logging file with naming convention: `{module_type}_{"%Y-%m-%d_%H-%M"}.log`. The `workers` also 
+append the queue name (they are listening to) and the process id as a suffix, i.e., 
+`{module_type}_{"%Y-%m-%d_%H-%M"}_{queue_name}_{pid}.log`. 
+
+Example server log file name: `server_2025-01-21_14-17.log`.
+
+Example worker log file name: `worker_2025-01-21_14-17_operandi_queue_users_15.log`.
 
 ## 5. Maintenance
 TODO: 
