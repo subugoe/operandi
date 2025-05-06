@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition standard96s:shared
+#SBATCH --partition standard96:shared
 #SBATCH --time 00:20:00
 #SBATCH --qos 2h
 #SBATCH --output check_ocrd_all_version_job-%J.txt

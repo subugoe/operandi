@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition standard96s:shared
+#SBATCH --partition standard96:shared
 #SBATCH --time 6:00:00
 #SBATCH --output download_all_ocrd_models_job-%J.txt
 #SBATCH --cpus-per-task 16
