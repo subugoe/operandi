@@ -76,7 +76,6 @@ class OperandiServer(FastAPI):
         self.logger.info(f"Operandi local server url: {self.local_server_url}")
         self.logger.info(f"Operandi live server url: {self.live_server_url}")
 
-        # TODO: Recheck this again...
         safe_init_logging()
         log_file_path = f"{get_log_file_path_prefix(module_type='server')}.log"
         # Reconfigure all loggers to the same format
@@ -92,7 +91,6 @@ class OperandiServer(FastAPI):
         await self.include_webapi_routers()
 
     async def shutdown_event(self):
-        # TODO: Gracefully shutdown and clean things here if needed
         self.logger.info(f"The Operandi Server is shutting down.")
 
     async def home(self):

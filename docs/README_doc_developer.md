@@ -134,19 +134,115 @@ For more information on testing also check the
 [tester](https://github.com/subugoe/operandi/tree/main/docs/README_doc_tester.md) documentation.
 
 ## 6. Operandi software modules
-This section provides more in-depth information about the separate module packages.
-
-TODO:
+This section provides more in-depth information about the separate module packages:
+- Operandi Server (6.1.)
+- Operandi Broker (6.2.)
+- Operandi Harvester (6.3.)
+- Operandi Client (6.4.)
+- Operandi Utils (6.5.)
 
 ### 6.1. Operandi Server
+
+The Operandi server is designed to manage, process, and respond to requests from clients (users or machines). 
+Conceptually, the server is divided into 4 subcomponents:
+- the main Uvicorn application (the server)
+- the files manager
+- endpoint routers
+- response models
+
 #### 6.1.1. Server
+The server application is developed using Python 3.10 and the FastAPI framework, providing a high-performance, 
+asynchronous web API built on top of Starlette and Pydantic. It supports asynchronous request handling using Python’s 
+`async` and `await` syntax, enabling efficient concurrency and scalability under load. FastAPI's integration with 
+`Pydantic` ensures robust data validation and parsing, while automatically generating interactive API documentation 
+through `Swagger UI` and `ReDoc`. The application follows a modular architecture, with components organized into routers, 
+models, and services to enhance maintainability and promote clean separation of concerns. Middleware is used for logging, 
+authentication, and exception handling, allowing consistent processing of all endpoints. The application is deployed 
+using an ASGI server - Uvicorn, and is capable of serving as a backend for handling RESTful API requests, user 
+authentication, background processing, and integration with external services, i.e., the MongoDB and the RabbitMQ.
+
+The `server.py` file contains the main application logic, while `server_utils.py` defines supporting utility functions 
+to keep the core server file clean and focused on high-level behavior. Upon invoking the `run` method, the 
+`startup_event` handler is automatically executed. During startup, the logging system is reconfigured to enforce a 
+consistent format across all third-party libraries. Necessary directories and the primary server log file are created, 
+followed by the initialization of default admin and harvester credentials (as defined in the environment file). 
+Production workflows are then generated and stored in the appropriate server-side locations. After setup, all API 
+endpoint routers are registered with the FastAPI application. Conversely, the `shutdown_event` handler provides a hook 
+for performing any required cleanup operations when the application terminates.
+
 #### 6.1.2. Files manager
+The files manager module, `files_manager.py`, is responsible for handling all server-side file operations in a 
+structured manner. It provides a centralized interface for reading, writing, moving, deleting, and organizing files used 
+by the server application. The module abstracts low-level file system interactions to ensure consistency and reduce code 
+duplication across the codebase. It supports path validation, automatic directory creation, and error handling to prevent 
+common I/O issues. The files manager plays a critical role in managing temporary and persistent data, supporting 
+workflows that involve uploading, processing, or storing user-generated or system-generated content. Four different base 
+directories are created: `workspaces`, `workflows` `worfklow jobs`, and `oton conversions`.
+
 #### 6.1.3. Endpoint routers
+The server endpoints define the HTTP interface through which clients interact with the application. Implemented using 
+FastAPI's routing system, each endpoint corresponds to a specific URL path and HTTP method, handling operations such as 
+data retrieval, creation, update, and deletion. The endpoints are organized into modular router definitions to separate 
+concerns and improve maintainability. Each route is equipped with request validation using `Pydantic` models, ensuring 
+that incoming data conforms to the expected schema. Responses are consistently structured, and appropriate status codes 
+are returned based on the outcome of each request. Authentication and authorization mechanisms are applied to restrict 
+access to sensitive routes. Together, these endpoints form the public API surface of the application.
+
+The `routers` directory contains the following routers and their helper utilities:
+- admin_panel
+- discovery
+- ola_hd
+- oton
+- user
+- workflow
+- workspace
+
+Each router is dedicated to implementing only the endpoints relevant to its specific category, promoting clearer 
+separation of concerns and simplifying maintenance. This modular design makes the codebase easier to navigate and reduces 
+coupling between unrelated parts of the API. It also allows developers to work on specific functional areas without 
+affecting other parts of the application. As a result, updates, testing, and debugging can be performed more efficiently, 
+and the application structure remains scalable as new features are added.
+
+Note: 
+
 #### 6.1.4. Response models
+In Python's FastAPI framework, response models are a helpful feature used to define and structure the data returned from 
+API endpoints. By leveraging `Pydantic` models, FastAPI ensures that responses adhere to a specified schema, enhancing 
+both validation and documentation. These models help in automatically generating OpenAPI documentation and allow 
+developers to control which fields are included in the response, even supporting features like field aliasing, optional 
+fields, and nested data. This improves the reliability and clarity of API responses.
+
+The `models` directory contains the following response models:
+- base
+- discovery
+- user
+- workflow
+- workspace
+
+Response models are defined and structured based on the data schemas required by each router endpoint's functionality 
+and expected output.
 
 ### 6.2. Operandi Broker
+The Operandi broker consists of two main agent types: the `broker` and the `workers`. 
+
 #### 6.2.1. Broker
+The broker is primarily responsible for orchestrating the lifecycle of workers, including their creation, monitoring, 
+and graceful termination. It utilizes Python's `psutil` library to manage and inspect worker processes, and the `signal` 
+module to coordinate communication through UNIX signals, enabling an event-driven and decoupled control mechanism.
+
 #### 6.2.2. Workers
+Workers are organized into three distinct categories, with a base worker class designed to reduce code duplication across 
+similar methods. Each worker listens for requests on its assigned RabbitMQ queue, consumes messages as they arrive, and 
+triggers the appropriate message handler to process the request. The `submit` worker handles the submission of HPC batch 
+jobs, the `status` worker monitors and updates job statuses, and the `download` worker retrieves results from the HPC 
+environment upon successful job completion. 
+
+When a termination signal is received from the broker, each worker sends a negative acknowledgment for the message it is 
+currently processing to the RabbitMQ server, ensuring that no requests are lost during the module shutdown. This is 
+especially crucial for the `submit` and `download` workers, as message loss could result in `job submission` or `result 
+retrieval` failures. In contrast, the `status` worker can tolerate message loss with minimal impact, as its main function 
+is to check and update job statuses. Additionally, users typically query the job status multiple times throughout the 
+workflow job duration, which mitigates the risk of losing a few status messages.
 
 ### 6.3. Operandi Harvester
 
@@ -154,7 +250,7 @@ TODO:
 
 ### 6.5. Operandi Utils
 #### 6.5.1. RabbitMQ
-#### 6.5.2. Database
+#### 6.5.2. MongoDB
 #### 6.5.3. OtoN
 #### 6.5.4. HPC
 ##### OCR-D process workflows
