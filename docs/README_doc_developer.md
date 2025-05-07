@@ -245,17 +245,108 @@ is to check and update job statuses. Additionally, users typically query the job
 workflow job duration, which mitigates the risk of losing a few status messages.
 
 ### 6.3. Operandi Harvester
+The Harvester module automates the submission of workspaces for processing via the Operandi Server. It utilizes the 
+Operandi client (see next subsection 6.4. Operandi client) to perform HTTP-based communication with the server.
+
+Consistent with the architecture of preceding modules:
+- The main application logic resides in `harvester.py`.
+- Supporting utility functions are implemented in `harvester_utils.py`.
+- The `assets` directory contains test resources, including a minimal workspace archive (`small_ws.ocrd.zip`) and a JSON 
+file with VD18 mets file URLs metadata. These assets are used to validate Harvester configuration and ensure successful 
+connectivity with the Operandi Server.
+
+The Harvester performs the following operations:
+1. Workspace Submission: Uploads a workspace to the Operandi Server. In production, this typically involves referencing 
+METS file URLs.
+2. Workflow Job Submission: Initiates a processing job using the uploaded workspace and the server’s default workflow 
+(see 6.5.4.2 Nextflow Workflows).
+3. Job Monitoring: Continuously polls the job status until completion. If an error occurs, the submission process is 
+halted and requires manual intervention to avoid unnecessary consumption of compute resources.
 
 ### 6.4. Operandi Client
+To simplify interaction with the FastAPI server, a dedicated Python client library has been implemented. This client 
+provides a high-level interface that abstracts away direct HTTP requests, enabling users to interact with the server 
+functionality through intuitive Python method calls. Instead of manually constructing requests and handling responses, 
+users can perform operations such as submitting workspaces, starting workflow jobs, and monitoring workflow job status 
+with simple function calls. The Harvester is the main module that uses the Operandi client. 
+
+Note: Only the most commonly used and relevant server endpoints are implemented in the client; not all server endpoints 
+are currently supported.
 
 ### 6.5. Operandi Utils
+The utilities module provides helper methods for interacting with RabbitMQ, MongoDB, HPC systems, and OtoN. Its purpose 
+is to encapsulate implementation details and promote code reuse across the `Operandi Server`, `Operandi Broker`, and 
+`Operandi Harvester` modules.
+
 #### 6.5.1. RabbitMQ
+The Server and Broker modules should remain decoupled from the low-level RabbitMQ implementation details involved in 
+publishing and consuming request messages. To facilitate this abstraction, the 
+[rabbitmq](https://github.com/subugoe/operandi/tree/main/src/utils/operandi_utils/rabbitmq) submodule exposes utility 
+wrappers within the `wrappers.py` file, which handle the instantiation and management of RabbitMQ connection objects.
+The implementations for the consumer and publisher are isolated in `consumer.py` and `publisher.py`, respectively. Both 
+classes inherit from the Connector class (`connector.py`), which serves as an abstraction layer to encapsulate and hide 
+the underlying RabbitMQ connection management details. More technical details can be found in the 
+official [RabbitMQ](https://www.rabbitmq.com/docs) documentation.
+
+RabbitMQ is the message exchange broker (server) between `Operandi Server` and `Operandi Broker`. Typically, the 
+Operandi Server is the `publisher` and the workers of the Operandi Broker are the `consumers`. Depending on the coming 
+request to the Operandi Server, the server forwards the requests to one of the queues. On the other side, the Operandi 
+Broker creates workers to consume messages from the queues to process them. By default, there are the following message 
+queues available:
+- `operandi_queue_users` - for user workflow job requests (there is no prioritization among users)
+- `operandi_queue_harvester` - for harvester workflow job requests (there is no prioritization among harvesters)
+- `operandi_queue_job_statuses` - for job status checks
+- `operandi_queue_hpc_downloads` - for hpc results download
+
+Also check the default example `rabbitmq_definitions.json` in the repository for more details.
+
 #### 6.5.2. MongoDB
+The [database](https://github.com/subugoe/operandi/tree/main/src/utils/operandi_utils/database) submodule provides 
+utility wrappers that abstract the creation, modification, and deletion of database entries. It includes both 
+synchronous and asynchronous method variants to accommodate different execution contexts: the server leverages the 
+asynchronous versions for improved responsiveness, while the workers rely on the synchronous versions to ensure blocking 
+behavior, as they are required to wait for operation results.
+
+The `models.py` file defines all database model classes corresponding to the entities stored in the database instance. 
+Additional files following the `db_*.py` naming convention provide modular abstractions for database operations, 
+organized by domain-specific concerns — for example, `db_workspace.py` encapsulates all workspace-related database 
+interactions. 
+
 #### 6.5.3. OtoN
+The [oton](https://github.com/subugoe/operandi/tree/main/src/utils/operandi_utils/oton) (ocrd-to-nextflow) submodule 
+serves as an abstraction layer for converting OCR-D process workflows into executable Nextflow workflows. The primary 
+entry point for this conversion is the `oton_converter.py` module. Supporting this functionality, files following the 
+`nf_*.py` naming convention encapsulate modular abstractions corresponding to individual Nextflow process blocks, 
+Nextflow workflow block, and the overall structure of the Nextflow script (`nf_file_executable.py`). Production workflows 
+of input OCR-D process workflows and their corresponding generated Nextflow workflows are available in the directories 
+`operandi_utils/hpc/ocrd_process_workflows` and `operandi_utils/hpc/nextflow_workflows`, respectively. 
+
 #### 6.5.4. HPC
-##### OCR-D process workflows
-##### Nextflow workflows
-##### Batch Scripts
+The [hpc](https://github.com/subugoe/operandi/tree/main/src/utils/operandi_utils/hpc) module implements the communication 
+and abstraction layers responsible for interfacing with high-performance computing (HPC) environment. The module defines 
+two distinct agent classes: `NHRExecutor` and `NHRTransfer`. As their names imply, `NHRExecutor` is responsible for 
+executing commands within the HPC cluster, while `NHRTransfer` handles file transfers to and from the HPC environment. 
+Both agents rely on the `NHRConnector` class, which serves as a low-level abstraction layer for managing the underlying 
+connection mechanisms.
+
+##### 6.5.4.1. OCR-D process workflows
+The [ocrd_process_workflows](https://github.com/subugoe/operandi/tree/main/src/utils/operandi_utils/hpc/ocrd_process_workflows) 
+directory contains all OCR-D process workflow definitions that are utilized in the production environment. These 
+workflows specify the sequence of OCR-D processors and associated parameters.
+
+##### 6.5.4.2. Nextflow workflows
+The [nextflow_workflows](https://github.com/subugoe/operandi/tree/main/src/utils/operandi_utils/hpc/nextflow_workflows) 
+directory includes the production Nextflow workflows generated from the corresponding OCR-D process definitions. All the 
+workflows have their `*_with_MS` variants which means the workflows utilize a `Mets server` as an entry point to the mets 
+file. If no `Mets server` is utilized then the fallback solution of splitting and then merging the mets files is used.
+
+Note: It is strongly recommended to utilize only those workflows that have their METS servers enabled. This ensures 
+greater robustness and improved performance during execution. Variants without METS server integration are provided 
+solely as fallback options and should be used only when necessary.
+
+##### 6.5.4.3. Batch Scripts
+TODO: 
+
 
 ## 7. More insights regarding Operandi, Nextflow, and the GWDG HPC cluster:
 

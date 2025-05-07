@@ -25,8 +25,14 @@ point to the workflow. The default file group is `DEFAULT`. The response is a un
 6. The user downloads the workflow job execution metadata as a zip using the `workflow_job_id`.
 
 ## 3. Operandi Client (Python)
-The Operandi Python client is useful for users who want to programmatically send requests to the Operandi Server.
-That client is also utilized by the Harvesting module.
+To simplify interaction with the FastAPI server, a dedicated Python client library has been implemented. This client 
+provides a high-level interface that abstracts away direct HTTP requests, enabling users to interact with the server 
+functionality through intuitive Python method calls. Instead of manually constructing requests and handling responses, 
+users can perform operations such as submitting workspaces, starting workflow jobs, and monitoring workflow job status 
+with simple function calls. The Harvester is the main module that uses the Operandi client. 
+
+Note: Only the most commonly used and relevant server endpoints are implemented in the client; not all server endpoints 
+are currently supported. 
 
 ## 4. Operandi Integration Script (Bash)
 The Operandi Integration Script (written in bash) is made to integrate Operandi with other services such as Goobi and 
@@ -58,6 +64,14 @@ This section is separated into further subsections to ease the navigation
 ### 6.2 Workspaces
 
 ### 6.3 Workflows
+The Operandi server provides three production "ready-to-be-used" workflows. The `default_workflow`, `odem_workflow`, and 
+the `sbb_workflow`. Check the ocrd process workflows 
+[here](https://github.com/subugoe/operandi/tree/main/src/utils/operandi_utils/hpc/ocrd_process_workflows). Check their 
+respective Nextflow workflows [here](https://github.com/subugoe/operandi/tree/main/src/utils/operandi_utils/hpc/nextflow_workflows).
+
+Note: It is strongly recommended to utilize only those workflows that have their METS servers enabled. This ensures 
+greater robustness and improved performance during execution. Variants without METS server integration are provided 
+solely as fallback options and should be used only when necessary.
 
 ### 6.4 OTON Converter
 
