@@ -77,18 +77,14 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
         "OCR-D-SEG-BLOCK-TESSERACT", "OCR-D-SEGMENT-REPAIR", "OCR-D-CLIP", "OCR-D-SEGMENT-OCROPY", "OCR-D-DEWARP"
     ]
 
-    # Nothing really to be removed - there are just 2 file groups and they are to be preserved
-    remove_file_grps_list_sbb = []
-
     # Post workflow job
-    workflow_id = "odem_workflow_with_MS"
+    workflow_id = "default_workflow_with_MS"
     input_file_grp = DEFAULT_FILE_GRP
     req_data = {
         "workflow_id": workflow_id,
         "workflow_args": {
             "workspace_id": workspace_id,
             "input_file_grp": input_file_grp,
-            # "remove_file_grps": ",".join(remove_file_grps_list_odem),
             "remove_file_grps": "",
             "preserve_file_grps": f"{input_file_grp},OCR-D-OCR",
             "mets_name": DEFAULT_METS_BASENAME
@@ -108,7 +104,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
     assert Path(ws_dir, "OCR-D-OCR").exists()
 
     # Check if file groups not mentioned in preserve_file_grps are removed
-    for file_group in remove_file_grps_list_odem:
+    for file_group in remove_file_grps_list_default:
         assert not Path(ws_dir, file_group).exists()
 
     wf_job_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, workflow_job_id)
