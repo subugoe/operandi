@@ -22,8 +22,6 @@ if [ ! -d "${APPTAINER_CACHE_DIR}" ]; then
 fi
 
 cd "${APPTAINER_CACHE_DIR}" || exit
-# apptainer build --disable-cache "ocrd_all_maximum_image_new.sif" "docker://ocrd/all:latest"
-# apptainer exec "ocrd_all_maximum_image_new.sif" ocrd --version
 
 declare -a images=(
 "core"
