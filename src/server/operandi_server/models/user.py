@@ -22,6 +22,7 @@ class PYUserAction(BaseModel):
             user_id=db_user_account.user_id,
             email=db_user_account.email,
             account_type=db_user_account.account_type,
+            approved_user=db_user_account.approved_user,
             details=db_user_account.details,
             action=action
         )

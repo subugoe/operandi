@@ -1,5 +1,3 @@
-# TODO: This needs a better organization and inheritance structure
-
 class AuthenticationError(Exception):
     pass
 

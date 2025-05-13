@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition standard96s:shared
+#SBATCH --partition standard96:shared
 #SBATCH --time 4:00:00
 #SBATCH --output create_ocrd_slim_sif_images_job-%J.txt
 #SBATCH --cpus-per-task 16
@@ -22,8 +22,6 @@ if [ ! -d "${APPTAINER_CACHE_DIR}" ]; then
 fi
 
 cd "${APPTAINER_CACHE_DIR}" || exit
-# apptainer build --disable-cache "ocrd_all_maximum_image_new.sif" "docker://ocrd/all:latest"
-# apptainer exec "ocrd_all_maximum_image_new.sif" ocrd --version
 
 declare -a images=(
 "core"

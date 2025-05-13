@@ -8,7 +8,7 @@ from typing import List
 from operandi_utils.constants import StateJobSlurm, OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE
 from .constants import (
     HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_DEFAULT, HPC_NHR_JOB_DEFAULT_PARTITION, HPC_BATCH_SUBMIT_WORKFLOW_JOB,
-    HPC_USE_SLIM_IMAGES, HPC_WRAPPER_SUBMIT_WORKFLOW_JOB, HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS
+    HPC_WRAPPER_SUBMIT_WORKFLOW_JOB, HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS
 )
 from .nhr_connector import NHRConnector
 from .nhr_executor_cmd_wrappers import cmd_nextflow_run
@@ -89,24 +89,15 @@ class NHRExecutor(NHRConnector):
             "batch_script_path": join(self.batch_scripts_dir, HPC_BATCH_SUBMIT_WORKFLOW_JOB)
         }
 
-        sif_ocrd_all = OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE["ocrd_all"]
         sif_ocrd_core = OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE["ocrd"]
-
-        if not HPC_USE_SLIM_IMAGES:
-            sif_ocrd_core = f"{sif_ocrd_all}"
         nf_run_command = cmd_nextflow_run(
-            sif_core=sif_ocrd_core, sif_ocrd_all=sif_ocrd_all, input_file_grp=input_file_grp,
+            sif_core=sif_ocrd_core, input_file_grp=input_file_grp,
             mets_basename=mets_basename, use_mets_server=use_mets_server, nf_executable_steps=nf_executable_steps,
-            ws_pages_amount=ws_pages_amount, cpus=cpus, ram=ram, forks=nf_process_forks,
-            use_slim_images=HPC_USE_SLIM_IMAGES
+            ws_pages_amount=ws_pages_amount, cpus=cpus, ram=ram, forks=nf_process_forks
         )
 
-        if HPC_USE_SLIM_IMAGES:
-            ocrd_processor_images = ",".join([OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE[exe] for exe in nf_executable_steps])
-            ocrd_processor_images = f"{sif_ocrd_core},{ocrd_processor_images}"
-        else:
-            ocrd_processor_images = sif_ocrd_all
-
+        ocrd_processor_images = ",".join([OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE[exe] for exe in nf_executable_steps])
+        ocrd_processor_images = f"{sif_ocrd_core},{ocrd_processor_images}"
         regular_args = {
             "ocrd_processor_images": ocrd_processor_images,
             "project_base_dir": self.project_root_dir,

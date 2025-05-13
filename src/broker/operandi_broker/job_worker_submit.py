@@ -135,7 +135,6 @@ class JobWorkerSubmit(JobWorkerBase):
         self.current_message_wf_id = None
         self.current_message_ws_id = None
 
-    # TODO: This should be further refined, currently it's just everything in one place
     def prepare_and_trigger_slurm_job(
         self, workflow_job_id: str, workspace_id: str, workspace_dir: Path, workspace_base_mets: str,
         workflow_script_path: Path, input_file_grp: str, nf_process_forks: int, ws_pages_amount: int,

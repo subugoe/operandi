@@ -12,6 +12,7 @@ __all__ = [
     "AccountType",
     "LOG_FORMAT",
     "LOG_LEVEL_BROKER",
+    "LOG_LEVEL_CLIENT",
     "LOG_LEVEL_HARVESTER",
     "LOG_LEVEL_RMQ_CONSUMER",
     "LOG_LEVEL_RMQ_PUBLISHER",
@@ -30,13 +31,14 @@ load_dotenv()
 
 LOG_FORMAT: str = "%(levelname) -7s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s"
 LOG_LEVEL_SERVER: str = "INFO"
+LOG_LEVEL_CLIENT: str = "INFO"
 LOG_LEVEL_HARVESTER: str = "INFO"
 LOG_LEVEL_BROKER: str = "INFO"
 LOG_LEVEL_WORKER: str = "INFO"
 LOG_LEVEL_RMQ_CONSUMER: str = "INFO"
 LOG_LEVEL_RMQ_PUBLISHER: str = "INFO"
 
-MODULE_TYPES = ["server", "harvester", "broker", "worker"]
+MODULE_TYPES = ["server", "harvester", "client", "broker", "worker"]
 
 OPERANDI_VERSION = get_distribution("operandi_utils").version
 
@@ -52,6 +54,8 @@ class AccountType(str, Enum):
 class ServerApiTag(str, Enum):
     ADMIN = "admin"
     DISCOVERY = "discovery"
+    OTON = "oton"
+    OLAHD = "olahd"
     USER = "user"
     WORKFLOW = "workflow"
     WORKSPACE = "workspace"
@@ -158,10 +162,10 @@ class StateWorkspace(str, Enum):
     TRANSFERRING_FROM_HPC = "TRANSFERRING_FROM_HPC"
     UNSET = "UNSET"
 
-# TODO: Find a more optimal way of achieving this dynamically
+# Inconvenient way of doing that but no better solution is currently available
 OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE = {
-    "ocrd_all": "ocrd_all_maximum_image.sif",
     "ocrd": "ocrd_core.sif",
+    "ocrd-dummy": "ocrd_core.sif",
     "ocrd-tesserocr-crop": "ocrd_tesserocr.sif",
     "ocrd-tesserocr-deskew": "ocrd_tesserocr.sif",
     "ocrd-tesserocr-recognize": "ocrd_tesserocr.sif",
@@ -220,7 +224,7 @@ OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE = {
     "ocrd-anybaseocr-deskew": "ocrd_anybaseocr.sif",
     "ocrd-sbb-binarize": "ocrd_sbb_binarization.sif",
     "ocrd-detectron2-segment": "ocrd_detectron2.sif",
-    "ocrd-froc": "ocrd_froc.sif",
+    "ocrd-froc-recognize": "ocrd_froc.sif",
     "ocrd-pagetopdf": "ocrd_pagetopdf.sif",
     "ocrd-keraslm-rate": "ocrd_keraslm.sif",
     "ocrd-docstruct": "ocrd_docstruct.sif",

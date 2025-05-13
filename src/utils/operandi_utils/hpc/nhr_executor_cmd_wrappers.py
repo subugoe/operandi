@@ -11,8 +11,8 @@ PH_CMD_WRAPPER = "PH_CMD_WRAPPER"
 
 
 def cmd_nextflow_run(
-    sif_core: str, sif_ocrd_all: str, input_file_grp: str, mets_basename: str, use_mets_server: bool,
-    nf_executable_steps: List[str], ws_pages_amount: int, cpus: int, ram: int, forks: int, use_slim_images: bool
+    sif_core: str, input_file_grp: str, mets_basename: str, use_mets_server: bool,
+    nf_executable_steps: List[str], ws_pages_amount: int, cpus: int, ram: int, forks: int
 ) -> str:
     nf_run_command = f"nextflow run {PH_NF_SCRIPT_PATH} -ansi-log false -with-report -with-trace"
     nf_run_command += f" --input_file_group {input_file_grp}"
@@ -26,15 +26,13 @@ def cmd_nextflow_run(
     apptainer_cmd = f"apptainer exec --bind {PH_HPC_WS_DIR}:/ws_data --bind {bind_ocrd_models}"
     # Mets caching is disabled for the core, to avoid the cache error
     # when merging mets files https://github.com/OCR-D/core/issues/1297
-    apptainer_image = sif_core if use_slim_images else sif_ocrd_all
-    core_command = f"{apptainer_cmd} --env OCRD_METS_CACHING=false {PH_NODE_DIR_PROCESSOR_SIFS}/{apptainer_image}"
+    core_command = f"{apptainer_cmd} --env OCRD_METS_CACHING=false {PH_NODE_DIR_PROCESSOR_SIFS}/{sif_core}"
     nf_run_command += f" --env_wrapper_cmd_core {PH_CMD_WRAPPER}{core_command}{PH_CMD_WRAPPER}"
 
     index = 0
     sif_images = [OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE[exe] for exe in nf_executable_steps]
     for sif_image in sif_images:
-        apptainer_image = sif_image if use_slim_images else sif_ocrd_all
-        step_command = f"{apptainer_cmd} --env OCRD_METS_CACHING=true {PH_NODE_DIR_PROCESSOR_SIFS}/{apptainer_image}"
+        step_command = f"{apptainer_cmd} --env OCRD_METS_CACHING=true {PH_NODE_DIR_PROCESSOR_SIFS}/{sif_image}"
         nf_run_command += f" --env_wrapper_cmd_step{index} {PH_CMD_WRAPPER}{step_command}{PH_CMD_WRAPPER}"
         index += 1
     nf_run_command += f" --cpus {cpus}"

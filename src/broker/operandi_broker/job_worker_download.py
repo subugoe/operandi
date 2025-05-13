@@ -99,7 +99,6 @@ class JobWorkerDownload(JobWorkerBase):
         if interruption:
             # self.log.info(f"Nacking delivery tag: {self.current_message_delivery_tag}")
             # self.rmq_consumer._channel.basic_nack(delivery_tag=self.current_message_delivery_tag)
-            # TODO: Sending ACK for now because it is hard to clean up without a mets workspace backup mechanism
             self.log.info(f"Interruption ack delivery tag: {self.current_message_delivery_tag}")
             self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
             return
