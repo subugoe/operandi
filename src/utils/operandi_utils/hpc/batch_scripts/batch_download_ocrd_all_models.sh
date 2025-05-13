@@ -31,3 +31,4 @@ apptainer exec --bind "${OCRD_MODELS_DIR}:/usr/local/share" "${SIFS_DIR_PATH}/oc
 apptainer exec --bind "${OCRD_MODELS_DIR}:/usr/local/share" "${SIFS_DIR_PATH}/ocrd_kraken.sif" ocrd resmgr download -o ocrd-kraken-recognize '*'
 apptainer exec --bind "${OCRD_MODELS_DIR}:/usr/local/share" "${SIFS_DIR_PATH}/ocrd_sbb_binarization.sif" ocrd resmgr download -o ocrd-sbb-binarize '*'
 apptainer exec --bind "${OCRD_MODELS_DIR}:/usr/local/share" "${SIFS_DIR_PATH}/ocrd_cis.sif" ocrd resmgr download -o ocrd-cis-ocropy-recognize '*'
+apptainer exec --bind "${OCRD_MODELS_DIR}:/usr/local/share" "${SIFS_DIR_PATH}/ocrd_eynollah.sif" ocrd resmgr download -o ocrd-eynollah-segment '*'
