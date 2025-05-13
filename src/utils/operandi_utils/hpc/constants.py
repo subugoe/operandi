@@ -11,7 +11,6 @@ __all__ = [
     "HPC_SSH_CONNECTION_TRY_TIMES",
     "HPC_NHR_PROJECT",
     "HPC_NHR_CLUSTERS",
-    "HPC_USE_SLIM_IMAGES",
     "HPC_WRAPPER_SUBMIT_WORKFLOW_JOB",
     "HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS"
 ]
@@ -63,7 +62,6 @@ HPC_WRAPPER_CHECK_WORKFLOW_JOB_STATUS: str = f"wrapper_check_workflow_job_status
 
 HPC_JOB_DEADLINE_TIME_REGULAR = "48:00:00"
 HPC_JOB_DEADLINE_TIME_TEST = "00:30:00"
-# TODO: Use again "standard96s:shared"
 HPC_NHR_JOB_DEFAULT_PARTITION = "standard96:shared"
 HPC_NHR_JOB_TEST_PARTITION = "standard96:shared"
 
@@ -73,6 +71,3 @@ HPC_JOB_QOS_DEFAULT = "48h"  # The default deadline for non-specified QOS is 48h
 HPC_JOB_QOS_LONG = "7d"
 HPC_JOB_QOS_VERY_LONG = "14d"
 HPC_SSH_CONNECTION_TRY_TIMES = 30
-
-# A switch to decide whether to use the fat ocrd_all image or slim images of the processors
-HPC_USE_SLIM_IMAGES: bool = False

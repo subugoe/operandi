@@ -162,10 +162,10 @@ class StateWorkspace(str, Enum):
     TRANSFERRING_FROM_HPC = "TRANSFERRING_FROM_HPC"
     UNSET = "UNSET"
 
-# TODO: Find a more optimal way of achieving this dynamically
+# Inconvenient way of doing that but no better solution is currently available
 OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE = {
-    "ocrd_all": "ocrd_all_maximum_image.sif",
     "ocrd": "ocrd_core.sif",
+    "ocrd-dummy": "ocrd_core.sif",
     "ocrd-tesserocr-crop": "ocrd_tesserocr.sif",
     "ocrd-tesserocr-deskew": "ocrd_tesserocr.sif",
     "ocrd-tesserocr-recognize": "ocrd_tesserocr.sif",
@@ -224,7 +224,7 @@ OCRD_PROCESSOR_EXECUTABLE_TO_IMAGE = {
     "ocrd-anybaseocr-deskew": "ocrd_anybaseocr.sif",
     "ocrd-sbb-binarize": "ocrd_sbb_binarization.sif",
     "ocrd-detectron2-segment": "ocrd_detectron2.sif",
-    "ocrd-froc": "ocrd_froc.sif",
+    "ocrd-froc-recognize": "ocrd_froc.sif",
     "ocrd-pagetopdf": "ocrd_pagetopdf.sif",
     "ocrd-keraslm-rate": "ocrd_keraslm.sif",
     "ocrd-docstruct": "ocrd_docstruct.sif",
