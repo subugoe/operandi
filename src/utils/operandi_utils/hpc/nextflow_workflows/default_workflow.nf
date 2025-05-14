@@ -238,7 +238,7 @@ process ocrd_calamari_recognize_7 {
 
     script:
         """
-        ${params.env_wrapper_cmd_step7} ocrd-calamari-recognize -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "qurator-gt4histocr-1.0"}'
+        ${params.env_wrapper_cmd_step7} ocrd-calamari-recognize -w ${params.workspace_dir} -m ${mets_path} --page-id ${page_range} -I ${input_group} -O ${output_group} -p '{"checkpoint_dir": "gt4histocr"}'
         """
 }
 
