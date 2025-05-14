@@ -21,6 +21,7 @@ if [ ! -d "${SIFS_DIR_PATH}" ]; then
   exit 1
 fi
 
+echo -n "Starting checking versions of ocr-d processors"
 
 processor_image="ocrd_core.sif"
 ocrd_processors=("ocrd" "ocrd-dummy")
@@ -29,7 +30,70 @@ for ocrd_processor in "${ocrd_processors[@]}"
 do
   echo ""
   echo "$ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "$ocrd_processor" --version || true
+  echo ""
 done
+echo $'\n'
+
+
+processor_image="ocrd_calamari.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-calamari-recognize" --version || true
+echo $'\n'
+
+processor_image="ocrd_olena.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-olena-binarize" --version || true
+echo $'\n'
+
+processor_image="ocrd_dinglehopper.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-dinglehopper" --version || true
+echo $'\n'
+
+processor_image="ocrd_eynollah.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-eynollah-segment" --version || true
+echo $'\n'
+
+processor_image="ocrd_fileformat.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-fileformat-transform" --version || true
+echo $'\n'
+
+processor_image="ocrd_nmalign.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-nmalign-merge" --version || true
+echo $'\n'
+
+processor_image="ocrd_sbb_binarization.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-sbb-binarize" --version || true
+echo $'\n'
+
+processor_image="ocrd_detectron2.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-detectron2-segment" --version || true
+echo $'\n'
+
+processor_image="ocrd_froc.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-froc-recognize" --version || true
+echo $'\n'
+
+processor_image="ocrd_pagetopdf.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-pagetopdf" --version || true
+echo $'\n'
+
+processor_image="ocrd_keraslm.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-keraslm-rate" --version || true
+echo $'\n'
+
+processor_image="ocrd_docstruct.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-docstruct" --version || true
+echo $'\n'
+
+processor_image="ocrd_doxa.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-doxa-binarize" --version || true
+echo $'\n'
+
+processor_image="ocrd_im6convert.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-im6convert" --version || true
+echo $'\n'
+
+processor_image="ocrd_olahd-client.sif"
+echo "$processor_image " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-olahd-client" --version || true
+echo $'\n'
 
 
 processor_image="ocrd_tesserocr.sif"
@@ -50,10 +114,13 @@ for ocrd_processor in "${ocrd_processors[@]}"
 do
   echo ""
   echo "$ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "$ocrd_processor" --version || true
+  echo ""
 done
+echo $'\n\n'
 
 apptainer exec "${SIFS_DIR_PATH}/$processor_image" ocrd-tesserocr-recognize --dump-module-dir || true
 apptainer exec "${SIFS_DIR_PATH}/$processor_image" ls -la /models || true
+echo $'\n\n'
 
 
 processor_image="ocrd_anybaseocr.sif"
@@ -72,7 +139,9 @@ for ocrd_processor in "${ocrd_processors[@]}"
 do
   echo ""
   echo "$ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "$ocrd_processor" --version || true
+  echo ""
 done
+echo $'\n\n'
 
 
 processor_image="ocrd_cis.sif"
@@ -95,7 +164,9 @@ for ocrd_processor in "${ocrd_processors[@]}"
 do
   echo ""
   echo "$ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "$ocrd_processor" --version || true
+  echo ""
 done
+echo $'\n\n'
 
 
 processor_image="ocrd_cor-asv-ann.sif"
@@ -111,7 +182,9 @@ for ocrd_processor in "${ocrd_processors[@]}"
 do
   echo ""
   echo "$ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "$ocrd_processor" --version || true
+  echo ""
 done
+echo $'\n\n'
 
 
 processor_image="ocrd_segment.sif"
@@ -135,7 +208,10 @@ for ocrd_processor in "${ocrd_processors[@]}"
 do
   echo ""
   echo "$ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "$ocrd_processor" --version || true
+  echo ""
 done
+echo $'\n\n'
+
 
 processor_image="ocrd_kraken.sif"
 ocrd_processors=("ocrd-kraken-binarize" "ocrd-kraken-recognize" "ocrd-kraken-segment")
@@ -144,7 +220,9 @@ for ocrd_processor in "${ocrd_processors[@]}"
 do
   echo ""
   echo "$ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "$ocrd_processor" --version || true
+  echo ""
 done
+echo $'\n\n'
 
 
 processor_image="ocrd_wrap.sif"
@@ -160,65 +238,6 @@ for ocrd_processor in "${ocrd_processors[@]}"
 do
   echo ""
   echo "$ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "$ocrd_processor" --version || true
+  echo ""
 done
-
-
-processor_image="ocrd_calamari.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-calamari-recognize" --version || true
-
-processor_image="ocrd_olena.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-olena-binarize" --version || true
-
-processor_image="ocrd_dinglehopper.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-dinglehopper" --version || true
-
-processor_image="ocrd_eynollah.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-eynollah-segment" --version || true
-
-processor_image="ocrd_fileformat.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-fileformat-transform" --version || true
-
-processor_image="ocrd_nmalign.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-nmalign-merge" --version || true
-
-processor_image="ocrd_sbb_binarization.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-sbb-binarize" --version || true
-
-processor_image="ocrd_detectron2.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-detectron2-segment" --version || true
-
-processor_image="ocrd_froc.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-froc-recognize" --version || true
-
-processor_image="ocrd_pagetopdf.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-pagetopdf" --version || true
-
-processor_image="ocrd_keraslm.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-keraslm-rate" --version || true
-
-processor_image="ocrd_docstruct.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-docstruct" --version || true
-
-processor_image="ocrd_doxa.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-doxa-binarize" --version || true
-
-processor_image="ocrd_im6convert.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-im6convert" --version || true
-
-processor_image="ocrd_olahd-client.sif"
-echo ""
-echo "$processor_image $ocrd_processor " & apptainer exec "${SIFS_DIR_PATH}/$processor_image" "ocrd-olahd-client" --version || true
+echo $'\n\n'
