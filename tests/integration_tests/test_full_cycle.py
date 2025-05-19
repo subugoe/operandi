@@ -11,10 +11,10 @@ from tests.tests_server.helpers_asserts import assert_response_status_code
 
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
 
-def check_job_till_finish(auth_harvester, operandi, workflow_id: str, workflow_job_id: str):
+def check_job_till_finish(auth_harvester, operandi, workflow_job_id: str):
     tries = 60
     job_status = None
-    check_job_status_url = f"/workflow/{workflow_id}/{workflow_job_id}"
+    check_job_status_url = f"/workflow-job/{workflow_job_id}"
     while tries > 0:
         tries -= 1
         sleep(60)
@@ -32,9 +32,9 @@ def check_job_till_finish(auth_harvester, operandi, workflow_id: str, workflow_j
     assert job_status == StateJob.SUCCESS
 
 
-def download_workflow_job_logs(auth_harvester, operandi, workflow_id: str, workflow_job_id: str):
+def download_workflow_job_logs(auth_harvester, operandi, workflow_job_id: str):
     tries = 60
-    get_log_zip_url = f"/workflow/{workflow_id}/{workflow_job_id}/logs"
+    get_log_zip_url = f"/workflow-job/{workflow_job_id}/logs"
     while tries > 0:
         tries -= 1
         sleep(30)

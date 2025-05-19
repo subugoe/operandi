@@ -86,7 +86,7 @@ class OperandiClient:
 
     def get_workflow_job_state(self, workflow_id: str, job_id: str) -> str:
         self.logger.info(f"Checking state of workflow job id: {job_id}")
-        req_url_base = f"{self.server_address}/workflow/{workflow_id}/{job_id}"
+        req_url_base = f"{self.server_address}/workflow-job/{job_id}"
         response = requests_get(url=req_url_base, auth=self.auth)
         workflow_job_status = self._parse_response_field(response=response, field_key="job_state")
         if not workflow_job_status:
@@ -128,7 +128,7 @@ class OperandiClient:
     def get_workflow_job_zip(self, workflow_id: str, job_id: str, download_dir: str) -> str:
         self.logger.info(f"Downloading workflow job zip of: {job_id}")
         download_path = join(download_dir, f"{job_id}.zip")
-        req_url_base = f"{self.server_address}/workflow/{workflow_id}/{job_id}/log"
+        req_url_base = f"{self.server_address}/workflow-job/{job_id}/log"
         # headers={"accept": "application/vnd.zip"},
         response = requests_get(url=req_url_base, auth=self.auth)
         receive_file(response=response, download_path=download_path)

@@ -88,7 +88,7 @@ class RouterWorkflow:
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
         router.add_api_route(
-            path="/workflow/{workflow_id}/{job_id}",
+            path="/workflow-job/{job_id}",
             endpoint=self.get_workflow_job_status, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="""
             Get the state of a job identified with `workflow_id` and `job_id`.
@@ -103,13 +103,13 @@ class RouterWorkflow:
             response_model=WorkflowJobRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         router.add_api_route(
-            path="/workflow/{workflow_id}/{job_id}/logs",
+            path="/workflow-job/{job_id}/logs",
             endpoint=self.download_workflow_job_logs, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download the logs zip of a job identified with `workflow_id` and `job_id`.",
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
         )
         router.add_api_route(
-            path="/workflow/{workflow_id}/{job_id}/hpc-log",
+            path="/workflow-job/{job_id}/hpc-log",
             endpoint=self.download_workflow_job_hpc_log, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Download the slurm job log file of the `job_id`.",
             response_model=None, response_model_exclude_unset=False, response_model_exclude_none=False
