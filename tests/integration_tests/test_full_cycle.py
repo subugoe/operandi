@@ -78,7 +78,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
     ]
 
     # Post workflow job
-    workflow_id = "default_workflow_with_MS"
+    workflow_id = "odem_workflow_with_MS"
     input_file_grp = DEFAULT_FILE_GRP
     req_data = {
         "workflow_id": workflow_id,
@@ -104,7 +104,7 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
     assert Path(ws_dir, "OCR-D-OCR").exists()
 
     # Check if file groups not mentioned in preserve_file_grps are removed
-    for file_group in remove_file_grps_list_default:
+    for file_group in remove_file_grps_list_odem:
         assert not Path(ws_dir, file_group).exists()
 
     wf_job_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKFLOW_JOBS_ROUTER, workflow_job_id)
