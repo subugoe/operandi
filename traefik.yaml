@@ -6,12 +6,25 @@ log:
 api:
   dashboard: true
   insecure: true
-entryPoints:
-  web:
-    address: :80
-  websecure:
-    address: :443
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
+certificatesResolvers:
+  myResolver:
+    acme:
+      httpChallenge:
+        entryPoint: web
+      email: <SET_YOUR_EMAIL_HERE>
+      storage: /etc/certstore/acme.json
+entryPoints:
+  web:
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: :443

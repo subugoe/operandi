@@ -14,10 +14,15 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./traefik.yaml:/etc/traefik/traefik.yaml:ro"
+      - type: bind
+        source: ${OPERANDI_TRAEFIK_CONFIG_YAML}
+        target: /etc/traefik/traefik.yaml
+        read_only: true
+      - type: bind
+        source: ${OPERANDI_CERTIFICATES_DIR}
+        target: /etc/certstore
     restart: unless-stopped
     networks:
       - operandi
@@ -79,11 +84,12 @@ services:
         condition: service_healthy
     restart: on-failure
     ports:
-      - "80:8000"
+      - "8000:8000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.operandi-server.rule=PathPrefix(`/docs`)"
-      - "traefik.http.routers.operandi-server.entrypoints=web"
+      - "traefik.http.routers.operandi-server.entrypoints=websecure"
+      - "traefik.http.routers.operandi-server.rule=Host(`operandi.ocr-d.de`) && PathPrefix(`/`)"
+      - "traefik.http.routers.operandi-server.tls.certresolver=myResolver"
     environment:
       - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
       - OPERANDI_DB_URL=${OPERANDI_DB_URL}
