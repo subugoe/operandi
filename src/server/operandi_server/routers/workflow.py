@@ -1,3 +1,4 @@
+from datetime import datetime
 from json import dumps
 from logging import getLogger
 from os import unlink
@@ -5,7 +6,7 @@ from os.path import join
 from pathlib import Path
 from shutil import make_archive
 from tempfile import mkdtemp
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
@@ -21,6 +22,8 @@ from operandi_server.models import SbatchArguments, WorkflowArguments, WorkflowR
 from .workflow_utils import (
     get_db_workflow_job_with_handling,
     get_db_workflow_with_handling,
+    get_user_workflows,
+    get_user_workflow_jobs,
     nf_script_extract_metadata_with_handling,
     push_status_request_to_rabbitmq
 )
@@ -48,6 +51,12 @@ class RouterWorkflow:
             self.rmq_publisher.disconnect()
 
     def add_api_routes(self, router: APIRouter):
+        router.add_api_route(
+            path="/workflow", endpoint=self.list_workflows, methods=["GET"],
+            status_code=status.HTTP_200_OK, response_model=List[WorkflowRsrc], response_model_exclude_unset=True,
+            response_model_exclude_none=True,
+            summary="List workflows uploaded by the current user."
+        )
         router.add_api_route(
             path="/workflow", endpoint=self.upload_workflow_script, methods=["POST"],
             status_code=status.HTTP_201_CREATED, response_model=WorkflowRsrc, response_model_exclude_unset=True,
@@ -111,6 +120,16 @@ class RouterWorkflow:
             summary="Update an existing workflow script identified with or `workflow_id` or upload a new script.",
             response_model=WorkflowRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
+
+    async def list_workflows(
+        self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    ) -> List[WorkflowRsrc]:
+        """
+        The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
+        """
+        current_user = await user_auth_with_handling(self.logger, auth)
+        return await get_user_workflows(current_user.user_id, start_date, end_date, True)
 
     async def download_workflow_script(
         self, workflow_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
@@ -183,7 +202,7 @@ class RouterWorkflow:
         return WorkflowRsrc.from_db_workflow(db_workflow)
 
     async def get_workflow_job_status(
-        self, workflow_id: str, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> WorkflowJobRsrc:
         """
         Curl equivalent:
@@ -206,8 +225,7 @@ class RouterWorkflow:
             db_workflow_job=db_wf_job, db_workflow=db_workflow, db_workspace=db_workspace)
 
     async def download_workflow_job_logs(
-        self, background_tasks: BackgroundTasks, workflow_id: str, job_id: str,
-        auth: HTTPBasicCredentials = Depends(HTTPBasic())
+        self, background_tasks: BackgroundTasks, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> FileResponse:
         """
         Curl equivalent:
@@ -236,7 +254,7 @@ class RouterWorkflow:
         return FileResponse(path=job_archive_path, filename=f"{job_id}.zip", media_type="application/zip")
 
     async def download_workflow_job_hpc_log(
-        self, workflow_id: str, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+        self, job_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
         await user_auth_with_handling(self.logger, auth)
 
         db_wf_job = await get_db_workflow_job_with_handling(self.logger, job_id=job_id, check_local_existence=True)
