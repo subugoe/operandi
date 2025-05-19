@@ -8,6 +8,20 @@ networks:
       com.docker.network.driver.mtu: 1450
 
 services:
+  traefik:
+    image: traefik:v3.4
+    container_name: operandi-reverse-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./traefik.yaml:/etc/traefik/traefik.yaml:ro"
+    restart: unless-stopped
+    networks:
+      - operandi
+
   operandi-rabbitmq:
     image: "rabbitmq:3.12-management"
     container_name: operandi-rabbitmq
@@ -23,6 +37,7 @@ services:
       - type: bind
         source: ${OPERANDI_RABBITMQ_CONFIG_JSON}
         target: /rmq_definitions.json
+    restart: on-failure
     environment:
       - RABBITMQ_SERVER_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
       - RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version
@@ -45,6 +60,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${OPERANDI_DB_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${OPERANDI_DB_ROOT_PASS}
+    restart: on-failure
     networks:
       - operandi
     healthcheck:
@@ -64,6 +80,10 @@ services:
     restart: on-failure
     ports:
       - "80:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.operandi-server.rule=PathPrefix(`/docs`)"
+      - "traefik.http.routers.operandi-server.entrypoints=web"
     environment:
       - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
       - OPERANDI_DB_URL=${OPERANDI_DB_URL}
