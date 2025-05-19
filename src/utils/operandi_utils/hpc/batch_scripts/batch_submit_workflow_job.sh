@@ -5,7 +5,7 @@ set -e
 module purge
 module load jq
 module load apptainer
-module load nextflow
+module load gcc nextflow
 # module load spack-user; eval "$(spack load --sh curl%gcc@10.2.0)"
 
 hostname
