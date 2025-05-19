@@ -12,7 +12,7 @@ from operandi_utils import safe_init_logging
 
 from operandi_server.files_manager import LFMInstance
 from operandi_server.routers import (
-    RouterAdminPanel, RouterDiscovery, RouterOton, RouterUser, RouterWorkflow, RouterWorkspace)
+    RouterAdminPanel, RouterDiscovery, RouterOlahd, RouterOton, RouterUser, RouterWorkflow, RouterWorkspace)
 from operandi_server.server_utils import (
     insert_default_accounts, insert_production_workflows, produce_production_workflows)
 
@@ -102,6 +102,7 @@ class OperandiServer(FastAPI):
     async def include_webapi_routers(self):
         self.include_router(RouterAdminPanel().router)
         self.include_router(RouterDiscovery().router)
+        self.include_router(RouterOlahd().router)
         self.include_router(RouterOton().router)
         self.include_router(RouterUser().router)
         self.include_router(RouterWorkflow(self.production_workflows).router)
