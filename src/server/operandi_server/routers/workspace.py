@@ -1,8 +1,9 @@
+from datetime import datetime
 from logging import getLogger
 from os import unlink
 from pathlib import Path
 from shutil import rmtree
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
@@ -23,6 +24,7 @@ from .workspace_utils import (
     extract_pages_with_handling,
     validate_bag_with_handling,
     get_db_workspace_with_handling,
+    get_user_workspaces,
     parse_file_groups_with_handling,
     remove_file_groups_with_handling
 )
@@ -40,6 +42,12 @@ class RouterWorkspace:
             endpoint=self.upload_workspace_from_url, methods=["POST"], status_code=status.HTTP_201_CREATED,
             summary="Import workspace from mets url. Returns a `resource_id` associated with the uploaded workspace.",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
+        )
+        router.add_api_route(
+            path="/workspace", endpoint=self.list_workspaces, methods=["GET"],
+            status_code=status.HTTP_200_OK, response_model=List[WorkspaceRsrc], response_model_exclude_unset=True,
+            response_model_exclude_none=True,
+            summary="List workspaces uploaded by the current user."
         )
         router.add_api_route(
             path="/workspace",
@@ -85,6 +93,16 @@ class RouterWorkspace:
             summary="Remove file groups from a workspace",
             response_model=WorkspaceRsrc, response_model_exclude_unset=True, response_model_exclude_none=True
         )
+
+    async def list_workspaces(
+        self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    ) -> List[WorkspaceRsrc]:
+        """
+        The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
+        """
+        current_user = await user_auth_with_handling(self.logger, auth)
+        return await get_user_workspaces(current_user.user_id, start_date, end_date, True)
 
     async def download_workspace(
         self, background_tasks: BackgroundTasks, workspace_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
