@@ -95,8 +95,8 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_job_id = response.json()["resource_id"]
 
-    check_job_till_finish(auth_harvester, operandi, workflow_id, workflow_job_id)
-    download_workflow_job_logs(auth_harvester, operandi, workflow_id, workflow_job_id)
+    check_job_till_finish(auth_harvester, operandi, workflow_job_id)
+    download_workflow_job_logs(auth_harvester, operandi, workflow_job_id)
 
     ws_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, workspace_id)
     assert ws_dir.exists()
