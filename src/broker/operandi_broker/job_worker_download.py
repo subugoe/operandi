@@ -7,8 +7,7 @@ from ocrd import Resolver
 from operandi_broker.job_worker_base import JobWorkerBase
 from operandi_utils.constants import StateJob, StateWorkspace
 from operandi_utils.database import (
-    DBWorkspace, sync_db_increase_processing_stats,
-    sync_db_get_hpc_slurm_job, sync_db_get_workflow_job, sync_db_get_workspace,
+    DBWorkspace, sync_db_create_page_stat, sync_db_get_hpc_slurm_job, sync_db_get_workflow_job, sync_db_get_workspace,
     sync_db_update_workflow_job, sync_db_update_workspace)
 
 
@@ -42,10 +41,12 @@ class JobWorkerDownload(JobWorkerBase):
 
             db_workflow_job = sync_db_get_workflow_job(self.current_message_job_id)
             workspace_id = db_workflow_job.workspace_id
+            job_id = db_workflow_job.job_id
             job_dir = db_workflow_job.job_dir
 
             db_workspace = sync_db_get_workspace(workspace_id)
             ws_dir = db_workspace.workspace_dir
+            institution_id = db_workspace.institution_id
             user_id = db_workspace.user_id
         except RuntimeError as error:
             self.log.warning(f"Database run-time error has occurred: {error}")
@@ -66,9 +67,15 @@ class JobWorkerDownload(JobWorkerBase):
                 db_workspace = sync_db_update_workspace(
                     find_workspace_id=workspace_id, state=StateWorkspace.READY, file_groups=updated_file_groups)
                 pages_amount = db_workspace.pages_amount
-                self.log.info(f"Increasing `pages_succeed` stat by {pages_amount}")
-                db_stats = sync_db_increase_processing_stats(find_user_id=user_id, pages_succeed=pages_amount)
-                self.log.info(f"Total amount of `pages_succeed` stat: {db_stats.pages_succeed}")
+                self.log.info(f"Creating page stat succeeded with quantity {pages_amount}")
+                sync_db_create_page_stat(
+                    stat_type="succeeded",
+                    quantity=pages_amount,
+                    institution_id=institution_id,
+                    user_id=user_id,
+                    workspace_id=workspace_id,
+                    workflow_job_id=job_id
+                )
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
                 self.log.info(f"Setting new workflow job state `{StateJob.SUCCESS}`"
                               f" of job_id: {self.current_message_job_id}")
@@ -77,9 +84,15 @@ class JobWorkerDownload(JobWorkerBase):
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
                 db_workspace = sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
                 pages_amount = db_workspace.pages_amount
-                self.log.error(f"Increasing `pages_failed` stat by {pages_amount}")
-                db_stats = sync_db_increase_processing_stats(find_user_id=user_id, pages_failed=pages_amount)
-                self.log.error(f"Total amount of `pages_failed` stat: {db_stats.pages_failed}")
+                self.log.info(f"Creating page stat failed with quantity {pages_amount}")
+                sync_db_create_page_stat(
+                    stat_type="failed",
+                    quantity=pages_amount,
+                    institution_id=institution_id,
+                    user_id=user_id,
+                    workspace_id=workspace_id,
+                    workflow_job_id=job_id
+                )
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.FAILED)
                 self.log.info(f"Setting new workflow job state `{StateJob.FAILED}`"
                               f" of job_id: {self.current_message_job_id}")

@@ -5,7 +5,7 @@ from typing import List
 from operandi_utils.constants import AccountType
 from operandi_utils.database import (
     db_create_processing_stats, db_create_user_account, db_get_all_user_accounts, db_get_user_account,
-    db_get_user_account_with_email, db_get_processing_stats, DBProcessingStatistics, DBUserAccount)
+    db_get_user_account_with_email, db_get_processing_stats, DBProcessingStatsTotal, DBUserAccount)
 from operandi_server.models import PYUserAction, PYUserInfo
 from .password_utils import encrypt_password, validate_password
 
@@ -73,7 +73,7 @@ async def user_register_with_handling(
     logger.error(f"{message}")
     raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers=headers, detail=message)
 
-async def get_user_processing_stats_with_handling(logger, user_id: str) -> DBProcessingStatistics:
+async def get_user_processing_stats_with_handling(logger, user_id: str) -> DBProcessingStatsTotal:
     try:
         db_processing_stats = await db_get_processing_stats(user_id=user_id)
     except RuntimeError as error:

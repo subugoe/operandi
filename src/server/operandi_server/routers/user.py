@@ -6,7 +6,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_server.models import PYUserAction, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
-from operandi_utils.database.models import DBProcessingStatistics
+from operandi_utils.database.models_stats import DBProcessingStatsTotal
 from operandi_utils.rabbitmq import get_connection_publisher
 from .workflow_utils import get_user_workflows, get_user_workflow_jobs
 from .workspace_utils import get_user_workspaces
@@ -45,7 +45,7 @@ class RouterUser:
             path="/user/processing_stats",
             endpoint=self.user_processing_stats, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get user account statistics of the currently logged user",
-            response_model=DBProcessingStatistics, response_model_exclude_unset=True, response_model_exclude_none=True
+            response_model=DBProcessingStatsTotal, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         router.add_api_route(
             path="/user/workspaces",

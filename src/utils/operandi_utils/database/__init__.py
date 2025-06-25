@@ -1,11 +1,12 @@
 __all__ = [
     "DBHPCSlurmJob",
-    "DBProcessingStatistics",
+    "DBProcessingStatsTotal",
     "DBUserAccount",
     "DBWorkflow",
     "DBWorkflowJob",
     "DBWorkspace",
     "db_create_hpc_slurm_job",
+    "db_create_page_stat_with_handling",
     "db_create_processing_stats",
     "db_create_user_account",
     "db_create_workflow",
@@ -57,7 +58,8 @@ __all__ = [
 ]
 
 from .base import db_initiate_database, sync_db_initiate_database
-from .models import DBHPCSlurmJob, DBProcessingStatistics, DBUserAccount, DBWorkflow, DBWorkflowJob, DBWorkspace
+from .models import DBHPCSlurmJob, DBUserAccount, DBWorkflow, DBWorkflowJob, DBWorkspace
+from .models_stats import DBProcessingStatsTotal
 from .db_hpc_slurm_job import (
     db_create_hpc_slurm_job,
     db_get_hpc_slurm_job,
@@ -108,7 +110,7 @@ from .db_workspace import (
     sync_db_update_workspace,
     sync_db_get_all_workspaces_by_user
 )
-from .db_processing_statistics import (
+from .db_processing_stats_total import (
     db_create_processing_stats,
     db_get_processing_stats,
     db_increase_processing_stats,
@@ -116,4 +118,9 @@ from .db_processing_statistics import (
     sync_db_create_processing_stats,
     sync_db_get_processing_stats,
     sync_db_increase_processing_stats
+)
+from .db_processing_stats import (
+    db_create_page_stat,
+    db_create_page_stat_with_handling,
+    sync_db_create_page_stat
 )
