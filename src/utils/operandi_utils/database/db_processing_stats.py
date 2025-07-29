@@ -3,22 +3,8 @@ from logging import Logger
 from typing import Optional
 from fastapi import HTTPException, status
 from operandi_utils import call_sync
-from .models_stats import (
-    DBPageStat,
-    DBPageStatDownloaded,
-    DBPageStatFailed,
-    DBPageStatSubmitted,
-    DBPageStatSucceeded,
-    DBPageStatUploaded
-)
+from .models_stats import DBPageStat, DBProcessingStatsTotal, PAGE_STAT_TYPE_TO_MODEL
 
-PAGE_STAT_TYPE_TO_MODEL = {
-    "uploaded": DBPageStatUploaded,
-    "downloaded": DBPageStatDownloaded,
-    "submitted": DBPageStatSubmitted,
-    "succeeded": DBPageStatSucceeded,
-    "failed": DBPageStatFailed,
-}
 
 async def db_create_page_stat(
     stat_type: str, quantity: int, institution_id: str, user_id: str, workspace_id: str,
@@ -68,3 +54,51 @@ async def db_create_page_stat_with_handling(
         logger.error(message)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
     return db_page_stat
+
+
+async def db_create_processing_stats(institution_id: str, user_id: str) -> DBProcessingStatsTotal:
+    db_processing_stats = await DBProcessingStatsTotal.find_one(
+        DBProcessingStatsTotal.institution_id == institution_id,
+        DBProcessingStatsTotal.user_id == user_id)
+
+    if db_processing_stats:
+        raise RuntimeError(
+            f"DB processing statistics entry already exists for user_id: {user_id}, institution_id: {institution_id}")
+
+    db_processing_stats = DBProcessingStatsTotal(
+        institution_id=institution_id,
+        user_id=user_id,
+        pages_uploaded=0,
+        pages_submitted=0,
+        pages_succeed=0,
+        pages_failed=0,
+        pages_downloaded=0,
+        pages_cancelled=0
+    )
+    await db_processing_stats.save()
+    return db_processing_stats
+
+
+async def db_get_processing_stats(user_id: str) -> DBProcessingStatsTotal:
+    db_processing_stats = await db_update_processing_stats(user_id=user_id)
+    return db_processing_stats
+
+
+async def db_update_processing_stats(user_id: str) -> DBProcessingStatsTotal:
+    db_processing_stats = await DBProcessingStatsTotal.find_one(DBProcessingStatsTotal.user_id == user_id)
+    if not db_processing_stats:
+        raise RuntimeError(f"No DB processing statistics entry found for user id: {user_id}")
+    stats = {}
+    for stat_type in PAGE_STAT_TYPE_TO_MODEL:
+        page_stat_total = 0
+        for page_stat in PAGE_STAT_TYPE_TO_MODEL[stat_type].find_all(DBPageStat.user_id == user_id).to_list():
+            page_stat_total += page_stat.amount
+        stats[stat_type] = page_stat_total
+    db_processing_stats.pages_uploaded = stats["uploaded"]
+    db_processing_stats.pages_submitted = stats["submitted"]
+    db_processing_stats.pages_succeed = stats["succeed"]
+    db_processing_stats.pages_failed = stats["failed"]
+    db_processing_stats.pages_downloaded = stats["downloaded"]
+    db_processing_stats.pages_cancelled = stats["cancelled"]
+    db_processing_stats.save()
+    return db_processing_stats

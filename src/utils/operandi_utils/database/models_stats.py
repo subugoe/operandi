@@ -15,7 +15,7 @@ class DBProcessingStatsTotal(Document):
         pages_succeed:      Total amount of successfully processed pages
         pages_failed:       Total amount of failed pages
         pages_downloaded:   Total amount of pages downloaded as a workspace from the server
-        pages_cancel:       Total amount of cancelled pages
+        pages_cancelled:    Total amount of cancelled pages
     """
     institution_id: str
     user_id: str
@@ -24,10 +24,11 @@ class DBProcessingStatsTotal(Document):
     pages_succeed: int = Field(0, ge=0)
     pages_failed: int = Field(0, ge=0)
     pages_downloaded: int = Field(0, ge=0)
-    pages_cancel: int = Field(0, ge=0)
+    pages_cancelled: int = Field(0, ge=0)
 
     class Settings:
         name = "processing_stats_total"
+
 
 class DBPageStat(Document):
     """
@@ -76,3 +77,13 @@ class DBPageStatCancelled(DBPageStat):
     workflow_job_id: str
     class Settings:
         name = "page_stat_cancelled"
+
+
+PAGE_STAT_TYPE_TO_MODEL = {
+    "uploaded": DBPageStatUploaded,
+    "downloaded": DBPageStatDownloaded,
+    "submitted": DBPageStatSubmitted,
+    "succeeded": DBPageStatSucceeded,
+    "failed": DBPageStatFailed,
+    "cancelled": DBPageStatCancelled
+}
