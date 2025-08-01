@@ -12,7 +12,7 @@ class DBProcessingStatsTotal(Document):
         user_id:            Unique id of the user to whom the statistics belong to
         pages_uploaded:     Total amount of pages uploaded as a workspace to the server
         pages_submitted:    Total amount of submitted pages in workflow jobs
-        pages_succeed:      Total amount of successfully processed pages
+        pages_succeeded:    Total amount of successfully processed pages
         pages_failed:       Total amount of failed pages
         pages_downloaded:   Total amount of pages downloaded as a workspace from the server
         pages_cancelled:    Total amount of cancelled pages
@@ -21,7 +21,7 @@ class DBProcessingStatsTotal(Document):
     user_id: str
     pages_uploaded: int = Field(0, ge=0)
     pages_submitted: int = Field(0, ge=0)
-    pages_succeed: int = Field(0, ge=0)
+    pages_succeeded: int = Field(0, ge=0)
     pages_failed: int = Field(0, ge=0)
     pages_downloaded: int = Field(0, ge=0)
     pages_cancelled: int = Field(0, ge=0)

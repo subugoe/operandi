@@ -70,7 +70,7 @@ async def db_create_processing_stats(institution_id: str, user_id: str) -> DBPro
         user_id=user_id,
         pages_uploaded=0,
         pages_submitted=0,
-        pages_succeed=0,
+        pages_succeeded=0,
         pages_failed=0,
         pages_downloaded=0,
         pages_cancelled=0
@@ -109,7 +109,7 @@ async def db_update_processing_stats(
         stats[stat_type] = page_stat_total
     db_processing_stats.pages_uploaded = stats["uploaded"]
     db_processing_stats.pages_submitted = stats["submitted"]
-    db_processing_stats.pages_succeed = stats["succeeded"]
+    db_processing_stats.pages_succeeded = stats["succeeded"]
     db_processing_stats.pages_failed = stats["failed"]
     db_processing_stats.pages_downloaded = stats["downloaded"]
     db_processing_stats.pages_cancelled = stats["cancelled"]
