@@ -1,6 +1,6 @@
 from datetime import datetime
 from logging import Logger
-from typing import Optional
+from typing import Any, Dict, Optional
 from fastapi import HTTPException, status
 from operandi_utils import call_sync
 from .models_stats import DBPageStat, DBProcessingStatsTotal, PAGE_STAT_TYPE_TO_MODEL
@@ -79,26 +79,39 @@ async def db_create_processing_stats(institution_id: str, user_id: str) -> DBPro
     return db_processing_stats
 
 
-async def db_get_processing_stats(user_id: str) -> DBProcessingStatsTotal:
-    db_processing_stats = await db_update_processing_stats(user_id=user_id)
+async def db_get_processing_stats(
+    logger: Logger, user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+) -> DBProcessingStatsTotal:
+    db_processing_stats = await db_update_processing_stats(
+        logger=logger, user_id=user_id, start_date=start_date, end_date=end_date)
     return db_processing_stats
 
 
-async def db_update_processing_stats(user_id: str) -> DBProcessingStatsTotal:
+async def db_update_processing_stats(
+    logger: Logger, user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+) -> DBProcessingStatsTotal:
     db_processing_stats = await DBProcessingStatsTotal.find_one(DBProcessingStatsTotal.user_id == user_id)
     if not db_processing_stats:
         raise RuntimeError(f"No DB processing statistics entry found for user id: {user_id}")
+    query: Dict[str, Any] = {"user_id": user_id}
+    if start_date or end_date:
+        query["datetime"] = {}
+        if start_date:
+            query["datetime"]["$gte"] = start_date
+        if end_date:
+            query["datetime"]["$lte"] = end_date
     stats = {}
     for stat_type in PAGE_STAT_TYPE_TO_MODEL:
         page_stat_total = 0
-        for page_stat in PAGE_STAT_TYPE_TO_MODEL[stat_type].find_all(DBPageStat.user_id == user_id).to_list():
-            page_stat_total += page_stat.amount
+        page_stats = await PAGE_STAT_TYPE_TO_MODEL[stat_type].find_many(query).to_list()
+        for page_stat in page_stats:
+            page_stat_total += page_stat.quantity
         stats[stat_type] = page_stat_total
     db_processing_stats.pages_uploaded = stats["uploaded"]
     db_processing_stats.pages_submitted = stats["submitted"]
-    db_processing_stats.pages_succeed = stats["succeed"]
+    db_processing_stats.pages_succeed = stats["succeeded"]
     db_processing_stats.pages_failed = stats["failed"]
     db_processing_stats.pages_downloaded = stats["downloaded"]
     db_processing_stats.pages_cancelled = stats["cancelled"]
-    db_processing_stats.save()
+    await db_processing_stats.save()
     return db_processing_stats

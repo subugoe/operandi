@@ -98,9 +98,13 @@ class RouterUser:
                  f"Please contact the OCR-D team to get your account validated before use."
         return PYUserAction.from_db_user_account(action=action, db_user_account=db_user_account)
 
-    async def user_processing_stats(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+    async def user_processing_stats(
+        self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    ):
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        return await get_user_processing_stats_with_handling(self.logger, user_id=py_user_action.user_id)
+        return await get_user_processing_stats_with_handling(
+            self.logger, user_id=py_user_action.user_id, start_date=start_date, end_date=end_date)
 
     async def user_workflow_jobs(
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
