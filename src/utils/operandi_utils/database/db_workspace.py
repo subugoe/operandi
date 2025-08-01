@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from os.path import join
 from operandi_utils import call_sync
@@ -78,7 +78,7 @@ async def db_get_workspace(workspace_id: str) -> DBWorkspace:
 async def db_get_all_workspaces_by_user(
     user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
 ) -> List[DBWorkspace]:
-    query = {"user_id": user_id}
+    query: Dict[str, Any] = {"user_id": user_id}
     if start_date or end_date:
         query["datetime"] = {}
         if start_date:
