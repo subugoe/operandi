@@ -30,6 +30,7 @@ __all__ = [
     "db_update_workflow_job",
     "db_update_workspace",
     "sync_db_create_hpc_slurm_job",
+    "sync_db_create_page_stat",
     "sync_db_create_user_account",
     "sync_db_create_workflow",
     "sync_db_create_workflow_job",

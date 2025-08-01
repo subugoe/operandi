@@ -8,9 +8,9 @@ from operandi_broker.job_worker_base import JobWorkerBase
 
 from operandi_utils.constants import StateJob, StateWorkspace
 from operandi_utils.database import (
-    DBWorkflow, DBWorkflowJob, DBWorkspace,
-    sync_db_create_page_stat, sync_db_get_workflow, sync_db_get_workflow_job, sync_db_get_workspace,
-    sync_db_create_hpc_slurm_job, sync_db_update_workflow_job, sync_db_update_workspace)
+    DBUserAccount, DBWorkflow, DBWorkflowJob, DBWorkspace,
+    sync_db_create_page_stat, sync_db_get_user_account, sync_db_get_workflow, sync_db_get_workflow_job,
+    sync_db_get_workspace, sync_db_create_hpc_slurm_job, sync_db_update_workflow_job, sync_db_update_workspace)
 from operandi_utils.hpc.constants import (
     HPC_BATCH_SUBMIT_WORKFLOW_JOB, HPC_JOB_DEADLINE_TIME_REGULAR, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_SHORT,
     HPC_JOB_QOS_DEFAULT)
@@ -157,12 +157,14 @@ class JobWorkerSubmit(JobWorkerBase):
         # self.log.info("HPC transfer connection renewed successfully.")
 
         try:
-            db_workspace = sync_db_update_workspace(
+            db_workspace: DBWorkspace = sync_db_update_workspace(
                 find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_TO_HPC)
             sync_db_update_workflow_job(find_job_id=workflow_job_id, job_state=StateJob.TRANSFERRING_TO_HPC)
             self.hpc_io_transfer.pack_and_put_slurm_workspace(
                 ocrd_workspace_dir=workspace_dir, workflow_job_id=workflow_job_id,
                 nextflow_script_path=workflow_script_path)
+            db_user: DBUserAccount = sync_db_get_user_account(db_workspace.user_id)
+            institute_id = db_user.institution_id
         except Exception as error:
             raise Exception(f"Failed to pack and put slurm workspace: {error}")
 
@@ -180,7 +182,7 @@ class JobWorkerSubmit(JobWorkerBase):
             sync_db_create_page_stat(
                 stat_type="failed",
                 quantity=ws_pages_amount,
-                institution_id=db_workspace.institution_id,
+                institution_id=institute_id,
                 user_id=db_workspace.user_id,
                 workspace_id=workspace_id,
                 workflow_job_id=workflow_job_id

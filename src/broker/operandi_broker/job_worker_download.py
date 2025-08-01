@@ -7,7 +7,8 @@ from ocrd import Resolver
 from operandi_broker.job_worker_base import JobWorkerBase
 from operandi_utils.constants import StateJob, StateWorkspace
 from operandi_utils.database import (
-    DBWorkspace, sync_db_create_page_stat, sync_db_get_hpc_slurm_job, sync_db_get_workflow_job, sync_db_get_workspace,
+    DBWorkflowJob, DBWorkspace, DBHPCSlurmJob, DBUserAccount, sync_db_create_page_stat,
+    sync_db_get_hpc_slurm_job, sync_db_get_user_account, sync_db_get_workflow_job, sync_db_get_workspace,
     sync_db_update_workflow_job, sync_db_update_workspace)
 
 
@@ -36,18 +37,21 @@ class JobWorkerDownload(JobWorkerBase):
             return
 
         try:
-            db_hpc_slurm_job = sync_db_get_hpc_slurm_job(self.current_message_job_id)
+            db_hpc_slurm_job: DBHPCSlurmJob = sync_db_get_hpc_slurm_job(self.current_message_job_id)
             slurm_job_id = db_hpc_slurm_job.hpc_slurm_job_id
 
-            db_workflow_job = sync_db_get_workflow_job(self.current_message_job_id)
+            db_workflow_job: DBWorkflowJob = sync_db_get_workflow_job(self.current_message_job_id)
             workspace_id = db_workflow_job.workspace_id
             job_id = db_workflow_job.job_id
             job_dir = db_workflow_job.job_dir
 
-            db_workspace = sync_db_get_workspace(workspace_id)
+            db_workspace: DBWorkspace = sync_db_get_workspace(workspace_id)
             ws_dir = db_workspace.workspace_dir
-            institution_id = db_workspace.institution_id
             user_id = db_workspace.user_id
+            pages_amount = db_workspace.pages_amount
+
+            db_user: DBUserAccount = sync_db_get_user_account(user_id=user_id)
+            institution_id = db_user.institution_id
         except RuntimeError as error:
             self.log.warning(f"Database run-time error has occurred: {error}")
             self._handle_msg_failure(interruption=False)
@@ -64,9 +68,8 @@ class JobWorkerDownload(JobWorkerBase):
                 self.__download_results_from_hpc(job_dir=job_dir, workspace_dir=ws_dir)
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
                 updated_file_groups = self.__extract_updated_file_groups(db_workspace=db_workspace)
-                db_workspace = sync_db_update_workspace(
+                db_workspace: DBWorkspace = sync_db_update_workspace(
                     find_workspace_id=workspace_id, state=StateWorkspace.READY, file_groups=updated_file_groups)
-                pages_amount = db_workspace.pages_amount
                 self.log.info(f"Creating page stat succeeded with quantity {pages_amount}")
                 sync_db_create_page_stat(
                     stat_type="succeeded",
@@ -82,8 +85,8 @@ class JobWorkerDownload(JobWorkerBase):
             if previous_job_state == StateJob.HPC_FAILED:
                 self.hpc_io_transfer.download_slurm_job_log_file(slurm_job_id, job_dir)
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
-                db_workspace = sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.READY)
-                pages_amount = db_workspace.pages_amount
+                db_workspace: DBWorkspace = sync_db_update_workspace(
+                    find_workspace_id=workspace_id, state=StateWorkspace.READY)
                 self.log.info(f"Creating page stat failed with quantity {pages_amount}")
                 sync_db_create_page_stat(
                     stat_type="failed",
