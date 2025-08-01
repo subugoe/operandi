@@ -4,8 +4,17 @@ from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from operandi_utils import call_sync
-from .models import DBHPCSlurmJob, DBProcessingStatistics, DBUserAccount, DBWorkflow, DBWorkflowJob, DBWorkspace
-
+from .models import DBHPCSlurmJob, DBUserAccount, DBWorkflow, DBWorkflowJob, DBWorkspace
+from .models_stats import (
+    DBPageStat,
+    DBPageStatCancelled,
+    DBPageStatDownloaded,
+    DBPageStatFailed,
+    DBPageStatSubmitted,
+    DBPageStatSucceeded,
+    DBPageStatUploaded,
+    DBProcessingStatsTotal
+)
 
 async def db_initiate_database(
     db_url: str = environ.get("OPERANDI_DB_URL"), db_name: str = environ.get("OPERANDI_DB_NAME")
@@ -13,7 +22,21 @@ async def db_initiate_database(
     logger = getLogger("operandi_utils.database.base")
     logger.info(f"MongoDB URL: {db_url}")
     logger.info(f"MongoDB Name: {db_name}")
-    doc_models = [DBHPCSlurmJob, DBProcessingStatistics, DBUserAccount, DBWorkflow, DBWorkflowJob, DBWorkspace]
+    doc_models = [
+        DBHPCSlurmJob,
+        DBPageStat,
+        DBPageStatCancelled,
+        DBPageStatDownloaded,
+        DBPageStatFailed,
+        DBPageStatSubmitted,
+        DBPageStatSucceeded,
+        DBPageStatUploaded,
+        DBProcessingStatsTotal,
+        DBUserAccount,
+        DBWorkflow,
+        DBWorkflowJob,
+        DBWorkspace
+    ]
     client = AsyncIOMotorClient(db_url)
     # Documentation: https://beanie-odm.dev/
     await init_beanie(database=client.get_default_database(default=db_name), document_models=doc_models)

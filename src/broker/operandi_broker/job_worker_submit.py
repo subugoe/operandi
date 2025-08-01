@@ -9,7 +9,7 @@ from operandi_broker.job_worker_base import JobWorkerBase
 from operandi_utils.constants import StateJob, StateWorkspace
 from operandi_utils.database import (
     DBWorkflow, DBWorkflowJob, DBWorkspace,
-    sync_db_increase_processing_stats, sync_db_get_workflow, sync_db_get_workflow_job, sync_db_get_workspace,
+    sync_db_create_page_stat, sync_db_get_workflow, sync_db_get_workflow_job, sync_db_get_workspace,
     sync_db_create_hpc_slurm_job, sync_db_update_workflow_job, sync_db_update_workspace)
 from operandi_utils.hpc.constants import (
     HPC_BATCH_SUBMIT_WORKFLOW_JOB, HPC_JOB_DEADLINE_TIME_REGULAR, HPC_JOB_DEADLINE_TIME_TEST, HPC_JOB_QOS_SHORT,
@@ -157,7 +157,8 @@ class JobWorkerSubmit(JobWorkerBase):
         # self.log.info("HPC transfer connection renewed successfully.")
 
         try:
-            sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_TO_HPC)
+            db_workspace = sync_db_update_workspace(
+                find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_TO_HPC)
             sync_db_update_workflow_job(find_job_id=workflow_job_id, job_state=StateJob.TRANSFERRING_TO_HPC)
             self.hpc_io_transfer.pack_and_put_slurm_workspace(
                 ocrd_workspace_dir=workspace_dir, workflow_job_id=workflow_job_id,
@@ -175,10 +176,15 @@ class JobWorkerSubmit(JobWorkerBase):
                 file_groups_to_remove=file_groups_to_remove, cpus=cpus, ram=ram, job_deadline_time=job_deadline_time,
                 partition=partition, qos=qos)
         except Exception as error:
-            db_stats = sync_db_increase_processing_stats(
-                find_user_id=self.current_message_user_id, pages_failed=ws_pages_amount)
-            self.log.error(f"Increasing `pages_failed` stat by {ws_pages_amount}")
-            self.log.error(f"Total amount of `pages_failed` stat: {db_stats.pages_failed}")
+            self.log.info(f"Creating page stat failed with quantity {ws_pages_amount}")
+            sync_db_create_page_stat(
+                stat_type="failed",
+                quantity=ws_pages_amount,
+                institution_id=db_workspace.institution_id,
+                user_id=db_workspace.user_id,
+                workspace_id=workspace_id,
+                workflow_job_id=workflow_job_id
+            )
             raise Exception(f"Triggering slurm job failed: {error}")
 
         try:

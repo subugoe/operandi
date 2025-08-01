@@ -1,13 +1,13 @@
 from json import dumps, loads
 from typing_extensions import override
 
-from operandi_broker.job_worker_base import JobWorkerBase
 from operandi_utils.constants import StateJob, StateWorkspace
 from operandi_utils.database import (
     DBHPCSlurmJob, DBWorkflowJob,
     sync_db_get_hpc_slurm_job, sync_db_get_workflow_job,
     sync_db_update_hpc_slurm_job, sync_db_update_workflow_job, sync_db_update_workspace)
 from operandi_utils.rabbitmq import RABBITMQ_QUEUE_HPC_DOWNLOADS
+from .job_worker_base import JobWorkerBase
 
 
 class JobWorkerStatus(JobWorkerBase):

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from operandi_utils import call_sync
 from .models import DBWorkflow
 
@@ -57,7 +57,7 @@ async def db_get_workflow(workflow_id: str) -> DBWorkflow:
 async def db_get_all_workflows_by_user(
     user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
 ) -> List[DBWorkflow]:
-    query = {"user_id": user_id}
+    query: Dict[str, Any] = {"user_id": user_id}
     if start_date or end_date:
         query["datetime"] = {}
         if start_date:

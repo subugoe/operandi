@@ -11,7 +11,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import ServerApiTag, StateWorkspace
 from operandi_utils.database import (
-    db_create_workspace, db_get_workspace, db_update_workspace, db_increase_processing_stats_with_handling)
+   db_create_page_stat_with_handling, db_create_workspace, db_get_workspace, db_update_workspace)
 from operandi_server.constants import DEFAULT_METS_BASENAME
 from operandi_server.files_manager import receive_resource
 from operandi_server.files_manager import LFMInstance
@@ -125,9 +125,14 @@ class RouterWorkspace:
             self.logger.error(f"{message}, error: {error}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
 
-        await db_increase_processing_stats_with_handling(
-            self.logger, find_user_id=py_user_action.user_id, pages_downloaded=db_workspace.pages_amount)
-
+        await db_create_page_stat_with_handling(
+            logger=self.logger,
+            stat_type="downloaded",
+            quantity=db_workspace.pages_amount,
+            institution_id=py_user_action.institution_id,
+            user_id=py_user_action.user_id,
+            workspace_id=workspace_id
+        )
         background_tasks.add_task(unlink, bag_path)
         return FileResponse(path=bag_path, filename=f"{workspace_id}.ocrd.zip", media_type="application/ocrd+zip")
 
@@ -160,7 +165,9 @@ class RouterWorkspace:
         db_workspace = await db_create_workspace(
             user_id=user_id, workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount,
             file_groups=file_groups, bag_info=bag_info, state=StateWorkspace.READY, details=details)
-        await db_increase_processing_stats_with_handling(self.logger, find_user_id=user_id, pages_uploaded=pages_amount)
+        await db_create_page_stat_with_handling(
+            logger=self.logger, stat_type="uploaded", quantity=db_workspace.pages_amount,
+            institution_id=py_user_action.institution_id, user_id=py_user_action.user_id, workspace_id=ws_id)
         return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def upload_batch_workspaces(
@@ -214,7 +221,9 @@ class RouterWorkspace:
         db_workspace = await db_create_workspace(
             user_id=user_id, workspace_id=workspace_id, workspace_dir=workspace_dir, pages_amount=pages_amount,
             file_groups=file_groups, bag_info=bag_info, state=StateWorkspace.READY, details=details)
-        await db_increase_processing_stats_with_handling(self.logger, find_user_id=user_id, pages_uploaded=pages_amount)
+        await db_create_page_stat_with_handling(
+            logger=self.logger, stat_type="uploaded", quantity=db_workspace.pages_amount,
+            institution_id=py_user_action.institution_id, user_id=py_user_action.user_id, workspace_id=workspace_id)
         return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def upload_batch_workspaces_from_urls(
@@ -278,7 +287,9 @@ class RouterWorkspace:
         db_workspace = await db_create_workspace(
             user_id=user_id, workspace_id=ws_id, workspace_dir=ws_dir, pages_amount=pages_amount,
             file_groups=file_groups, bag_info=bag_info, state=StateWorkspace.READY, details=details)
-        await db_increase_processing_stats_with_handling(self.logger, find_user_id=user_id, pages_uploaded=pages_amount)
+        await db_create_page_stat_with_handling(
+            logger=self.logger, stat_type="uploaded", quantity=db_workspace.pages_amount,
+            institution_id=py_user_action.institution_id, user_id=py_user_action.user_id, workspace_id=workspace_id)
         return WorkspaceRsrc.from_db_workspace(db_workspace)
 
     async def delete_workspace(

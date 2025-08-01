@@ -64,9 +64,13 @@ class RouterAdminPanel:
         await self.auth_admin_with_handling(auth)
         return await get_user_accounts()
 
-    async def user_processing_stats(self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+    async def user_processing_stats(
+        self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    ):
         await self.auth_admin_with_handling(auth)
-        return await get_user_processing_stats_with_handling(self.logger, user_id=user_id)
+        return await get_user_processing_stats_with_handling(
+            self.logger, user_id=user_id, start_date=start_date, end_date=end_date)
 
     async def user_workflow_jobs(
         self, user_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic()),

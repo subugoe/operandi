@@ -6,7 +6,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_server.models import PYUserAction, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
-from operandi_utils.database.models import DBProcessingStatistics
+from operandi_utils.database.models_stats import DBProcessingStatsTotal
 from operandi_utils.rabbitmq import get_connection_publisher
 from .workflow_utils import get_user_workflows, get_user_workflow_jobs
 from .workspace_utils import get_user_workspaces
@@ -45,7 +45,7 @@ class RouterUser:
             path="/user/processing_stats",
             endpoint=self.user_processing_stats, methods=["GET"], status_code=status.HTTP_200_OK,
             summary="Get user account statistics of the currently logged user",
-            response_model=DBProcessingStatistics, response_model_exclude_unset=True, response_model_exclude_none=True
+            response_model=DBProcessingStatsTotal, response_model_exclude_unset=True, response_model_exclude_none=True
         )
         router.add_api_route(
             path="/user/workspaces",
@@ -98,9 +98,13 @@ class RouterUser:
                  f"Please contact the OCR-D team to get your account validated before use."
         return PYUserAction.from_db_user_account(action=action, db_user_account=db_user_account)
 
-    async def user_processing_stats(self, auth: HTTPBasicCredentials = Depends(HTTPBasic())):
+    async def user_processing_stats(
+        self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
+        start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
+    ):
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        return await get_user_processing_stats_with_handling(self.logger, user_id=py_user_action.user_id)
+        return await get_user_processing_stats_with_handling(
+            self.logger, user_id=py_user_action.user_id, start_date=start_date, end_date=end_date)
 
     async def user_workflow_jobs(
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
