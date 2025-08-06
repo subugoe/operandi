@@ -71,7 +71,7 @@ class RouterAdminPanel:
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ):
         await self.auth_admin_with_handling(auth)
-        query = create_db_query(user_id, start_date, end_date)
+        query = create_db_query(user_id, start_date, end_date, hide_deleted=False)
         return await get_user_processing_stats_with_handling(logger=self.logger, query=query)
 
     async def user_workflow_jobs(
