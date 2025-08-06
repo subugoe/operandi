@@ -1,7 +1,6 @@
-from datetime import datetime
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from typing import List, Optional
+from typing import Any, Dict, List
 
 from operandi_utils.constants import AccountType
 from operandi_utils.database import (
@@ -74,12 +73,10 @@ async def user_register_with_handling(
     logger.error(f"{message}")
     raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, headers=headers, detail=message)
 
-async def get_user_processing_stats_with_handling(
-    logger, user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-) -> DBProcessingStatsTotal:
+async def get_user_processing_stats_with_handling(logger, query: Dict[str, Any]) -> DBProcessingStatsTotal:
+    user_id = query["user_id"]
     try:
-        db_processing_stats = await db_get_processing_stats(
-            logger=logger, user_id=user_id, start_date=start_date, end_date=end_date)
+        db_processing_stats = await db_get_processing_stats(logger=logger, query=query)
     except RuntimeError as error:
         message = f"Processing stats not found for the user_id: {user_id}"
         logger.error(f"{message}, error: {error}")
