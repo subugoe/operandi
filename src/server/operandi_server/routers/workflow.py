@@ -12,6 +12,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, 
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from operandi_utils import create_db_query
 from operandi_utils.constants import AccountType, ServerApiTag, StateJob, StateWorkspace
 from operandi_utils.database import (
     db_create_page_stat_with_handling, db_create_workflow, db_create_workflow_job, db_get_hpc_slurm_job,
@@ -128,7 +129,8 @@ class RouterWorkflow:
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         current_user = await user_auth_with_handling(self.logger, auth)
-        return await get_user_workflows(current_user.user_id, start_date, end_date, True)
+        query = create_db_query(current_user.user_id, start_date, end_date, hide_deleted=True)
+        return await get_user_workflows(logger=self.logger, query=query)
 
     async def download_workflow_script(
         self, workflow_id: str, auth: HTTPBasicCredentials = Depends(HTTPBasic())
