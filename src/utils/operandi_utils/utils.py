@@ -47,7 +47,7 @@ def create_db_query(
     user_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
-    hide_deleted: bool = True
+    hide_deleted: bool = False
 ) -> Dict[str, Any]:
     query: Dict[str, Any] = {"user_id": user_id}
     if start_date or end_date:
