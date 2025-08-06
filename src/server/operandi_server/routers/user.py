@@ -8,6 +8,7 @@ from operandi_utils.constants import AccountType, ServerApiTag
 from operandi_server.models import PYUserAction, WorkflowJobRsrc, WorkspaceRsrc, WorkflowRsrc
 from operandi_utils.database.models_stats import DBProcessingStatsTotal
 from operandi_utils.rabbitmq import get_connection_publisher
+from operandi_utils.utils import create_db_query
 from .workflow_utils import get_user_workflows, get_user_workflow_jobs
 from .workspace_utils import get_user_workspaces
 from .user_utils import get_user_processing_stats_with_handling, user_auth_with_handling, user_register_with_handling
@@ -103,8 +104,8 @@ class RouterUser:
         start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ):
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        return await get_user_processing_stats_with_handling(
-            self.logger, user_id=py_user_action.user_id, start_date=start_date, end_date=end_date)
+        query = create_db_query(py_user_action.user_id, start_date, end_date)
+        return await get_user_processing_stats_with_handling(logger=self.logger, query=query)
 
     async def user_workflow_jobs(
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
@@ -114,8 +115,8 @@ class RouterUser:
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        return await get_user_workflow_jobs(
-            self.logger, self.rmq_publisher, py_user_action.user_id, start_date, end_date, True)
+        query = create_db_query(py_user_action.user_id, start_date, end_date, hide_deleted=True)
+        return await get_user_workflow_jobs(logger=self.logger, rmq_publisher=self.rmq_publisher, query=query)
 
     async def user_workspaces(
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
@@ -125,7 +126,8 @@ class RouterUser:
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        return await get_user_workspaces(py_user_action.user_id, start_date, end_date, True)
+        query = create_db_query(py_user_action.user_id, start_date, end_date, hide_deleted=True)
+        return await get_user_workspaces(logger=self.logger, query=query)
 
     async def user_workflows(
         self, auth: HTTPBasicCredentials = Depends(HTTPBasic()),
@@ -135,4 +137,5 @@ class RouterUser:
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        return await get_user_workflows(py_user_action.user_id, start_date, end_date, True)
+        query = create_db_query(py_user_action.user_id, start_date, end_date, hide_deleted=True)
+        return await get_user_workflows(logger=self.logger, query=query)

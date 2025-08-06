@@ -1,10 +1,10 @@
 import bagit
-from datetime import datetime
 from fastapi import HTTPException, status
+from logging import Logger
 from os.path import join
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Optional
+from typing import Any, Dict, List
 from zipfile import ZipFile
 
 from ocrd import Resolver
@@ -229,10 +229,6 @@ def find_file_groups_to_remove_with_handling(logger, db_workspace, preserve_file
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message)
     return remove_groups
 
-async def get_user_workspaces(
-    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
-) -> List[WorkspaceRsrc]:
-    db_workspaces = await db_get_all_workspaces_by_user(
-        user_id=user_id, start_date=start_date, end_date=end_date, hide_deleted=hide_deleted)
+async def get_user_workspaces(logger: Logger, query: Dict[str, Any]) -> List[WorkspaceRsrc]:
+    db_workspaces = await db_get_all_workspaces_by_user(query=query)
     return [WorkspaceRsrc.from_db_workspace(db_workspace) for db_workspace in db_workspaces]
-

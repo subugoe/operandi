@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import wraps
 from io import DEFAULT_BUFFER_SIZE
 from os import sep
@@ -10,6 +11,7 @@ from requests import get as requests_get
 from requests.exceptions import RequestException
 from shutil import make_archive, move, unpack_archive
 from uuid import uuid4
+from typing import Any, Dict, Optional
 
 from ocrd_utils import initLogging
 
@@ -40,6 +42,23 @@ def call_sync(func):
         return result
 
     return func_wrapper
+
+def create_db_query(
+    user_id: str,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    hide_deleted: Optional[bool] = None
+) -> Dict[str, Any]:
+    query: Dict[str, Any] = {"user_id": user_id}
+    if start_date or end_date:
+        query["datetime"] = {}
+        if start_date:
+            query["datetime"]["$gte"] = start_date
+        if end_date:
+            query["datetime"]["$lte"] = end_date
+    if hide_deleted:
+        query["deleted"] = hide_deleted
+    return query
 
 def is_url_responsive(url: str) -> bool:
     try:

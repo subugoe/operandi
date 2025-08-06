@@ -79,27 +79,15 @@ async def db_create_processing_stats(institution_id: str, user_id: str) -> DBPro
     return db_processing_stats
 
 
-async def db_get_processing_stats(
-    logger: Logger, user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-) -> DBProcessingStatsTotal:
-    db_processing_stats = await db_update_processing_stats(
-        logger=logger, user_id=user_id, start_date=start_date, end_date=end_date)
-    return db_processing_stats
+async def db_get_processing_stats(logger: Logger, query: Dict[str, Any]) -> DBProcessingStatsTotal:
+    return await db_update_processing_stats(logger=logger, query=query)
 
 
-async def db_update_processing_stats(
-    logger: Logger, user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-) -> DBProcessingStatsTotal:
+async def db_update_processing_stats(logger: Logger, query: Dict[str, Any]) -> DBProcessingStatsTotal:
+    user_id = query["user_id"]
     db_processing_stats = await DBProcessingStatsTotal.find_one(DBProcessingStatsTotal.user_id == user_id)
     if not db_processing_stats:
         raise RuntimeError(f"No DB processing statistics entry found for user id: {user_id}")
-    query: Dict[str, Any] = {"user_id": user_id}
-    if start_date or end_date:
-        query["datetime"] = {}
-        if start_date:
-            query["datetime"]["$gte"] = start_date
-        if end_date:
-            query["datetime"]["$lte"] = end_date
     stats = {}
     for stat_type in PAGE_STAT_TYPE_TO_MODEL:
         page_stat_total = 0
