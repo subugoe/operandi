@@ -47,7 +47,7 @@ def create_db_query(
     user_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
-    hide_deleted: Optional[bool] = None
+    hide_deleted: bool = True
 ) -> Dict[str, Any]:
     query: Dict[str, Any] = {"user_id": user_id}
     if start_date or end_date:
@@ -57,7 +57,7 @@ def create_db_query(
         if end_date:
             query["datetime"]["$lte"] = end_date
     if hide_deleted:
-        query["deleted"] = hide_deleted
+        query["deleted"] = False
     return query
 
 def is_url_responsive(url: str) -> bool:

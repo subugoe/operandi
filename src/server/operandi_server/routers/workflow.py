@@ -129,7 +129,7 @@ class RouterWorkflow:
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         current_user = await user_auth_with_handling(self.logger, auth)
-        query = create_db_query(current_user.user_id, start_date, end_date, hide_deleted=True)
+        query = create_db_query(current_user.user_id, start_date, end_date, True)
         return await get_user_workflows(logger=self.logger, query=query)
 
     async def download_workflow_script(

@@ -115,7 +115,7 @@ class RouterUser:
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        query = create_db_query(py_user_action.user_id, start_date, end_date, hide_deleted=True)
+        query = create_db_query(py_user_action.user_id, start_date, end_date, True)
         return await get_user_workflow_jobs(logger=self.logger, rmq_publisher=self.rmq_publisher, query=query)
 
     async def user_workspaces(
@@ -126,7 +126,7 @@ class RouterUser:
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        query = create_db_query(py_user_action.user_id, start_date, end_date, hide_deleted=True)
+        query = create_db_query(py_user_action.user_id, start_date, end_date, True)
         return await get_user_workspaces(logger=self.logger, query=query)
 
     async def user_workflows(
@@ -137,5 +137,5 @@ class RouterUser:
         The expected datetime format: YYYY-MM-DDTHH:MM:SS, for example, 2024-12-01T18:17:15
         """
         py_user_action = await user_auth_with_handling(self.logger, auth)
-        query = create_db_query(py_user_action.user_id, start_date, end_date, hide_deleted=True)
+        query = create_db_query(py_user_action.user_id, start_date, end_date, True)
         return await get_user_workflows(logger=self.logger, query=query)
