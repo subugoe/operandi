@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from operandi_utils import call_sync
 from operandi_utils.constants import StateJob
 from operandi_utils.database.models import DBWorkflowJob
@@ -38,20 +38,8 @@ async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
     return db_workflow_job
 
 
-async def db_get_all_workflow_jobs_by_user(
-    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
-) -> List[DBWorkflowJob]:
-    query: Dict[str, Any] = {"user_id": user_id}
-    if start_date or end_date:
-        query["datetime"] = {}
-        if start_date:
-            query["datetime"]["$gte"] = start_date
-        if end_date:
-            query["datetime"]["$lte"] = end_date
-    if hide_deleted:
-        query["deleted"] = False
-    db_workflow_jobs = await DBWorkflowJob.find_many(query).to_list()
-    return db_workflow_jobs
+async def db_get_all_workflow_jobs_by_user(query: Dict[str, Any]) -> List[DBWorkflowJob]:
+    return await DBWorkflowJob.find_many(query).to_list()
 
 
 @call_sync
@@ -96,7 +84,5 @@ async def sync_db_update_workflow_job(find_job_id: str, **kwargs) -> DBWorkflowJ
     return await db_update_workflow_job(find_job_id=find_job_id, **kwargs)
 
 @call_sync
-async def sync_db_get_all_workflow_jobs_by_user(
-    user_id: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None, hide_deleted: bool = True
-) -> List[DBWorkflowJob]:
-    return await db_get_all_workflow_jobs_by_user(user_id, start_date, end_date, hide_deleted)
+async def sync_db_get_all_workflow_jobs_by_user(query: Dict[str, Any]) -> List[DBWorkflowJob]:
+    return await db_get_all_workflow_jobs_by_user(query)
