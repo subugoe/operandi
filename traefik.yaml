@@ -20,6 +20,9 @@ certificatesResolvers:
 entryPoints:
   web:
     address: :80
+    transport:
+      respondingTimeouts:
+        readTimeout: 60m
     http:
       redirections:
         entryPoint:
@@ -28,3 +31,6 @@ entryPoints:
           permanent: true
   websecure:
     address: :443
+    transport:
+      respondingTimeouts:
+        readTimeout: 60m

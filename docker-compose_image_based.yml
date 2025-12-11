@@ -90,6 +90,9 @@ services:
       - "traefik.http.routers.operandi-server.entrypoints=websecure"
       - "traefik.http.routers.operandi-server.rule=Host(`operandi.ocr-d.de`) && PathPrefix(`/`)"
       - "traefik.http.routers.operandi-server.tls.certresolver=myResolver"
+      - "traefik.http.routers.operandi-server.middlewares=limit@docker"
+      - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=8000000000"
+      - "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=8000000000"
     environment:
       - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
       - OPERANDI_DB_URL=${OPERANDI_DB_URL}
