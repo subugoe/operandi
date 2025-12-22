@@ -21,7 +21,7 @@ async def test_post_workflow_script(operandi, auth, db_workflows, bytes_template
 
 
 @mark.asyncio
-async def _test_post_workflow_script_with_ms(operandi, auth, db_workflows, bytes_template_workflow_with_ms):
+async def test_post_workflow_script_with_ms(operandi, auth, db_workflows, bytes_template_workflow_with_ms):
     # Post a new workflow script
     wf_detail = "Test template workflow with mets server"
     response = await operandi.post(
@@ -36,7 +36,7 @@ async def _test_post_workflow_script_with_ms(operandi, auth, db_workflows, bytes
 
 
 @mark.asyncio
-async def _test_put_workflow_script(
+async def test_put_workflow_script(
     operandi, auth, db_workflows, bytes_template_workflow_with_ms, bytes_default_workflow_with_ms
 ):
     put_workflow_id = "put_workflow_id"
@@ -87,7 +87,7 @@ async def _test_put_workflow_script(
 
 
 @mark.asyncio
-async def _test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow_with_ms):
+async def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow_with_ms):
     production_workflow_ids = [
         "template_workflow", "default_workflow", "odem_workflow",
         "template_workflow_with_MS", "default_workflow_with_MS", "odem_workflow_with_MS"
@@ -102,18 +102,18 @@ async def _test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow
 
 # Not implemented/planned in the WebAPI
 @mark.asyncio
-async def _test_delete_workflow():
+async def test_delete_workflow():
     pass
 
 
 # Not implemented/planned in the WebAPI
 @mark.asyncio
-async def _test_delete_workflow_non_existing():
+async def test_delete_workflow_non_existing():
     pass
 
 
 @mark.asyncio
-async def _test_get_workflow_script(operandi, auth, bytes_template_workflow):
+async def test_get_workflow_script(operandi, auth, bytes_template_workflow):
     # Post a new workflow script
     response = await operandi.post(url="/workflow", files={"nextflow_script": bytes_template_workflow}, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -128,7 +128,7 @@ async def _test_get_workflow_script(operandi, auth, bytes_template_workflow):
 
 
 @mark.asyncio
-async def _test_get_workflow_non_existing(operandi, auth):
+async def test_get_workflow_non_existing(operandi, auth):
     non_workflow_id = "non_existing_workflow_id"
     response = await operandi.get(url=f"/workflow/{non_workflow_id}", auth=auth)
     assert_response_status_code(response.status_code, expected_floor=4)
@@ -147,7 +147,7 @@ async def _test_running_workflow_job_status():
 
 
 @mark.asyncio
-async def _test_convert_txt_to_nextflow_success(operandi, auth):
+async def test_convert_txt_to_nextflow_success(operandi, auth):
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "local", "with_mets_server": False}
@@ -164,7 +164,7 @@ async def _test_convert_txt_to_nextflow_success(operandi, auth):
 
 
 @mark.asyncio
-async def _test_convert_txt_to_nextflow_success_with_mets_server(operandi, auth):
+async def test_convert_txt_to_nextflow_success_with_mets_server(operandi, auth):
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "local", "with_mets_server": True}
@@ -181,7 +181,7 @@ async def _test_convert_txt_to_nextflow_success_with_mets_server(operandi, auth)
 
 
 @mark.asyncio
-async def _test_convert_txt_to_nextflow_auth_failure(operandi):
+async def test_convert_txt_to_nextflow_auth_failure(operandi):
     dummy_text = "Some dummy text"
     dummy_file = BytesIO(dummy_text.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
@@ -195,7 +195,7 @@ async def _test_convert_txt_to_nextflow_auth_failure(operandi):
 
 
 @mark.asyncio
-async def _test_convert_txt_to_nextflow_validator_failure(operandi, auth):
+async def test_convert_txt_to_nextflow_validator_failure(operandi, auth):
     invalid_text = "Invalid ocrd process text"
     dummy_file = BytesIO(invalid_text.encode('utf-8'))
     files = {"txt_file": ("invalid.txt", dummy_file, "text/plain")}
@@ -207,7 +207,7 @@ async def _test_convert_txt_to_nextflow_validator_failure(operandi, auth):
 
 
 @mark.asyncio
-async def _test_convert_txt_to_nextflow_docker_success(operandi, auth):
+async def test_convert_txt_to_nextflow_docker_success(operandi, auth):
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "docker", "with_mets_server": False}
@@ -222,7 +222,7 @@ async def _test_convert_txt_to_nextflow_docker_success(operandi, auth):
 
 
 @mark.asyncio
-async def _test_convert_txt_to_nextflow_docker_success_with_mets_server(operandi, auth):
+async def test_convert_txt_to_nextflow_docker_success_with_mets_server(operandi, auth):
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "docker", "with_mets_server": True}
