@@ -1,19 +1,18 @@
-from pytest import mark
 from os.path import exists, isdir, isfile
-from pymongo import AsyncMongoClient
+from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 
 
-@mark.asyncio
-async def assert_availability_db(db_url: str, timeout_ms: int = 5000) -> bool:
-    client = AsyncMongoClient(db_url, serverSelectionTimeoutMS=timeout_ms)
+
+def assert_availability_db(db_url: str, timeout_ms: int = 5000) -> bool:
+    client = MongoClient(db_url, serverSelectionTimeoutMS=timeout_ms)
     try:
-        await client.admin.command("ping")
+        client.admin.command("ping")
         return True
     except ServerSelectionTimeoutError:
         return False
     finally:
-        await client.close()
+        client.close()
 
 
 def assert_exists_db_resource(db_resource, resource_key, resource_id):

@@ -1,15 +1,13 @@
 from io import BytesIO
-from pytest import mark
 from tests.helpers_asserts import assert_exists_db_resource
 from tests.constants import WORKFLOW_DUMMY_TEXT
 from .helpers_asserts import assert_local_dir_workflow, assert_response_status_code
 
 
-@mark.asyncio
-async def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workflow):
+def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workflow):
     # Post a new workflow script
     wf_detail = "Test template workflow with mets server"
-    response = await operandi.post(
+    response = operandi.post(
         url=f"/workflow?details={wf_detail}", files={"nextflow_script": bytes_template_workflow}, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
@@ -20,11 +18,10 @@ async def test_post_workflow_script(operandi, auth, db_workflows, bytes_template
     assert db_workflow["uses_mets_server"] == False
 
 
-@mark.asyncio
-async def test_post_workflow_script_with_ms(operandi, auth, db_workflows, bytes_template_workflow_with_ms):
+def test_post_workflow_script_with_ms(operandi, auth, db_workflows, bytes_template_workflow_with_ms):
     # Post a new workflow script
     wf_detail = "Test template workflow with mets server"
-    response = await operandi.post(
+    response = operandi.post(
         url=f"/workflow?details={wf_detail}", files={"nextflow_script": bytes_template_workflow_with_ms}, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
@@ -35,15 +32,14 @@ async def test_post_workflow_script_with_ms(operandi, auth, db_workflows, bytes_
     assert db_workflow["uses_mets_server"] == True
 
 
-@mark.asyncio
-async def test_put_workflow_script(
+def test_put_workflow_script(
     operandi, auth, db_workflows, bytes_template_workflow_with_ms, bytes_default_workflow_with_ms
 ):
     put_workflow_id = "put_workflow_id"
     # The first put request creates a new workflow
     files = {"nextflow_script": bytes_template_workflow_with_ms}
     wf_detail = "Test template workflow with mets server"
-    response = await operandi.put(url=f"/workflow/{put_workflow_id}?details={wf_detail}", files=files, auth=auth)
+    response = operandi.put(url=f"/workflow/{put_workflow_id}?details={wf_detail}", files=files, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
@@ -62,7 +58,7 @@ async def test_put_workflow_script(
     # The second put request replaces the previously created workflow
     files = {"nextflow_script": bytes_default_workflow_with_ms}
     wf_detail_put = "Test default workflow with mets server"
-    response = await operandi.put(url=f"/workflow/{put_workflow_id}?details={wf_detail_put}", files=files, auth=auth)
+    response = operandi.put(url=f"/workflow/{put_workflow_id}?details={wf_detail_put}", files=files, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
@@ -86,8 +82,7 @@ async def test_put_workflow_script(
         f"Workflow details should not, but match: {workflow_details1} == {workflow_details2}"
 
 
-@mark.asyncio
-async def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow_with_ms):
+def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow_with_ms):
     production_workflow_ids = [
         "template_workflow", "default_workflow", "odem_workflow",
         "template_workflow_with_MS", "default_workflow_with_MS", "odem_workflow_with_MS"
@@ -96,64 +91,61 @@ async def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow_
     # Try to replace a production workflow which should raise an error code of 405
     files = {"nextflow_script": bytes_template_workflow_with_ms}
     for workflow_id in production_workflow_ids:
-        response = await operandi.put(url=f"/workflow/{workflow_id}", files=files, auth=auth)
+        response = operandi.put(url=f"/workflow/{workflow_id}", files=files, auth=auth)
         assert_response_status_code(response.status_code, expected_floor=4)
 
 
-# Not implemented/planned in the WebAPI
-@mark.asyncio
-async def test_delete_workflow():
+# Not implemented/planned in the WebAP
+
+def test_delete_workflow():
     pass
 
 
-# Not implemented/planned in the WebAPI
-@mark.asyncio
-async def test_delete_workflow_non_existing():
+# Not implemented/planned in the WebAP
+
+def test_delete_workflow_non_existing():
     pass
 
 
-@mark.asyncio
-async def test_get_workflow_script(operandi, auth, bytes_template_workflow):
+def test_get_workflow_script(operandi, auth, bytes_template_workflow):
     # Post a new workflow script
-    response = await operandi.post(url="/workflow", files={"nextflow_script": bytes_template_workflow}, auth=auth)
+    response = operandi.post(url="/workflow", files={"nextflow_script": bytes_template_workflow}, auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     workflow_id = response.json()['resource_id']
     assert_local_dir_workflow(workflow_id)
     # Get the same workflow script
-    response = await operandi.get(url=f"/workflow/{workflow_id}", auth=auth)
+    response = operandi.get(url=f"/workflow/{workflow_id}", auth=auth)
     assert_response_status_code(response.status_code, expected_floor=2)
     print(response.headers)
     assert response.headers.get('content-disposition').find(".nf") > -1, \
         "filename should have the '.nf' extension"
 
 
-@mark.asyncio
-async def test_get_workflow_non_existing(operandi, auth):
+def test_get_workflow_non_existing(operandi, auth):
     non_workflow_id = "non_existing_workflow_id"
-    response = await operandi.get(url=f"/workflow/{non_workflow_id}", auth=auth)
+    response = operandi.get(url=f"/workflow/{non_workflow_id}", auth=auth)
     assert_response_status_code(response.status_code, expected_floor=4)
 
 
-# This is already implemented as a part of the harvester full cycle test
-@mark.asyncio
-async def _test_run_operandi_workflow():
+# This is already implemented as a part of the harvester full cycle tes
+
+def _test_run_operandi_workflow():
     pass
 
 
-# This is already implemented as a part of the harvester full cycle test
-@mark.asyncio
-async def _test_running_workflow_job_status():
+# This is already implemented as a part of the harvester full cycle tes
+
+def _test_running_workflow_job_status():
     pass
 
 
-@mark.asyncio
-async def test_convert_txt_to_nextflow_success(operandi, auth):
+def test_convert_txt_to_nextflow_success(operandi, auth):
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "local", "with_mets_server": False}
 
     # Simulate uploading the text file for conversion via POST
-    response = await operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
+    response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
     nf_file_content = response.content.decode('utf-8')
     # Verify the status code and content
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -163,14 +155,13 @@ async def test_convert_txt_to_nextflow_success(operandi, auth):
     assert "merging_mets" in nf_file_content
 
 
-@mark.asyncio
-async def test_convert_txt_to_nextflow_success_with_mets_server(operandi, auth):
+def test_convert_txt_to_nextflow_success_with_mets_server(operandi, auth):
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "local", "with_mets_server": True}
 
     # Simulate uploading the text file for conversion via POST
-    response = await operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
+    response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
     nf_file_content = response.content.decode('utf-8')
     # Verify the status code and content
     assert_response_status_code(response.status_code, expected_floor=2)
@@ -180,39 +171,36 @@ async def test_convert_txt_to_nextflow_success_with_mets_server(operandi, auth):
     assert "merging_mets" not in nf_file_content
 
 
-@mark.asyncio
-async def test_convert_txt_to_nextflow_auth_failure(operandi):
+def test_convert_txt_to_nextflow_auth_failure(operandi):
     dummy_text = "Some dummy text"
     dummy_file = BytesIO(dummy_text.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "local", "with_mets_server": False}
     auth = ('invalid_user', 'invalid_password')
-    response = await operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
+    response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
 
     # Verify the status code and error message for failed authentication
     assert_response_status_code(response.status_code, expected_floor=4)
     assert response.json()["detail"] == "Not found user account for email: invalid_user"
 
 
-@mark.asyncio
-async def test_convert_txt_to_nextflow_validator_failure(operandi, auth):
+def test_convert_txt_to_nextflow_validator_failure(operandi, auth):
     invalid_text = "Invalid ocrd process text"
     dummy_file = BytesIO(invalid_text.encode('utf-8'))
     files = {"txt_file": ("invalid.txt", dummy_file, "text/plain")}
     params = {"environment": "local", "with_mets_server": False}
 
-    response = await operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
+    response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
     assert_response_status_code(response.status_code, expected_floor=4)
     assert "Failed to validate the ocrd process workflow txt file" in response.json()["detail"]
 
 
-@mark.asyncio
-async def test_convert_txt_to_nextflow_docker_success(operandi, auth):
+def test_convert_txt_to_nextflow_docker_success(operandi, auth):
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "docker", "with_mets_server": False}
 
-    response = await operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
+    response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
     nf_file_content = response.content.decode('utf-8')
     assert_response_status_code(response.status_code, expected_floor=2)
     assert "params.mets_path" in nf_file_content
@@ -221,13 +209,12 @@ async def test_convert_txt_to_nextflow_docker_success(operandi, auth):
     assert "merging_mets" in nf_file_content
 
 
-@mark.asyncio
-async def test_convert_txt_to_nextflow_docker_success_with_mets_server(operandi, auth):
+def test_convert_txt_to_nextflow_docker_success_with_mets_server(operandi, auth):
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "docker", "with_mets_server": True}
 
-    response = await operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
+    response = operandi.post(url="/convert_workflow", files=files, auth=auth, params=params)
     nf_file_content = response.content.decode('utf-8')
     assert_response_status_code(response.status_code, expected_floor=2)
     assert "params.mets_path" in nf_file_content
