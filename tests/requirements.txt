@@ -2,7 +2,7 @@ autopep8
 click
 generateDS == 2.35.20
 pylint
-pymongo >= 4.3.3
+pymongo >= 4.15.5
 pytest >= 7.0.0
 pytest-docker>=1.0.0
 requests>2.32.0
