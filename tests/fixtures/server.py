@@ -1,14 +1,15 @@
+from httpx import ASGITransport, AsyncClient
 from os import environ
 from pytest import fixture
-from fastapi.testclient import TestClient
-
 from operandi_server import OperandiServer
 from tests.helpers_asserts import assert_availability_db
 
 
 @fixture(scope="package", name="operandi")
-def fixture_operandi_server():
-    assert_availability_db(environ.get("OPERANDI_DB_URL"))
-    operandi_app = OperandiServer()
-    with TestClient(operandi_app) as client:
+async def fixture_operandi_server():
+    await assert_availability_db(environ.get("OPERANDI_DB_URL"))
+    async with AsyncClient(
+        transport=ASGITransport(app=OperandiServer()),
+        base_url="http://testserver"
+    ) as client:
         yield client

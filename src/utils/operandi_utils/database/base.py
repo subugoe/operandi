@@ -38,7 +38,7 @@ async def db_initiate_database(
         DBWorkspace
     ]
     client = AsyncMongoClient(db_url)
-    db = client[db_name]
+    db = client.get_default_database(default=db_name)
     # Documentation: https://beanie-odm.dev/
     await init_beanie(database=db, document_models=doc_models)
 
