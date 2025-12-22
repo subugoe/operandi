@@ -22,9 +22,6 @@ class WorkspaceRsrc(Resource):
     mets_basename: Optional[str]
     bag_info_adds: Optional[dict]
 
-    class Config:
-        validate_by_name = True
-
     @staticmethod
     def from_db_workspace(db_workspace: DBWorkspace):
         return WorkspaceRsrc(
