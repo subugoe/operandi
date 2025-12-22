@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=69.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "operandi-utils"
+version = "2.23.0"
+authors = [ { name = "Mehmed Mustafa", email = "mehmed.mustafa@gwdg.de" } ]
+license = { text = "Apache License 2.0" }
+description = "Shared utilities for Operandi"
+requires-python = ">=3.10"
+dependencies = [
+    "aiofiles>=0.8.0",
+    "beanie==1.11.7",
+    "chardet>=5.1.0",
+    "click>=7",
+    "clint==0.5.1",
+    "loguru>=0.6.0",
+    "httpx>=0.24.0",
+    "ocrd>=3.0.4",
+    "paramiko>=3.4.0",
+    "pika>=1.2.0",
+    "pydantic>=1.9.1",
+    "pymongo >= 4.3.3",
+    "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.5"
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.scripts]
+oton-converter = "operandi_utils.oton:cli"
+
+[tool.setuptools]
+packages = { find = {} }
+include-package-data = true
+
+[tool.setuptools.package-data]
+operandi_utils = [
+    "batch_scripts/*.sh",
+    "nextflow_workflows/*.nf",
+    "ocrd_process_workflows/*.txt",
+    "ocrd-all-tool.json"
+]
