@@ -1,6 +1,6 @@
 from json import load
 from os import environ
-from pkg_resources import resource_filename
+from importlib import resources
 
 BS: str = '{}'
 SPACES = '    '
@@ -11,8 +11,7 @@ CONST_METS_PATH: str = 'mets_path'
 CONST_METS_SOCKET_PATH: str = 'mets_socket_path'
 CONST_WORKSPACE_DIR: str = 'workspace_dir'
 
-OCRD_ALL_JSON_FILE = resource_filename(__name__, 'ocrd-all-tool.json')
-with open(OCRD_ALL_JSON_FILE) as f:
+with resources.open_text(package="operandi_utils.oton", resource="ocrd-all-tool.json") as f:
     OCRD_ALL_JSON = load(f)
 
 OTON_LOG_LEVEL = environ.get("OTON_LOG_LEVEL", "INFO")
