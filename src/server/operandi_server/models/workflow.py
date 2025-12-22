@@ -19,7 +19,7 @@ class WorkflowRsrc(Resource):
     producible_file_groups: List[str]
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
     @staticmethod
     def from_db_workflow(db_workflow: DBWorkflow):
@@ -49,7 +49,7 @@ class WorkflowJobRsrc(Resource):
     workspace_rsrc: Optional[WorkspaceRsrc]
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
     @staticmethod
     def from_db_workflow_job(db_workflow_job: DBWorkflowJob, db_workflow: DBWorkflow, db_workspace: DBWorkspace):

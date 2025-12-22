@@ -13,7 +13,7 @@ class Resource(BaseModel):
     deleted: bool
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 class WorkflowArguments(BaseModel):
     workspace_id: str
@@ -23,7 +23,7 @@ class WorkflowArguments(BaseModel):
     mets_name: Optional[str] = DEFAULT_METS_BASENAME
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 class SbatchArguments(BaseModel):
     partition: str = HPC_NHR_JOB_DEFAULT_PARTITION  # partition to be used
@@ -31,7 +31,7 @@ class SbatchArguments(BaseModel):
     ram: int = 64  # RAM (in GB) per job allocated by default
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 class OlahdUploadArguments(BaseModel):
     username: str
@@ -39,7 +39,7 @@ class OlahdUploadArguments(BaseModel):
     endpoint: str
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 class MetsUrlRequest(BaseModel):
     mets_url: str = Field(..., description="The mets url")
@@ -47,4 +47,4 @@ class MetsUrlRequest(BaseModel):
     mets_basename: str = Field(default=DEFAULT_METS_BASENAME, description="The mets file basename")
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True

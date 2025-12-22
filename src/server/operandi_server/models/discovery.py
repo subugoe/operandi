@@ -12,4 +12,4 @@ class PYDiscovery(BaseModel):
     has_docker: bool = Field(default=False, description="Whether the OCR-D executables run in a Docker container")
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True

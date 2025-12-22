@@ -23,7 +23,7 @@ class WorkspaceRsrc(Resource):
     bag_info_adds: Optional[dict]
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
     @staticmethod
     def from_db_workspace(db_workspace: DBWorkspace):

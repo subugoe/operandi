@@ -13,7 +13,7 @@ class PYUserAction(BaseModel):
     action: str = Field(..., description="Description of the user action")
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
     @staticmethod
     def from_db_user_account(action: str, db_user_account: DBUserAccount):
@@ -37,7 +37,7 @@ class PYUserInfo(BaseModel):
     details: str = Field(..., description="More details about the account")
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
     @staticmethod
     def from_db_user_account(db_user_account: DBUserAccount):
