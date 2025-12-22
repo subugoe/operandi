@@ -11,7 +11,8 @@ CONST_METS_PATH: str = 'mets_path'
 CONST_METS_SOCKET_PATH: str = 'mets_socket_path'
 CONST_WORKSPACE_DIR: str = 'workspace_dir'
 
-with resources.open_text(package="operandi_utils.oton", resource="ocrd-all-tool.json") as f:
+ocrd_all_file = resources.files("operandi_utils.oton") / "ocrd-all-tool.json"
+with ocrd_all_file.open("r", encoding="utf-8") as f:
     OCRD_ALL_JSON = load(f)
 
 OTON_LOG_LEVEL = environ.get("OTON_LOG_LEVEL", "INFO")
