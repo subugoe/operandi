@@ -11,15 +11,3 @@ def fixture_operandi_server():
     operandi_app = OperandiServer()
     with TestClient(operandi_app) as client:
         yield client
-
-"""
-from httpx import ASGITransport, AsyncClient
-@fixture(scope="package", name="operandi")
-async def fixture_operandi_server():
-    await assert_availability_db(environ.get("OPERANDI_DB_URL"))
-    async with AsyncClient(
-        transport=ASGITransport(app=OperandiServer()),
-        base_url="http://testserver"
-    ) as client:
-        yield client
-"""

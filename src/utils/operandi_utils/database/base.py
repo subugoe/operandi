@@ -2,7 +2,6 @@ from logging import getLogger
 from os import environ
 from beanie import init_beanie
 from pymongo import AsyncMongoClient
-from motor.motor_asyncio import AsyncIOMotorClient
 
 from operandi_utils import call_sync
 from .models import DBHPCSlurmJob, DBUserAccount, DBWorkflow, DBWorkflowJob, DBWorkspace
@@ -38,7 +37,7 @@ async def db_initiate_database(
         DBWorkflowJob,
         DBWorkspace
     ]
-    client = AsyncIOMotorClient(db_url)
+    client = AsyncMongoClient(db_url)
     db = client.get_default_database(default=db_name)
     # Documentation: https://beanie-odm.dev/
     await init_beanie(database=db, document_models=doc_models)

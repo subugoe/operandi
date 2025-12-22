@@ -16,7 +16,6 @@ dependencies = [
     "click>=7",
     "clint==0.5.1",
     "loguru>=0.6.0",
-    "motor >= 3.7.1",
     "httpx>=0.24.0",
     "ocrd>=3.9.1",
     "paramiko>=3.4.0",
