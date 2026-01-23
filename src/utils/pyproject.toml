@@ -11,7 +11,7 @@ description = "Shared utilities for Operandi"
 requires-python = ">=3.10"
 dependencies = [
     "aiofiles>=0.8.0",
-    "beanie>=2.0.1",
+    "beanie>=2.0.0",
     "chardet>=5.1.0",
     "click>=7",
     "clint==0.5.1",
