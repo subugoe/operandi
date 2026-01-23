@@ -42,5 +42,5 @@ operandi_utils = [
     "batch_scripts/*.sh",
     "nextflow_workflows/*.nf",
     "ocrd_process_workflows/*.txt",
-    "ocrd-all-tool.json"
+    "oton/ocrd-all-tool.json"
 ]
