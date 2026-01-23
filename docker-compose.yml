@@ -29,6 +29,10 @@ services:
     image: "rabbitmq:4.2-management"
     container_name: operandi-rabbitmq
     hostname: rabbit-mq-host
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -43,6 +47,7 @@ services:
     restart: on-failure
     environment:
       - RABBITMQ_SERVER_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit peer_discovery_backend none
       - RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version,restart_streams
     networks:
       - operandi
