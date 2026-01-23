@@ -21,16 +21,18 @@ def check_job_till_finish(auth_harvester, operandi, workflow_job_id: str):
         response = operandi.get(url=check_job_status_url, auth=auth_harvester)
         assert_response_status_code(response.status_code, expected_floor=2)
         job_status = response.json()["job_state"]
-        if job_status == StateJob.SUCCESS:
+        if job_status == StateJob.HPC_SUCCESS:
             break
+        if job_status == StateJob.HPC_FAILED:
+            break
+    assert job_status == StateJob.HPC_SUCCESS
 
-        # TODO: Fix may be needed here
-        # When failed loop 5 more times.
-        # Sometimes the FAILED changes to SUCCESS
-        if job_status == StateJob.FAILED and tries > 5:
-            tries = 5
+def check_job_status_after_data_download(auth_harvester, operandi, workflow_job_id: str):
+    check_job_status_url = f"/workflow-job/{workflow_job_id}"
+    response = operandi.get(url=check_job_status_url, auth=auth_harvester)
+    assert_response_status_code(response.status_code, expected_floor=2)
+    job_status = response.json()["job_state"]
     assert job_status == StateJob.SUCCESS
-
 
 def download_workflow_job_logs(auth_harvester, operandi, workflow_job_id: str):
     tries = 60
@@ -112,3 +114,5 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
     assert Path(wf_job_dir, "work").exists
     assert Path(wf_job_dir, workspace_id, input_file_grp).exists()
     assert Path(wf_job_dir, workspace_id, "OCR-D-OCR").exists()
+
+    check_job_status_after_data_download(auth_harvester, operandi, workflow_job_id)
