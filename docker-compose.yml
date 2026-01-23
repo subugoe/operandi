@@ -43,7 +43,7 @@ services:
     restart: on-failure
     environment:
       - RABBITMQ_SERVER_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
-      - RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version
+      - RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version,restart_streams
     networks:
       - operandi
     healthcheck:
