@@ -39,8 +39,8 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 operandi_utils = [
-    "batch_scripts/*.sh",
-    "nextflow_workflows/*.nf",
-    "ocrd_process_workflows/*.txt",
+    "hpc/batch_scripts/*.sh",
+    "hpc/nextflow_workflows/*.nf",
+    "hpc/ocrd_process_workflows/*.txt",
     "oton/ocrd-all-tool.json"
 ]
