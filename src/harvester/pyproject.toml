@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "operandi-harvester"
-version = "2.23.0"
+version = "2.24.0"
 authors = [{name = "Mehmed Mustafa", email = "mehmed.mustafa@gwdg.de"}]
 license = {text = "Apache License 2.0"}
 description = "Harvester for Operandi"
 requires-python = ">=3.10"
 dependencies = [
-    "operandi-utils>=2.23.0",
+    "operandi-utils>=2.24.0",
     "requests>2.32.0"
 ]
 
