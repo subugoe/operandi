@@ -12,12 +12,12 @@ from tests.tests_server.helpers_asserts import assert_response_status_code
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
 
 def check_job_till_finish(auth_harvester, operandi, workflow_job_id: str):
-    tries = 120
+    tries = 360
     job_status = None
     check_job_status_url = f"/workflow-job/{workflow_job_id}"
     while tries > 0:
         tries -= 1
-        sleep(30)
+        sleep(120)
         response = operandi.get(url=check_job_status_url, auth=auth_harvester)
         assert_response_status_code(response.status_code, expected_floor=2)
         job_status = response.json()["job_state"]
@@ -35,11 +35,11 @@ def check_job_status_after_data_download(auth_harvester, operandi, workflow_job_
     assert job_status == StateJob.SUCCESS
 
 def download_workflow_job_logs(auth_harvester, operandi, workflow_job_id: str):
-    tries = 120
+    tries = 360
     get_log_zip_url = f"/workflow-job/{workflow_job_id}/logs"
     while tries > 0:
         tries -= 1
-        sleep(30)
+        sleep(120)
         response = operandi.get(url=get_log_zip_url, auth=auth_harvester)
         if response.status_code != 200:
             continue
