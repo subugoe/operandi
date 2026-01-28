@@ -115,7 +115,7 @@ run-tests: run-tests-utils run-tests-broker run-tests-server run-tests-harvester
 
 run-tests-utils:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_utils/test_*/test_*.py -v
+	pytest tests/tests_utils/test_*/test_*.py -s -v
 
 run-tests-broker:
 	export $(shell sed 's/=.*//' ./tests/.env)
@@ -123,11 +123,11 @@ run-tests-broker:
 
 run-tests-harvester:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_harvester/test_*.py -v
+	pytest tests/tests_harvester/test_*.py -s -v
 
 run-tests-server:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_server/test_*.py -v
+	pytest tests/tests_server/test_*.py -s -v
 
 run-tests-integration:
 	export $(shell sed 's/=.*//' ./tests/.env)
