@@ -109,7 +109,7 @@ start-server-native:
 
 start-harvester-dummy:
 	export $(shell sed 's/=.*//' ./.env)
-	operandi-harvester start-dummy --address http://localhost
+	operandi-harvester start-dummy --address http://localhost:8000
 
 run-tests: run-tests-utils run-tests-broker run-tests-server run-tests-harvester run-tests-integration
 
