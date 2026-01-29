@@ -1,11 +1,11 @@
-autopep8
-click
+autopep8 >= 2.3.2
+click >= 8.3.1
 generateDS == 2.35.20
-httpx >= 0.28.0
-pylint
-pymongo >= 4.15.5
-pytest >= 7.0.0
-pytest-docker >= 1.0.0
-requests > 2.32.0
-twine
+httpx >= 0.28.1
+pylint >= 4.0.4
+pymongo >= 4.16.0
+pytest >= 9.0.0
+pytest-docker >= 3.2.5
+requests > 2.32.5
+twine >= 6.2.0
 wheel
