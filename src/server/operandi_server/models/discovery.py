@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PYDiscovery(BaseModel):
+    model_config = ConfigDict(validate_by_name=True)
     ram: float = Field(default=0.0, description="All available RAM in bytes")
     cpu_cores: int = Field(default=0, description="Number of available CPU cores")
     has_cuda: bool = Field(default=False, description="Whether deployment supports NVIDIA's CUDA")
@@ -10,6 +11,3 @@ class PYDiscovery(BaseModel):
     ocrd_all_version: str = Field(
         default="Ocrd all version not detected", description="Git tag of the ocrd_all version implemented")
     has_docker: bool = Field(default=False, description="Whether the OCR-D executables run in a Docker container")
-
-    class Config:
-        allow_population_by_field_name = True

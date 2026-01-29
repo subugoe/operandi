@@ -17,8 +17,8 @@ class JobWorkerStatus(JobWorkerBase):
 
     @override
     def _consumed_msg_callback(self, ch, method, properties, body):
-        self.log.debug(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
-        self.log.debug(f"Consumed message: {body}")
+        self.log.info(f"ch: {ch}, method: {method}, properties: {properties}, body: {body}")
+        self.log.info(f"Consumed message: {body}")
         self.current_message_delivery_tag = method.delivery_tag
         self.has_consumed_message = True
 
@@ -55,7 +55,7 @@ class JobWorkerStatus(JobWorkerBase):
             return
 
         self.has_consumed_message = False
-        self.log.debug(f"Ack delivery tag: {self.current_message_delivery_tag}")
+        self.log.info(f"Ack delivery tag: {self.current_message_delivery_tag}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     @override
@@ -69,7 +69,7 @@ class JobWorkerStatus(JobWorkerBase):
             self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
             return
 
-        self.log.debug(f"Ack delivery tag: {self.current_message_delivery_tag}")
+        self.log.info(f"Ack delivery tag: {self.current_message_delivery_tag}")
         self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
 
         # Reset the current message related parameters
@@ -108,7 +108,7 @@ class JobWorkerStatus(JobWorkerBase):
         if new_job_state == StateJob.HPC_SUCCESS or new_job_state == StateJob.HPC_FAILED:
             sync_db_update_workspace(find_workspace_id=workspace_id, state=StateWorkspace.TRANSFERRING_FROM_HPC)
             sync_db_update_workflow_job(find_job_id=job_id, job_state=StateJob.TRANSFERRING_FROM_HPC)
-            result_download_message = {"job_id": f"{job_id}", "previous_job_state": f"{new_job_state}"}
+            result_download_message = {"job_id": f"{job_id}", "previous_job_state": f"{new_job_state.value}"}
             self.log.info(f"Encoding the result download RabbitMQ message: {result_download_message}")
             encoded_result_download_message = dumps(result_download_message).encode(encoding="utf-8")
             self.rmq_publisher.publish_to_queue(

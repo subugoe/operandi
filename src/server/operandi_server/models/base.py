@@ -1,10 +1,11 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 from operandi_utils.hpc.constants import HPC_NHR_JOB_DEFAULT_PARTITION
 from ..constants import DEFAULT_FILE_GRP, DEFAULT_METS_BASENAME
 
 class Resource(BaseModel):
+    model_config = ConfigDict(validate_by_name=True)
     user_id: str = Field(..., description="The unique id of the user who created the resource")
     resource_id: str = Field(..., description="The unique id of the resource")
     resource_url: str = Field(..., description="The unique URL of the resource")
@@ -12,39 +13,28 @@ class Resource(BaseModel):
     datetime: datetime
     deleted: bool
 
-    class Config:
-        allow_population_by_field_name = True
-
 class WorkflowArguments(BaseModel):
+    model_config = ConfigDict(validate_by_name=True)
     workspace_id: str
     input_file_grp: Optional[str] = DEFAULT_FILE_GRP
     remove_file_grps: Optional[str] = ""
     preserve_file_grps: Optional[str] = ""
     mets_name: Optional[str] = DEFAULT_METS_BASENAME
 
-    class Config:
-        allow_population_by_field_name = True
-
 class SbatchArguments(BaseModel):
+    model_config = ConfigDict(validate_by_name=True)
     partition: str = HPC_NHR_JOB_DEFAULT_PARTITION  # partition to be used
     cpus: int = 4  # cpus per job allocated by default
     ram: int = 64  # RAM (in GB) per job allocated by default
 
-    class Config:
-        allow_population_by_field_name = True
-
 class OlahdUploadArguments(BaseModel):
+    model_config = ConfigDict(validate_by_name=True)
     username: str
     password: str
     endpoint: str
 
-    class Config:
-        allow_population_by_field_name = True
-
 class MetsUrlRequest(BaseModel):
+    model_config = ConfigDict(validate_by_name=True)
     mets_url: str = Field(..., description="The mets url")
     preserve_file_grps: str = Field(..., description="The file groups to be preserved")
     mets_basename: str = Field(default=DEFAULT_METS_BASENAME, description="The mets file basename")
-
-    class Config:
-        allow_population_by_field_name = True

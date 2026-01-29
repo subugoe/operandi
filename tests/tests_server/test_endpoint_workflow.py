@@ -3,6 +3,7 @@ from tests.helpers_asserts import assert_exists_db_resource
 from tests.constants import WORKFLOW_DUMMY_TEXT
 from .helpers_asserts import assert_local_dir_workflow, assert_response_status_code
 
+
 def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workflow):
     # Post a new workflow script
     wf_detail = "Test template workflow with mets server"
@@ -15,6 +16,7 @@ def test_post_workflow_script(operandi, auth, db_workflows, bytes_template_workf
     assert_exists_db_resource(db_workflow, resource_key="workflow_id", resource_id=workflow_id)
     assert db_workflow["details"] == wf_detail
     assert db_workflow["uses_mets_server"] == False
+
 
 def test_post_workflow_script_with_ms(operandi, auth, db_workflows, bytes_template_workflow_with_ms):
     # Post a new workflow script
@@ -79,6 +81,7 @@ def test_put_workflow_script(
     assert workflow_details1 != workflow_details2, \
         f"Workflow details should not, but match: {workflow_details1} == {workflow_details2}"
 
+
 def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow_with_ms):
     production_workflow_ids = [
         "template_workflow", "default_workflow", "odem_workflow",
@@ -92,13 +95,15 @@ def test_put_workflow_not_allowed(operandi, auth, bytes_template_workflow_with_m
         assert_response_status_code(response.status_code, expected_floor=4)
 
 
-# Not implemented/planned in the WebAPI
-def _test_delete_workflow():
+# Not implemented/planned in the WebAP
+
+def test_delete_workflow():
     pass
 
 
-# Not implemented/planned in the WebAPI
-def _test_delete_workflow_non_existing():
+# Not implemented/planned in the WebAP
+
+def test_delete_workflow_non_existing():
     pass
 
 
@@ -122,23 +127,19 @@ def test_get_workflow_non_existing(operandi, auth):
     assert_response_status_code(response.status_code, expected_floor=4)
 
 
-# This is already implemented as a part of the harvester full cycle test
+# This is already implemented as a part of the harvester full cycle tes
+
 def _test_run_operandi_workflow():
     pass
 
 
-# This is already implemented as a part of the harvester full cycle test
+# This is already implemented as a part of the harvester full cycle tes
+
 def _test_running_workflow_job_status():
     pass
 
 
-# Added by Faizan
 def test_convert_txt_to_nextflow_success(operandi, auth):
-    """
-    Test the successful conversion of a text file to a Nextflow (.nf) file.
-    """
-
-    # Convert the dummy text to bytes and create an in-memory file-like object
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "local", "with_mets_server": False}
@@ -155,11 +156,6 @@ def test_convert_txt_to_nextflow_success(operandi, auth):
 
 
 def test_convert_txt_to_nextflow_success_with_mets_server(operandi, auth):
-    """
-    Test the successful conversion of a text file to a Nextflow (.nf) file with mets server.
-    """
-
-    # Convert the dummy text to bytes and create an in-memory file-like object
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "local", "with_mets_server": True}
@@ -174,11 +170,8 @@ def test_convert_txt_to_nextflow_success_with_mets_server(operandi, auth):
     assert "params.mets_socket_path" in nf_file_content
     assert "merging_mets" not in nf_file_content
 
-# Added by Faizan
+
 def test_convert_txt_to_nextflow_auth_failure(operandi):
-    """
-    Test the conversion process when authentication fails.
-    """
     dummy_text = "Some dummy text"
     dummy_file = BytesIO(dummy_text.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
@@ -191,12 +184,7 @@ def test_convert_txt_to_nextflow_auth_failure(operandi):
     assert response.json()["detail"] == "Not found user account for email: invalid_user"
 
 
-# Added by Faizan
 def test_convert_txt_to_nextflow_validator_failure(operandi, auth):
-    """
-    Test the conversion process when there's a validation or conversion failure.
-    """
-    # Providing an invalid text input to trigger the ValueError in the conversion
     invalid_text = "Invalid ocrd process text"
     dummy_file = BytesIO(invalid_text.encode('utf-8'))
     files = {"txt_file": ("invalid.txt", dummy_file, "text/plain")}
@@ -207,13 +195,7 @@ def test_convert_txt_to_nextflow_validator_failure(operandi, auth):
     assert "Failed to validate the ocrd process workflow txt file" in response.json()["detail"]
 
 
-# Added by Faizan
 def test_convert_txt_to_nextflow_docker_success(operandi, auth):
-    """
-    Test the successful conversion of a text file to a Nextflow (.nf) file.
-    """
-
-    # Convert the dummy text to bytes and create an in-memory file-like object
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "docker", "with_mets_server": False}
@@ -228,11 +210,6 @@ def test_convert_txt_to_nextflow_docker_success(operandi, auth):
 
 
 def test_convert_txt_to_nextflow_docker_success_with_mets_server(operandi, auth):
-    """
-    Test the successful conversion of a text file to a Nextflow (.nf) file with mets server.
-    """
-
-    # Convert the dummy text to bytes and create an in-memory file-like object
     dummy_file = BytesIO(WORKFLOW_DUMMY_TEXT.encode('utf-8'))
     files = {"txt_file": ("dummy.txt", dummy_file, "text/plain")}
     params = {"environment": "docker", "with_mets_server": True}

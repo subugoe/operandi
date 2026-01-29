@@ -1,7 +1,6 @@
+from fastapi.testclient import TestClient
 from os import environ
 from pytest import fixture
-from fastapi.testclient import TestClient
-
 from operandi_server import OperandiServer
 from tests.helpers_asserts import assert_availability_db
 

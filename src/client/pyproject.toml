@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "operandi-client"
+version = "2.24.0"
+authors = [{name = "Mehmed Mustafa", email = "mehmed.mustafa@gwdg.de"}]
+license = {text = "Apache License 2.0"}
+description = "Client for Operandi"
+requires-python = ">=3.10"
+dependencies = ["operandi-utils>=2.24.0"]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.scripts]
+operandi-client = "operandi_client:cli"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+include = ["operandi_client*"]

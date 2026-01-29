@@ -109,7 +109,7 @@ start-server-native:
 
 start-harvester-dummy:
 	export $(shell sed 's/=.*//' ./.env)
-	operandi-harvester start-dummy --address http://localhost
+	operandi-harvester start-dummy --address http://localhost:8000
 
 run-tests: run-tests-utils run-tests-broker run-tests-server run-tests-harvester run-tests-integration
 
@@ -119,7 +119,7 @@ run-tests-utils:
 
 run-tests-broker:
 	export $(shell sed 's/=.*//' ./tests/.env)
-	pytest tests/tests_broker/test_*.py -s -v
+	pytest tests/tests_broker/test_*.py -v
 
 run-tests-harvester:
 	export $(shell sed 's/=.*//' ./tests/.env)

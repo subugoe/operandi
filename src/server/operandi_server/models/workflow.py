@@ -18,9 +18,6 @@ class WorkflowRsrc(Resource):
     executable_steps: List[str]
     producible_file_groups: List[str]
 
-    class Config:
-        allow_population_by_field_name = True
-
     @staticmethod
     def from_db_workflow(db_workflow: DBWorkflow):
         return WorkflowRsrc(
@@ -47,9 +44,6 @@ class WorkflowJobRsrc(Resource):
     job_state: Optional[StateJob] = StateJob.UNSET
     workflow_rsrc: Optional[WorkflowRsrc]
     workspace_rsrc: Optional[WorkspaceRsrc]
-
-    class Config:
-        allow_population_by_field_name = True
 
     @staticmethod
     def from_db_workflow_job(db_workflow_job: DBWorkflowJob, db_workflow: DBWorkflow, db_workspace: DBWorkspace):

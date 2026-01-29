@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   operandi:
     name: operandi
@@ -28,9 +26,13 @@ services:
       - operandi
 
   operandi-rabbitmq:
-    image: "rabbitmq:3.12-management"
+    image: "rabbitmq:4.2-management"
     container_name: operandi-rabbitmq
     hostname: rabbit-mq-host
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -45,7 +47,7 @@ services:
     restart: on-failure
     environment:
       - RABBITMQ_SERVER_ERL_ARGS=-rabbitmq_management load_definitions "/rmq_definitions.json"
-      - RABBITMQ_FEATURE_FLAGS=quorum_queue,implicit_default_bindings,classic_mirrored_queue_version
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit peer_discovery_backend none
     networks:
       - operandi
     healthcheck:
@@ -93,6 +95,9 @@ services:
       - "traefik.http.routers.operandi-server.entrypoints=websecure"
       - "traefik.http.routers.operandi-server.rule=Host(`operandi.ocr-d.de`) && PathPrefix(`/`)"
       - "traefik.http.routers.operandi-server.tls.certresolver=myResolver"
+      - "traefik.http.routers.operandi-server.middlewares=limit@docker"
+      - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=8000000000"
+      - "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=8000000000"
     environment:
       - OPERANDI_DB_NAME=${OPERANDI_DB_NAME}
       - OPERANDI_DB_URL=${OPERANDI_DB_URL}

@@ -30,7 +30,7 @@ class JobWorkerDownload(JobWorkerBase):
             consumed_message = loads(body)
             self.log.info(f"Consumed message: {consumed_message}")
             self.current_message_job_id = consumed_message["job_id"]
-            previous_job_state = consumed_message["previous_job_state"]
+            previous_job_state: StateJob = StateJob(consumed_message["previous_job_state"])
         except Exception as error:
             self.log.warning(f"Parsing the consumed message has failed: {error}")
             self._handle_msg_failure(interruption=False)
@@ -63,8 +63,11 @@ class JobWorkerDownload(JobWorkerBase):
 
         try:
             # TODO: Refactor this block of code since nothing is downloaded from the HPC when job fails.
+            self.log.info(f"Previous job state: {previous_job_state}")
             if previous_job_state == StateJob.HPC_SUCCESS:
+                self.log.info(f"Downloading slurm job log file of succeeded: {slurm_job_id}")
                 self.hpc_io_transfer.download_slurm_job_log_file(slurm_job_id, job_dir)
+                self.log.info(f"Downloading results of succeeded workflow job: {job_dir}")
                 self.__download_results_from_hpc(job_dir=job_dir, workspace_dir=ws_dir)
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
                 updated_file_groups = self.__extract_updated_file_groups(db_workspace=db_workspace)
@@ -82,8 +85,10 @@ class JobWorkerDownload(JobWorkerBase):
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.SUCCESS)
                 self.log.info(f"Setting new workflow job state `{StateJob.SUCCESS}`"
                               f" of job_id: {self.current_message_job_id}")
-            if previous_job_state == StateJob.HPC_FAILED:
+            elif previous_job_state == StateJob.HPC_FAILED:
+                self.log.info(f"Downloading slurm job log file of failed: {slurm_job_id}")
                 self.hpc_io_transfer.download_slurm_job_log_file(slurm_job_id, job_dir)
+                self.log.info(f"Skipping downloading results of failed workflow job: {job_dir}")
                 self.log.info(f"Setting new workspace state `{StateWorkspace.READY}` of workspace_id: {workspace_id}")
                 db_workspace: DBWorkspace = sync_db_update_workspace(
                     find_workspace_id=workspace_id, state=StateWorkspace.READY)
@@ -99,13 +104,17 @@ class JobWorkerDownload(JobWorkerBase):
                 sync_db_update_workflow_job(find_job_id=self.current_message_job_id, job_state=StateJob.FAILED)
                 self.log.info(f"Setting new workflow job state `{StateJob.FAILED}`"
                               f" of job_id: {self.current_message_job_id}")
+            elif previous_job_state == StateJob.TRANSFERRING_FROM_HPC:
+                self.log.warning("Another worker instance is already downloading or has downloaded")
+            else:
+                self.log.warning(f"State not processable: {previous_job_state}")
         except Exception as error:
             self.log.warning(f"{error}")
             self._handle_msg_failure(interruption=False)
             return
 
         self.has_consumed_message = False
-        self.log.debug(f"Ack delivery tag: {self.current_message_delivery_tag}")
+        self.log.info(f"Ack delivery tag: {self.current_message_delivery_tag}")
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     @override
@@ -119,7 +128,7 @@ class JobWorkerDownload(JobWorkerBase):
             self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
             return
 
-        self.log.debug(f"Ack delivery tag: {self.current_message_delivery_tag}")
+        self.log.info(f"Ack delivery tag: {self.current_message_delivery_tag}")
         self.rmq_consumer.ack_message(delivery_tag=self.current_message_delivery_tag)
 
         # Reset the current message related parameters

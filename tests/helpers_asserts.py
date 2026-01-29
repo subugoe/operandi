@@ -1,18 +1,18 @@
 from os.path import exists, isdir, isfile
-from requests import get
-from time import sleep
+from pymongo import MongoClient
+from pymongo.errors import ServerSelectionTimeoutError
 
 
-def assert_availability_db(url, tries: int = 6, wait_time: int = 10):
-    http_url = url.replace("mongodb", "http")
-    response = None
-    while tries > 0:
-        response = get(http_url)
-        if response.status_code == 200:
-            break
-        sleep(wait_time)
-        tries -= 1
-    assert response.status_code == 200, f"DB not running on: {url}"
+
+def assert_availability_db(db_url: str, timeout_ms: int = 5000) -> bool:
+    client = MongoClient(db_url, serverSelectionTimeoutMS=timeout_ms)
+    try:
+        client.admin.command("ping")
+        return True
+    except ServerSelectionTimeoutError:
+        return False
+    finally:
+        client.close()
 
 
 def assert_exists_db_resource(db_resource, resource_key, resource_id):
