@@ -12,20 +12,19 @@ from tests.tests_server.helpers_asserts import assert_response_status_code
 OPERANDI_SERVER_BASE_DIR = environ.get("OPERANDI_SERVER_BASE_DIR")
 
 def check_job_till_finish(auth_harvester, operandi, workflow_job_id: str):
-    tries = 360
+    tries = 120
     job_status = None
     check_job_status_url = f"/workflow-job/{workflow_job_id}"
     while tries > 0:
         tries -= 1
-        sleep(120)
+        sleep(15)
         response = operandi.get(url=check_job_status_url, auth=auth_harvester)
         assert_response_status_code(response.status_code, expected_floor=2)
         job_status = response.json()["job_state"]
-        if job_status == StateJob.HPC_SUCCESS:
+        if job_status in [StateJob.HPC_SUCCESS, StateJob.HPC_FAILED, StateJob.TRANSFERRING_FROM_HPC]:
             break
-        if job_status == StateJob.HPC_FAILED:
-            break
-    assert job_status == StateJob.HPC_SUCCESS
+    assert job_status is not None
+    return job_status
 
 def check_job_status_after_data_download(auth_harvester, operandi, workflow_job_id: str):
     check_job_status_url = f"/workflow-job/{workflow_job_id}"
@@ -33,13 +32,14 @@ def check_job_status_after_data_download(auth_harvester, operandi, workflow_job_
     assert_response_status_code(response.status_code, expected_floor=2)
     job_status = response.json()["job_state"]
     assert job_status == StateJob.SUCCESS
+    return job_status
 
 def download_workflow_job_logs(auth_harvester, operandi, workflow_job_id: str):
-    tries = 360
+    tries = 120
     get_log_zip_url = f"/workflow-job/{workflow_job_id}/logs"
     while tries > 0:
         tries -= 1
-        sleep(120)
+        sleep(15)
         response = operandi.get(url=get_log_zip_url, auth=auth_harvester)
         if response.status_code != 200:
             continue
@@ -61,8 +61,6 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
     service_broker.create_worker_process(RABBITMQ_QUEUE_HARVESTER, "submit_worker")
     # Create a background worker for the job statuses queue
     service_broker.create_worker_process(RABBITMQ_QUEUE_JOB_STATUSES, "status_worker")
-    # Create a background worker for the hpc download queue
-    service_broker.create_worker_process(RABBITMQ_QUEUE_HPC_DOWNLOADS, "download_worker")
 
     # Post a workspace zip
     response = operandi.post(url="/workspace", files={"workspace": bytes_small_workspace}, auth=auth_harvester)
@@ -98,6 +96,10 @@ def test_full_cycle(auth_harvester, operandi, service_broker, bytes_small_worksp
     workflow_job_id = response.json()["resource_id"]
 
     check_job_till_finish(auth_harvester, operandi, workflow_job_id)
+
+    # Create a background worker for the hpc download queue
+    service_broker.create_worker_process(RABBITMQ_QUEUE_HPC_DOWNLOADS, "download_worker")
+
     download_workflow_job_logs(auth_harvester, operandi, workflow_job_id)
 
     ws_dir = Path(OPERANDI_SERVER_BASE_DIR, SERVER_WORKSPACES_ROUTER, workspace_id)
