@@ -6,6 +6,6 @@ pylint >= 4.0.4
 pymongo >= 4.16.0
 pytest >= 9.0.0
 pytest-docker >= 3.2.5
-requests > 2.32.5
+requests >= 2.32.5
 twine >= 6.2.0
 wheel
