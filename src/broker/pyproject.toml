@@ -9,10 +9,7 @@ authors = [{name = "Mehmed Mustafa", email = "mehmed.mustafa@gwdg.de"}]
 license = {text = "Apache License 2.0"}
 description = "Broker for Operandi"
 requires-python = ">=3.10"
-dependencies = [
-    "operandi-utils>=2.24.0",
-    "requests>2.32.0"
-]
+dependencies = ["operandi-utils>=2.24.0"]
 
 [project.readme]
 file = "README.md"
