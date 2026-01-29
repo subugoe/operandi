@@ -172,14 +172,17 @@ transfer_to_node_storage_processor_images(){
     if [ ! -f "$ocrd_image_path" ]; then
       echo "Expected ocrd processor image not found at: $ocrd_image_path"
       exit 1
-    else
-      echo "Transferring ocrd processor image to the compute node: ${ocrd_image}"
-      cp "${ocrd_image_path}" "${node_ocrd_image_path}"
-      echo "Ocrd processor image was transferred to: ${node_ocrd_image_path}"
-      if [ ! -f "${node_ocrd_image_path}" ]; then
-        echo "Expected ocrd processor image was copied but not found locally at: ${node_ocrd_image_path}"
-        exit 1
-      fi
+    fi
+    if [ -f "$node_ocrd_image_path" ]; then
+      echo "Skipping ${ocrd_image_path} since the same image was already copied in a previous step"
+      continue
+    fi
+    echo "Transferring ocrd processor image to the compute node: ${ocrd_image}"
+    cp "${ocrd_image_path}" "${node_ocrd_image_path}"
+    echo "Ocrd processor image was transferred to: ${node_ocrd_image_path}"
+    if [ ! -f "${node_ocrd_image_path}" ]; then
+      echo "Expected ocrd processor image was copied but not found locally at: ${node_ocrd_image_path}"
+      exit 1
     fi
   done
   echo ""

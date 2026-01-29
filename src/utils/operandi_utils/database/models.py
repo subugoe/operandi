@@ -32,7 +32,7 @@ class DBUserAccount(Document):
     approved_user: bool = False
     deleted: bool = False
     datetime: Optional[datetime]
-    details: Optional[str]
+    details: Optional[str] = "User Account"
 
     class Settings:
         name = "user_accounts"
@@ -57,11 +57,11 @@ class DBHPCSlurmJob(Document):
     workflow_job_id: str
     hpc_slurm_job_id: str
     hpc_slurm_job_state: StateJobSlurm = StateJobSlurm.UNSET
-    hpc_batch_script_path: Optional[str]
-    hpc_slurm_workspace_path: Optional[str]
+    hpc_batch_script_path: Optional[str] = "UNSET"
+    hpc_slurm_workspace_path: Optional[str] = "UNSET"
     deleted: bool = False
     datetime: Optional[datetime]
-    details: Optional[str]
+    details: Optional[str] = "HPC-Slurm-Job"
 
     class Settings:
         name = "hpc_slurm_jobs"
@@ -93,7 +93,7 @@ class DBWorkflow(Document):
     producible_file_groups: List[str]
     deleted: bool = False
     datetime: Optional[datetime]
-    details: Optional[str]
+    details: Optional[str] = "Workflow"
 
     class Settings:
         name = "workflows"
@@ -123,12 +123,12 @@ class DBWorkflowJob(Document):
     workflow_id: str
     workspace_id: str
     job_state: StateJob = StateJob.UNSET
-    workflow_dir: Optional[str]
-    workspace_dir: Optional[str]
-    hpc_slurm_job_id: Optional[str]
+    workflow_dir: Optional[str] = "UNSET"
+    workspace_dir: Optional[str] = "UNSET"
+    hpc_slurm_job_id: Optional[str] = "UNSET"
     deleted: bool = False
     datetime: Optional[datetime]
-    details: Optional[str]
+    details: Optional[str] = "Workflow-Job"
 
     class Settings:
         name = "workflow_jobs"
@@ -164,14 +164,14 @@ class DBWorkspace(Document):
     pages_amount: int
     file_groups: List[str]
     state: StateWorkspace = StateWorkspace.UNSET
-    ocrd_identifier: Optional[str]
-    bagit_profile_identifier: Optional[str]
-    ocrd_base_version_checksum: Optional[str]
-    mets_basename: Optional[str]
-    bag_info_adds: Optional[dict]
+    ocrd_identifier: Optional[str] = "UNSET"
+    bagit_profile_identifier: Optional[str] = "UNSET"
+    ocrd_base_version_checksum: Optional[str] = "UNSET"
+    mets_basename: Optional[str] = "UNSET"
+    bag_info_adds: Optional[dict] = {}
     deleted: bool = False
     datetime: Optional[datetime]
-    details: Optional[str]
+    details: Optional[str] = "Workspace"
 
     class Settings:
         name = "workspaces"

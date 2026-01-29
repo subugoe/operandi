@@ -20,7 +20,7 @@ def test_parse_slurm_job_state_from_output_less_lines():
         "'-------------------- -------------------- -------- \n'"
     ]
     slurm_job_state, msg = parse_slurm_job_state_from_output(test_output_out_of_memory)
-    assert msg == "The output has less than 3 lines, job not listed yet."
+    assert msg == f"Less than 3 lines in the output: {test_output_out_of_memory}"
     assert slurm_job_state == StateJobSlurm.UNSET
 
 
@@ -70,5 +70,5 @@ def test_parse_slurm_job_state_from_output_invalid_state():
         "'6313216.extern        COMPLETED                 0:0 \n'"
     ]
     slurm_job_state, msg = parse_slurm_job_state_from_output(test_output_out_of_memory)
-    assert msg == f"Unknown parsed state: OUT_OF_ME+"
+    assert msg == f"Unknown parsed state: OUT_OF_ME+ from output: {test_output_out_of_memory}"
     assert slurm_job_state == StateJobSlurm.UNSET
