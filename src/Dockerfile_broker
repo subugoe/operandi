@@ -41,10 +41,16 @@ ENV PYTHONIOENCODING=utf8 \
 
 WORKDIR /usr/src
 
-# Install runtime dependencies only (no build tools needed)
+# Install runtime dependencies only (no build tools needed) and all necessary libraries for OpenCV
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         curl \
+        libxcb1 \
+        libx11-6 \
+        libxext6 \
+        libxrender1 \
+        libfontconfig1 \
+        libfreetype6 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy wheels from builder and install
